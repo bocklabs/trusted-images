@@ -179,11 +179,18 @@ jobs:
       - name: Capture Trivy DB metadata
         id: dbmeta1
         shell: bash
+        env:
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy # same cache dir trivy-action scanned with
         run: |
           set -euo pipefail
-          trivy --version | sed -n '/Vulnerability DB:/,/^$/p' | sed 's/[[:space:]]*$//' > trivy-db-meta-1.txt
-          DB_DIGEST="$(grep -i 'Check Bundle Digest:' trivy-db-meta-1.txt | head -1 | sed 's/.*Digest:[[:space:]]*//')"
-          DB_UPDATED="$(grep -i 'UpdatedAt:' trivy-db-meta-1.txt | head -1 | sed 's/.*UpdatedAt:[[:space:]]*//')"
+          trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-1.txt
+          DB_DIGEST="$(grep -i 'Check Bundle Digest:' trivy-db-meta-1.txt | head -1 | sed 's/.*Digest:[[:space:]]*//')" || true
+          DB_UPDATED="$(grep -i 'UpdatedAt:' trivy-db-meta-1.txt | head -1 | sed 's/.*UpdatedAt:[[:space:]]*//')" || true
+          if [ -z "$DB_DIGEST" ] || [ -z "$DB_UPDATED" ]; then
+            echo "FATAL: trivy --version (cache dir $TRIVY_CACHE_DIR) carries no DB metadata (DB not downloaded where expected?)"
+            cat trivy-db-meta-1.txt
+            exit 1
+          fi
           echo "db_digest=${DB_DIGEST}" >> "$GITHUB_OUTPUT"
           echo "db_updated=${DB_UPDATED}" >> "$GITHUB_OUTPUT"
           cat trivy-db-meta-1.txt
@@ -209,9 +216,11 @@ jobs:
       - name: Assert single DB across scans
         id: dbassert
         shell: bash
+        env:
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
         run: |
           set -euo pipefail
-          trivy --version | sed -n '/Vulnerability DB:/,/^$/p' | sed 's/[[:space:]]*$//' > trivy-db-meta-2.txt
+          trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-2.txt
           if ! diff -u trivy-db-meta-1.txt trivy-db-meta-2.txt; then
             echo "FATAL: Trivy DB changed between scans (SCAN-03)"
             exit 1
