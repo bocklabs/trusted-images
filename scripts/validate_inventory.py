@@ -25,13 +25,12 @@ Usage: validate_inventory.py [ROOT]   (ROOT defaults to ./inventory)
 PyYAML 6.0.3 is the one deliberate dependency; everything else is stdlib.
 """
 
-from __future__ import annotations
 
 import re
 import sys
 from pathlib import Path
 
-import yaml  # PyYAML 6.0.3 — the single deliberate dependency
+import yaml  # PyYAML — the single deliberate dependency
 
 API_VERSION = "trusted-images.bocklabs.dev/v1"
 KIND = "Image"

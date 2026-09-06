@@ -111,7 +111,3 @@ tag.
 Renovate manager regex and the inventory schema drift apart (Renovate
 silently matching nothing). Run it with `node
 tests/renovate-manager-match.mjs`.
-
-## License
-
-[MIT](LICENSE)

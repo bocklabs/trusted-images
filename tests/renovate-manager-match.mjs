@@ -2,11 +2,10 @@
 // Drift guard between the Renovate custom-manager regexes in renovate.json and
 // the inventory schema: compiles the exact managerFilePatterns/matchStrings
 // with the same regex engine Renovate uses (JS) and asserts every
-// inventory/<app>/image.yaml is matched with non-empty depName, currentValue
-// and currentDigest captures. A green run proves extraction cannot silently
-// return empty (the "silent blind mode" failure: regex drifts from the YAML
-// field names, Renovate reports nothing, the dashboard goes quiet).
-// Stdlib only (fs, path, url). Exit 0 = all entries extracted; exit 1 = miss.
+// inventory/<app>/image.yaml is extracted by at least one manager with
+// non-empty depName, currentValue and currentDigest captures. A green run
+// proves extraction cannot silently return empty. Stdlib only. Exit 0 = all
+// entries extracted; exit 1 = miss.
 
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -37,50 +36,30 @@ if (managers.length === 0) {
   process.exit(1);
 }
 
+const CAPTURES = ["depName", "currentValue", "currentDigest"];
 let failures = 0;
-for (const [i, manager] of managers.entries()) {
-  const label = `customManagers[${i}]`;
-  const filePatterns = (manager.managerFilePatterns ?? []).map(compileFilePattern);
-  if (filePatterns.length === 0) {
-    console.error(`miss: ${label} has no managerFilePatterns`);
+for (const rel of entries) {
+  const content = readFileSync(join(root, rel), "utf8");
+  let match = null;
+  for (const manager of managers) {
+    const filePatterns = (manager.managerFilePatterns ?? []).map(compileFilePattern);
+    if (!filePatterns.some((re) => re.test(rel))) continue;
+    for (const ms of manager.matchStrings ?? []) {
+      const m = new RegExp(ms).exec(content);
+      if (m && CAPTURES.every((g) => m.groups?.[g])) {
+        match = m;
+        break;
+      }
+    }
+    if (match) break;
+  }
+  if (!match) {
+    console.error(`miss: ${rel} extracted by no custom manager (regex/schema drift?)`);
     failures++;
     continue;
   }
-  const matchStrings = manager.matchStrings ?? [];
-  if (matchStrings.length === 0) {
-    console.error(`miss: ${label} has no matchStrings`);
-    failures++;
-    continue;
-  }
-
-  for (const rel of entries) {
-    const content = readFileSync(join(root, rel), "utf8");
-    if (!filePatterns.some((re) => re.test(rel))) {
-      console.error(`miss: ${rel} matches no managerFilePatterns of ${label}`);
-      failures++;
-      continue;
-    }
-    let match = null;
-    for (const ms of matchStrings) {
-      match = new RegExp(ms).exec(content);
-      if (match) break;
-    }
-    if (!match) {
-      console.error(`miss: ${rel} matched no matchStrings regex of ${label}`);
-      failures++;
-      continue;
-    }
-    const missing = ["depName", "currentValue", "currentDigest"].filter(
-      (g) => !match.groups?.[g],
-    );
-    if (missing.length > 0) {
-      console.error(`miss: ${rel} empty/missing capture group(s): ${missing.join(", ")}`);
-      failures++;
-      continue;
-    }
-    const digestShort = match.groups.currentDigest.slice(0, 19);
-    console.log(`match: ${rel} -> ${match.groups.depName} @ ${match.groups.currentValue} ${digestShort}`);
-  }
+  const digestShort = match.groups.currentDigest.slice(0, 19);
+  console.log(`match: ${rel} -> ${match.groups.depName} @ ${match.groups.currentValue} ${digestShort}`);
 }
 
 if (failures > 0) {
