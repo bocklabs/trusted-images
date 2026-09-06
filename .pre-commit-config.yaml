@@ -1,0 +1,77 @@
+# Pre-commit hooks. Install the git hook once with:
+#   pre-commit install
+# Then run manually across the repo with:
+#   pre-commit run --all-files
+ci:
+  autofix_commit_msg: "chore: pre-commit auto-fixes"
+  autofix_prs: true
+
+repos:
+  # File hygiene + parse checks. Matches the tracked file surface:
+  # Python scripts/tests, GitHub Actions + inventory YAML, renovate.json, Markdown.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-yaml
+      - id: check-json
+      - id: check-ast
+      - id: debug-statements
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+
+  # Lint the stdlib-only Python (scripts/ + tests/).
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.22
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+
+  # Secret scanning: this is a public supply-chain repo — a leaked token in a
+  # workflow, provenance record, or inventory entry is the one unrecoverable mistake.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks-docker
+
+  # The repo's own fast gates — the same checks CI runs, kept green per commit.
+  - repo: local
+    hooks:
+      - id: inventory-valid
+        name: validate inventory schema v1
+        entry: ./.venv/bin/python scripts/validate_inventory.py
+        language: system
+        pass_filenames: false
+
+      - id: unittest
+        name: python unittest suite
+        entry: ./.venv/bin/python -m unittest discover -s tests
+        language: system
+        pass_filenames: false
+
+      - id: renovate-config
+        name: renovate config validator (strict)
+        entry: npx --yes --package renovate -- renovate-config-validator --strict
+        language: system
+        pass_filenames: false
+        files: ^renovate\.json$
+
+      - id: renovate-manager-match
+        name: renovate manager / inventory schema drift guard
+        entry: node tests/renovate-manager-match.mjs
+        language: system
+        pass_filenames: false
+        files: ^(renovate\.json|inventory/)
+
+      - id: action-digest-pins
+        name: every GitHub Action ref is SHA-pinned
+        entry: "bash -c '! grep -rn \"uses:\" .github/workflows .github/actions | grep -vF \"uses: ./\" | grep -vE \"@[0-9a-f]{40}\"'"
+        language: system
+        pass_filenames: false
+        files: ^\.github/

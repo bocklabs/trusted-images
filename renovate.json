@@ -23,6 +23,32 @@
       "datasourceTemplate": "docker",
       "versioningTemplate": "loose",
       "autoReplaceStringTemplate": "ref: {{{depName}}}\n    tag: {{{newValue}}}\n    digest: {{{newDigest}}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Manage SecObserve GitHub Actions separately because SecObserve uses vYYYY_MM release tags which are incompatible with Renovate's native GitHub Actions digest lookup.",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "uses:\\s+SecObserve/secobserve_actions_templates/(?<actionPath>[^@\\s]+)@(?<currentDigest>[a-f0-9]{40})\\s+#\\s+(?<currentValue>v\\d{4}_\\d{2})"
+      ],
+      "depNameTemplate": "SecObserve/secobserve_actions_templates",
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "regex:^v?(?<major>\\d{4})_(?<minor>\\d{2})$",
+      "autoReplaceStringTemplate": "uses: SecObserve/secobserve_actions_templates/{{{actionPath}}}@{{{newDigest}}} # {{{newValue}}}"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Disable Renovate's native GitHub Actions handling for SecObserve. SecObserve vYYYY_MM releases are managed by the custom regex manager so SHA pinning can be retained without native digest lookup failures.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "SecObserve/secobserve_actions_templates"
+      ],
+      "enabled": false
     }
   ]
 }

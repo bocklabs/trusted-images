@@ -7,7 +7,6 @@ negative case — that the failure output names the offending file, field, or
 value. stdlib unittest only; PyYAML is used to build the fixtures.
 """
 
-from __future__ import annotations
 
 import subprocess
 import sys
