@@ -12,5 +12,7 @@ spec:
   destination:
     package: ghcr.io/bocklabs/nginx-qualification
   patchPolicy: enabled
-  validationProfile: http
-  version: 1
+  validation:
+    type: http
+    port: 80
+  version: 2

@@ -62,6 +62,52 @@ for (const rel of entries) {
   console.log(`match: ${rel} -> ${match.groups.depName} @ ${match.groups.currentValue} ${digestShort}`);
 }
 
+// D-05 negative fixture: nothing may sit between the ref/tag/digest lines the
+// custom manager binds — an inserted field breaks extraction AND Renovate's
+// auto-replace would destroy the insertion on the next upstream bump. The
+// fixture is v2-shaped with a field between tag: and digest:; asserted to be
+// extracted by NO manager.
+const negativeFixture = [
+  "apiVersion: trusted-images.bocklabs.dev/v1",
+  "kind: Image",
+  "metadata:",
+  "  name: app-negative",
+  "spec:",
+  "  upstream:",
+  "    ref: quay.io/example/app-negative",
+  "    tag: v1.2.3",
+  "    note: field inserted between tag and digest",
+  "    digest: sha256:" + "a".repeat(64),
+  "  destination:",
+  "    package: ghcr.io/bocklabs/app-negative",
+  "  patchPolicy: enabled",
+  "  validation:",
+  "    type: http",
+  "    port: 9187",
+  "  version: 2",
+].join("\n");
+
+let negativeMatched = false;
+for (const manager of managers) {
+  for (const ms of manager.matchStrings ?? []) {
+    const m = new RegExp(ms).exec(negativeFixture);
+    if (m && CAPTURES.every((g) => m.groups?.[g])) {
+      negativeMatched = true;
+      break;
+    }
+  }
+  if (negativeMatched) break;
+}
+if (negativeMatched) {
+  console.error(
+    "match: negative fixture WAS extracted by a custom manager — the between-lines invariant is broken",
+  );
+  process.exit(1);
+}
+console.log(
+  "negative: between-lines fixture missed by all managers as expected — ref/tag/digest adjacency enforced",
+);
+
 if (failures > 0) {
   console.error(`${failures} mismatch(es) — regex/schema drift detected`);
   process.exit(1);

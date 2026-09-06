@@ -19,7 +19,177 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+
+      - name: Install pinned PyYAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip install PyYAML==6.0.3
+
+      - name: Resolve inventory entry and validation params
+        id: entry
+        shell: bash
+        env:
+          APP: ${{ inputs.app }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
+            echo "FATAL: app not in inventory: ${APP}"
+            exit 1
+          fi
+          if ! ls inventory/ | grep -qFx -- "${APP}"; then
+            echo "FATAL: app not in inventory: ${APP}"
+            exit 1
+          fi
+          OUT="$(python3 - "${APP}" <<'PY'
+          import json
+          import sys
+          import yaml
+
+          spec = yaml.safe_load(open(f"inventory/{sys.argv[1]}/image.yaml"))["spec"]
+          validation = spec["validation"]
+          print(f"upstream_ref={spec['upstream']['ref']}")
+          print(f"upstream_tag={spec['upstream']['tag']}")
+          print(f"upstream_digest={spec['upstream']['digest']}")
+          print(f"dest_package={spec['destination']['package']}")
+          print(f"app={sys.argv[1]}")
+          print(f"validation_type={validation['type']}")
+          PARAM_OUTPUTS = {
+              "port": "validation_port",
+              "path": "validation_path",
+              "expectStatus": "validation_expect_status",
+              "durationSeconds": "validation_duration_seconds",
+              "timeoutSeconds": "validation_timeout_seconds",
+              "expectedExit": "validation_expected_exit",
+          }
+          for key, output in PARAM_OUTPUTS.items():
+              if key in validation:
+                  print(f"{output}={validation[key]}")
+          if "command" in validation:
+              print("validation_command=" + json.dumps(validation["command"]))
+          if "expectedPlatforms" in validation:
+              print("validation_expected_platforms=" + ",".join(validation["expectedPlatforms"]))
+          if validation.get("env"):
+              print("validation_env=" + json.dumps(validation["env"]))
+          PY
+          )"
+          echo "${OUT}"
+          echo "${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch upstream index
+        id: index
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SKOPEO="quay.io/skopeo/stable@sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc" # v1.22.2
+          SRC_CREDS=()
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
+          fi
+          docker run --rm -v "$PWD":/workspace "$SKOPEO" \
+            inspect --raw "${SRC_CREDS[@]}" \
+            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
+          jq -e '.manifests | length > 0' upstream-index.json > /dev/null \
+            || { echo "FATAL: upstream index carries no manifests"; exit 1; }
+          echo "upstream index bytes: $(wc -c < upstream-index.json)"
+
+      - name: Pull candidate image
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            echo "${DOCKERHUB_TOKEN}" | docker login docker.io --username "${DOCKERHUB_USERNAME}" --password-stdin
+          fi
+          docker pull "${UPSTREAM_REF}@${UPSTREAM_DIGEST}"
+
+      - name: Run validation
+        id: runval
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          VALIDATION_TYPE: ${{ steps.entry.outputs.validation_type }}
+          VALIDATION_PORT: ${{ steps.entry.outputs.validation_port }}
+          VALIDATION_PATH: ${{ steps.entry.outputs.validation_path }}
+          VALIDATION_EXPECT_STATUS: ${{ steps.entry.outputs.validation_expect_status }}
+          VALIDATION_DURATION_SECONDS: ${{ steps.entry.outputs.validation_duration_seconds }}
+          VALIDATION_TIMEOUT_SECONDS: ${{ steps.entry.outputs.validation_timeout_seconds }}
+          VALIDATION_EXPECTED_EXIT: ${{ steps.entry.outputs.validation_expected_exit }}
+          VALIDATION_COMMAND: ${{ steps.entry.outputs.validation_command }}
+          VALIDATION_EXPECTED_PLATFORMS: ${{ steps.entry.outputs.validation_expected_platforms }}
+          VALIDATION_ENV: ${{ steps.entry.outputs.validation_env }}
+        run: |
+          set -euo pipefail
+          # D-04: workflow-side defaults wherever the inventory entry carries no deviation.
+          ARGS=(
+            --app "${APP}"
+            --ref "${UPSTREAM_REF}"
+            --digest "${UPSTREAM_DIGEST}"
+            --validation-type "${VALIDATION_TYPE}"
+            --index-file upstream-index.json
+            --evidence-out validation-evidence.json
+            --path "${VALIDATION_PATH:-/}"
+            --expect-status "${VALIDATION_EXPECT_STATUS:-200}"
+            --duration-seconds "${VALIDATION_DURATION_SECONDS:-30}"
+            --timeout-seconds "${VALIDATION_TIMEOUT_SECONDS:-60}"
+            --expected-exit "${VALIDATION_EXPECTED_EXIT:-0}"
+            --expected-platforms "${VALIDATION_EXPECTED_PLATFORMS:-linux/amd64}"
+            --command "${VALIDATION_COMMAND:-[]}"
+          )
+          if [ -n "${VALIDATION_PORT:-}" ]; then
+            ARGS+=(--port "${VALIDATION_PORT}")
+          fi
+          if [ -n "${VALIDATION_ENV:-}" ]; then
+            while IFS=$'\t' read -r KEY VALUE; do
+              ARGS+=("--env" "${KEY}=${VALUE}")
+            done < <(jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv' <<<"${VALIDATION_ENV}")
+          fi
+          python3 scripts/validate_image.py "${ARGS[@]}"
+
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: validation-evidence
+          path: validation-evidence.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload validation container logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: validation-container-logs
+          path: validation-logs/
+          retention-days: 14
+          # A sub-second crash can leave no log capture at all (Pitfall 6);
+          # the evidence records the honest absence, the upload just warns.
+          if-no-files-found: warn
+
   promote:
+    needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -100,7 +270,6 @@ jobs:
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
         run: |
           set -euo pipefail
-          # List existing tags on the destination package via anonymous GHCR token exchange.
           TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
           TAGS="$(curl -s -H "Authorization: Bearer ${TOKEN}" \
             "https://ghcr.io/v2/bocklabs/${APP}/tags/list?n=1000" | jq -r '.tags // [] | .[]' || true)"
@@ -130,11 +299,9 @@ jobs:
           {
             echo "skip_copy=${SKIP_COPY}"
             echo "internal_tag=${INTERNAL_TAG}"
-            echo "revision=${REVISION}"
           } >> "$GITHUB_OUTPUT"
           echo "skip_copy:    ${SKIP_COPY}"
           echo "internal_tag: ${INTERNAL_TAG}"
-          echo "revision:     ${REVISION}"
 
       - name: Resolve source registry credentials
         id: creds
@@ -145,7 +312,6 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          # Docker Hub creds only when the source registry is docker.io; empty outputs otherwise.
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
             echo "user=${DOCKERHUB_USERNAME}" >> "$GITHUB_OUTPUT"
             echo "pass=${DOCKERHUB_TOKEN}" >> "$GITHUB_OUTPUT"
@@ -424,6 +590,11 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+      - name: Download validation evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: validation-evidence
+
       - name: Job summary evidence panel
         id: summary
         if: always()
@@ -483,6 +654,34 @@ jobs:
             PROBE_LINE="FAIL — anonymous probe failed"
           fi
 
+          # D-14.2: the panel displays what the validate job recorded in the
+          # evidence artifact — never recomputes or overrides the result.
+          if [ -f validation-evidence.json ]; then
+            V_RESULT="$(jq -r '.validation.result // "unknown"' validation-evidence.json)"
+            V_TYPE="$(jq -r '.validation.type // "?"' validation-evidence.json)"
+            V_PARAMS="$(jq -c '.validation.params // {}' validation-evidence.json)"
+            V_HSTATUS="$(jq -r '.validation.health.final_status // "?"' validation-evidence.json)"
+            V_TIMINGS="$(jq -r '.validation.timings | "\(.started_at) → \(.finished_at) (\(.duration_seconds)s)"' validation-evidence.json)"
+            V_RUNNER="$(jq -r '.validation.runner // "?"' validation-evidence.json)"
+            V_BASELINE="$(jq -c '{entrypoint: .validation.baseline.entrypoint, cmd: .validation.baseline.cmd, env: .validation.baseline.env}' validation-evidence.json)"
+            VALID_RESULT_LINE="N/A — result '${V_RESULT}' not recorded"
+            if [ "${V_RESULT}" = "pass" ]; then
+              VALID_RESULT_LINE="PASS — validation recorded pass"
+            elif [ "${V_RESULT}" = "fail" ]; then
+              VALID_RESULT_LINE="FAIL — validation recorded fail"
+            fi
+            HEALTH_LINE="FAIL — HEALTHCHECK stuck in '${V_HSTATUS}' at the deadline (D-10)"
+            if [ "${V_HSTATUS}" = "healthy" ]; then
+              HEALTH_LINE="PASS — HEALTHCHECK reached healthy (D-10)"
+            elif [ "${V_HSTATUS}" = "none-defined" ]; then
+              HEALTH_LINE="PASS — no HEALTHCHECK defined; profile check is the gate (D-10)"
+            elif [ "${V_HSTATUS}" = "not-applicable" ]; then
+              HEALTH_LINE="N/A — oneshot profile: container exits by design"
+            elif [ "${V_HSTATUS}" = "unhealthy" ] || [ "${V_HSTATUS}" = "gone" ]; then
+              HEALTH_LINE="FAIL — HEALTHCHECK status '${V_HSTATUS}' (D-10)"
+            fi
+          fi
+
           {
             echo "## Promotion evidence — ${APP:-<unknown app>}"
             echo
@@ -499,6 +698,21 @@ jobs:
               echo "> D1 fallback used (buildx imagetools create): ${DIVERGENCE_NOTE:-no divergence note recorded}."
               echo
             fi
+            echo "### Validation"
+            echo
+            echo "| Fact | Result |"
+            echo "| --- | --- |"
+            if [ -f validation-evidence.json ]; then
+              echo "| Profile + params | ${V_TYPE} — ${V_PARAMS} |"
+              echo "| Validation result | ${VALID_RESULT_LINE} |"
+              echo "| Health (D-10) | ${HEALTH_LINE} |"
+              echo "| Timings | ${V_TIMINGS} |"
+              echo "| Runner | ${V_RUNNER} |"
+              echo "| Baseline (entrypoint/cmd/env) | ${V_BASELINE} |"
+            else
+              echo "| Validation | N/A — evidence artifact absent; validation did not complete |"
+            fi
+            echo
             echo "### Vulnerabilities (deduped, full report)"
             echo
             if [ -s trivy-full.json ]; then
@@ -557,7 +771,6 @@ jobs:
           DISPATCHED_BY: ${{ github.actor }}
         run: |
           set -euo pipefail
-          # Runs only when everything before it passed; every flag was captured earlier.
           FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
           COPA_SHA="$(sha256sum trivy-copa.json | awk '{print $1}')"
           PLATFORMS="$(paste -sd, upstream.platforms)"
@@ -566,6 +779,21 @@ jobs:
           if [ -f pushed-digest.txt ]; then
             INTERNAL_DIGEST="$(cat pushed-digest.txt)"
           fi
+          # D-14: the validation block comes verbatim from the validate job's
+          # evidence artifact, never hand-typed; result must be pass (fail-closed).
+          VALIDATION_RESULT="$(jq -r '.validation.result' validation-evidence.json)"
+          if [ "${VALIDATION_RESULT}" != "pass" ]; then
+            echo "FATAL: validation evidence result is '${VALIDATION_RESULT}', not 'pass' — refusing to write provenance (D-12/D-14)"
+            exit 1
+          fi
+          VALIDATION_TYPE="$(jq -r '.validation.type' validation-evidence.json)"
+          VALIDATION_PARAMS="$(jq -c '.validation.params' validation-evidence.json)"
+          VALIDATION_TIMINGS="$(jq -c '.validation.timings' validation-evidence.json)"
+          VALIDATION_HEALTH="$(jq -c '.validation.health' validation-evidence.json)"
+          VALIDATION_RUNNER="$(jq -r '.validation.runner' validation-evidence.json)"
+          VALIDATION_ENTRYPOINT="$(jq -c '.validation.baseline.entrypoint' validation-evidence.json)"
+          VALIDATION_CMD="$(jq -c '.validation.baseline.cmd' validation-evidence.json)"
+          VALIDATION_ENV="$(jq -c '.validation.baseline.env' validation-evidence.json)"
           NOTES_ARGS=()
           if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ] && [ -n "${DIVERGENCE_NOTE:-}" ]; then
             NOTES_ARGS+=(--notes "${DIVERGENCE_NOTE}")
@@ -593,6 +821,15 @@ jobs:
             --copa-report-sha256 "${COPA_SHA}" \
             --secobserve-product trusted-images \
             --secobserve-origin "${UPSTREAM_REF}:${UPSTREAM_TAG}" \
+            --validation-type "${VALIDATION_TYPE}" \
+            --validation-result "${VALIDATION_RESULT}" \
+            --validation-params "${VALIDATION_PARAMS}" \
+            --validation-timings "${VALIDATION_TIMINGS}" \
+            --validation-health "${VALIDATION_HEALTH}" \
+            --validation-runner "${VALIDATION_RUNNER}" \
+            --validation-entrypoint "${VALIDATION_ENTRYPOINT}" \
+            --validation-cmd "${VALIDATION_CMD}" \
+            --validation-env "${VALIDATION_ENV}" \
             "${NOTES_ARGS[@]}" \
             --out provenance/${APP}/${INTERNAL_TAG}.json
           {

@@ -21,29 +21,33 @@ reason named in its log and summary.
 The steps run in a fixed order; each one's failure stops the run
 before anything downstream happens.
 
-1. **Resolve** the inventory entry for the dispatched app — upstream
+1. **Validate the candidate** — a separate job that runs first: the
+   image is checked statically and executed live according to its
+   validation profile (see Validation below). A failed validation ends
+   the run before any of the steps below start.
+2. **Resolve** the inventory entry for the dispatched app — upstream
    registry/repository, tracked tag, pinned digest, destination
    package.
-2. **Fetch the upstream index** at the pinned digest and record its
+3. **Fetch the upstream index** at the pinned digest and record its
    media type and platform set (the expected values for later
    assertions).
-3. **Compute the internal tag** — the next `<tag>-bocklabs.N` revision
+4. **Compute the internal tag** — the next `<tag>-bocklabs.N` revision
    on the destination package. Never-promoted versions start at `.1`;
    existing tags are never overwritten or moved.
-4. **Scan twice with one scanner database**: a full vulnerability
+5. **Scan twice with one scanner database**: a full vulnerability
    report (all severities, unfixed included) and a fixable-OS-only
    report. Both scans use the same pinned scanner version and the same
    database, which is asserted by comparing database metadata captured
    after each scan. The full report is converted to the findings
    service's import format with a conversion-parity check.
-5. **Upload the full report** to the findings service under the
+6. **Upload the full report** to the findings service under the
    candidate identity — **before** anything is pushed. A promoted
    image with no scan evidence cannot exist.
-6. **Copy the image** digest-preserving, registry to registry, into
+7. **Copy the image** digest-preserving, registry to registry, into
    the destination package under the computed tag.
-7. **Verify** that the pushed digest equals the upstream pinned digest
+8. **Verify** that the pushed digest equals the upstream pinned digest
    and that the pushed platform set matches the upstream platform set.
-8. **Probe** the published package anonymously — a manifest fetch
+9. **Probe** the published package anonymously — a manifest fetch
    without any credentials must succeed and return the expected
    digest.
 
@@ -60,6 +64,43 @@ invariant when it fails. A run that ends green has all of them:
   pinned scanner database.
 - **Anonymous readability** — the published package pulls without any
   credential; public visibility is part of the promotion contract.
+
+## Validation
+
+Every dispatch validates the candidate image before the promotion job
+starts. Validation is its own job with a minimal environment: the
+candidate container runs with no network egress, and the job holds
+nothing but optional read-only pull credentials for the upstream
+registry. A failed validation ends the run right there — no scan, no
+report upload, no copy; nothing downstream happens.
+
+Validation has a static half and a live half.
+
+The static half checks the image index and the image configuration.
+The platform expectation uses subset semantics: every expected platform
+must be present in the image's platform set, and additional platforms
+are allowed — which is what makes a multi-arch image promotable against
+a single-platform expectation. The image configuration must parse, and
+its entrypoint, command, and environment are recorded into the
+provenance record as the baseline for the promotion.
+
+The live half executes the image. One liveness contract covers all
+three profiles, and the profile is selected per image in the inventory
+entry's `validation` block — the entry names the type plus only the
+deviations from the defaults:
+
+- **http** — a web-serving image must answer on its port within the
+  timeout and still be running at the end of the window.
+- **process** — a long-running image must still be running through the
+  window.
+- **oneshot** — a one-shot image must exit within its timeout with
+  exactly the expected exit code.
+
+Health is observed, not assumed. When the image defines its own
+healthcheck, the container must become healthy within the window or
+validation fails. When it defines none, the profile check alone gates,
+and the validation evidence says so rather than inventing a health
+expectation.
 
 ## Re-running a promotion
 

@@ -52,6 +52,18 @@ def valid_flags(out: Path) -> dict[str, str]:
         "--copa-report-sha256": "c" * 64,
         "--secobserve-product": "trusted-images",
         "--secobserve-origin": "quay.io/prometheuscommunity/postgres-exporter:v0.20.1",
+        "--validation-type": "http",
+        "--validation-result": "pass",
+        "--validation-params": '{"port":9187,"expectStatus":200,"path":"/","durationSeconds":30}',
+        "--validation-timings": (
+            '{"started_at":"2026-09-06T00:00:00Z",'
+            '"finished_at":"2026-09-06T00:00:35Z","duration_seconds":35}'
+        ),
+        "--validation-health": '{"defined":false,"final_status":"none-defined"}',
+        "--validation-runner": "ubuntu-latest",
+        "--validation-entrypoint": '["/bin/postgres_exporter"]',
+        "--validation-cmd": "[]",
+        "--validation-env": "[]",
         "--out": str(out),
     }
 
@@ -126,6 +138,51 @@ class ProvenanceTests(unittest.TestCase):
     def test_empty_platforms_fails(self) -> None:
         result = self.run_generator(self.mutated(platforms=""))
         self.assert_fails_closed(result, "platforms")
+
+    def test_validation_block_present_in_record(self) -> None:
+        result = self.run_generator(valid_flags(self.out))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(self.out.exists())
+        record = json.loads(self.out.read_text(encoding="utf-8"))
+        validation = record["validation"]
+        self.assertEqual(validation["profile"], "http")
+        self.assertEqual(validation["result"], "pass")
+        self.assertEqual(
+            validation["params"],
+            {"port": 9187, "expectStatus": 200, "path": "/", "durationSeconds": 30},
+        )
+        self.assertEqual(
+            validation["timings"],
+            {
+                "started_at": "2026-09-06T00:00:00Z",
+                "finished_at": "2026-09-06T00:00:35Z",
+                "duration_seconds": 35,
+            },
+        )
+        self.assertEqual(
+            validation["health"], {"defined": False, "final_status": "none-defined"}
+        )
+        self.assertEqual(validation["runner"], "ubuntu-latest")
+        self.assertEqual(
+            validation["baseline"],
+            {
+                "entrypoint": ["/bin/postgres_exporter"],
+                "cmd": [],
+                "env": [],
+            },
+        )
+
+    def test_missing_validation_result_fails(self) -> None:
+        result = self.run_generator(self.mutated(validation_result=None))
+        self.assert_fails_closed(result, "validation-result")
+
+    def test_malformed_validation_entrypoint_json_fails(self) -> None:
+        result = self.run_generator(self.mutated(validation_entrypoint="not-json"))
+        self.assert_fails_closed(result, "validation-entrypoint")
+
+    def test_non_object_validation_timings_fails(self) -> None:
+        result = self.run_generator(self.mutated(validation_timings="[]"))
+        self.assert_fails_closed(result, "validation-timings")
 
 
 if __name__ == "__main__":

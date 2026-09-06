@@ -26,7 +26,8 @@ PACKAGE_PREFIX = "ghcr.io/bocklabs/"
 DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
 BARE_SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 
-# flag -> (kind, required); kind: text | digest (sha256:<64hex>) | sha256 (bare 64-hex)
+# flag -> (kind, required); kind: text | digest (sha256:<64hex>) | sha256
+# (bare 64-hex) | json (object or array — per-flag shape in *_JSON_FLAGS)
 FLAGS: dict[str, tuple[str, bool]] = {
     "--app": ("text", True),
     "--upstream-ref": ("text", True),
@@ -50,9 +51,21 @@ FLAGS: dict[str, tuple[str, bool]] = {
     "--copa-report-sha256": ("sha256", True),
     "--secobserve-product": ("text", True),
     "--secobserve-origin": ("text", True),
+    "--validation-type": ("text", True),
+    "--validation-result": ("text", True),
+    "--validation-params": ("json", True),
+    "--validation-timings": ("json", True),
+    "--validation-health": ("json", True),
+    "--validation-runner": ("text", True),
+    "--validation-entrypoint": ("json", True),
+    "--validation-cmd": ("json", True),
+    "--validation-env": ("json", True),
     "--notes": ("text", False),
     "--out": ("text", True),
 }
+
+JSON_OBJECT_FLAGS = ("--validation-params", "--validation-timings", "--validation-health")
+JSON_ARRAY_FLAGS = ("--validation-entrypoint", "--validation-cmd", "--validation-env")
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,13 +73,12 @@ def parse_args() -> argparse.Namespace:
         description="Write one provenance-v1 record for a promoted internal image.",
     )
     for flag in FLAGS:
-        parser.add_argument(flag, default="" if flag == "--notes" else None)
+        parser.add_argument(flag, default="")
     return parser.parse_args()
 
 
 def value_of(args: argparse.Namespace, flag: str) -> str:
-    value = getattr(args, flag.lstrip("-").replace("-", "_"))
-    return value if isinstance(value, str) else ""
+    return getattr(args, flag.lstrip("-").replace("-", "_"))
 
 
 def collect_violations(args: argparse.Namespace) -> list[str]:
@@ -86,6 +98,20 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
             violations.append(
                 f"{flag} must be bare 64-hex sha256sum output, no sha256: prefix (got {value!r})"
             )
+        if kind == "json" and value.strip():
+            try:
+                parsed = json.loads(value)
+            except json.JSONDecodeError:
+                violations.append(f"{flag} must be valid JSON (got {value!r})")
+            else:
+                if flag in JSON_OBJECT_FLAGS and not isinstance(parsed, dict):
+                    violations.append(
+                        f"{flag} must be a JSON object (got {type(parsed).__name__})"
+                    )
+                if flag in JSON_ARRAY_FLAGS and not isinstance(parsed, list):
+                    violations.append(
+                        f"{flag} must be a JSON array (got {type(parsed).__name__})"
+                    )
 
     app = value_of(args, "--app")
     package = value_of(args, "--internal-package")
@@ -153,6 +179,19 @@ def build_record(args: argparse.Namespace, platforms: list[str]) -> dict:
             "secobserve": {
                 "product": value_of(args, "--secobserve-product"),
                 "origin": value_of(args, "--secobserve-origin"),
+            },
+        },
+        "validation": {
+            "profile": value_of(args, "--validation-type"),
+            "result": value_of(args, "--validation-result"),
+            "params": json.loads(value_of(args, "--validation-params")),
+            "timings": json.loads(value_of(args, "--validation-timings")),
+            "health": json.loads(value_of(args, "--validation-health")),
+            "runner": value_of(args, "--validation-runner"),
+            "baseline": {
+                "entrypoint": json.loads(value_of(args, "--validation-entrypoint")),
+                "cmd": json.loads(value_of(args, "--validation-cmd")),
+                "env": json.loads(value_of(args, "--validation-env")),
             },
         },
         "promoted_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
