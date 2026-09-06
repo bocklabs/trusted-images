@@ -140,3 +140,116 @@ jobs:
           echo "skip_copy:    ${SKIP_COPY}"
           echo "internal_tag: ${INTERNAL_TAG}"
           echo "revision:     ${REVISION}"
+
+      - name: Resolve source registry credentials
+        id: creds
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # D-09: Docker Hub creds only when the source registry is docker.io;
+          # empty outputs otherwise so no quay/gcr scan ever sees them.
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            echo "user=${DOCKERHUB_USERNAME}" >> "$GITHUB_OUTPUT"
+            echo "pass=${DOCKERHUB_TOKEN}" >> "$GITHUB_OUTPUT"
+          else
+            echo "user=" >> "$GITHUB_OUTPUT"
+            echo "pass=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trivy full scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_IMAGE_SRC: remote # D-21: registry-direct, no docker daemon
+          TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
+          TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
+        with:
+          version: v0.74.0 # SCAN-03 pin (D-20)
+          image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.entry.outputs.upstream_digest }}
+          scanners: vuln
+          format: json
+          output: trivy-full.json
+          ignore-unfixed: 'false'
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          timeout: 30m0s
+        # Evidence-only scan (D-05): no gate on findings; no cache input (A6: fresh DB per run,
+        # single job = single DB).
+
+      - name: Capture Trivy DB metadata
+        id: dbmeta1
+        shell: bash
+        run: |
+          set -euo pipefail
+          trivy --version | sed -n '/Vulnerability DB:/,/^$/p' | sed 's/[[:space:]]*$//' > trivy-db-meta-1.txt
+          DB_DIGEST="$(grep -i 'Check Bundle Digest:' trivy-db-meta-1.txt | head -1 | sed 's/.*Digest:[[:space:]]*//')"
+          DB_UPDATED="$(grep -i 'UpdatedAt:' trivy-db-meta-1.txt | head -1 | sed 's/.*UpdatedAt:[[:space:]]*//')"
+          echo "db_digest=${DB_DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "db_updated=${DB_UPDATED}" >> "$GITHUB_OUTPUT"
+          cat trivy-db-meta-1.txt
+
+      - name: Trivy Copa-shaped scan (fixable OS only)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_IMAGE_SRC: remote # D-21
+          TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
+          TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
+          TRIVY_SKIP_DB_UPDATE: 'true' # no action input exists — env pass-through; reuse scan 1's DB (SCAN-03)
+        with:
+          version: v0.74.0
+          image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.entry.outputs.upstream_digest }}
+          scanners: vuln
+          format: json
+          output: trivy-copa.json
+          vuln-type: os
+          ignore-unfixed: 'true'
+          timeout: 30m0s
+        # Independent second invocation (P1): never derived from trivy-full.json. Evidence-only (D-05).
+
+      - name: Assert single DB across scans
+        id: dbassert
+        shell: bash
+        run: |
+          set -euo pipefail
+          trivy --version | sed -n '/Vulnerability DB:/,/^$/p' | sed 's/[[:space:]]*$//' > trivy-db-meta-2.txt
+          if ! diff -u trivy-db-meta-1.txt trivy-db-meta-2.txt; then
+            echo "FATAL: Trivy DB changed between scans (SCAN-03)"
+            exit 1
+          fi
+
+      - name: Convert full report to CycloneDX with parity check
+        id: convert
+        shell: bash
+        run: |
+          set -euo pipefail
+          trivy convert --format cyclonedx --output trivy-full.cdx.json trivy-full.json
+          test -s trivy-full.json
+          test -s trivy-full.cdx.json
+          JSON_COUNT="$(jq '[.Results[].Vulnerabilities[]?] | unique_by([.VulnerabilityID, .PkgName, .InstalledVersion]) | length' trivy-full.json)"
+          CDX_COUNT="$(jq '.vulnerabilities | length' trivy-full.cdx.json)"
+          {
+            echo "cyclonedx findings in JSON report: ${JSON_COUNT}"
+            echo "cyclonedx findings in CDX file:   ${CDX_COUNT}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # 0 == 0 is a legitimate pass: an empty findings array is not conversion loss (P12).
+          if [ "${JSON_COUNT}" -gt 0 ] && [ "${CDX_COUNT}" -eq 0 ]; then
+            echo "FATAL: CycloneDX conversion lost findings (P12)"
+            exit 1
+          fi
+
+      - name: Upload full report to SecObserve
+        uses: SecObserve/secobserve_actions_templates/actions/importer@0a0f7d0981982a589f2a11c3f05c8e1c628fbd79 # v2026_08
+        with:
+          so_api_base_url: ${{ vars.SECOBSERVE_API_BASE_URL }}
+          so_api_token: ${{ secrets.SECOBSERVE_API_TOKEN }} # D-19 shared token
+          so_product_name: trusted-images # ADR-005 candidate product (constant)
+          so_branch_name: ${{ steps.entry.outputs.app }}
+          so_file_name: trivy-full.cdx.json
+          so_parser_name: CycloneDX
+          so_origin_service: ${{ steps.entry.outputs.app }}
+          so_origin_docker_image_name_tag: ${{ steps.entry.outputs.upstream_ref }}:${{ steps.entry.outputs.upstream_tag }} # origin = upstream ref (ADR-005)
+          so_suppress_licenses: 'true'
+        # No conditional (D-06): dispatch IS acceptance. Unconditional upload BEFORE any push (D-08).
+
