@@ -12,5 +12,7 @@ spec:
   destination:
     package: ghcr.io/bocklabs/postgres-exporter
   patchPolicy: enabled
-  validationProfile: http
-  version: 1
+  validation:
+    type: http
+    port: 9187
+  version: 2

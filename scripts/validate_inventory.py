@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Validate the trusted-images inventory against schema v1.
+"""Validate the trusted-images inventory against schema v2.
 
 Every inventory/<app>/image.yaml is untrusted input (public-repo pull-request
 surface): parse with yaml.safe_load only, never yaml.load. Any rule violation
 fails the run — one line per violation, each naming the offending file and the
 violated rule. Exit 0 prints "OK: inventory valid"; exit 1 means invalid.
 
-Schema v1 rules (field names are locked — the Renovate custom manager and CI
+Schema v2 rules (field names are locked — the Renovate custom manager and CI
 bind to these exact strings):
   apiVersion              == trusted-images.bocklabs.dev/v1
   kind                    == Image
@@ -17,8 +17,24 @@ bind to these exact strings):
   spec.upstream.digest    matches ^sha256:[a-f0-9]{64}$
   spec.destination.package == ghcr.io/bocklabs/<parent folder name>, unique
   spec.patchPolicy        in {enabled, disabled}
-  spec.validationProfile  in {process, http, oneshot}
-  spec.version            == 1 (integer)
+  spec.validation         mapping whose "type" is required and must be in
+                          {process, http, oneshot}; per-type params below;
+                          ANY unknown key inside the mapping is rejected
+                          (fail-closed against typos like "ports:")
+  spec.version            == 2 (integer)
+
+Per-type validation params (required first, then optional):
+  http     port (int 1-65535); path; expectStatus, durationSeconds
+           (positive int); command (list of str)
+  process  durationSeconds (positive int); command (list of str)
+  oneshot  expectedExit (int); timeoutSeconds (positive int);
+           command (list of str)
+  shared   expectedPlatforms (list of os/arch[/variant] strings); env
+           (str->str mapping)
+
+The v1 flat profile shape (a bare profile string where spec.validation now
+lives) is accepted nowhere: an entry still carrying it fails validation
+(missing spec.validation.type).
 
 Usage: validate_inventory.py [ROOT]   (ROOT defaults to ./inventory)
 
@@ -30,15 +46,35 @@ import re
 import sys
 from pathlib import Path
 
-import yaml  # PyYAML — the single deliberate dependency
+import yaml
 
 API_VERSION = "trusted-images.bocklabs.dev/v1"
 KIND = "Image"
 REGISTRY_PREFIX = "ghcr.io/bocklabs/"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
 PATCH_POLICIES = ("enabled", "disabled")
 VALIDATION_PROFILES = ("process", "http", "oneshot")
+PLATFORM_RE = re.compile(r"^[a-z0-9]+/[a-z0-9]+(/.+)?$")
+
+# spec.validation.type -> (required params, optional params). Anything outside
+# required + optional + SHARED_OPTIONAL + "type" is an unknown key -> rejected.
+VALIDATION_PARAM_RULES = {
+    "http": {
+        "required": ("port",),
+        "optional": ("path", "expectStatus", "durationSeconds", "command"),
+    },
+    "process": {
+        "required": (),
+        "optional": ("durationSeconds", "command"),
+    },
+    "oneshot": {
+        "required": (),
+        "optional": ("expectedExit", "timeoutSeconds", "command"),
+    },
+}
+SHARED_OPTIONAL = ("expectedPlatforms", "env")
+POSITIVE_INT_PARAMS = ("expectStatus", "durationSeconds", "timeoutSeconds")
 
 REQUIRED_FIELDS = (
     "apiVersion",
@@ -49,7 +85,7 @@ REQUIRED_FIELDS = (
     "spec.upstream.digest",
     "spec.destination.package",
     "spec.patchPolicy",
-    "spec.validationProfile",
+    "spec.validation.type",
     "spec.version",
 )
 
@@ -64,8 +100,46 @@ def dig(data: dict, dotted: str) -> tuple[bool, object]:
     return True, node
 
 
+def param_failure(param: str, value: object) -> str | None:
+    """Rule violation text for one spec.validation param, or None if valid."""
+    if param == "port":
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or not 1 <= value <= 65535
+        ):
+            return f"must be an integer in 1-65535 (got {value!r})"
+    elif param in POSITIVE_INT_PARAMS:
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            return f"must be a positive integer (got {value!r})"
+    elif param == "expectedExit":
+        if isinstance(value, bool) or not isinstance(value, int):
+            return f"must be an integer (got {value!r})"
+    elif param == "command":
+        if not isinstance(value, list) or not all(
+            isinstance(item, str) for item in value
+        ):
+            return f"must be a list of strings (got {value!r})"
+    elif param == "expectedPlatforms":
+        if (
+            not isinstance(value, list)
+            or not value
+            or not all(
+                isinstance(item, str) and PLATFORM_RE.match(item) for item in value
+            )
+        ):
+            return f"must be a list of os/arch[/variant] strings (got {value!r})"
+    elif param == "env":
+        if not isinstance(value, dict) or not all(
+            isinstance(key, str) and isinstance(item, str)
+            for key, item in value.items()
+        ):
+            return f"must be a str->str mapping (got {value!r})"
+    return None
+
+
 def entry_failures(path: Path, data: object) -> list[str]:
-    """All schema-v1 violations in one entry, each naming file + rule."""
+    """All schema-v2 violations in one entry, each naming file + rule."""
     name = path.parent.name
     issues: list[str] = []
 
@@ -116,14 +190,32 @@ def entry_failures(path: Path, data: object) -> list[str]:
             f"not in {list(PATCH_POLICIES)}"
         )
 
-    if (
-        "spec.validationProfile" in values
-        and values["spec.validationProfile"] not in VALIDATION_PROFILES
-    ):
-        fail(
-            f"spec.validationProfile {values['spec.validationProfile']!r} "
-            f"not in {list(VALIDATION_PROFILES)}"
-        )
+    if "spec.validation.type" in values:
+        vtype = values["spec.validation.type"]
+        validation = dig(data, "spec.validation")[1]
+        if not isinstance(vtype, str) or vtype not in VALIDATION_PROFILES:
+            fail(f"spec.validation.type {vtype!r} not in {list(VALIDATION_PROFILES)}")
+        elif not isinstance(validation, dict):
+            fail(f"spec.validation must be a mapping (got {type(validation).__name__})")
+        else:
+            rules = VALIDATION_PARAM_RULES[vtype]
+            allowed = (
+                set(rules["required"]) | set(rules["optional"]) | set(SHARED_OPTIONAL)
+            )
+            for key in sorted(set(validation) - allowed - {"type"}):
+                fail(
+                    f"spec.validation.{key} is not a known param for type '{vtype}' "
+                    f"(allowed: {sorted(allowed | {'type'})})"
+                )
+            for param in rules["required"]:
+                if param not in validation:
+                    fail(f"spec.validation.{param} is required for type '{vtype}'")
+            for param, value in sorted(validation.items()):
+                if param == "type":
+                    continue
+                violation = param_failure(param, value)
+                if violation:
+                    fail(f"spec.validation.{param} {violation}")
 
     if "spec.version" in values:
         version = values["spec.version"]

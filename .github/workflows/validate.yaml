@@ -31,6 +31,12 @@ jobs:
           set -euo pipefail
           pip install PyYAML==6.0.3
 
+      - name: Run test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -v
+
       - name: Validate inventory
         shell: bash
         run: |
@@ -42,6 +48,12 @@ jobs:
         run: |
           set -euo pipefail
           npx --yes --package renovate -- renovate-config-validator --strict
+
+      - name: Run Renovate drift guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/renovate-manager-match.mjs
 
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
