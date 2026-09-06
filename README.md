@@ -39,6 +39,13 @@ version bumps and same-tag digest drift; each PR carries the
 `validate / inventory` check, and on green it merges automatically —
 no human in the loop.
 
+Promoting an image is a manual dispatch of the repository's `promote`
+workflow with an inventory app name: the run scans the pinned upstream
+image, publishes it digest-preserving to the public registry, verifies
+digest equality and anonymous readability, and opens a provenance
+pull request recording the evidence. See
+[docs/pipeline.md](docs/pipeline.md).
+
 ## Inventory format
 
 One folder per image, directly under `inventory/`; the entry lives at
