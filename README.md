@@ -37,9 +37,7 @@ Upstream tracking is fully live and automated end to end: Renovate
 watches every inventory entry and opens pull requests on upstream
 version bumps and same-tag digest drift; each PR carries the
 `validate / inventory` check, and on green it merges automatically —
-no human in the loop. The automated promotion workflow itself lands in
-this repository's next phase; until then the inventory, the tracking
-configuration, and the validation CI are live.
+no human in the loop.
 
 ## Inventory format
 
@@ -106,17 +104,6 @@ tag.
 Renovate manager regex and the inventory schema drift apart (Renovate
 silently matching nothing). Run it with `node
 tests/renovate-manager-match.mjs`.
-
-## Policies
-
-- **Public packages, permanently.** Every `ghcr.io/bocklabs/*` package
-  is public and anonymously readable, permanently. Each promotion run
-  ends with an unauthenticated pull probe — a package left private at
-  run end equals a failed promotion.
-- **GitHub-hosted runners only.** All CI runs on `ubuntu-latest`;
-  untrusted-image work never runs on self-hosted infrastructure, and a
-  guard step fails any pull request that introduces a self-hosted runner
-  label.
 
 ## License
 
