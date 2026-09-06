@@ -1,5 +1,3 @@
-# One ordered promotion job per dispatch: resolve inventory entry -> compute internal tag/skip -> two-report Trivy scan -> SecObserve upload -> digest-preserving GHCR copy -> equality assertions -> anonymous probe -> evidence summary -> provenance record -> provenance PR + self-posted inventory check + automerge.
-# GitHub-hosted runners only (ADR-004): the untrusted upstream image is fetched registry-direct and never loaded into any docker daemon.
 name: promote
 
 on:

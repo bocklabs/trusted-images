@@ -1,7 +1,3 @@
-# PR-gating validation for the trusted-images inventory.
-# GitHub-hosted runners only (ADR-004): the forbidden runner labels must
-# never appear in this repository's workflows; the guard step below fails
-# CI if one ever does.
 name: validate
 
 on:
