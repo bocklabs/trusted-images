@@ -1,4 +1,4 @@
-# One ordered promotion job per dispatch: resolve inventory entry -> compute internal tag/skip -> two-report Trivy scan -> SecObserve upload -> digest-preserving GHCR copy -> equality assertions -> anonymous probe -> evidence summary.
+# One ordered promotion job per dispatch: resolve inventory entry -> compute internal tag/skip -> two-report Trivy scan -> SecObserve upload -> digest-preserving GHCR copy -> equality assertions -> anonymous probe -> evidence summary -> provenance record -> provenance PR + self-posted inventory check + automerge.
 # GitHub-hosted runners only (ADR-004): the untrusted upstream image is fetched registry-direct and never loaded into any docker daemon.
 name: promote
 
@@ -544,7 +544,127 @@ jobs:
             echo "- Artifacts: \`trivy-full-report\`, \`trivy-copa-report\`"
             echo
           } >> "$GITHUB_STEP_SUMMARY"
-        # The provenance-PR link completes the D-22 set later in the same run's summary:
-        # the 02-04 write-back leg appends it to $GITHUB_STEP_SUMMARY (PR does not exist yet here).
+        # The provenance-PR link completes the D-22 links set; the pr step below appends it
+        # to $GITHUB_STEP_SUMMARY (the PR does not exist yet at this point).
+
+      - name: Generate provenance record
+        id: prov
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          MEDIA_TYPE: ${{ steps.index.outputs.media_type }}
+          DEST_PACKAGE: ${{ steps.entry.outputs.dest_package }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          DB_DIGEST: ${{ steps.dbmeta1.outputs.db_digest }}
+          DB_UPDATED: ${{ steps.dbmeta1.outputs.db_updated }}
+          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+          DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DISPATCHED_BY: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          # Runs only if everything before it (scan, upload, copy, assertions, probe) passed:
+          # a record is written only for a verified promotion (copy, D1 fallback, and
+          # idempotent-skip paths alike). Every flag value was captured by an earlier step.
+          FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
+          COPA_SHA="$(sha256sum trivy-copa.json | awk '{print $1}')"
+          PLATFORMS="$(paste -sd, upstream.platforms)"
+          # The ACTUAL pushed digest: pushed-digest.txt on the copy and D1 fallback paths
+          # (== upstream digest per D-11; a D1 index divergence is sanctioned and noted);
+          # upstream digest on the idempotent-skip path where nothing was pushed now.
+          INTERNAL_DIGEST="${UPSTREAM_DIGEST}"
+          if [ -f pushed-digest.txt ]; then
+            INTERNAL_DIGEST="$(cat pushed-digest.txt)"
+          fi
+          NOTES_ARGS=()
+          if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ] && [ -n "${DIVERGENCE_NOTE:-}" ]; then
+            NOTES_ARGS+=(--notes "${DIVERGENCE_NOTE}")
+          fi
+          python3 scripts/generate_provenance.py \
+            --app "${APP}" \
+            --upstream-ref "${UPSTREAM_REF}" \
+            --upstream-tag "${UPSTREAM_TAG}" \
+            --upstream-digest "${UPSTREAM_DIGEST}" \
+            --media-type "${MEDIA_TYPE}" \
+            --internal-package "${DEST_PACKAGE}" \
+            --internal-tag "${INTERNAL_TAG}" \
+            --internal-digest "${INTERNAL_DIGEST}" \
+            --platforms "${PLATFORMS}" \
+            --run-url "${RUN_URL}" \
+            --workflow promote \
+            --dispatched-by "${DISPATCHED_BY}" \
+            --trivy-version 0.74.0 \
+            --trivy-action-sha ed142fd0673e97e23eac54620cfb913e5ce36c25 \
+            --skopeo-version 1.22.2 \
+            --skopeo-image-digest sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc \
+            --trivy-db-check-bundle-digest "${DB_DIGEST}" \
+            --trivy-db-updated-at "${DB_UPDATED}" \
+            --full-report-sha256 "${FULL_SHA}" \
+            --copa-report-sha256 "${COPA_SHA}" \
+            --secobserve-product trusted-images \
+            --secobserve-origin "${UPSTREAM_REF}:${UPSTREAM_TAG}" \
+            "${NOTES_ARGS[@]}" \
+            --out provenance/${APP}/${INTERNAL_TAG}.json
+          {
+            echo "### Provenance record"
+            echo
+            echo '```json'
+            cat "provenance/${APP}/${INTERNAL_TAG}.json"
+            echo '```'
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open provenance PR and enable merge
+        id: pr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # LAST step by design: the provenance PR exists only for promotions that passed
+          # the probe. GITHUB_TOKEN-authored PRs trigger no workflows (ADR-006), so this
+          # step re-validates the branch itself and self-posts the required check.
+          BRANCH="provenance/${APP}/${INTERNAL_TAG}"
+          git config user.name "trusted-images bot"
+          git config user.email "bot@users.noreply.github.com"
+          git checkout -b "${BRANCH}"
+          git add provenance/
+          git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
+          # force-with-lease is the refresh semantic: a re-dispatch of the same tag
+          # rewrites the branch (never protected) and its open PR follows along.
+          git push --force-with-lease origin "${BRANCH}"
+          PR_URL="$(gh pr list --head "${BRANCH}" --state open --json url --jq '.[0].url')"
+          if [ -z "${PR_URL}" ]; then
+            BODY="Machine-generated provenance record per docs/pipeline.md."
+            BODY+=$'\n'"- Run: ${RUN_URL}"
+            BODY+=$'\n'"- Upstream digest: ${UPSTREAM_DIGEST}"
+            BODY+=$'\n'"- Internal tag: ${INTERNAL_TAG}"
+            PR_URL="$(gh pr create \
+              --head "${BRANCH}" \
+              --title "provenance: ${APP} ${INTERNAL_TAG}" \
+              --body "${BODY}")"
+          fi
+          echo "Provenance PR: ${PR_URL}" >> "$GITHUB_STEP_SUMMARY"
+          # The required check's actual payload, re-run against the branch tree.
+          python3 scripts/validate_inventory.py
+          HEAD_SHA="$(git rev-parse HEAD)"
+          # The name is EXACTLY `inventory` — the ruleset's stored required context
+          # (checks: write is already in this workflow's permissions).
+          gh api "repos/${REPO}/check-runs" \
+            -f name=inventory \
+            -f head_sha="${HEAD_SHA}" \
+            -f status=completed \
+            -f conclusion=success \
+            -f output.title="inventory valid (provenance)" \
+            -f output.summary="validate_inventory.py passed on the provenance branch"
+          gh pr merge --auto --merge "${PR_URL}"
 
 
