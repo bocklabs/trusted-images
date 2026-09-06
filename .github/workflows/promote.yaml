@@ -31,11 +31,17 @@ jobs:
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
 
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+          cache: pip
+
       - name: Install pinned PyYAML
         shell: bash
         run: |
           set -euo pipefail
-          pip install PyYAML==6.0.3
+          pip install -r requirements.txt
 
       - name: Resolve inventory entry and validation params
         id: entry
@@ -199,11 +205,17 @@ jobs:
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
 
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+          cache: pip
+
       - name: Install pinned PyYAML
         shell: bash
         run: |
           set -euo pipefail
-          pip install PyYAML==6.0.3
+          pip install -r requirements.txt
 
       - name: Resolve inventory entry
         id: entry
@@ -333,6 +345,8 @@ jobs:
           format: json
           output: trivy-full.json
           ignore-unfixed: 'false'
+          cache: 'true'
+          cache-dir: ${{ github.workspace }}/.cache/trivy
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           timeout: 30m0s
 
