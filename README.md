@@ -17,8 +17,7 @@ configuration that tracks those upstreams for version bumps and same-tag
 digest drift. External images are untrusted until promoted: promotion
 means an image has passed the security pipeline and been published to
 `ghcr.io/bocklabs/*`. An inventory entry is a statement that an upstream
-image is *tracked*, never that it is trustworthy (see
-[ADR-001](docs/adr/001-trusted-images-repo-purpose.md)).
+image is *tracked*, never that it is trustworthy.
 
 ## How promotion works
 
@@ -34,12 +33,13 @@ upstream ref (digest-pinned)
   -> anonymous-pull probe (a package not publicly readable fails the run)
 ```
 
-Upstream tracking is fully live: Renovate watches every inventory entry
-and opens pull requests on upstream version bumps and same-tag digest
-drift, with no automerge — every bump is reviewed by a human because
-each merge gates a future promotion. The automated promotion workflow
-itself lands in this repository's next phase; until then the inventory,
-the tracking configuration, and the validation CI are live.
+Upstream tracking is fully live and automated end to end: Renovate
+watches every inventory entry and opens pull requests on upstream
+version bumps and same-tag digest drift; each PR carries the
+`validate / inventory` check, and on green it merges automatically —
+no human in the loop. The automated promotion workflow itself lands in
+this repository's next phase; until then the inventory, the tracking
+configuration, and the validation CI are live.
 
 ## Inventory format
 
@@ -78,35 +78,45 @@ spec:
   version: 1
 ```
 
-Every entry is validated on every pull request by
-`scripts/validate_inventory.py` (schema, digest format, enums,
-folder-name consistency).
+## Usage
+
+**Validate locally** — the same check CI runs on every PR:
+
+```bash
+pip install PyYAML==6.0.3
+python scripts/validate_inventory.py
+```
+
+Output `OK: inventory valid` (exit 0) means every entry passes schema,
+digest-format, uniqueness, and folder-name checks.
+
+**Add a tracked image** — create `inventory/<name>/image.yaml` using the
+format above (pin the current digest of the tag you track), then open a
+pull request. CI validates the entry; once merged, Renovate picks it up
+on its next run and keeps it current from then on.
+
+**How updates flow** — when an upstream publishes a new version or
+re-points an existing tag, Renovate opens a PR updating the entry's
+`tag` and `digest`. The `validate / inventory` check runs on the PR and
+it merges automatically on green. Digests are always pinned: an update
+is always an explicit, reviewable diff in git history, never a floating
+tag.
+
+**Drift guard** — `tests/renovate-manager-match.mjs` fails if the
+Renovate manager regex and the inventory schema drift apart (Renovate
+silently matching nothing). Run it with `node
+tests/renovate-manager-match.mjs`.
 
 ## Policies
 
 - **Public packages, permanently.** Every `ghcr.io/bocklabs/*` package
   is public and anonymously readable, permanently. Each promotion run
   ends with an unauthenticated pull probe — a package left private at
-  run end equals a failed promotion
-  ([ADR-002](docs/adr/002-ghcr-public-visibility-model.md)).
+  run end equals a failed promotion.
 - **GitHub-hosted runners only.** All CI runs on `ubuntu-latest`;
   untrusted-image work never runs on self-hosted infrastructure, and a
   guard step fails any pull request that introduces a self-hosted runner
-  label ([ADR-004](docs/adr/004-github-hosted-runners-permanent.md)).
-- **No automerge on inventory PRs.** Every upstream bump is manually
-  reviewed because each merge gates a future promotion run.
-- **Decisions are recorded.** Every day-one decision is committed as an
-  architecture decision record under `docs/adr/` (index below).
-
-## Decision records
-
-| ADR | Decision |
-| --- | -------- |
-| [ADR-001](docs/adr/001-trusted-images-repo-purpose.md) | Trusted-images repository purpose |
-| [ADR-002](docs/adr/002-ghcr-public-visibility-model.md) | GHCR public visibility model |
-| [ADR-003](docs/adr/003-internal-tag-scheme-and-renovate-versioning.md) | Internal tag scheme and Renovate versioning |
-| [ADR-004](docs/adr/004-github-hosted-runners-permanent.md) | GitHub-hosted runners, permanently |
-| [ADR-005](docs/adr/005-secobserve-product-origin-naming.md) | SecObserve product and origin naming |
+  label.
 
 ## License
 

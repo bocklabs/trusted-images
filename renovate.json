@@ -6,10 +6,14 @@
     "helpers:pinGitHubActionDigests",
     ":configMigration"
   ],
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "merge",
+  "platformAutomerge": true,
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Trusted-images inventory upstream tracking: captures ref, tag and digest from every inventory/<app>/image.yaml entry so Renovate opens PRs on upstream version bumps AND same-tag digest drift. Versioning is loose, never default docker, so the internal -bocklabs.N revision suffix orders numerically. No automerge anywhere: each inventory-bump PR is manually reviewed because its merge gates a future promotion run (fail-closed posture).",
+      "description": "Trusted-images inventory upstream tracking: captures ref, tag and digest from every inventory/<app>/image.yaml entry so Renovate opens PRs on upstream version bumps AND same-tag digest drift. Versioning is loose, never default docker, so the internal -bocklabs.N revision suffix orders numerically. PRs automerge once the validate / inventory check passes.",
       "managerFilePatterns": [
         "/^inventory\\/[^/]+\\/image\\.yaml$/"
       ],
