@@ -608,7 +608,7 @@ jobs:
         id: pr
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.BOCKLABS_BOT_TOKEN || github.token }}
           REPO: ${{ github.repository }}
           APP: ${{ steps.entry.outputs.app }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
@@ -619,8 +619,8 @@ jobs:
           # GITHUB_TOKEN-authored PRs trigger no workflows, so this step re-validates
           # the branch itself and self-posts the required `inventory` check.
           BRANCH="provenance/${APP}/${INTERNAL_TAG}"
-          git config user.name "trusted-images bot"
-          git config user.email "bot@users.noreply.github.com"
+          git config user.name "bocklabs-release[bot]"
+          git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
           git checkout -b "${BRANCH}"
           git add provenance/
           git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
