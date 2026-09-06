@@ -1,0 +1,19 @@
+# Qualification entry: known-unpatchable image class.
+# The floating tag "nonroot" may be skipped by Renovate as an invalid version;
+# Phase 5 confirms the refs.
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: distroless-static
+spec:
+  upstream:
+    ref: gcr.io/distroless/static-debian12
+    tag: nonroot
+    digest: sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
+  destination:
+    package: ghcr.io/bocklabs/distroless-static
+  # no package manager — nothing for a patch step to act on; classification
+  # confirmed at Phase 5 (schema-level reason field is deferred to Phase 5)
+  patchPolicy: disabled
+  validationProfile: process
+  version: 1

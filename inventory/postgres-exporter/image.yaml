@@ -1,0 +1,16 @@
+# Pilot entry of the trusted-images promotion pipeline.
+# Digest verified live against quay.io at research time (2026-09-04).
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: postgres-exporter
+spec:
+  upstream:
+    ref: quay.io/prometheuscommunity/postgres-exporter
+    tag: v0.20.1
+    digest: sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e
+  destination:
+    package: ghcr.io/bocklabs/postgres-exporter
+  patchPolicy: enabled
+  validationProfile: http
+  version: 1

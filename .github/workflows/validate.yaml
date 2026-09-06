@@ -1,0 +1,65 @@
+# PR-gating validation for the trusted-images inventory.
+# GitHub-hosted runners only (ADR-004): the forbidden runner labels must
+# never appear in this repository's workflows; the guard step below fails
+# CI if one ever does.
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.14"
+
+      - name: Install pinned PyYAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip install PyYAML==6.0.3
+
+      - name: Validate inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_inventory.py
+
+      - name: Validate Renovate config
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes --package renovate -- renovate-config-validator --strict
+
+      - name: Guard runner labels
+        # Needles are assembled by concatenation so this step's own source
+        # text can never match the search. Any hit means a workflow in this
+        # repo targets a runner pool outside the GitHub-hosted boundary.
+        shell: bash
+        run: |
+          set -euo pipefail
+          p1='self-'
+          needle="${p1}hosted"
+          p2='bocklabs-gh-'
+          pool="${p2}runner"
+          if grep -rIn -e "$needle" -e "$pool" .github/workflows/; then
+            echo "ERROR: forbidden runner label found in .github/workflows/ (GitHub-hosted runners only, ADR-004)"
+            exit 1
+          fi
+          echo "runner-label guard: clean"

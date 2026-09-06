@@ -1,0 +1,24 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests",
+    ":configMigration"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Trusted-images inventory upstream tracking: captures ref, tag and digest from every inventory/<app>/image.yaml entry so Renovate opens PRs on upstream version bumps AND same-tag digest drift. Versioning is loose, never default docker, so the internal -bocklabs.N revision suffix orders numerically. No automerge anywhere: each inventory-bump PR is manually reviewed because its merge gates a future promotion run (fail-closed posture).",
+      "managerFilePatterns": [
+        "/^inventory\\/[^/]+\\/image\\.yaml$/"
+      ],
+      "matchStrings": [
+        "ref:\\s*(?<depName>[^\\s]+)\\n\\s*tag:\\s*['\\\"]?(?<currentValue>[^'\\\"\\s]+)['\\\"]?\\n\\s*digest:\\s*['\\\"]?(?<currentDigest>sha256:[a-f0-9]{64})['\\\"]?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "loose",
+      "autoReplaceStringTemplate": "ref: {{{depName}}}\n    tag: {{{newValue}}}\n    digest: {{{newDigest}}}"
+    }
+  ]
+}

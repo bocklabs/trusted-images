@@ -1,0 +1,16 @@
+# Qualification entry: deliberately stale Feb-2024 snapshot of nginx.
+# Its expected fixable-OS CVEs are confirmed via Trivy at Phase 5 plan time.
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: nginx-qualification
+spec:
+  upstream:
+    ref: docker.io/library/nginx
+    tag: "1.25.3"
+    digest: sha256:c7a6ad68be85142c7fe1089e48faa1e7c7166a194caa9180ddea66345876b9d2
+  destination:
+    package: ghcr.io/bocklabs/nginx-qualification
+  patchPolicy: enabled
+  validationProfile: http
+  version: 1
