@@ -1,0 +1,142 @@
+# One ordered promotion job per dispatch: resolve inventory entry -> compute internal tag/skip -> two-report Trivy scan -> SecObserve upload -> digest-preserving GHCR copy -> equality assertions -> anonymous probe -> evidence summary.
+# GitHub-hosted runners only (ADR-004): the untrusted upstream image is fetched registry-direct and never loaded into any docker daemon.
+name: promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Inventory folder name to promote (must match inventory/<app>/image.yaml)
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: promote-${{ inputs.app }}
+  cancel-in-progress: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+
+      - name: Install pinned PyYAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip install PyYAML==6.0.3
+
+      - name: Resolve inventory entry
+        id: entry
+        shell: bash
+        env:
+          APP: ${{ inputs.app }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
+            echo "FATAL: app not in inventory: ${APP}"
+            exit 1
+          fi
+          if ! ls inventory/ | grep -qFx -- "${APP}"; then
+            echo "FATAL: app not in inventory: ${APP}"
+            exit 1
+          fi
+          # The dispatch input reaches this script only via the APP env var; it is
+          # validated above against the inventory listing before any other use.
+          OUT="$(python3 - "${APP}" <<'PY'
+          import sys
+          import yaml
+
+          spec = yaml.safe_load(open(f"inventory/{sys.argv[1]}/image.yaml"))["spec"]
+          print(f"upstream_ref={spec['upstream']['ref']}")
+          print(f"upstream_tag={spec['upstream']['tag']}")
+          print(f"upstream_digest={spec['upstream']['digest']}")
+          print(f"dest_package={spec['destination']['package']}")
+          print(f"app={sys.argv[1]}")
+          PY
+          )"
+          echo "${OUT}"
+          echo "${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch upstream index
+        id: index
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SKOPEO="quay.io/skopeo/stable@sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc" # v1.22.2 (D-20)
+          SRC_CREDS=()
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}") # D-09: docker.io only, never quay/gcr
+          fi
+          docker run --rm -v "$PWD":/workspace "$SKOPEO" \
+            inspect --raw "${SRC_CREDS[@]}" \
+            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
+          MEDIA_TYPE="$(jq -r '.mediaType' upstream-index.json)"
+          echo "media_type=${MEDIA_TYPE}" >> "$GITHUB_OUTPUT"
+          jq -r '.manifests[] | "\(.platform.os)/\(.platform.architecture)\(.platform.variant // "")"' upstream-index.json \
+            | sort -u > upstream.platforms
+          echo "media type: ${MEDIA_TYPE}"
+          echo "platforms:"
+          cat upstream.platforms
+
+      - name: Compute internal tag and detect skip
+        id: tag
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+        run: |
+          set -euo pipefail
+          # Anonymous GHCR token exchange (D-12): list existing tags on the destination package.
+          TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
+          TAGS="$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/tags/list?n=1000" | jq -r '.tags // [] | .[]' || true)"
+          # Escape the upstream tag so it can anchor a grep -E pattern safely.
+          TAG_RE="$(printf '%s' "${UPSTREAM_TAG}" | sed 's/[^[:alnum:]_-]/\\&/g')"
+          MAX_N="$(printf '%s\n' "${TAGS}" \
+            | grep -E "^${TAG_RE}-bocklabs\.[0-9]+$" \
+            | sed -E 's/.*-bocklabs\.//' | sort -n | tail -1 || true)"
+          REVISION="$(( ${MAX_N:-0} + 1 ))"
+          INTERNAL_TAG="${UPSTREAM_TAG}-bocklabs.${REVISION}"
+          # D-03 skip detection: newest revision first, does any existing tag carry the upstream digest?
+          SKIP_COPY="false"
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+          CANDIDATES="$(printf '%s\n' "${TAGS}" \
+            | grep -E "^${TAG_RE}-bocklabs\.[0-9]+$" \
+            | sed -E 's/.*-bocklabs\.//' | sort -nr \
+            | sed "s/^/${UPSTREAM_TAG}-bocklabs./" || true)"
+          for CAND in ${CANDIDATES}; do
+            CAND_DIGEST="$(curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+              "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CAND}" \
+              | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}' || true)"
+            if [ -n "${CAND_DIGEST}" ] && [ "${CAND_DIGEST}" = "${UPSTREAM_DIGEST}" ]; then
+              SKIP_COPY="true"
+              INTERNAL_TAG="${CAND}"
+              break
+            fi
+          done
+          {
+            echo "skip_copy=${SKIP_COPY}"
+            echo "internal_tag=${INTERNAL_TAG}"
+            echo "revision=${REVISION}"
+          } >> "$GITHUB_OUTPUT"
+          echo "skip_copy:    ${SKIP_COPY}"
+          echo "internal_tag: ${INTERNAL_TAG}"
+          echo "revision:     ${REVISION}"
