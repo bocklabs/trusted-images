@@ -1,0 +1,668 @@
+name: promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Inventory folder name to promote (must match inventory/<app>/image.yaml)
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: promote-${{ inputs.app }}
+  cancel-in-progress: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+
+      - name: Install pinned PyYAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip install PyYAML==6.0.3
+
+      - name: Resolve inventory entry
+        id: entry
+        shell: bash
+        env:
+          APP: ${{ inputs.app }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
+            echo "FATAL: app not in inventory: ${APP}"
+            exit 1
+          fi
+          if ! ls inventory/ | grep -qFx -- "${APP}"; then
+            echo "FATAL: app not in inventory: ${APP}"
+            exit 1
+          fi
+          # The dispatch input reaches this script only via the APP env var; it is
+          # validated above against the inventory listing before any other use.
+          OUT="$(python3 - "${APP}" <<'PY'
+          import sys
+          import yaml
+
+          spec = yaml.safe_load(open(f"inventory/{sys.argv[1]}/image.yaml"))["spec"]
+          print(f"upstream_ref={spec['upstream']['ref']}")
+          print(f"upstream_tag={spec['upstream']['tag']}")
+          print(f"upstream_digest={spec['upstream']['digest']}")
+          print(f"dest_package={spec['destination']['package']}")
+          print(f"app={sys.argv[1]}")
+          PY
+          )"
+          echo "${OUT}"
+          echo "${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch upstream index
+        id: index
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SKOPEO="quay.io/skopeo/stable@sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc" # v1.22.2 (D-20)
+          SRC_CREDS=()
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}") # D-09: docker.io only, never quay/gcr
+          fi
+          docker run --rm -v "$PWD":/workspace "$SKOPEO" \
+            inspect --raw "${SRC_CREDS[@]}" \
+            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
+          MEDIA_TYPE="$(jq -r '.mediaType' upstream-index.json)"
+          echo "media_type=${MEDIA_TYPE}" >> "$GITHUB_OUTPUT"
+          jq -r '.manifests[] | "\(.platform.os)/\(.platform.architecture)\(.platform.variant // "")"' upstream-index.json \
+            | sort -u > upstream.platforms
+          echo "media type: ${MEDIA_TYPE}"
+          echo "platforms:"
+          cat upstream.platforms
+
+      - name: Compute internal tag and detect skip
+        id: tag
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+        run: |
+          set -euo pipefail
+          # Anonymous GHCR token exchange (D-12): list existing tags on the destination package.
+          TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
+          TAGS="$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/tags/list?n=1000" | jq -r '.tags // [] | .[]' || true)"
+          # Escape the upstream tag so it can anchor a grep -E pattern safely.
+          TAG_RE="$(printf '%s' "${UPSTREAM_TAG}" | sed 's/[^[:alnum:]_-]/\\&/g')"
+          MAX_N="$(printf '%s\n' "${TAGS}" \
+            | grep -E "^${TAG_RE}-bocklabs\.[0-9]+$" \
+            | sed -E 's/.*-bocklabs\.//' | sort -n | tail -1 || true)"
+          REVISION="$(( ${MAX_N:-0} + 1 ))"
+          INTERNAL_TAG="${UPSTREAM_TAG}-bocklabs.${REVISION}"
+          # D-03 skip detection: newest revision first, does any existing tag carry the upstream digest?
+          SKIP_COPY="false"
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+          CANDIDATES="$(printf '%s\n' "${TAGS}" \
+            | grep -E "^${TAG_RE}-bocklabs\.[0-9]+$" \
+            | sed -E 's/.*-bocklabs\.//' | sort -nr \
+            | sed "s/^/${UPSTREAM_TAG}-bocklabs./" || true)"
+          for CAND in ${CANDIDATES}; do
+            CAND_DIGEST="$(curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+              "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CAND}" \
+              | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}' || true)"
+            if [ -n "${CAND_DIGEST}" ] && [ "${CAND_DIGEST}" = "${UPSTREAM_DIGEST}" ]; then
+              SKIP_COPY="true"
+              INTERNAL_TAG="${CAND}"
+              break
+            fi
+          done
+          {
+            echo "skip_copy=${SKIP_COPY}"
+            echo "internal_tag=${INTERNAL_TAG}"
+            echo "revision=${REVISION}"
+          } >> "$GITHUB_OUTPUT"
+          echo "skip_copy:    ${SKIP_COPY}"
+          echo "internal_tag: ${INTERNAL_TAG}"
+          echo "revision:     ${REVISION}"
+
+      - name: Resolve source registry credentials
+        id: creds
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # D-09: Docker Hub creds only when the source registry is docker.io;
+          # empty outputs otherwise so no quay/gcr scan ever sees them.
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            echo "user=${DOCKERHUB_USERNAME}" >> "$GITHUB_OUTPUT"
+            echo "pass=${DOCKERHUB_TOKEN}" >> "$GITHUB_OUTPUT"
+          else
+            echo "user=" >> "$GITHUB_OUTPUT"
+            echo "pass=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trivy full scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_IMAGE_SRC: remote # D-21: registry-direct, no docker daemon
+          TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
+          TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
+        with:
+          version: v0.74.0 # SCAN-03 pin (D-20)
+          image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.entry.outputs.upstream_digest }}
+          scanners: vuln
+          format: json
+          output: trivy-full.json
+          ignore-unfixed: 'false'
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          timeout: 30m0s
+        # Evidence-only scan (D-05): no gate on findings; no cache input (A6: fresh DB per run,
+        # single job = single DB).
+
+      - name: Capture Trivy DB metadata
+        id: dbmeta1
+        shell: bash
+        run: |
+          set -euo pipefail
+          trivy --version | sed -n '/Vulnerability DB:/,/^$/p' | sed 's/[[:space:]]*$//' > trivy-db-meta-1.txt
+          DB_DIGEST="$(grep -i 'Check Bundle Digest:' trivy-db-meta-1.txt | head -1 | sed 's/.*Digest:[[:space:]]*//')"
+          DB_UPDATED="$(grep -i 'UpdatedAt:' trivy-db-meta-1.txt | head -1 | sed 's/.*UpdatedAt:[[:space:]]*//')"
+          echo "db_digest=${DB_DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "db_updated=${DB_UPDATED}" >> "$GITHUB_OUTPUT"
+          cat trivy-db-meta-1.txt
+
+      - name: Trivy Copa-shaped scan (fixable OS only)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_IMAGE_SRC: remote # D-21
+          TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
+          TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
+          TRIVY_SKIP_DB_UPDATE: 'true' # no action input exists — env pass-through; reuse scan 1's DB (SCAN-03)
+        with:
+          version: v0.74.0
+          image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.entry.outputs.upstream_digest }}
+          scanners: vuln
+          format: json
+          output: trivy-copa.json
+          vuln-type: os
+          ignore-unfixed: 'true'
+          timeout: 30m0s
+        # Independent second invocation (P1): never derived from trivy-full.json. Evidence-only (D-05).
+
+      - name: Assert single DB across scans
+        id: dbassert
+        shell: bash
+        run: |
+          set -euo pipefail
+          trivy --version | sed -n '/Vulnerability DB:/,/^$/p' | sed 's/[[:space:]]*$//' > trivy-db-meta-2.txt
+          if ! diff -u trivy-db-meta-1.txt trivy-db-meta-2.txt; then
+            echo "FATAL: Trivy DB changed between scans (SCAN-03)"
+            exit 1
+          fi
+
+      - name: Convert full report to CycloneDX with parity check
+        id: convert
+        shell: bash
+        run: |
+          set -euo pipefail
+          trivy convert --format cyclonedx --output trivy-full.cdx.json trivy-full.json
+          test -s trivy-full.json
+          test -s trivy-full.cdx.json
+          JSON_COUNT="$(jq '[.Results[].Vulnerabilities[]?] | unique_by([.VulnerabilityID, .PkgName, .InstalledVersion]) | length' trivy-full.json)"
+          CDX_COUNT="$(jq '.vulnerabilities | length' trivy-full.cdx.json)"
+          {
+            echo "cyclonedx findings in JSON report: ${JSON_COUNT}"
+            echo "cyclonedx findings in CDX file:   ${CDX_COUNT}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # 0 == 0 is a legitimate pass: an empty findings array is not conversion loss (P12).
+          if [ "${JSON_COUNT}" -gt 0 ] && [ "${CDX_COUNT}" -eq 0 ]; then
+            echo "FATAL: CycloneDX conversion lost findings (P12)"
+            exit 1
+          fi
+
+      - name: Upload full report to SecObserve
+        uses: SecObserve/secobserve_actions_templates/actions/importer@0a0f7d0981982a589f2a11c3f05c8e1c628fbd79 # v2026_08
+        with:
+          so_api_base_url: ${{ vars.SECOBSERVE_API_BASE_URL }}
+          so_api_token: ${{ secrets.SECOBSERVE_API_TOKEN }} # D-19 shared token
+          so_product_name: trusted-images # ADR-005 candidate product (constant)
+          so_branch_name: ${{ steps.entry.outputs.app }}
+          so_file_name: trivy-full.cdx.json
+          so_parser_name: CycloneDX
+          so_origin_service: ${{ steps.entry.outputs.app }}
+          so_origin_docker_image_name_tag: ${{ steps.entry.outputs.upstream_ref }}:${{ steps.entry.outputs.upstream_tag }} # origin = upstream ref (ADR-005)
+          so_suppress_licenses: 'true'
+        # No conditional (D-06): dispatch IS acceptance. Unconditional upload BEFORE any push (D-08).
+
+      - name: Digest-preserving copy to GHCR
+        id: copy
+        if: steps.tag.outputs.skip_copy != 'true'
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          GH_TOKEN: ${{ github.token }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SKOPEO="quay.io/skopeo/stable@sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc" # v1.22.2 (D-20)
+          SRC_CREDS=()
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}") # D-09
+          fi
+          rm -f skopeo-copy.err
+          # P3: --all copies the whole index; no platform filters, no partial-copy modes anywhere.
+          if docker run --rm -v "$PWD":/workspace "$SKOPEO" \
+              copy \
+                --all \
+                --preserve-digests \
+                --remove-signatures \
+                --dest-tls-verify \
+                --digestfile /workspace/pushed-digest.txt \
+                "${SRC_CREDS[@]}" \
+                --dest-creds "bocklabs-bot:${GH_TOKEN}" \
+                "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" \
+                "docker://ghcr.io/bocklabs/${APP}:${INTERNAL_TAG}" \
+              2> skopeo-copy.err; then
+            echo "fallback_used=false" >> "$GITHUB_OUTPUT"
+            echo "divergence_note=" >> "$GITHUB_OUTPUT"
+            echo "pushed digest: $(cat pushed-digest.txt)"
+          else
+            if grep -q "Instructed to preserve digests" skopeo-copy.err; then
+              echo "skopeo refused a destination-required conversion — taking the D1 fallback (buildx imagetools create)"
+              # The fallback pushes via buildx, which authenticates from the docker CLI config.
+              echo "${GH_TOKEN}" | docker login ghcr.io --username bocklabs-bot --password-stdin
+              docker buildx imagetools create \
+                -t "ghcr.io/bocklabs/${APP}:${INTERNAL_TAG}" \
+                "${UPSTREAM_REF}@${UPSTREAM_DIGEST}"
+              # The fallback never runs --digestfile; downstream reads pushed-digest.txt
+              # unconditionally, so the fallback branch must write it.
+              TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
+              INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+              curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+                "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}" \
+                | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}' > pushed-digest.txt
+              PUSHED="$(cat pushed-digest.txt)"
+              echo "fallback_used=true" >> "$GITHUB_OUTPUT"
+              if [ "${PUSHED}" = "${UPSTREAM_DIGEST}" ]; then
+                echo "divergence_note=" >> "$GITHUB_OUTPUT"
+              else
+                NOTE="D1 fallback: pushed index digest ${PUSHED} differs from upstream ${UPSTREAM_DIGEST}; children preserved per A2"
+                echo "divergence_note=${NOTE}" >> "$GITHUB_OUTPUT"
+                echo "${NOTE}"
+              fi
+            else
+              echo "FATAL: skopeo copy failed"
+              cat skopeo-copy.err
+              exit 1
+            fi
+          fi
+
+      - name: Assert digest equality
+        id: assertdigest
+        if: steps.tag.outputs.skip_copy != 'true'
+        shell: bash
+        env:
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+        run: |
+          set -euo pipefail
+          PUSHED="$(cat pushed-digest.txt)"
+          if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
+            # D1/SC5/A2: index-digest divergence is the sanctioned tolerate-and-record case;
+            # children identity stays fatal-enforced by the platform-set assertion next.
+            echo "D1 fallback path: pushed index digest ${PUSHED} vs upstream ${UPSTREAM_DIGEST} — divergence recorded, continuing"
+          else
+            if [ "${PUSHED}" != "${UPSTREAM_DIGEST}" ]; then
+              echo "FATAL: digest divergence (PROMO-01): pushed=${PUSHED} upstream=${UPSTREAM_DIGEST}"
+              exit 1
+            fi
+            echo "digest equality: PASS (${PUSHED})"
+          fi
+
+      - name: Assert platform-set equality
+        id: assertplatforms
+        if: steps.tag.outputs.skip_copy != 'true'
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+        run: |
+          set -euo pipefail
+          TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+          PUSHED="$(cat pushed-digest.txt)"
+          curl -s -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${PUSHED}" \
+            | jq -r '.manifests[] | "\(.platform.os)/\(.platform.architecture)\(.platform.variant // "")"' \
+            | sort -u > pushed.platforms
+          if ! diff -u upstream.platforms pushed.platforms; then
+            echo "FATAL: platform-set divergence (P3)"
+            echo "--- upstream ---"; cat upstream.platforms
+            echo "--- pushed ---"; cat pushed.platforms
+            exit 1
+          fi
+
+      - name: Anonymous-pull probe
+        id: probe
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+        run: |
+          set -euo pipefail
+          # PROMO-06 / ADR-002, runs ALWAYS (copy, fallback, and skip paths).
+          # Success (200 + digest equality) is the only assertable fact: the registry
+          # hides private/nonexistent packages behind the same not-found answer.
+          EXPECTED="${UPSTREAM_DIGEST}"
+          if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
+            EXPECTED="$(cat pushed-digest.txt)"
+          fi
+          TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+          HDRS="$(curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
+          PUSHED=""
+          if echo "${HDRS}" | grep -qi '^HTTP/2 200'; then
+            PUSHED="$(echo "${HDRS}" | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}')"
+            if [ -n "${PUSHED}" ] && [ "${PUSHED}" = "${EXPECTED}" ]; then
+              echo "result=pass" >> "$GITHUB_OUTPUT"
+              echo "probe: anonymous 200 + docker-content-digest match (${PUSHED})"
+              exit 0
+            fi
+          fi
+          echo "result=fail" >> "$GITHUB_OUTPUT"
+          # A not-found here after a fresh push is the designed D-10 private-arrival contingency
+          # for the operator to resolve (one-time visibility flip + re-dispatch).
+          echo "FATAL: package not anonymously readable at expected digest (ADR-002)"
+          echo "probe digest: ${PUSHED:-none} / expected: ${EXPECTED}"
+          exit 1
+
+      - name: Upload trivy-full-report artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: trivy-full-report
+          path: trivy-full.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload trivy-copa-report artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: trivy-copa-report
+          path: trivy-copa.json
+          retention-days: 30
+          if-no-files-found: error
+        # D-07: the Copa-shaped report is artifact-only in v0 — nothing consumes it until Copa (Phase 5).
+
+      - name: Job summary evidence panel
+        id: summary
+        if: always()
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          SKIP_COPY: ${{ steps.tag.outputs.skip_copy }}
+          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+          DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
+          PROBE_RESULT: ${{ steps.probe.outputs.result }}
+          SECOBSERVE_API_BASE_URL: ${{ vars.SECOBSERVE_API_BASE_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPORT: trivy-full.json
+        run: |
+          set -euo pipefail
+          SECOBSERVE_UI_URL="${SECOBSERVE_API_BASE_URL%/api}"
+
+          DIGEST_LINE="N/A — run failed before a digest was recorded"
+          if [ -n "${SKIP_COPY:-}" ] && [ "${SKIP_COPY}" = "true" ]; then
+            DIGEST_LINE="PASS — idempotent skip: existing tag ${INTERNAL_TAG:-?} verified equal to upstream digest (D-03)"
+          elif [ -f pushed-digest.txt ]; then
+            PUSHED="$(cat pushed-digest.txt)"
+            if [ "${PUSHED}" = "${UPSTREAM_DIGEST:-}" ]; then
+              DIGEST_LINE="PASS — pushed ${PUSHED} == upstream ${UPSTREAM_DIGEST:-?}"
+            elif [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
+              DIGEST_LINE="RECORDED — D1 fallback: pushed index digest ${PUSHED} vs upstream ${UPSTREAM_DIGEST:-?} (children equality enforced by the platform assertion)"
+            else
+              DIGEST_LINE="FAIL — pushed ${PUSHED} != upstream ${UPSTREAM_DIGEST:-?}"
+            fi
+          fi
+
+          PLATFORM_LINE="N/A — platform sets not produced"
+          if [ -f upstream.platforms ] && [ -f pushed.platforms ]; then
+            if diff -q upstream.platforms pushed.platforms > /dev/null; then
+              PLATFORM_LINE="PASS — $(paste -sd, upstream.platforms)"
+            else
+              PLATFORM_LINE="FAIL — platform sets differ (upstream vs pushed)"
+            fi
+          elif [ -f upstream.platforms ] && [ -n "${SKIP_COPY:-}" ] && [ "${SKIP_COPY}" = "true" ]; then
+            PLATFORM_LINE="SKIP — no copy; upstream platforms: $(paste -sd, upstream.platforms)"
+          fi
+
+          DB_LINE="N/A — DB metadata not captured"
+          if [ -f trivy-db-meta-1.txt ] && [ -f trivy-db-meta-2.txt ]; then
+            if diff -q trivy-db-meta-1.txt trivy-db-meta-2.txt > /dev/null; then
+              DB_LINE="PASS — identical Trivy DB metadata across both scans"
+            else
+              DB_LINE="FAIL — Trivy DB metadata changed between scans"
+            fi
+          elif [ -f trivy-db-meta-1.txt ]; then
+            DB_LINE="PARTIAL — only scan 1 metadata captured (run failed before scan 2 assertion)"
+          fi
+
+          PROBE_LINE="N/A — probe did not run"
+          if [ -n "${PROBE_RESULT:-}" ]; then
+            if [ "${PROBE_RESULT}" = "pass" ]; then
+              PROBE_LINE="PASS — anonymous 200 with matching docker-content-digest"
+            else
+              PROBE_LINE="FAIL — anonymous probe failed"
+            fi
+          fi
+
+          {
+            echo "## Promotion evidence — ${APP:-<unknown app>}"
+            echo
+            echo "### Invariants"
+            echo
+            echo "| Invariant | Result |"
+            echo "| --- | --- |"
+            echo "| Digest equality (PROMO-01) | ${DIGEST_LINE} |"
+            echo "| Platform-set equality (P3) | ${PLATFORM_LINE} |"
+            echo "| Trivy DB match (SCAN-03) | ${DB_LINE} |"
+            echo "| Anonymous pull probe (PROMO-06) | ${PROBE_LINE} |"
+            echo
+            if [ -n "${SKIP_COPY:-}" ] && [ "${SKIP_COPY}" = "true" ]; then
+              echo "> Idempotent skip — verified existing digest on ${INTERNAL_TAG:-?} against the upstream digest; scan/upload/provenance refreshed, no re-copy (D-03)."
+              echo
+            fi
+            if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
+              echo "> D1 fallback used (buildx imagetools create): ${DIVERGENCE_NOTE:-no divergence note recorded}."
+              echo
+            fi
+            echo "### Vulnerabilities (deduped, full report)"
+            echo
+            if [ -s "${REPORT}" ]; then
+              echo "| Severity | Count |"
+              echo "| --- | ---: |"
+              jq -r '
+                (
+                  [.Results[].Vulnerabilities[]?]
+                  | unique_by([
+                      .VulnerabilityID,
+                      .PkgName,
+                      .InstalledVersion
+                    ])
+                ) as $v
+                |
+                "| Critical | \([$v[] | select(.Severity == "CRITICAL")] | length) |\n"
+                + "| High | \([$v[] | select(.Severity == "HIGH")] | length) |\n"
+                + "| Medium | \([$v[] | select(.Severity == "MEDIUM")] | length) |\n"
+                + "| Low | \([$v[] | select(.Severity == "LOW")] | length) |\n"
+                + "| Unknown | \([$v[] | select(.Severity == "UNKNOWN")] | length) |\n"
+                + "| **Total** | \($v | length) |"
+              ' "${REPORT}"
+            else
+              echo "> Trivy report unavailable for this run."
+            fi
+            echo
+            echo "### Links"
+            echo
+            echo "- Run: ${RUN_URL}"
+            echo "- GHCR package: https://github.com/bocklabs/${APP:-?}/pkgs/container/${APP:-?}"
+            if [ -n "${SECOBSERVE_UI_URL}" ]; then
+              echo "- SecObserve UI (product trusted-images): ${SECOBSERVE_UI_URL}"
+            else
+              echo "- SecObserve UI: not configured (vars.SECOBSERVE_API_BASE_URL missing)"
+            fi
+            echo "- Artifacts: \`trivy-full-report\`, \`trivy-copa-report\`"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+        # The provenance-PR link completes the D-22 links set; the pr step below appends it
+        # to $GITHUB_STEP_SUMMARY (the PR does not exist yet at this point).
+
+      - name: Generate provenance record
+        id: prov
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          MEDIA_TYPE: ${{ steps.index.outputs.media_type }}
+          DEST_PACKAGE: ${{ steps.entry.outputs.dest_package }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          DB_DIGEST: ${{ steps.dbmeta1.outputs.db_digest }}
+          DB_UPDATED: ${{ steps.dbmeta1.outputs.db_updated }}
+          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+          DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DISPATCHED_BY: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          # Runs only if everything before it (scan, upload, copy, assertions, probe) passed:
+          # a record is written only for a verified promotion (copy, D1 fallback, and
+          # idempotent-skip paths alike). Every flag value was captured by an earlier step.
+          FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
+          COPA_SHA="$(sha256sum trivy-copa.json | awk '{print $1}')"
+          PLATFORMS="$(paste -sd, upstream.platforms)"
+          # The ACTUAL pushed digest: pushed-digest.txt on the copy and D1 fallback paths
+          # (== upstream digest per D-11; a D1 index divergence is sanctioned and noted);
+          # upstream digest on the idempotent-skip path where nothing was pushed now.
+          INTERNAL_DIGEST="${UPSTREAM_DIGEST}"
+          if [ -f pushed-digest.txt ]; then
+            INTERNAL_DIGEST="$(cat pushed-digest.txt)"
+          fi
+          NOTES_ARGS=()
+          if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ] && [ -n "${DIVERGENCE_NOTE:-}" ]; then
+            NOTES_ARGS+=(--notes "${DIVERGENCE_NOTE}")
+          fi
+          python3 scripts/generate_provenance.py \
+            --app "${APP}" \
+            --upstream-ref "${UPSTREAM_REF}" \
+            --upstream-tag "${UPSTREAM_TAG}" \
+            --upstream-digest "${UPSTREAM_DIGEST}" \
+            --media-type "${MEDIA_TYPE}" \
+            --internal-package "${DEST_PACKAGE}" \
+            --internal-tag "${INTERNAL_TAG}" \
+            --internal-digest "${INTERNAL_DIGEST}" \
+            --platforms "${PLATFORMS}" \
+            --run-url "${RUN_URL}" \
+            --workflow promote \
+            --dispatched-by "${DISPATCHED_BY}" \
+            --trivy-version 0.74.0 \
+            --trivy-action-sha ed142fd0673e97e23eac54620cfb913e5ce36c25 \
+            --skopeo-version 1.22.2 \
+            --skopeo-image-digest sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc \
+            --trivy-db-check-bundle-digest "${DB_DIGEST}" \
+            --trivy-db-updated-at "${DB_UPDATED}" \
+            --full-report-sha256 "${FULL_SHA}" \
+            --copa-report-sha256 "${COPA_SHA}" \
+            --secobserve-product trusted-images \
+            --secobserve-origin "${UPSTREAM_REF}:${UPSTREAM_TAG}" \
+            "${NOTES_ARGS[@]}" \
+            --out provenance/${APP}/${INTERNAL_TAG}.json
+          {
+            echo "### Provenance record"
+            echo
+            echo '```json'
+            cat "provenance/${APP}/${INTERNAL_TAG}.json"
+            echo '```'
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open provenance PR and enable merge
+        id: pr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # LAST step by design: the provenance PR exists only for promotions that passed
+          # the probe. GITHUB_TOKEN-authored PRs trigger no workflows (ADR-006), so this
+          # step re-validates the branch itself and self-posts the required check.
+          BRANCH="provenance/${APP}/${INTERNAL_TAG}"
+          git config user.name "trusted-images bot"
+          git config user.email "bot@users.noreply.github.com"
+          git checkout -b "${BRANCH}"
+          git add provenance/
+          git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
+          # force-with-lease is the refresh semantic: a re-dispatch of the same tag
+          # rewrites the branch (never protected) and its open PR follows along.
+          git push --force-with-lease origin "${BRANCH}"
+          PR_URL="$(gh pr list --head "${BRANCH}" --state open --json url --jq '.[0].url')"
+          if [ -z "${PR_URL}" ]; then
+            BODY="Machine-generated provenance record per docs/pipeline.md."
+            BODY+=$'\n'"- Run: ${RUN_URL}"
+            BODY+=$'\n'"- Upstream digest: ${UPSTREAM_DIGEST}"
+            BODY+=$'\n'"- Internal tag: ${INTERNAL_TAG}"
+            PR_URL="$(gh pr create \
+              --head "${BRANCH}" \
+              --title "provenance: ${APP} ${INTERNAL_TAG}" \
+              --body "${BODY}")"
+          fi
+          echo "Provenance PR: ${PR_URL}" >> "$GITHUB_STEP_SUMMARY"
+          # The required check's actual payload, re-run against the branch tree.
+          python3 scripts/validate_inventory.py
+          HEAD_SHA="$(git rev-parse HEAD)"
+          # The name is EXACTLY `inventory` — the ruleset's stored required context
+          # (checks: write is already in this workflow's permissions).
+          gh api "repos/${REPO}/check-runs" \
+            -f name=inventory \
+            -f head_sha="${HEAD_SHA}" \
+            -f status=completed \
+            -f conclusion=success \
+            -f output.title="inventory valid (provenance)" \
+            -f output.summary="validate_inventory.py passed on the provenance branch"
+          gh pr merge --auto --merge "${PR_URL}"
+
+

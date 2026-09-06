@@ -1,0 +1,22 @@
+name: runner-label-guard
+description: Fails the calling workflow if any workflow or action file in this repo targets a runner outside the GitHub-hosted boundary (ADR-004).
+
+runs:
+  using: composite
+  steps:
+    - name: Guard runner labels
+      # Needles are assembled by concatenation so this action's own source
+      # text can never match the search. Any hit means a workflow or action
+      # in this repo targets a runner pool outside the GitHub-hosted boundary.
+      shell: bash
+      run: |
+        set -euo pipefail
+        p1='self-'
+        needle="${p1}hosted"
+        p2='bocklabs-gh-'
+        pool="${p2}runner"
+        if grep -rIn -e "$needle" -e "$pool" .github/workflows/ .github/actions/; then
+          echo "ERROR: forbidden runner label found in .github/ (GitHub-hosted runners only, ADR-004)"
+          exit 1
+        fi
+        echo "runner-label guard: clean"
