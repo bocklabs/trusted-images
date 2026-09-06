@@ -19,7 +19,7 @@
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34036492571",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34056945853",
     "workflow": "promote",
     "dispatched_by": "nitish-raj"
   },
@@ -31,16 +31,53 @@
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:1c67c09fbd6f1c09e1afdb3ec68e85cafebac21e4f774d82ffbeb5e09cbc1437",
+      "check_bundle_digest": "sha256:447438abddc83969b049f025cea095b5a7cad4aaa36536c3d2c074ebb146e8f6",
       "updated_at": "2026-09-06 07:00:11.537152697 +0000 UTC"
     },
-    "full_report_sha256": "384f76df2eb04aeb32df8068420ae482537506889ba3578c4eb209367ca7d7f7",
-    "copa_report_sha256": "067603cae1835f8ca2f993e67e19a1aa08d155536f1448dc9e82209b2a3208af",
+    "full_report_sha256": "e3f7b1e282e44ad979fb0b4cc579fec7fef57be15abcaccfb725e545de3a2990",
+    "copa_report_sha256": "c72c4ca94ad5432cb2b95a7fe4f1e2694f3ead6f0bb61da1cc438afdd771f2bc",
     "secobserve": {
       "product": "trusted-images",
       "origin": "quay.io/prometheuscommunity/postgres-exporter:v0.20.1"
     }
   },
-  "promoted_at": "2026-09-06T13:35:21Z",
+  "validation": {
+    "profile": "http",
+    "result": "pass",
+    "params": {
+      "type": "http",
+      "port": 9187,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 60,
+      "expectedExit": 0,
+      "command": [],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-09-06T20:06:34Z",
+      "finished_at": "2026-09-06T20:07:04Z",
+      "duration_seconds": 30.1
+    },
+    "health": {
+      "defined": false,
+      "final_status": "none-defined"
+    },
+    "runner": "GitHub Actions 1000008808",
+    "baseline": {
+      "entrypoint": [
+        "/bin/postgres_exporter"
+      ],
+      "cmd": [],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  },
+  "promoted_at": "2026-09-06T20:08:07Z",
   "notes": ""
 }
