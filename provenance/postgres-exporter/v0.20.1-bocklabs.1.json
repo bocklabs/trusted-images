@@ -19,7 +19,7 @@
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34056945853",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34057727196",
     "workflow": "promote",
     "dispatched_by": "nitish-raj"
   },
@@ -34,8 +34,8 @@
       "check_bundle_digest": "sha256:447438abddc83969b049f025cea095b5a7cad4aaa36536c3d2c074ebb146e8f6",
       "updated_at": "2026-09-06 07:00:11.537152697 +0000 UTC"
     },
-    "full_report_sha256": "e3f7b1e282e44ad979fb0b4cc579fec7fef57be15abcaccfb725e545de3a2990",
-    "copa_report_sha256": "c72c4ca94ad5432cb2b95a7fe4f1e2694f3ead6f0bb61da1cc438afdd771f2bc",
+    "full_report_sha256": "762e27213945bc2bd46ec3b4c23bbb4ffd9760768f4c164ded69f5c93e95527e",
+    "copa_report_sha256": "3c61f1e0f957cd665d0d944b031d4a7838d0486941244f04b46d39caef7aa552",
     "secobserve": {
       "product": "trusted-images",
       "origin": "quay.io/prometheuscommunity/postgres-exporter:v0.20.1"
@@ -59,15 +59,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-09-06T20:06:34Z",
-      "finished_at": "2026-09-06T20:07:04Z",
+      "started_at": "2026-09-06T20:21:37Z",
+      "finished_at": "2026-09-06T20:22:07Z",
       "duration_seconds": 30.1
     },
     "health": {
       "defined": false,
       "final_status": "none-defined"
     },
-    "runner": "GitHub Actions 1000008808",
+    "runner": "GitHub Actions 1000008818",
     "baseline": {
       "entrypoint": [
         "/bin/postgres_exporter"
@@ -78,6 +78,6 @@
       ]
     }
   },
-  "promoted_at": "2026-09-06T20:08:07Z",
+  "promoted_at": "2026-09-06T20:23:29Z",
   "notes": ""
 }
