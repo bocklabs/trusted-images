@@ -400,6 +400,7 @@ jobs:
           output: trivy-copa.json
           vuln-type: os
           ignore-unfixed: 'true'
+          cache: 'false'
           timeout: 30m0s
 
       - name: Assert single DB across scans
