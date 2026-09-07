@@ -46,7 +46,7 @@
         "^scripts/[^/]+\\.py$"
       ],
       "matchStrings": [
-        "(?<depName>[^\\s\"'=]+):(?<currentValue>[^@\\s\"']+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
+        "(?:[\"']|^)(?<depName>(?:[a-z0-9.-]+/)*[a-z0-9._-]+/[a-z0-9._-]+):(?<currentValue>[a-zA-Z0-9._-]+)@(?<currentDigest>sha256:[a-f0-9]{64})(?:[\"']|$)"
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "loose"

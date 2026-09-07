@@ -60,6 +60,7 @@ jobs:
         uses: ./.github/actions/runner-label-guard
 
   sync-dispatch-options:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -99,7 +100,7 @@ jobs:
           git checkout -b "$BRANCH"
           git add .github/workflows/promote.yaml
           git commit -m "chore: sync promote dispatch options with inventory"
-          git push --force-with-lease origin "$BRANCH"
+          git push --force origin "$BRANCH"
           PR_URL="$(gh pr create --title "chore: sync promote dispatch options" --body "Auto-generated from inventory/." --base main || true)"
           if [ -n "${PR_URL}" ]; then
             gh pr merge --auto --merge "$PR_URL"
