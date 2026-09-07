@@ -103,7 +103,7 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SKOPEO="quay.io/skopeo/stable@sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc" # v1.22.2
+          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c" # v1.22.2
           SRC_CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
             SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
@@ -257,7 +257,7 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SKOPEO="quay.io/skopeo/stable@sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc" # v1.22.2
+          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c" # v1.22.2
           SRC_CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
             SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
@@ -454,7 +454,7 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SKOPEO="quay.io/skopeo/stable@sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc" # v1.22.2
+          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c" # v1.22.2
           SRC_CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
             SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
@@ -829,7 +829,7 @@ jobs:
             --trivy-version 0.74.0 \
             --trivy-action-sha ed142fd0673e97e23eac54620cfb913e5ce36c25 \
             --skopeo-version 1.22.2 \
-            --skopeo-image-digest sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc \
+            --skopeo-image-digest sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c \
             --trivy-db-check-bundle-digest "${DB_DIGEST}" \
             --trivy-db-updated-at "${DB_UPDATED}" \
             --full-report-sha256 "${FULL_SHA}" \

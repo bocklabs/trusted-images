@@ -13,7 +13,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Trusted-images inventory upstream tracking: captures ref, tag and digest from every inventory/<app>/image.yaml entry so Renovate opens PRs on upstream version bumps AND same-tag digest drift. Versioning is loose, never default docker, so the internal -bocklabs.N revision suffix orders numerically. PRs automerge once the validate / inventory check passes.",
+      "description": "Inventory upstream ref/tag/digest tracking.",
       "managerFilePatterns": [
         "/^inventory\\/[^/]+\\/image\\.yaml$/"
       ],
@@ -26,7 +26,7 @@
     },
     {
       "customType": "regex",
-      "description": "Manage SecObserve GitHub Actions separately because SecObserve uses vYYYY_MM release tags which are incompatible with Renovate's native GitHub Actions digest lookup.",
+      "description": "SecObserve vYYYY_MM tags need custom digest lookup.",
       "managerFilePatterns": [
         "/^\\.github/workflows/.*\\.ya?ml$/"
       ],
@@ -37,6 +37,19 @@
       "datasourceTemplate": "github-tags",
       "versioningTemplate": "regex:^v?(?<major>\\d{4})_(?<minor>\\d{2})$",
       "autoReplaceStringTemplate": "uses: SecObserve/secobserve_actions_templates/{{{actionPath}}}@{{{newDigest}}} # {{{newValue}}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Digest-pinned tool images in workflows and scripts.",
+      "managerFilePatterns": [
+        "\\.github/workflows/[^/]+\\.yaml$",
+        "^scripts/[^/]+\\.py$"
+      ],
+      "matchStrings": [
+        "(?<depName>[^\\s\"'=]+):(?<currentValue>[^@\\s\"']+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "loose"
     }
   ],
   "packageRules": [

@@ -22,7 +22,7 @@ PILOT_UPSTREAM_DIGEST = (
     "sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e"
 )
 PILOT_SKOPEO_DIGEST = (
-    "sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc"
+    "sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c"
 )
 SCHEMA = "trusted-images.bocklabs.dev/provenance-v1"
 
