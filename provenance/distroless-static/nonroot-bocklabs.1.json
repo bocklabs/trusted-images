@@ -1,0 +1,85 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "distroless-static",
+  "upstream": {
+    "ref": "gcr.io/distroless/static-debian12",
+    "tag": "nonroot",
+    "digest": "sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
+    "media_type": "application/vnd.oci.image.index.v1+json"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/distroless-static",
+    "tag": "nonroot-bocklabs.1",
+    "digest": "sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
+    "platforms": [
+      "linux/amd64",
+      "linux/arm64v8",
+      "linux/armv7",
+      "linux/ppc64le",
+      "linux/s390x"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34160727858",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.74.0",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "skopeo": "1.22.2",
+    "skopeo_image_digest": "sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:5c92f9a7bcfbe47ded4b0b4fdb07afc6443a8f52342a7703df495ec133e81cc7",
+      "updated_at": "2026-09-07 19:06:01.154199452 +0000 UTC"
+    },
+    "full_report_sha256": "761291e270851792e596582aa736dafa22882f8cb1f76728cf3985d5485f9675",
+    "copa_report_sha256": "99f78fe128618d2e78c8dd303a19150c880118034358758344c333143b6d4046",
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "gcr.io/distroless/static-debian12:nonroot"
+    }
+  },
+  "validation": {
+    "profile": "oneshot",
+    "result": "pass",
+    "params": {
+      "type": "oneshot",
+      "port": null,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 60,
+      "expectedExit": 127,
+      "command": [
+        "/bocklabs/no-executable"
+      ],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-09-07T20:47:39Z",
+      "finished_at": "2026-09-07T20:47:40Z",
+      "duration_seconds": 0.2
+    },
+    "health": {
+      "defined": false,
+      "final_status": "not-applicable"
+    },
+    "runner": "GitHub Actions 1000008943",
+    "baseline": {
+      "entrypoint": [],
+      "cmd": [],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+      ]
+    }
+  },
+  "promoted_at": "2026-09-07T20:48:56Z",
+  "notes": ""
+}
