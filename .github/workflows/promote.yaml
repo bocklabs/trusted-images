@@ -110,12 +110,12 @@ jobs:
         run: |
           set -euo pipefail
           SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c" # v1.22.2
-          SRC_CREDS=()
+          CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
+            CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
           fi
           docker run --rm -v "$PWD":/workspace "$SKOPEO" \
-            inspect --raw "${SRC_CREDS[@]}" \
+            inspect --raw ${CREDS[@]+"${CREDS[@]}"} \
             "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
           jq -e '.manifests | length > 0' upstream-index.json > /dev/null \
             || { echo "FATAL: upstream index carries no manifests"; exit 1; }
@@ -264,12 +264,12 @@ jobs:
         run: |
           set -euo pipefail
           SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c" # v1.22.2
-          SRC_CREDS=()
+          CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
+            CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
           fi
           docker run --rm -v "$PWD":/workspace "$SKOPEO" \
-            inspect --raw "${SRC_CREDS[@]}" \
+            inspect --raw ${CREDS[@]+"${CREDS[@]}"} \
             "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
           MEDIA_TYPE="$(jq -r '.mediaType' upstream-index.json)"
           echo "media_type=${MEDIA_TYPE}" >> "$GITHUB_OUTPUT"
