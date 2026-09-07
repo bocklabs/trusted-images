@@ -58,3 +58,50 @@ jobs:
 
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
+
+  sync-dispatch-options:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+
+      - name: Mint bocklabs-release app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.RELEASE_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_KEY }}
+
+      - name: Sync promote dispatch options with inventory
+        id: sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/sync_dispatch_options.py
+
+      - name: Push options PR
+        if: steps.sync.outputs.changed == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          BRANCH="chore/sync-dispatch-options"
+          git config user.name "bocklabs-release[bot]"
+          git config user.email "bocklabs-release[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add .github/workflows/promote.yaml
+          git commit -m "chore: sync promote dispatch options with inventory"
+          git push --force origin "$BRANCH"
+          PR_URL="$(gh pr create --title "chore: sync promote dispatch options" --body "Auto-generated from inventory/." --base main || true)"
+          if [ -n "${PR_URL}" ]; then
+            gh pr merge --auto --merge "$PR_URL"
+          fi
