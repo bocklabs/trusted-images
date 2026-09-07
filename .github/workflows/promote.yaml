@@ -429,18 +429,16 @@ jobs:
             exit 1
           fi
 
-      - name: Upload full report to SecObserve
-        uses: SecObserve/secobserve_actions_templates/actions/importer@0a0f7d0981982a589f2a11c3f05c8e1c628fbd79 # v2026_08
-        with:
-          so_api_base_url: ${{ vars.SECOBSERVE_API_BASE_URL }}
-          so_api_token: ${{ secrets.SECOBSERVE_API_TOKEN }}
-          so_product_name: trusted-images
-          so_branch_name: ${{ steps.entry.outputs.app }}
-          so_file_name: trivy-full.cdx.json
-          so_parser_name: CycloneDX
-          so_origin_service: ${{ steps.entry.outputs.app }}
-          so_origin_docker_image_name_tag: ${{ steps.entry.outputs.upstream_ref }}:${{ steps.entry.outputs.upstream_tag }}
-          so_suppress_licenses: 'true'
+      - name: Write SecObserve manifest
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+        run: |
+          set -euo pipefail
+          printf '{"app":"%s","upstream_ref":"%s","upstream_tag":"%s"}\n' \
+            "${APP}" "${UPSTREAM_REF}" "${UPSTREAM_TAG}" > secobserve-upload.json
 
       - name: Digest-preserving copy to GHCR
         id: copy
@@ -591,7 +589,10 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: trivy-full-report
-          path: trivy-full.json
+          path: |
+            trivy-full.json
+            trivy-full.cdx.json
+            secobserve-upload.json
           retention-days: 30
           if-no-files-found: error
 
