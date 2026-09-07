@@ -1,0 +1,98 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "nginx-qualification",
+  "upstream": {
+    "ref": "docker.io/library/nginx",
+    "tag": "1.31.5",
+    "digest": "sha256:05b8cb60c354a44ab824ea6e7dc69b46d50762cdbe728a347a5b656e6fb3d7c4",
+    "media_type": "application/vnd.oci.image.index.v1+json"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/nginx-qualification",
+    "tag": "1.31.5-bocklabs.1",
+    "digest": "sha256:05b8cb60c354a44ab824ea6e7dc69b46d50762cdbe728a347a5b656e6fb3d7c4",
+    "platforms": [
+      "linux/386",
+      "linux/amd64",
+      "linux/arm64v8",
+      "linux/armv5",
+      "linux/armv7",
+      "linux/ppc64le",
+      "linux/riscv64",
+      "linux/s390x",
+      "unknown/unknown"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34162828102",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.74.0",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "skopeo": "1.22.2",
+    "skopeo_image_digest": "sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:5c92f9a7bcfbe47ded4b0b4fdb07afc6443a8f52342a7703df495ec133e81cc7",
+      "updated_at": "2026-09-07 19:06:01.154199452 +0000 UTC"
+    },
+    "full_report_sha256": "640d20f74d75f83e3c01ae780bd98650aab3307bcad166f729e2ced5abd919ec",
+    "copa_report_sha256": "c5287b44ab5223f700fecc163be584f15305ffe04c44295f7c087849f8e5f7bb",
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "docker.io/library/nginx:1.31.5"
+    }
+  },
+  "validation": {
+    "profile": "http",
+    "result": "pass",
+    "params": {
+      "type": "http",
+      "port": 80,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 60,
+      "expectedExit": 0,
+      "command": [],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-09-07T21:21:35Z",
+      "finished_at": "2026-09-07T21:22:05Z",
+      "duration_seconds": 30.1
+    },
+    "health": {
+      "defined": false,
+      "final_status": "none-defined"
+    },
+    "runner": "GitHub Actions 1000008959",
+    "baseline": {
+      "entrypoint": [
+        "/docker-entrypoint.sh"
+      ],
+      "cmd": [
+        "nginx",
+        "-g",
+        "daemon off;"
+      ],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "NGINX_VERSION=1.31.5",
+        "NJS_VERSION=1.0.1",
+        "NJS_RELEASE=1~trixie",
+        "ACME_VERSION=0.4.1",
+        "PKG_RELEASE=1~trixie",
+        "DYNPKG_RELEASE=1~trixie"
+      ]
+    }
+  },
+  "promoted_at": "2026-09-07T21:24:21Z",
+  "notes": ""
+}
