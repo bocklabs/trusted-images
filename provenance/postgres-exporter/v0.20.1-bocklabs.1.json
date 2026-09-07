@@ -19,7 +19,7 @@
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34057727196",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34156751003",
     "workflow": "promote",
     "dispatched_by": "nitish-raj"
   },
@@ -27,15 +27,15 @@
     "trivy": "0.74.0",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "skopeo": "1.22.2",
-    "skopeo_image_digest": "sha256:8d25aabcf965e267b6a6ad02ff8da5512f77de1490063625093ff564797e88bc"
+    "skopeo_image_digest": "sha256:e5d9c4af8ec327785c7ca938d1e4f8452c6a05014850e58e2ff9456899ebd97c"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:447438abddc83969b049f025cea095b5a7cad4aaa36536c3d2c074ebb146e8f6",
-      "updated_at": "2026-09-06 07:00:11.537152697 +0000 UTC"
+      "check_bundle_digest": "sha256:5c92f9a7bcfbe47ded4b0b4fdb07afc6443a8f52342a7703df495ec133e81cc7",
+      "updated_at": "2026-09-07 19:06:01.154199452 +0000 UTC"
     },
-    "full_report_sha256": "762e27213945bc2bd46ec3b4c23bbb4ffd9760768f4c164ded69f5c93e95527e",
-    "copa_report_sha256": "3c61f1e0f957cd665d0d944b031d4a7838d0486941244f04b46d39caef7aa552",
+    "full_report_sha256": "e1c08be7e9c7b45a745dad0b7d2270b57d1d305313486b32c4001f6aeb25e139",
+    "copa_report_sha256": "60fecea7900f34cb40303b304b8a20c7fa403a8fe74c629a07e00f2f8aca3d48",
     "secobserve": {
       "product": "trusted-images",
       "origin": "quay.io/prometheuscommunity/postgres-exporter:v0.20.1"
@@ -59,15 +59,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-09-06T20:21:37Z",
-      "finished_at": "2026-09-06T20:22:07Z",
+      "started_at": "2026-09-07T19:45:12Z",
+      "finished_at": "2026-09-07T19:45:42Z",
       "duration_seconds": 30.1
     },
     "health": {
       "defined": false,
       "final_status": "none-defined"
     },
-    "runner": "GitHub Actions 1000008818",
+    "runner": "GitHub Actions 1000008915",
     "baseline": {
       "entrypoint": [
         "/bin/postgres_exporter"
@@ -78,6 +78,6 @@
       ]
     }
   },
-  "promoted_at": "2026-09-06T20:23:29Z",
+  "promoted_at": "2026-09-07T19:46:30Z",
   "notes": ""
 }
