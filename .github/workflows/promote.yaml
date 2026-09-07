@@ -4,9 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       app:
-        description: Inventory folder name to promote (must match inventory/<app>/image.yaml)
-        type: string
+        description: Inventory app to promote
+        type: choice
         required: true
+        options:
+          # apps-begin
+          - distroless-static
+          - nginx-qualification
+          - postgres-exporter
+          # apps-end
 
 permissions:
   contents: write
