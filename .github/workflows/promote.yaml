@@ -105,7 +105,7 @@ jobs:
         env:
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
@@ -126,7 +126,7 @@ jobs:
         env:
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
@@ -259,7 +259,7 @@ jobs:
         env:
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
@@ -326,7 +326,7 @@ jobs:
         shell: bash
         env:
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
@@ -457,7 +457,7 @@ jobs:
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
           INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
           GH_TOKEN: ${{ github.token }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
