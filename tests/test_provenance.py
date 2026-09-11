@@ -184,6 +184,59 @@ class ProvenanceTests(unittest.TestCase):
         result = self.run_generator(self.mutated(validation_timings="[]"))
         self.assert_fails_closed(result, "validation-timings")
 
+    def recovery_flags(self) -> dict[str, str]:
+        flags = valid_flags(self.out)
+        flags["--run-url"] = "https://github.com/bocklabs/trusted-images/actions/runs/99"
+        flags.update(
+            {
+                "--original-run-url": "https://github.com/bocklabs/trusted-images/actions/runs/42",
+                "--original-source-sha": "d" * 40,
+                "--recovered-tag": "v0.20.1-bocklabs.1",
+                "--recovered-digest": PILOT_UPSTREAM_DIGEST,
+            }
+        )
+        return flags
+
+    def test_recovery_records_original_binding_and_new_run(self) -> None:
+        result = self.run_generator(self.recovery_flags())
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        record = json.loads(self.out.read_text(encoding="utf-8"))
+        self.assertEqual(
+            record["pipeline"]["run_url"],
+            "https://github.com/bocklabs/trusted-images/actions/runs/99",
+        )
+        self.assertEqual(
+            record["recovery"],
+            {
+                "original_run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42",
+                "original_source_sha": "d" * 40,
+                "recovered_tag": "v0.20.1-bocklabs.1",
+                "recovered_digest": PILOT_UPSTREAM_DIGEST,
+            },
+        )
+
+    def test_incomplete_recovery_metadata_fails(self) -> None:
+        flags = self.recovery_flags()
+        del flags["--original-source-sha"]
+        result = self.run_generator(flags)
+        self.assert_fails_closed(result, "recovery")
+
+    def test_recovery_tag_and_digest_must_match_internal(self) -> None:
+        flags = self.recovery_flags()
+        flags["--recovered-tag"] = "v0.20.1-bocklabs.2"
+        result = self.run_generator(flags)
+        self.assert_fails_closed(result, "recovered-tag")
+        flags = self.recovery_flags()
+        flags["--recovered-digest"] = "sha256:" + "e" * 64
+        result = self.run_generator(flags)
+        self.assert_fails_closed(result, "recovered-digest")
+
+    def test_recovery_requires_a_new_run_url(self) -> None:
+        flags = self.recovery_flags()
+        flags["--run-url"] = flags["--original-run-url"]
+        result = self.run_generator(flags)
+        self.assert_fails_closed(result, "run-url")
+
 
 if __name__ == "__main__":
     unittest.main()

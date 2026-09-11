@@ -25,6 +25,7 @@ SCHEMA = "trusted-images.bocklabs.dev/provenance-v1"
 PACKAGE_PREFIX = "ghcr.io/bocklabs/"
 DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
 BARE_SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+SOURCE_SHA_RE = re.compile(r"^[a-f0-9]{40}$")
 
 # flag -> (kind, required); kind: text | digest (sha256:<64hex>) | sha256
 # (bare 64-hex) | json (object or array — per-flag shape in *_JSON_FLAGS)
@@ -61,8 +62,19 @@ FLAGS: dict[str, tuple[str, bool]] = {
     "--validation-cmd": ("json", True),
     "--validation-env": ("json", True),
     "--notes": ("text", False),
+    "--original-run-url": ("text", False),
+    "--original-source-sha": ("text", False),
+    "--recovered-tag": ("text", False),
+    "--recovered-digest": ("digest", False),
     "--out": ("text", True),
 }
+
+RECOVERY_FLAGS = (
+    "--original-run-url",
+    "--original-source-sha",
+    "--recovered-tag",
+    "--recovered-digest",
+)
 
 JSON_OBJECT_FLAGS = ("--validation-params", "--validation-timings", "--validation-health")
 JSON_ARRAY_FLAGS = ("--validation-entrypoint", "--validation-cmd", "--validation-env")
@@ -139,11 +151,24 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
                 f"(got {platforms_raw!r})"
             )
 
+    recovery_values = [value_of(args, flag).strip() for flag in RECOVERY_FLAGS]
+    if any(recovery_values) and not all(recovery_values):
+        violations.append("recovery metadata must provide all recovery fields")
+    if all(recovery_values):
+        if not SOURCE_SHA_RE.fullmatch(value_of(args, "--original-source-sha")):
+            violations.append("--original-source-sha must be 40 lowercase hex digits")
+        if value_of(args, "--recovered-tag") != internal_tag:
+            violations.append("--recovered-tag must equal --internal-tag")
+        if value_of(args, "--recovered-digest") != value_of(args, "--internal-digest"):
+            violations.append("--recovered-digest must equal --internal-digest")
+        if value_of(args, "--original-run-url") == value_of(args, "--run-url"):
+            violations.append("--run-url must identify a new recovery run")
+
     return violations
 
 
 def build_record(args: argparse.Namespace, platforms: list[str]) -> dict:
-    return {
+    record = {
         "schema": SCHEMA,
         "app": value_of(args, "--app"),
         "upstream": {
@@ -197,6 +222,14 @@ def build_record(args: argparse.Namespace, platforms: list[str]) -> dict:
         "promoted_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "notes": args.notes,
     }
+    if value_of(args, "--original-run-url"):
+        record["recovery"] = {
+            "original_run_url": value_of(args, "--original-run-url"),
+            "original_source_sha": value_of(args, "--original-source-sha"),
+            "recovered_tag": value_of(args, "--recovered-tag"),
+            "recovered_digest": value_of(args, "--recovered-digest"),
+        }
+    return record
 
 
 def main() -> int:
