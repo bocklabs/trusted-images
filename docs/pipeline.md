@@ -7,14 +7,46 @@ consume a promoted image — only to produce one.
 
 ## Dispatching a promotion
 
-Open the repository's **Actions** tab, select the **promote** workflow,
-and run it with one input: the inventory folder name (the app). Every
-inventory entry is promotable — the workflow is fully parameterized,
-not specific to any image. Dispatching a promotion **is** the
-acceptance decision: there is no separate approval stage and no
-scan-only dry-run mode. One dispatch runs the complete pipeline once,
-end to end, and the run either succeeds completely or fails with the
-reason named in its log and summary.
+Every inventory entry is promotable. Choose exactly one of these modes;
+all three run the same validation, scans, verification, artifact export,
+and provenance path.
+
+**Normal** tracks the inventory's current pinned content. If that digest
+already has an internal revision, the workflow verifies and reuses the
+newest matching revision without copying it again. Otherwise it publishes
+the next append-only revision.
+
+```sh
+gh workflow run promote.yaml --repo bocklabs/trusted-images --ref main \
+  -f app=<app>
+```
+
+**Force repeat** explicitly publishes the same pinned content under the
+next append-only revision. It changes allocation only; it never moves an
+existing tag.
+
+```sh
+gh workflow run promote.yaml --repo bocklabs/trusted-images --ref main \
+  -f app=<app> -f force_repromote=true
+```
+
+**Recovery** repairs one exact published revision after a partial run. It
+never copies or rewrites the tag. The workflow obtains the original run
+and immutable inventory snapshot from the revision's merged provenance.
+If publication succeeded before provenance was created, supply that
+original numeric run ID explicitly.
+
+```sh
+gh workflow run promote.yaml --repo bocklabs/trusted-images --ref main \
+  -f app=<app> -f recover_tag=<tag>-bocklabs.<N>
+
+gh workflow run promote.yaml --repo bocklabs/trusted-images --ref main \
+  -f app=<app> -f recover_tag=<tag>-bocklabs.<N> -f recovery_run_id=<run-id>
+```
+
+`force_repromote` and `recover_tag` are mutually exclusive. Dispatching
+a promotion is the acceptance decision: there is no separate approval
+stage or scan-only mode.
 
 ## What one run does
 
@@ -31,22 +63,26 @@ before anything downstream happens.
 3. **Fetch the upstream index** at the pinned digest and record its
    media type and platform set (the expected values for later
    assertions).
-4. **Compute the internal tag** — the next `<tag>-bocklabs.N` revision
-   on the destination package. Never-promoted versions start at `.1`;
-   existing tags are never overwritten or moved.
+4. **Select the internal tag** — normal mode reuses the newest revision
+   already carrying the pinned digest, force mode allocates the next
+   numeric revision, and recovery selects the requested existing revision.
+   Complete paginated registry observations and valid manifest digest
+   responses are required; failures never become an empty package.
 5. **Scan twice with one scanner database**: a full vulnerability
    report (all severities, unfixed included) and a fixable-OS-only
    report. Both scans use the same pinned scanner version and the same
    database, which is asserted by comparing database metadata captured
    after each scan. The full report is converted to the findings
    service's import format with a conversion-parity check.
-6. **Upload the full report** to the findings service under the
-   candidate identity — **before** anything is pushed. A promoted
-   image with no scan evidence cannot exist.
+6. **Export candidate evidence** — the full report, converted report,
+   fixable-OS report, and `secobserve-upload.json` manifest are retained as
+   run artifacts for the existing evidence bridge. The workflow does not
+   perform an inline findings-service upload.
 7. **Copy the image** digest-preserving, registry to registry, into
    the destination package under the computed tag.
-8. **Verify** that the pushed digest equals the upstream pinned digest
-   and that the pushed platform set matches the upstream platform set.
+8. **Verify** that the selected destination digest equals the upstream
+   pinned digest and that its platform set matches the upstream platform
+   set. These checks also run when copy is skipped or a revision is recovered.
 9. **Probe** the published package anonymously — a manifest fetch
    without any credentials must succeed and return the expected
    digest.
@@ -104,11 +140,18 @@ expectation.
 
 ## Re-running a promotion
 
-Dispatches are idempotent. If the destination package already holds
-the exact upstream digest under an existing `<tag>-bocklabs.N` tag,
-the run verifies it and refreshes the evidence (scans, upload,
-provenance) without re-copying anything. Re-dispatching after a
-partial failure is always safe.
+Ordinary dispatches are idempotent. If the destination package already
+holds the exact upstream digest under an existing `<tag>-bocklabs.N`
+tag, the run verifies it and refreshes the scans, artifacts, and
+provenance without re-copying anything. Use `force_repromote=true` only
+when a distinct next revision is required for unchanged content.
+
+Recovery is also append-only: it requires the requested public tag to
+exist at the original pinned digest, reruns current trusted workflow code
+against the original immutable inventory data, and records a new run as
+the successful evidence. The old run is retained as linkage; it is never
+relabelled successful. Eligibility begins only after the new run succeeds
+and its updated provenance record merges into `main`.
 
 ## If the first push arrives private
 
@@ -121,26 +164,32 @@ per package.
 
 ## Provenance
 
-Every successful promotion ends with a pull request adding one JSON
-record per internal tag under `provenance/`. The record is
+Every successful promotion ends with a pull request adding or updating the
+single JSON record for its internal tag under `provenance/`. The record is
 machine-generated by the run and carries: the upstream ref, tag, and
 digest; the internal package, tag, digest, and platform list; the
 promotion run URL; tool versions (scanner, scanner action, copy tool);
 the scanner database digest; SHA-256 hashes of both scan reports; and
-the findings-service identity the report was uploaded under. The pull
-request merges automatically once its inventory-validity check passes.
+the generic candidate-evidence identity. Recovery records additionally
+retain the original run URL and source commit plus the recovered tag and
+digest, while `pipeline.run_url` identifies the new recovery run. Existing
+open provenance branches and pull requests are updated under a verified
+lease; already-merged or no-diff records are handled without broad staging.
+The pull request merges automatically once its inventory-validity check passes.
 
 ## Configuration
 
-The workflow expects four names to exist on the repository — no other
-setup:
+The workflow uses these existing repository settings:
 
 | Name | Kind | Purpose |
 | ---- | ---- | ------- |
-| `SECOBSERVE_API_TOKEN` | secret | Upload to the findings service (SecObserve) |
-| `DOCKERHUB_USERNAME` | secret | Read-only pulls when an upstream lives on Docker Hub |
+| `RELEASE_CLIENT_ID` | secret | Existing release App client ID for provenance pull requests |
+| `RELEASE_APP_KEY` | secret | Existing release App private key for provenance pull requests |
+| `DOCKERHUB_USERNAME` | variable | Read-only pulls when an upstream lives on Docker Hub |
 | `DOCKERHUB_TOKEN` | secret | Read-only pulls when an upstream lives on Docker Hub |
-| `SECOBSERVE_API_BASE_URL` | variable | Findings service API base URL |
+| `SECOBSERVE_API_BASE_URL` | variable | Optional findings-service link in the run summary |
 
 The Docker Hub credentials need read-pull scope only; the token is
-used exclusively for scanning and copying upstream images.
+used exclusively for scanning and copying upstream images. Candidate
+evidence leaves this workflow only through its generic artifacts; no
+findings-service credential is used here.

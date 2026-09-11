@@ -13,12 +13,28 @@ on:
           - nginx-qualification
           - postgres-exporter
           # apps-end
+      force_repromote:
+        description: Publish the next append-only revision even when content is unchanged
+        type: boolean
+        required: false
+        default: false
+      recover_tag:
+        description: Repair this exact published internal tag without copying it again
+        type: string
+        required: false
+        default: ""
+      recovery_run_id:
+        description: Original promote run ID when the published tag has no provenance record
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: write
   packages: write
   pull-requests: write
   checks: write
+  actions: read
 
 concurrency:
   group: promote-${{ inputs.app }}
@@ -30,6 +46,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -54,28 +71,127 @@ jobs:
         shell: bash
         env:
           APP: ${{ inputs.app }}
+          FORCE_REPROMOTE: ${{ inputs.force_repromote }}
+          RECOVER_TAG: ${{ inputs.recover_tag }}
+          RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
             echo "FATAL: app not in inventory: ${APP}"
             exit 1
           fi
-          if ! ls inventory/ | grep -qFx -- "${APP}"; then
+          if [ -z "${RECOVER_TAG}" ] && ! ls inventory/ | grep -qFx -- "${APP}"; then
             echo "FATAL: app not in inventory: ${APP}"
             exit 1
           fi
-          OUT="$(python3 - "${APP}" <<'PY'
+          if [ "${FORCE_REPROMOTE}" = "true" ] && [ -n "${RECOVER_TAG}" ]; then
+            echo "FATAL: force_repromote and recover_tag cannot be combined"
+            exit 1
+          fi
+          if [ -n "${RECOVERY_RUN_ID}" ] && [ -z "${RECOVER_TAG}" ]; then
+            echo "FATAL: recovery_run_id requires recover_tag"
+            exit 1
+          fi
+
+          mkdir -p validation-context
+          if [ -n "${RECOVER_TAG}" ]; then
+            PROVENANCE="provenance/${APP}/${RECOVER_TAG}.json"
+            ORIGINAL_RUN_ID="${RECOVERY_RUN_ID}"
+            if [ -f "${PROVENANCE}" ]; then
+              RECORDED_URL="$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${PROVENANCE}")"
+              RECORDED_ID="${RECORDED_URL##*/}"
+              if [ -n "${ORIGINAL_RUN_ID}" ] && [ "${ORIGINAL_RUN_ID}" != "${RECORDED_ID}" ]; then
+                echo "FATAL: recovery_run_id does not match the existing provenance record"
+                exit 1
+              fi
+              ORIGINAL_RUN_ID="${RECORDED_ID}"
+            fi
+            if [[ ! "${ORIGINAL_RUN_ID}" =~ ^[1-9][0-9]*$ ]]; then
+              echo "FATAL: recovery needs an existing provenance record or numeric recovery_run_id"
+              exit 1
+            fi
+            gh api "repos/${REPO}/actions/runs/${ORIGINAL_RUN_ID}" > validation-context/original-run.json
+            jq -e --arg repo "${REPO}" '
+              .repository.full_name == $repo and
+              .path == ".github/workflows/promote.yaml" and
+              .event == "workflow_dispatch" and
+              (.head_sha | test("^[a-f0-9]{40}$"))
+            ' validation-context/original-run.json > /dev/null || {
+              echo "FATAL: recovery run does not belong to this repository's promote workflow"
+              exit 1
+            }
+            gh api --paginate "repos/${REPO}/actions/runs/${ORIGINAL_RUN_ID}/artifacts" \
+              --jq '.artifacts[] | select(.expired == false) | .name' \
+              > validation-context/original-artifacts.txt
+            for ARTIFACT in validation-evidence trivy-full-report trivy-copa-report; do
+              grep -qFx "${ARTIFACT}" validation-context/original-artifacts.txt || {
+                echo "FATAL: original run is missing required artifact ${ARTIFACT}"
+                exit 1
+              }
+            done
+            mkdir -p "${RUNNER_TEMP}/original-validation" "${RUNNER_TEMP}/original-report"
+            gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
+              --name validation-evidence --dir "${RUNNER_TEMP}/original-validation"
+            gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
+              --name trivy-full-report --dir "${RUNNER_TEMP}/original-report"
+            jq -e --arg app "${APP}" \
+              '.app == $app and .validation.result == "pass"' \
+              "${RUNNER_TEMP}/original-validation/validation-evidence.json" > /dev/null || {
+              echo "FATAL: original validation artifact is not bound to this app and a passing validation"
+              exit 1
+            }
+            ORIGINAL_SOURCE_SHA="$(jq -r '.head_sha' validation-context/original-run.json)"
+            ORIGINAL_RUN_URL="$(jq -r '.html_url' validation-context/original-run.json)"
+            gh api -H "Accept: application/vnd.github.raw+json" \
+              "repos/${REPO}/contents/inventory/${APP}/image.yaml?ref=${ORIGINAL_SOURCE_SHA}" \
+              > validation-context/image.yaml
+            python3 - validation-context/image.yaml \
+              "${RUNNER_TEMP}/original-report/secobserve-upload.json" "${APP}" <<'PY'
           import json
           import sys
           import yaml
 
-          spec = yaml.safe_load(open(f"inventory/{sys.argv[1]}/image.yaml"))["spec"]
+          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
+          manifest = json.load(open(sys.argv[2]))
+          expected = {
+              "app": sys.argv[3],
+              "upstream_ref": spec["upstream"]["ref"],
+              "upstream_tag": spec["upstream"]["tag"],
+          }
+          if manifest != expected:
+              raise SystemExit("FATAL: original report artifact is not bound to the recovered inventory")
+          PY
+            jq -n \
+              --arg original_run_url "${ORIGINAL_RUN_URL}" \
+              --arg original_source_sha "${ORIGINAL_SOURCE_SHA}" \
+              --arg recovered_tag "${RECOVER_TAG}" \
+              '{mode:"recovery", original_run_url:$original_run_url, original_source_sha:$original_source_sha, recovered_tag:$recovered_tag}' \
+              > validation-context/context.json
+          else
+            cp "inventory/${APP}/image.yaml" validation-context/image.yaml
+            jq -n '{mode:"normal"}' > validation-context/context.json
+          fi
+
+          OUT="$(python3 - validation-context/image.yaml "${APP}" "${RECOVER_TAG}" <<'PY'
+          import json
+          import sys
+          import yaml
+
+          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
           validation = spec["validation"]
+          app = sys.argv[2]
+          recover_tag = sys.argv[3]
+          if spec["destination"]["package"] != f"ghcr.io/bocklabs/{app}":
+              raise SystemExit("FATAL: recovered inventory destination does not match app")
+          if recover_tag and not recover_tag.startswith(spec["upstream"]["tag"] + "-bocklabs."):
+              raise SystemExit("FATAL: recover_tag does not match the original upstream tag")
           print(f"upstream_ref={spec['upstream']['ref']}")
           print(f"upstream_tag={spec['upstream']['tag']}")
           print(f"upstream_digest={spec['upstream']['digest']}")
           print(f"dest_package={spec['destination']['package']}")
-          print(f"app={sys.argv[1]}")
+          print(f"app={app}")
           print(f"validation_type={validation['type']}")
           PARAM_OUTPUTS = {
               "port": "validation_port",
@@ -98,6 +214,14 @@ jobs:
           )"
           echo "${OUT}"
           echo "${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload validation context
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: validation-context
+          path: validation-context/
+          retention-days: 30
+          if-no-files-found: error
 
       - name: Fetch upstream index
         id: index
@@ -223,6 +347,12 @@ jobs:
           set -euo pipefail
           pip install -r requirements.txt
 
+      - name: Download validation context
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: validation-context
+          path: validation-context
+
       - name: Resolve inventory entry
         id: entry
         shell: bash
@@ -234,20 +364,20 @@ jobs:
             echo "FATAL: app not in inventory: ${APP}"
             exit 1
           fi
-          if ! ls inventory/ | grep -qFx -- "${APP}"; then
-            echo "FATAL: app not in inventory: ${APP}"
-            exit 1
-          fi
-          OUT="$(python3 - "${APP}" <<'PY'
+          test -s validation-context/image.yaml || { echo "FATAL: validation context is empty"; exit 1; }
+          OUT="$(python3 - validation-context/image.yaml "${APP}" <<'PY'
           import sys
           import yaml
 
-          spec = yaml.safe_load(open(f"inventory/{sys.argv[1]}/image.yaml"))["spec"]
+          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
+          app = sys.argv[2]
+          if spec["destination"]["package"] != f"ghcr.io/bocklabs/{app}":
+              raise SystemExit("FATAL: validation context destination does not match app")
           print(f"upstream_ref={spec['upstream']['ref']}")
           print(f"upstream_tag={spec['upstream']['tag']}")
           print(f"upstream_digest={spec['upstream']['digest']}")
           print(f"dest_package={spec['destination']['package']}")
-          print(f"app={sys.argv[1]}")
+          print(f"app={app}")
           PY
           )"
           echo "${OUT}"
@@ -286,34 +416,110 @@ jobs:
           APP: ${{ steps.entry.outputs.app }}
           UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          FORCE_REPROMOTE: ${{ inputs.force_repromote }}
+          RECOVER_TAG: ${{ inputs.recover_tag }}
         run: |
           set -euo pipefail
-          TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
-          TAGS="$(curl -s -H "Authorization: Bearer ${TOKEN}" \
-            "https://ghcr.io/v2/bocklabs/${APP}/tags/list?n=1000" | jq -r '.tags // [] | .[]' || true)"
-          TAG_RE="$(printf '%s' "${UPSTREAM_TAG}" | sed 's/[^[:alnum:]_-]/\\&/g')"
-          MAX_N="$(printf '%s\n' "${TAGS}" \
-            | grep -E "^${TAG_RE}-bocklabs\.[0-9]+$" \
-            | sed -E 's/.*-bocklabs\.//' | sort -n | tail -1 || true)"
-          REVISION="$(( ${MAX_N:-0} + 1 ))"
-          INTERNAL_TAG="${UPSTREAM_TAG}-bocklabs.${REVISION}"
-          # Skip detection: newest revision first — does any existing tag carry the upstream digest?
-          SKIP_COPY="false"
+          TOKEN="$(curl --fail-with-body -sS \
+            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
           INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
-          CANDIDATES="$(printf '%s\n' "${TAGS}" \
-            | grep -E "^${TAG_RE}-bocklabs\.[0-9]+$" \
-            | sed -E 's/.*-bocklabs\.//' | sort -nr \
-            | sed "s/^/${UPSTREAM_TAG}-bocklabs./" || true)"
-          for CAND in ${CANDIDATES}; do
-            CAND_DIGEST="$(curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
-              "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CAND}" \
-              | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}' || true)"
-            if [ -n "${CAND_DIGEST}" ] && [ "${CAND_DIGEST}" = "${UPSTREAM_DIGEST}" ]; then
-              SKIP_COPY="true"
-              INTERNAL_TAG="${CAND}"
-              break
+          : > registry-tags.txt
+          : > registry-pages.txt
+          URL="https://ghcr.io/v2/bocklabs/${APP}/tags/list?n=100"
+          FIRST_PAGE=true
+          while [ -n "${URL}" ]; do
+            grep -qFx "${URL}" registry-pages.txt && {
+              echo "FATAL: registry pagination cycle detected"
+              exit 1
+            }
+            printf '%s\n' "${URL}" >> registry-pages.txt
+            set +e
+            STATUS="$(curl --fail-with-body -sS \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -D registry-page.headers -o registry-page.json -w '%{http_code}' "${URL}")"
+            CURL_STATUS=$?
+            set -e
+            if [ "${CURL_STATUS}" -ne 0 ]; then
+              if [ "${FIRST_PAGE}" = true ] && [ "${STATUS}" = 404 ]; then
+                break
+              fi
+              echo "FATAL: registry tag listing failed (${STATUS:-network error})"
+              exit 1
             fi
+            [ "${STATUS}" = 200 ] || { echo "FATAL: unexpected tag listing status ${STATUS}"; exit 1; }
+            jq -e 'type == "object" and ((.tags // []) | type == "array" and all(type == "string"))' \
+              registry-page.json > /dev/null || { echo "FATAL: malformed registry tag page"; exit 1; }
+            jq -r '.tags // [] | .[]' registry-page.json >> registry-tags.txt
+            URL="$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          headers = Path("registry-page.headers").read_text(encoding="utf-8")
+          match = re.search(r'<([^>]+)>;\s*rel="next"', headers, re.IGNORECASE)
+          print(match.group(1) if match else "")
+          PY
+            )"
+            if [ -n "${URL}" ] && [[ "${URL}" != "https://ghcr.io/v2/bocklabs/${APP}/tags/list?"* ]]; then
+              echo "FATAL: registry pagination left the expected package URL"
+              exit 1
+            fi
+            FIRST_PAGE=false
           done
+
+          python3 - "${UPSTREAM_TAG}" registry-tags.txt <<'PY' > registry-candidates.txt
+          import re
+          import sys
+          from pathlib import Path
+
+          pattern = re.compile(re.escape(sys.argv[1]) + r"-bocklabs\.[1-9][0-9]*$")
+          tags = Path(sys.argv[2]).read_text(encoding="utf-8").splitlines()
+          for tag in tags:
+              if pattern.fullmatch(tag):
+                  print(tag)
+          PY
+          : > registry-observations.tsv
+          while IFS= read -r CAND; do
+            [ -n "${CAND}" ] || continue
+            set +e
+            STATUS="$(curl --fail-with-body -sS -I \
+              -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+              -D registry-head.headers -o /dev/null -w '%{http_code}' \
+              "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CAND}")"
+            CURL_STATUS=$?
+            set -e
+            [ "${CURL_STATUS}" -eq 0 ] && [ "${STATUS}" = 200 ] || {
+              echo "FATAL: registry manifest HEAD failed for observed tag ${CAND} (${STATUS:-network error})"
+              exit 1
+            }
+            CAND_DIGEST="$(tr -d '\r' < registry-head.headers \
+              | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+            [[ "${CAND_DIGEST}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
+              echo "FATAL: observed tag ${CAND} has no valid digest HEAD"
+              exit 1
+            }
+            printf '%s\t%s\n' "${CAND}" "${CAND_DIGEST}" >> registry-observations.tsv
+          done < registry-candidates.txt
+          python3 - <<'PY' > registry-observations.json
+          import json
+          from pathlib import Path
+
+          rows = []
+          for line in Path("registry-observations.tsv").read_text(encoding="utf-8").splitlines():
+              tag, digest = line.split("\t")
+              rows.append({"tag": tag, "digest": digest})
+          print(json.dumps(rows))
+          PY
+
+          ARGS=(
+            --upstream-tag "${UPSTREAM_TAG}"
+            --upstream-digest "${UPSTREAM_DIGEST}"
+            --observations registry-observations.json
+          )
+          [ "${FORCE_REPROMOTE}" = "true" ] && ARGS+=(--force-repromote)
+          [ -n "${RECOVER_TAG}" ] && ARGS+=(--recover-tag "${RECOVER_TAG}")
+          RESULT="$(python3 scripts/resolve_internal_tag.py "${ARGS[@]}")"
+          INTERNAL_TAG="$(jq -er .internal_tag <<<"${RESULT}")"
+          SKIP_COPY="$(jq -er '.skip_copy | tostring' <<<"${RESULT}")"
           {
             echo "skip_copy=${SKIP_COPY}"
             echo "internal_tag=${INTERNAL_TAG}"
@@ -447,6 +653,29 @@ jobs:
           printf '{"app":"%s","upstream_ref":"%s","upstream_tag":"%s"}\n' \
             "${APP}" "${UPSTREAM_REF}" "${UPSTREAM_TAG}" > secobserve-upload.json
 
+      - name: Assert destination tag is still absent
+        if: steps.tag.outputs.skip_copy != 'true'
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+        run: |
+          set -euo pipefail
+          TOKEN="$(curl --fail-with-body -sS \
+            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+          set +e
+          STATUS="$(curl --fail-with-body -sS -I \
+            -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+            -o /dev/null -w '%{http_code}' \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
+          CURL_STATUS=$?
+          set -e
+          if [ "${CURL_STATUS}" -eq 0 ] || [ "${STATUS}" != 404 ]; then
+            echo "FATAL: destination tag collision before copy (${INTERNAL_TAG}, status ${STATUS})"
+            exit 1
+          fi
+
       - name: Digest-preserving copy to GHCR
         id: copy
         if: steps.tag.outputs.skip_copy != 'true'
@@ -516,14 +745,26 @@ jobs:
 
       - name: Assert digest equality
         id: assertdigest
-        if: steps.tag.outputs.skip_copy != 'true'
         shell: bash
         env:
+          APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
           FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
         run: |
           set -euo pipefail
-          PUSHED="$(cat pushed-digest.txt)"
+          TOKEN="$(curl --fail-with-body -sS \
+            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+          PUSHED="$(curl --fail-with-body -sSI \
+            -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}" \
+            | tr -d '\r' | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+          [[ "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
+            echo "FATAL: destination tag has no valid digest"
+            exit 1
+          }
+          printf '%s\n' "${PUSHED}" > pushed-digest.txt
           if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
             echo "D1 fallback path: pushed index digest ${PUSHED} vs upstream ${UPSTREAM_DIGEST} — divergence recorded, continuing"
           else
@@ -536,7 +777,6 @@ jobs:
 
       - name: Assert platform-set equality
         id: assertplatforms
-        if: steps.tag.outputs.skip_copy != 'true'
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
@@ -791,6 +1031,7 @@ jobs:
           DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           DISPATCHED_BY: ${{ github.actor }}
+          RECOVER_TAG: ${{ inputs.recover_tag }}
         run: |
           set -euo pipefail
           FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
@@ -819,6 +1060,17 @@ jobs:
           NOTES_ARGS=()
           if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ] && [ -n "${DIVERGENCE_NOTE:-}" ]; then
             NOTES_ARGS+=(--notes "${DIVERGENCE_NOTE}")
+          fi
+          RECOVERY_ARGS=()
+          if [ -n "${RECOVER_TAG}" ]; then
+            ORIGINAL_RUN_URL="$(jq -er .original_run_url validation-context/context.json)"
+            ORIGINAL_SOURCE_SHA="$(jq -er .original_source_sha validation-context/context.json)"
+            RECOVERY_ARGS=(
+              --original-run-url "${ORIGINAL_RUN_URL}"
+              --original-source-sha "${ORIGINAL_SOURCE_SHA}"
+              --recovered-tag "${INTERNAL_TAG}"
+              --recovered-digest "${INTERNAL_DIGEST}"
+            )
           fi
           python3 scripts/generate_provenance.py \
             --app "${APP}" \
@@ -852,6 +1104,7 @@ jobs:
             --validation-entrypoint "${VALIDATION_ENTRYPOINT}" \
             --validation-cmd "${VALIDATION_CMD}" \
             --validation-env "${VALIDATION_ENV}" \
+            "${RECOVERY_ARGS[@]}" \
             "${NOTES_ARGS[@]}" \
             --out provenance/${APP}/${INTERNAL_TAG}.json
           {
@@ -885,15 +1138,45 @@ jobs:
           # GITHUB_TOKEN-authored PRs trigger no workflows, so this step re-validates
           # the branch itself and self-posts the required `inventory` check.
           BRANCH="provenance/${APP}/${INTERNAL_TAG}"
+          RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
           git config user.name "bocklabs-release[bot]"
           git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
-          git checkout -b "${BRANCH}"
-          git add provenance/
-          git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
-
           APP_TOKEN="${{ steps.app-token.outputs.token }}"
-          git push --force-with-lease "https://x-access-token:${APP_TOKEN}@github.com/${REPO}.git" "${BRANCH}"
-          PR_URL="$(gh pr list --head "${BRANCH}" --state open --json url --jq '.[0].url')"
+          REMOTE="https://x-access-token:${APP_TOKEN}@github.com/${REPO}.git"
+          GENERATED="$(mktemp)"
+          cp "${RECORD}" "${GENERATED}"
+          git fetch origin main
+          REMOTE_SHA="$(git ls-remote "${REMOTE}" "refs/heads/${BRANCH}" | awk '{print $1}')"
+          if [ -n "${REMOTE_SHA}" ]; then
+            git fetch origin "refs/heads/${BRANCH}"
+            AUTHOR="$(git log -1 --format=%ae FETCH_HEAD)"
+            [ "${AUTHOR}" = "302587774+bocklabs-release[bot]@users.noreply.github.com" ] || {
+              echo "FATAL: existing provenance branch is not owned by the release App"
+              exit 1
+            }
+            OTHER="$(git diff --name-only origin/main...FETCH_HEAD | grep -vxF "${RECORD}" || true)"
+            [ -z "${OTHER}" ] || {
+              echo "FATAL: existing provenance branch changes files outside ${RECORD}"
+              exit 1
+            }
+          fi
+          git checkout -B "${BRANCH}" origin/main
+          mkdir -p "$(dirname "${RECORD}")"
+          cp "${GENERATED}" "${RECORD}"
+          git add "provenance/${APP}/${INTERNAL_TAG}.json"
+          if git diff --cached --quiet; then
+            echo "Provenance record already merged; no write-back needed" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
+          if [ -n "${REMOTE_SHA}" ]; then
+            git push --force-with-lease=refs/heads/${BRANCH}:${REMOTE_SHA} "${REMOTE}" "HEAD:${BRANCH}"
+          else
+            git push "${REMOTE}" "HEAD:${BRANCH}"
+          fi
+
+          PR_URL="$(gh pr list --head "${BRANCH}" --state all --json state,url \
+            --jq '[.[] | select(.state == "OPEN")][0].url // ""')"
           if [ -z "${PR_URL}" ]; then
             BODY="Machine-generated provenance record per docs/pipeline.md."
             BODY+=$'\n'"- Run: ${RUN_URL}"
