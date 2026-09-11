@@ -137,6 +137,12 @@ class PromoteWorkflowTests(unittest.TestCase):
                 self.assertIn(text, self.workflow)
         self.assertNotIn("tags/list?n=1000", self.workflow)
 
+    def test_skopeo_copy_writes_workspace_files_as_runner(self) -> None:
+        self.assertIn(
+            'docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"',
+            self.workflow,
+        )
+
     def test_recovery_uses_original_inventory_as_data(self) -> None:
         for text in (
             "validation-context",
