@@ -48,6 +48,8 @@ jobs:
 
       - name: Validate Renovate config
         shell: bash
+        env:
+          NPM_CONFIG_LOGLEVEL: error
         run: |
           set -euo pipefail
           npx --yes --package renovate -- renovate-config-validator --strict
