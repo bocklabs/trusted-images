@@ -697,7 +697,7 @@ jobs:
           fi
           rm -f skopeo-copy.err
           # --all copies the whole index: no platform filters, no partial-copy modes.
-          if docker run --rm -v "$PWD":/workspace "$SKOPEO" \
+          if docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
               copy \
                 --all \
                 --preserve-digests \
