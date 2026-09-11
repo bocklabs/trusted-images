@@ -1,0 +1,83 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "postgres-exporter",
+  "upstream": {
+    "ref": "quay.io/prometheuscommunity/postgres-exporter",
+    "tag": "v0.20.1",
+    "digest": "sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e",
+    "media_type": "application/vnd.docker.distribution.manifest.list.v2+json"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/postgres-exporter",
+    "tag": "v0.20.1-bocklabs.3",
+    "digest": "sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e",
+    "platforms": [
+      "linux/amd64",
+      "linux/arm64",
+      "linux/armv7",
+      "linux/ppc64le"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/34649068920",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.74.0",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "skopeo": "1.22.2",
+    "skopeo_image_digest": "sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:33b4ab04572f480aa0787d0eebcadff4ee965c5bcb15e8253b057e8d236bfd1b",
+      "updated_at": "2026-09-11 19:05:14.711544808 +0000 UTC"
+    },
+    "full_report_sha256": "32d5b574446564de16065062a5ec4211f77970113634b30a3514884e6bd3ea5a",
+    "copa_report_sha256": "1edd6518321a7c1c8274e0050abf88702f96d1048ad5f12cd437b0a99c0594cd",
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "quay.io/prometheuscommunity/postgres-exporter:v0.20.1"
+    }
+  },
+  "validation": {
+    "profile": "http",
+    "result": "pass",
+    "params": {
+      "type": "http",
+      "port": 9187,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 60,
+      "expectedExit": 0,
+      "command": [],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-09-11T21:22:53Z",
+      "finished_at": "2026-09-11T21:23:23Z",
+      "duration_seconds": 30.1
+    },
+    "health": {
+      "defined": false,
+      "final_status": "none-defined"
+    },
+    "runner": "GitHub Actions 1000009135",
+    "baseline": {
+      "entrypoint": [
+        "/bin/postgres_exporter"
+      ],
+      "cmd": [],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  },
+  "promoted_at": "2026-09-11T21:24:35Z",
+  "notes": ""
+}
