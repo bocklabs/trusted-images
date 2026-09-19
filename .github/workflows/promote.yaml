@@ -45,6 +45,9 @@ concurrency:
   group: promote-${{ inputs.app }}
   cancel-in-progress: true
 
+env:
+  SKOPEO_IMAGE: "quay.io/skopeo/stable:v1.22.2@sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -508,7 +511,7 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036" # v1.22.2
+          SKOPEO="${SKOPEO_IMAGE}"
           CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
             CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
@@ -530,7 +533,7 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036" # v1.22.2
+          SKOPEO="${SKOPEO_IMAGE}"
           CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
             CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
@@ -876,7 +879,7 @@ jobs:
           RECOVERED_DIGEST: ${{ steps.reuse.outputs.candidate_digest }}
         run: |
           set -euo pipefail
-          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c3fbc8b5d4d336036"
+          SKOPEO="${SKOPEO_IMAGE}"
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
             copy --preserve-digests \
             oci:/workspace/candidate-oci:candidate \
@@ -1051,7 +1054,7 @@ jobs:
               raise SystemExit("FATAL: patched labels violate the add-only provenance contract")
           PY
           docker save copa:final --output candidate-final.tar
-          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036"
+          SKOPEO="${SKOPEO_IMAGE}"
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             inspect --raw oci:/workspace/candidate-oci:candidate > candidate-manifest.json
           sha256sum candidate-manifest.json | awk '{print "digest=sha256:" $1}' > candidate-digest.txt
@@ -1485,7 +1488,7 @@ jobs:
             echo "FATAL: no candidate decision to export"
             exit 1
           fi
-          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036" # v1.22.2
+          SKOPEO="${SKOPEO_IMAGE}"
           CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
             CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
@@ -1882,7 +1885,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036" # v1.22.2
+          SKOPEO="${SKOPEO_IMAGE}"
           rm -f pushed-digest.txt
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
             copy \
@@ -2249,6 +2252,8 @@ jobs:
           NOW: ${{ steps.publication-decision.outputs.now }}
         run: |
           set -euo pipefail
+          SKOPEO_VERSION="${SKOPEO_IMAGE#*:}"
+          SKOPEO_VERSION="${SKOPEO_VERSION%%@*}"
           FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
           COPA_SHA="$(sha256sum trivy-copa.json | awk '{print $1}')"
           PLATFORMS="linux/amd64"
@@ -2306,8 +2311,8 @@ jobs:
             --dispatched-by "${DISPATCHED_BY}" \
             --trivy-version 0.74.0 \
             --trivy-action-sha ed142fd0673e97e23eac54620cfb913e5ce36c25 \
-            --skopeo-version 1.22.2 \
-            --skopeo-image-digest sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036 \
+            --skopeo-version "${SKOPEO_VERSION}" \
+            --skopeo-image-digest "${SKOPEO_IMAGE##*@}" \
             --trivy-db-check-bundle-digest "${DB_DIGEST}" \
             --trivy-db-updated-at "${DB_UPDATED}" \
             --full-report-sha256 "${FULL_SHA}" \

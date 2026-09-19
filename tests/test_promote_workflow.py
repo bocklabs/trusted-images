@@ -356,7 +356,8 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertIn("trivy-full.cdx.json\n            secobserve-upload.json", self.workflow)
 
     def test_patched_metadata_uses_a_stopped_container_and_emits_digest(self):
-        steps = yaml.safe_load(self.workflow)["jobs"]["validate"]["steps"]
+        workflow = yaml.safe_load(self.workflow)
+        steps = workflow["jobs"]["validate"]["steps"]
         step = next(step for step in steps if step["name"] == "Add only provenance labels and export final bytes")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -378,6 +379,7 @@ elif args[0] == 'run' and 'inspect' in args: print('{"schemaVersion":2}')
 """)
             executable.chmod(0o755)
             env = dict(os.environ, PATH=f"{root}:{os.environ['PATH']}", SPOOL=str(root / "spool"),
+                       SKOPEO_IMAGE=workflow["env"]["SKOPEO_IMAGE"],
                        GITHUB_OUTPUT=str(root / "output"), UPSTREAM_REF="registry.example/app", UPSTREAM_TAG="v1",
                        SELECTED_DIGEST=DIGEST_A, INTERNAL_TAG="v1-bocklabs.1")
             self.assertNotIn("${{", step["run"])
