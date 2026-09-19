@@ -1,5 +1,5 @@
-# Qualification entry: deliberately stale Feb-2024 snapshot of nginx.
-# Its expected fixable-OS CVEs are confirmed via Trivy at Phase 5 plan time.
+# Qualification entry: deliberately stale Feb-2024 snapshot of nginx. Renovate
+# keeps detecting updates, but the narrow repository rule requires review.
 apiVersion: trusted-images.bocklabs.dev/v1
 kind: Image
 metadata:

@@ -5,13 +5,11 @@ Invoked by the promote workflow's validate job with the resolved inventory
 entry (schema v2 spec.validation plus the workflow-side D-04 defaults).
 Order of operations:
 
-  1. Static checks (VAL-01): the platform set is extracted from the
-     skopeo-fetched index (--index-file) with the promote.yaml jq-equivalent
-     logic, sorted-unique; every expected platform must be present in the
-     index (subset semantics — extra index platforms are allowed); the set
-     is fail-closed on an empty or missing manifests array. The image config
-     must parse (docker image inspect of REF@DIGEST) and its
-     Entrypoint/Cmd/Env are recorded as the provenance baseline (D-12).
+  1. Static checks (VAL-01/D-20/D-14): --index-file is the exact candidate
+     image manifest (indexes are rejected), its runtime architecture must be
+     exactly linux/amd64, and the candidate config must preserve the selected
+     upstream child config except for additions to the four permitted OCI
+     provenance labels. Manifest annotations are recorded separately.
   2. Runtime profile (VAL-02), selected by --validation-type:
        http      candidate runs detached under --network none (D-07); a
                  digest-pinned curl sidecar joins the candidate netns via
@@ -51,7 +49,9 @@ stdlib only.
 """
 
 import argparse
+import hashlib
 import json
+import copy
 import os
 import subprocess
 import sys
@@ -80,8 +80,11 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--app", required=True, help="inventory app name")
-    parser.add_argument("--ref", required=True, help="upstream image ref")
-    parser.add_argument("--digest", required=True, help="upstream sha256:... digest")
+    parser.add_argument("--ref", required=True, help="candidate image ref")
+    parser.add_argument("--local-image", help="local candidate tag; config digest must match the exported manifest")
+    parser.add_argument("--digest", required=True, help="candidate sha256:... digest")
+    parser.add_argument("--baseline-ref", help="selected upstream child ref")
+    parser.add_argument("--baseline-digest", help="selected upstream child digest")
     parser.add_argument(
         "--validation-type", required=True, choices=PROFILES, help="spec.validation.type"
     )
@@ -130,19 +133,42 @@ def docker(*args: str) -> tuple[bool, str]:
     return proc.returncode == 0, output.strip()
 
 
-def platform_set(manifests: list) -> list[str]:
-    """Sorted-unique os/arch[variant] strings (the promote.yaml jq logic)."""
-    entries: set[str] = set()
-    for manifest in manifests:
-        platform = manifest.get("platform") if isinstance(manifest, dict) else None
-        if not isinstance(platform, dict):
-            continue
-        os_name = platform.get("os")
-        architecture = platform.get("architecture")
-        if not os_name or not architecture:
-            continue
-        entries.add(f"{os_name}/{architecture}{platform.get('variant') or ''}")
-    return sorted(entries)
+ALLOWED_NEW_LABELS = {
+    "org.opencontainers.image.base.digest",
+    "org.opencontainers.image.base.name",
+    "org.opencontainers.image.source",
+    "org.opencontainers.image.version",
+}
+IMAGE_MANIFEST_TYPES = {
+    "application/vnd.oci.image.manifest.v1+json",
+    "application/vnd.docker.distribution.manifest.v2+json",
+}
+
+
+def label_drift(baseline: dict, candidate: dict) -> list[str]:
+    base = baseline.get("Labels") or {}
+    final = candidate.get("Labels") or {}
+    if not isinstance(base, dict) or not isinstance(final, dict):
+        return ["config Labels must be objects or null"]
+    drift = [
+        f"existing label {key!r} changed from {base[key]!r} to {final.get(key)!r}"
+        for key in base if key not in final or final[key] != base[key]
+    ]
+    drift += [
+        f"label {key!r} is not one of the four permitted additions"
+        for key in final.keys() - base.keys() if key not in ALLOWED_NEW_LABELS
+    ]
+    return drift
+
+
+def config_drift(baseline: dict, candidate: dict) -> list[str]:
+    before = copy.deepcopy(baseline)
+    after = copy.deepcopy(candidate)
+    labels = label_drift(baseline, candidate)
+    before.pop("Labels", None)
+    after.pop("Labels", None)
+    drift = [] if before == after else ["runtime config changed outside permitted label additions"]
+    return drift + labels
 
 
 def inspect_value(inspect_json: str, path: tuple[str, ...]):  # type: ignore[valid-type]
@@ -324,8 +350,8 @@ def main() -> int:
     started_mono = time.monotonic()
 
     expected_platforms = [p.strip() for p in args.expected_platforms.split(",") if p.strip()]
-    if not expected_platforms:
-        print("FATAL: --expected-platforms resolved empty — nothing to assert (VAL-01)")
+    if expected_platforms != ["linux/amd64"]:
+        print("FATAL: new candidates must validate exactly linux/amd64 (D-20)")
         return 2
     try:
         command = json.loads(args.command)
@@ -373,7 +399,6 @@ def main() -> int:
                 "entrypoint": [],
                 "cmd": [],
                 "env": [],
-                "platforms_index": [],
                 "platforms_expected": expected_platforms,
             },
         },
@@ -403,36 +428,73 @@ def main() -> int:
         index = json.loads(index_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         return fail(f"index file is not valid JSON ({exc})")
-    manifests = index.get("manifests") if isinstance(index, dict) else None
-    if not isinstance(manifests, list) or not manifests:
-        return fail("index carries no non-empty manifests array (VAL-01)")
-    platforms_index = platform_set(manifests)
-    if not platforms_index:
-        return fail("index platform set is empty (VAL-01)")
-    ev["validation"]["baseline"]["platforms_index"] = platforms_index
-    missing = [p for p in expected_platforms if p not in platforms_index]
-    if missing:
-        return fail(
-            f"expected platforms absent from the index, subset check (VAL-01): "
-            f"{missing} not in {platforms_index}"
-        )
+    if not isinstance(index, dict):
+        return fail("candidate manifest is not an object (D-20)")
+    if "manifests" in index:
+        return fail("candidate manifest is an index; indexes cannot be published (D-20)")
+    if index.get("mediaType") not in IMAGE_MANIFEST_TYPES:
+        return fail("candidate manifest is not an OCI/Docker image manifest (D-20)")
+    ev["validation"]["manifest_annotations"] = index.get("annotations") or {}
 
-    ref_digest = f"{args.ref}@{args.digest}"
+    baseline_ref_digest = (
+        f"{args.baseline_ref}@{args.baseline_digest}"
+        if args.baseline_ref and args.baseline_digest
+        else None
+    )
+    baseline_config = None
+    if baseline_ref_digest:
+        ok, out = docker("image", "inspect", baseline_ref_digest)
+        if not ok:
+            return fail(f"docker image inspect failed for baseline {baseline_ref_digest}: {out}")
+        try:
+            baseline_config = json.loads(out)[0]["Config"]
+            if not isinstance(baseline_config, dict):
+                raise TypeError("baseline Config is not an object")
+        except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
+            return fail(f"baseline image config does not parse (VAL-01): {exc}")
+
+    ref_digest = args.local_image or f"{args.ref}@{args.digest}"
     ok, out = docker("image", "inspect", ref_digest)
     if not ok:
         return fail(f"docker image inspect failed for {ref_digest}: {out}")
     try:
-        config = json.loads(out)[0]["Config"]
+        inspected = json.loads(out)[0]
+        config = inspected["Config"]
         if not isinstance(config, dict):
             raise TypeError("Config is not an object")
-        entrypoint = list(config.get("Entrypoint") or [])
-        cmd = list(config.get("Cmd") or [])
-        env = list(config.get("Env") or [])
     except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
         return fail(f"image config does not parse (VAL-01): {exc}")
+    if args.local_image:
+        manifest_digest = "sha256:" + hashlib.sha256(index_path.read_bytes()).hexdigest()
+        if manifest_digest != args.digest:
+            return fail("local candidate manifest digest does not match the exported bytes")
+        descriptor = index.get("config")
+        expected_config = descriptor.get("digest") if isinstance(descriptor, dict) else None
+        if not isinstance(expected_config, str) or not expected_config.startswith("sha256:") or inspected.get("Id") != expected_config:
+            return fail("local candidate config digest does not match the exported manifest")
+        ref_digest = inspected["Id"]
+        ev["validation"]["candidate_digest"] = manifest_digest
+        ev["validation"]["candidate_image_id"] = inspected["Id"]
+    if inspected.get("Os") != "linux" or inspected.get("Architecture") != "amd64":
+        return fail(
+            "candidate platform mismatch (D-20): expected linux/amd64, "
+            f"got {inspected.get('Os')}/{inspected.get('Architecture')}"
+        )
+    if baseline_config is not None:
+        drift = config_drift(baseline_config, config)
+        if drift:
+            return fail("runtime configuration drift (D-14): " + "; ".join(drift))
+        ev["validation"]["baseline"]["config"] = baseline_config
+        ev["validation"]["candidate_config"] = config
+        ev["validation"]["config_drift"] = drift
+
+    entrypoint = list(config.get("Entrypoint") or [])
+    cmd = list(config.get("Cmd") or [])
+    env = list(config.get("Env") or [])
     ev["validation"]["baseline"]["entrypoint"] = entrypoint
     ev["validation"]["baseline"]["cmd"] = cmd
     ev["validation"]["baseline"]["env"] = env
+    ev["validation"]["candidate_platform"] = f"{inspected['Os']}/{inspected['Architecture']}"
     healthcheck_defined = config.get("Healthcheck") is not None
     ev["validation"]["health"]["defined"] = healthcheck_defined
 

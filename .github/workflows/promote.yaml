@@ -28,6 +28,11 @@ on:
         type: string
         required: false
         default: ""
+      accepted_candidate_run_id:
+        description: Resume this exact KEV-blocked candidate run after merging its risk acceptance
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -43,10 +48,20 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     permissions:
       contents: read
       actions: read
+      packages: read
+      pull-requests: read
+      issues: read
+    outputs:
+      candidate_manifest_sha256: ${{ steps.candidate.outputs.manifest_sha256 }}
+      db_digest: ${{ steps.dbmeta1.outputs.db_digest }}
+      db_updated: ${{ steps.dbmeta1.outputs.db_updated }}
+      resume_original_run_attempt: ${{ steps.resume.outputs.original_run_attempt }}
+      resume_original_source_sha: ${{ steps.resume.outputs.original_source_sha }}
+      resume_artifact_id: ${{ steps.resume.outputs.artifact_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -74,6 +89,10 @@ jobs:
           FORCE_REPROMOTE: ${{ inputs.force_repromote }}
           RECOVER_TAG: ${{ inputs.recover_tag }}
           RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
+          ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+          RESUME_ORIGINAL_RUN_ATTEMPT: ${{ needs.validate.outputs.resume_original_run_attempt }}
+          RESUME_ORIGINAL_SOURCE_SHA: ${{ needs.validate.outputs.resume_original_source_sha }}
+          RESUME_ARTIFACT_ID: ${{ needs.validate.outputs.resume_artifact_id }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
@@ -90,6 +109,18 @@ jobs:
             echo "FATAL: force_repromote and recover_tag cannot be combined"
             exit 1
           fi
+          if [ "${FORCE_REPROMOTE}" = "true" ] && [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+            echo "FATAL: force_repromote and accepted_candidate_run_id cannot be combined"
+            exit 1
+          fi
+          if [ -n "${RECOVER_TAG}" ] && [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+            echo "FATAL: recover inputs and accepted_candidate_run_id cannot be combined"
+            exit 1
+          fi
+          [[ -z "${ACCEPTED_CANDIDATE_RUN_ID}" || "${ACCEPTED_CANDIDATE_RUN_ID}" =~ ^[1-9][0-9]*$ ]] || {
+            echo "FATAL: accepted_candidate_run_id must be numeric"
+            exit 1
+          }
           if [ -n "${RECOVERY_RUN_ID}" ] && [ -z "${RECOVER_TAG}" ]; then
             echo "FATAL: recovery_run_id requires recover_tag"
             exit 1
@@ -98,18 +129,25 @@ jobs:
           mkdir -p validation-context
           if [ -n "${RECOVER_TAG}" ]; then
             PROVENANCE="provenance/${APP}/${RECOVER_TAG}.json"
-            ORIGINAL_RUN_ID="${RECOVERY_RUN_ID}"
-            if [ -f "${PROVENANCE}" ]; then
-              RECORDED_URL="$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${PROVENANCE}")"
-              RECORDED_ID="${RECORDED_URL##*/}"
-              if [ -n "${ORIGINAL_RUN_ID}" ] && [ "${ORIGINAL_RUN_ID}" != "${RECORDED_ID}" ]; then
-                echo "FATAL: recovery_run_id does not match the existing provenance record"
-                exit 1
-              fi
-              ORIGINAL_RUN_ID="${RECORDED_ID}"
-            fi
-            if [[ ! "${ORIGINAL_RUN_ID}" =~ ^[1-9][0-9]*$ ]]; then
-              echo "FATAL: recovery needs an existing provenance record or numeric recovery_run_id"
+            [ -f "${PROVENANCE}" ] || {
+              echo "FATAL: recovery requires an existing Phase 05 provenance record"
+              exit 1
+            }
+            jq -e --arg app "${APP}" --arg tag "${RECOVER_TAG}" '
+              .schema == "trusted-images.bocklabs.dev/provenance-v1" and
+              .app == $app and .internal.tag == $tag and
+              .internal.platforms == ["linux/amd64"] and
+              (.upstream.index_digest | type == "string") and
+              (.upstream.selected_child_digest | type == "string") and
+              (.internal.digest | type == "string")
+            ' "${PROVENANCE}" > /dev/null || {
+              echo "FATAL: recovery provenance is not a Phase 05 single-platform record"
+              exit 1
+            }
+            RECORDED_URL="$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${PROVENANCE}")"
+            ORIGINAL_RUN_ID="${RECORDED_URL##*/}"
+            if [ -n "${RECOVERY_RUN_ID}" ] && [ "${RECOVERY_RUN_ID}" != "${ORIGINAL_RUN_ID}" ]; then
+              echo "FATAL: recovery_run_id does not match the existing provenance record"
               exit 1
             fi
             gh api "repos/${REPO}/actions/runs/${ORIGINAL_RUN_ID}" > validation-context/original-run.json
@@ -125,7 +163,7 @@ jobs:
             gh api --paginate "repos/${REPO}/actions/runs/${ORIGINAL_RUN_ID}/artifacts" \
               --jq '.artifacts[] | select(.expired == false) | .name' \
               > validation-context/original-artifacts.txt
-            for ARTIFACT in validation-evidence trivy-full-report trivy-copa-report; do
+            for ARTIFACT in validation-evidence trivy-full-report trivy-copa-report candidate; do
               grep -qFx "${ARTIFACT}" validation-context/original-artifacts.txt || {
                 echo "FATAL: original run is missing required artifact ${ARTIFACT}"
                 exit 1
@@ -136,6 +174,50 @@ jobs:
               --name validation-evidence --dir "${RUNNER_TEMP}/original-validation"
             gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
               --name trivy-full-report --dir "${RUNNER_TEMP}/original-report"
+            rm -rf recovery-candidate
+            gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
+              --name candidate --dir recovery-candidate
+          python3 - "${PROVENANCE}" recovery-candidate <<'PY'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+
+          provenance, root = Path(sys.argv[1]), Path(sys.argv[2])
+          record = json.loads(provenance.read_text(encoding="utf-8"))
+          manifest = hashlib.sha256((root / "candidate-manifest.json").read_bytes()).hexdigest()
+          expected = {
+              "index": record["upstream"]["index_digest"],
+              "child": record["upstream"]["selected_child_digest"],
+              "candidate": record["internal"]["digest"],
+          }
+          actual = {
+              "index": "sha256:" + hashlib.sha256((root / "upstream-index.json").read_bytes()).hexdigest(),
+              "child": "sha256:" + hashlib.sha256((root / "child-manifest.json").read_bytes()).hexdigest(),
+              "candidate": "sha256:" + manifest,
+          }
+          if actual != expected:
+              raise SystemExit("FATAL: recovery candidate bytes do not match provenance")
+          blob = root / "candidate-oci" / "blobs" / "sha256" / expected["candidate"].split(":", 1)[1]
+          if not blob.is_file() or blob.read_bytes() != (root / "candidate-manifest.json").read_bytes():
+              raise SystemExit("FATAL: recovery OCI layout does not preserve candidate bytes")
+          listed = {
+              line.split("  ", 1)[1]
+              for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
+              if "  " in line
+          }
+          actual_files = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file() and path.name != "SHA256SUMS"}
+          if listed != actual_files:
+              raise SystemExit("FATAL: recovery candidate checksum manifest is ambiguous")
+          for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
+              digest, name = line.split("  ", 1)
+              if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
+                  raise SystemExit(f"FATAL: recovery candidate checksum failed: {name}")
+          Path("original-candidate-decision.json").write_bytes((root / "candidate-decision.json").read_bytes())
+          PY
+            cp recovery-candidate/candidate-manifest.json candidate-manifest.json
+            rm -rf candidate-oci
+            cp -a recovery-candidate/candidate-oci candidate-oci
             jq -e --arg app "${APP}" \
               '.app == $app and .validation.result == "pass"' \
               "${RUNNER_TEMP}/original-validation/validation-evidence.json" > /dev/null || {
@@ -167,7 +249,8 @@ jobs:
               --arg original_run_url "${ORIGINAL_RUN_URL}" \
               --arg original_source_sha "${ORIGINAL_SOURCE_SHA}" \
               --arg recovered_tag "${RECOVER_TAG}" \
-              '{mode:"recovery", original_run_url:$original_run_url, original_source_sha:$original_source_sha, recovered_tag:$recovered_tag}' \
+              --arg recovered_digest "$(jq -er .internal.digest "${PROVENANCE}")" \
+              '{mode:"recovery", original_run_url:$original_run_url, original_source_sha:$original_source_sha, recovered_tag:$recovered_tag, recovered_digest:$recovered_digest}' \
               > validation-context/context.json
           else
             cp "inventory/${APP}/image.yaml" validation-context/image.yaml
@@ -191,6 +274,7 @@ jobs:
           print(f"upstream_tag={spec['upstream']['tag']}")
           print(f"upstream_digest={spec['upstream']['digest']}")
           print(f"dest_package={spec['destination']['package']}")
+          print(f"patch_policy={spec['patchPolicy']}")
           print(f"app={app}")
           print(f"validation_type={validation['type']}")
           PARAM_OUTPUTS = {
@@ -212,6 +296,14 @@ jobs:
               print("validation_env=" + json.dumps(validation["env"]))
           PY
           )"
+          python3 - validation-context/image.yaml <<'PY' > validation-context/patch-policy.json
+          import json, sys, yaml
+          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
+          policy = {"patchPolicy": spec["patchPolicy"]}
+          if spec["patchPolicy"] == "disabled":
+              policy["patchDisabledReason"] = spec["patchDisabledReason"]
+          print(json.dumps(policy, sort_keys=True))
+          PY
           echo "${OUT}"
           echo "${OUT}" >> "$GITHUB_OUTPUT"
 
@@ -222,6 +314,189 @@ jobs:
           path: validation-context/
           retention-days: 30
           if-no-files-found: error
+
+      - name: Restore the exact accepted candidate
+        id: resume
+        if: inputs.accepted_candidate_run_id != ''
+        shell: bash
+        env:
+          ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP: ${{ steps.entry.outputs.app }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          rm -rf resume-download candidate-oci resume-run.json resume-branch.json resume-artifacts.jsonl
+          gh api "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}" > resume-run.json
+          gh api "repos/${REPO}/branches/main" > resume-branch.json
+          jq -e --arg repo "${REPO}" --arg run_id "${ACCEPTED_CANDIDATE_RUN_ID}" '
+            .id == ($run_id | tonumber) and .repository.full_name == $repo and
+            .path == ".github/workflows/promote.yaml" and .event == "workflow_dispatch" and
+            .head_branch == "main" and (.head_sha | test("^[a-f0-9]{40}$")) and
+            (.run_attempt | type == "number" and . > 0) and .status == "completed"
+          ' resume-run.json > /dev/null || {
+            echo "FATAL: accepted candidate is the wrong run or was not dispatched from protected main"
+            exit 1
+          }
+          jq -e '.name == "main" and .protected == true' resume-branch.json > /dev/null || {
+            echo "FATAL: repository main is not protected"
+            exit 1
+          }
+          gh api --paginate "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name == "candidate")' > resume-artifacts.jsonl
+          ARTIFACT_ID="$(python3 - "${ACCEPTED_CANDIDATE_RUN_ID}" <<'PY'
+          import json
+          import sys
+
+          rows = [json.loads(line) for line in open("resume-artifacts.jsonl", encoding="utf-8") if line.strip()]
+          valid = [row for row in rows if row.get("expired") is False and row.get("workflow_run", {}).get("id") == int(sys.argv[1])]
+          if len(rows) != 1 or len(valid) != 1 or not isinstance(valid[0].get("id"), int) or valid[0]["id"] <= 0:
+              raise SystemExit("FATAL: candidate artifact is missing, expired, or ambiguous")
+          print(valid[0]["id"])
+          PY
+          )"
+          printf '%s\n' "${ARTIFACT_ID}" > resume-artifact-id.txt
+          gh run download "${ACCEPTED_CANDIDATE_RUN_ID}" --repo "${REPO}" \
+            --name candidate --dir resume-download
+          python3 - "${ACCEPTED_CANDIDATE_RUN_ID}" "${ARTIFACT_ID}" <<'PY'
+          import hashlib
+          import importlib.util
+          import json
+          import os
+          import shutil
+          import sys
+          from pathlib import Path, PurePosixPath
+
+          import yaml
+
+          run_id, artifact_id = sys.argv[1], int(sys.argv[2])
+          root = Path("resume-download")
+          mandatory = {
+              "candidate-decision.json", "candidate-manifest.json", "child-config.json",
+              "child-manifest.json", "inventory-image.yaml", "secobserve-upload.json",
+              "source.sha", "tag-decision.json", "trivy-before-full.json", "trivy-copa.json",
+              "upstream-index.json",
+              "trivy-full.cdx.json", "trivy-full.json", "validation-evidence.json", "kev.json",
+              "kev-fetched-at.txt", "trivy-db-meta-1.txt", "trivy-db-meta-2.txt", "SHA256SUMS",
+          }
+          optional = {
+              "trivy-after-full.json", "scan-receipt.json", "trivy-db-meta-after.txt",
+              "copa-diagnostics.txt", "copa-candidate-image-id.txt", "before-labels.json",
+              "after-labels.json",
+          }
+          allowed_prefixes = ("candidate-oci/", "validation-logs/")
+          files = [path for path in root.rglob("*") if path.is_file() or path.is_symlink()]
+          relatives = []
+          for path in files:
+              relative = path.relative_to(root).as_posix()
+              if path.is_symlink() or path.is_absolute() or ".." in path.parts:
+                  raise SystemExit(f"FATAL: candidate artifact path traversal or symlink: {relative}")
+              relatives.append(relative)
+          checksum_lines = (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
+          listed = []
+          for line in checksum_lines:
+              digest, name = line.split("  ", 1)
+              relative_path = PurePosixPath(name)
+              if relative_path.is_absolute() or ".." in relative_path.parts:
+                  raise SystemExit(f"FATAL: candidate checksum manifest path traversal: {name}")
+              path = root / name
+              if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                  raise SystemExit(f"FATAL: candidate checksum/digest mismatch: {name}")
+              listed.append(name)
+          actual = [name for name in relatives if name != "SHA256SUMS"]
+          if len(listed) != len(set(listed)) or set(listed) != set(actual):
+              raise SystemExit("FATAL: candidate checksum manifest is incomplete or names undeclared files")
+          allowed = mandatory | optional | {name for name in actual if name.startswith(allowed_prefixes)}
+          undeclared = set(actual) - allowed
+          if undeclared:
+              raise SystemExit("FATAL: candidate artifact has undeclared files: " + ", ".join(sorted(undeclared)))
+          missing = mandatory - (set(actual) | {"SHA256SUMS"})
+          if missing:
+              raise SystemExit("FATAL: candidate artifact is missing required files: " + ", ".join(sorted(missing)))
+
+          spec = yaml.safe_load((root / "inventory-image.yaml").read_text(encoding="utf-8"))["spec"]
+          expected_package = f"ghcr.io/bocklabs/{os.environ['APP']}"
+          if spec["destination"]["package"] != expected_package:
+              raise SystemExit("FATAL: candidate inventory app/package mismatch")
+          current = Path("inventory") / os.environ["APP"] / "image.yaml"
+          if current.read_bytes() != (root / "inventory-image.yaml").read_bytes():
+              raise SystemExit("FATAL: candidate inventory bytes differ from current main")
+
+          decision_path = root / "candidate-decision.json"
+          decision = json.loads(decision_path.read_text(encoding="utf-8"))
+          module_spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
+          module = importlib.util.module_from_spec(module_spec)
+          module_spec.loader.exec_module(module)
+          module.validate_decision(decision)
+          run = json.loads(Path("resume-run.json").read_text(encoding="utf-8"))
+          expected = {
+              "app": os.environ["APP"],
+              "run_id": run_id,
+              "source_sha": run["head_sha"],
+              "upstream_index_digest": spec["upstream"]["digest"],
+          }
+          mismatches = [key for key, value in expected.items() if decision.get(key) != value]
+          if decision.get("run_attempt") != run["run_attempt"] or (root / "source.sha").read_text().strip() != run["head_sha"]:
+              mismatches.append("run_attempt/source.sha")
+          if decision.get("resume") is not None:
+              mismatches.append("resume")
+          if decision.get("eligible") is not False or decision.get("reason") != "missing_kev_acceptance":
+              mismatches.append("blocker")
+          if decision.get("validation", {}).get("result") != "pass":
+              mismatches.append("validation")
+          if mismatches:
+              raise SystemExit("FATAL: candidate decision binding failed (wrong run, app, source, inventory, or blocker): " + ", ".join(mismatches))
+
+          selected = decision["selected_child_digest"]
+          candidate = decision["candidate"]["digest"]
+          for name, digest in (("child-manifest.json", selected), ("candidate-manifest.json", candidate)):
+              actual_digest = "sha256:" + hashlib.sha256((root / name).read_bytes()).hexdigest()
+              if actual_digest != digest:
+                  raise SystemExit(f"FATAL: candidate {name} digest mismatch")
+          if module.sha256_file(root / "upstream-index.json") != spec["upstream"]["digest"]:
+              raise SystemExit("FATAL: candidate upstream index digest mismatch")
+          if module.select_child(json.loads((root / "upstream-index.json").read_text()), root / "child-manifest.json", root / "child-config.json") != selected:
+              raise SystemExit("FATAL: candidate child identity mismatch")
+          blob = root / "candidate-oci" / "blobs" / "sha256" / candidate.split(":", 1)[1]
+          if not blob.is_file() or blob.read_bytes() != (root / "candidate-manifest.json").read_bytes():
+              raise SystemExit("FATAL: candidate OCI layout does not preserve exact bytes")
+          tag = json.loads((root / "tag-decision.json").read_text(encoding="utf-8"))
+          if tag != {"internal_tag": decision["proposed_tag"], "skip_copy": False}:
+              raise SystemExit("FATAL: candidate proposed tag mismatch")
+          if json.loads((root / "validation-evidence.json").read_text()).get("validation", {}).get("result") != "pass":
+              raise SystemExit("FATAL: original candidate validation did not pass")
+
+          for name in mandatory | optional:
+              source = root / name
+              if source.is_file():
+                  shutil.copyfile(source, name)
+          shutil.copytree(root / "candidate-oci", "candidate-oci", dirs_exist_ok=True)
+          shutil.copyfile(root / "candidate-decision.json", "original-candidate-decision.json")
+          with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open("a", encoding="utf-8") as output:
+              output.write(f"candidate_digest={candidate}\n")
+              output.write(f"selected_child_digest={selected}\n")
+              output.write(f"internal_tag={decision['proposed_tag']}\n")
+              output.write("skip_copy=false\n")
+              output.write(f"patched={str(decision['copa']['original_child_input']).lower()}\n")
+              output.write(f"artifact_id={artifact_id}\n")
+              output.write(f"original_run_id={run_id}\n")
+              output.write(f"original_run_attempt={run['run_attempt']}\n")
+              output.write(f"original_source_sha={run['head_sha']}\n")
+          PY
+
+      - name: Materialize preserved candidate for fresh checks
+        if: inputs.accepted_candidate_run_id != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63f5bc8b5d4d336036"
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
+            copy --preserve-digests \
+            oci:/workspace/candidate-oci:candidate \
+            docker-archive:/workspace/resume-final.tar:resume:candidate
+          docker load --input resume-final.tar
+          docker image inspect resume:candidate --format '{{.Id}}' > resume-candidate-image-id.txt
 
       - name: Fetch upstream index
         id: index
@@ -245,150 +520,12 @@ jobs:
             || { echo "FATAL: upstream index carries no manifests"; exit 1; }
           echo "upstream index bytes: $(wc -c < upstream-index.json)"
 
-      - name: Pull candidate image
+      - name: Resolve the exact linux/amd64 child
+        id: child
         shell: bash
         env:
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            echo "${DOCKERHUB_TOKEN}" | docker login docker.io --username "${DOCKERHUB_USERNAME}" --password-stdin
-          fi
-          docker pull "${UPSTREAM_REF}@${UPSTREAM_DIGEST}"
-
-      - name: Run validation
-        id: runval
-        shell: bash
-        env:
-          APP: ${{ steps.entry.outputs.app }}
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          VALIDATION_TYPE: ${{ steps.entry.outputs.validation_type }}
-          VALIDATION_PORT: ${{ steps.entry.outputs.validation_port }}
-          VALIDATION_PATH: ${{ steps.entry.outputs.validation_path }}
-          VALIDATION_EXPECT_STATUS: ${{ steps.entry.outputs.validation_expect_status }}
-          VALIDATION_DURATION_SECONDS: ${{ steps.entry.outputs.validation_duration_seconds }}
-          VALIDATION_TIMEOUT_SECONDS: ${{ steps.entry.outputs.validation_timeout_seconds }}
-          VALIDATION_EXPECTED_EXIT: ${{ steps.entry.outputs.validation_expected_exit }}
-          VALIDATION_COMMAND: ${{ steps.entry.outputs.validation_command }}
-          VALIDATION_EXPECTED_PLATFORMS: ${{ steps.entry.outputs.validation_expected_platforms }}
-          VALIDATION_ENV: ${{ steps.entry.outputs.validation_env }}
-        run: |
-          set -euo pipefail
-          # D-04: workflow-side defaults wherever the inventory entry carries no deviation.
-          ARGS=(
-            --app "${APP}"
-            --ref "${UPSTREAM_REF}"
-            --digest "${UPSTREAM_DIGEST}"
-            --validation-type "${VALIDATION_TYPE}"
-            --index-file upstream-index.json
-            --evidence-out validation-evidence.json
-            --path "${VALIDATION_PATH:-/}"
-            --expect-status "${VALIDATION_EXPECT_STATUS:-200}"
-            --duration-seconds "${VALIDATION_DURATION_SECONDS:-30}"
-            --timeout-seconds "${VALIDATION_TIMEOUT_SECONDS:-60}"
-            --expected-exit "${VALIDATION_EXPECTED_EXIT:-0}"
-            --expected-platforms "${VALIDATION_EXPECTED_PLATFORMS:-linux/amd64}"
-            --command "${VALIDATION_COMMAND:-[]}"
-          )
-          if [ -n "${VALIDATION_PORT:-}" ]; then
-            ARGS+=(--port "${VALIDATION_PORT}")
-          fi
-          if [ -n "${VALIDATION_ENV:-}" ]; then
-            while IFS=$'\t' read -r KEY VALUE; do
-              ARGS+=("--env" "${KEY}=${VALUE}")
-            done < <(jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv' <<<"${VALIDATION_ENV}")
-          fi
-          python3 scripts/validate_image.py "${ARGS[@]}"
-
-      - name: Upload validation evidence
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: validation-evidence
-          path: validation-evidence.json
-          retention-days: 30
-          if-no-files-found: error
-
-      - name: Upload validation container logs
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: validation-container-logs
-          path: validation-logs/
-          retention-days: 14
-          # A sub-second crash can leave no log capture at all (Pitfall 6);
-          # the evidence records the honest absence, the upload just warns.
-          if-no-files-found: warn
-
-  promote:
-    needs: validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Guard runner labels
-        uses: ./.github/actions/runner-label-guard
-
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: "3.14"
-          cache: pip
-
-      - name: Install pinned PyYAML
-        shell: bash
-        run: |
-          set -euo pipefail
-          pip install -r requirements.txt
-
-      - name: Download validation context
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: validation-context
-          path: validation-context
-
-      - name: Resolve inventory entry
-        id: entry
-        shell: bash
-        env:
-          APP: ${{ inputs.app }}
-        run: |
-          set -euo pipefail
-          if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
-            echo "FATAL: app not in inventory: ${APP}"
-            exit 1
-          fi
-          test -s validation-context/image.yaml || { echo "FATAL: validation context is empty"; exit 1; }
-          OUT="$(python3 - validation-context/image.yaml "${APP}" <<'PY'
-          import sys
-          import yaml
-
-          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
-          app = sys.argv[2]
-          if spec["destination"]["package"] != f"ghcr.io/bocklabs/{app}":
-              raise SystemExit("FATAL: validation context destination does not match app")
-          print(f"upstream_ref={spec['upstream']['ref']}")
-          print(f"upstream_tag={spec['upstream']['tag']}")
-          print(f"upstream_digest={spec['upstream']['digest']}")
-          print(f"dest_package={spec['destination']['package']}")
-          print(f"app={app}")
-          PY
-          )"
-          echo "${OUT}"
-          echo "${OUT}" >> "$GITHUB_OUTPUT"
-
-      - name: Fetch upstream index
-        id: index
-        shell: bash
-        env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
           DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
@@ -398,24 +535,31 @@ jobs:
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
             CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
           fi
+          SELECTED_DIGEST="$(jq -er '[.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64")][0].digest' upstream-index.json)"
           docker run --rm -v "$PWD":/workspace "$SKOPEO" \
             inspect --raw ${CREDS[@]+"${CREDS[@]}"} \
-            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
-          MEDIA_TYPE="$(jq -r '.mediaType' upstream-index.json)"
-          echo "media_type=${MEDIA_TYPE}" >> "$GITHUB_OUTPUT"
-          jq -r '.manifests[] | "\(.platform.os)/\(.platform.architecture)\(.platform.variant // "")"' upstream-index.json \
-            | sort -u > upstream.platforms
-          echo "media type: ${MEDIA_TYPE}"
-          echo "platforms:"
-          cat upstream.platforms
+            "docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" > child-manifest.json
+          docker run --rm -v "$PWD":/workspace "$SKOPEO" \
+            inspect --config ${CREDS[@]+"${CREDS[@]}"} \
+            "docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" > child-config.json
+          SELECTED_DIGEST="$(python3 scripts/evaluate_promotion.py --resolve-only \
+            --index upstream-index.json \
+            --upstream-index-digest "${UPSTREAM_INDEX_DIGEST}" \
+            --child-manifest child-manifest.json \
+            --child-config child-config.json \
+            --selected-digest-out selected-child.txt)"
+          echo "digest=${SELECTED_DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "selected linux/amd64 child: ${SELECTED_DIGEST}"
 
       - name: Compute internal tag and detect skip
         id: tag
+        if: inputs.accepted_candidate_run_id == ''
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
           UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          SELECTED_CHILD_DIGEST: ${{ steps.child.outputs.digest }}
           FORCE_REPROMOTE: ${{ inputs.force_repromote }}
           RECOVER_TAG: ${{ inputs.recover_tag }}
         run: |
@@ -499,33 +643,101 @@ jobs:
             }
             printf '%s\t%s\n' "${CAND}" "${CAND_DIGEST}" >> registry-observations.tsv
           done < registry-candidates.txt
-          python3 - <<'PY' > registry-observations.json
+          python3 - "${APP}" <<'PY' > registry-observations.json
           import json
+          import sys
           from pathlib import Path
 
           rows = []
           for line in Path("registry-observations.tsv").read_text(encoding="utf-8").splitlines():
               tag, digest = line.split("\t")
-              rows.append({"tag": tag, "digest": digest})
+              provenance = Path("provenance") / sys.argv[1] / f"{tag}.json"
+              if provenance.is_file():
+                  record = json.loads(provenance.read_text(encoding="utf-8"))
+                  if record.get("schema") != "trusted-images.bocklabs.dev/provenance-v1" or record.get("internal", {}).get("tag") != tag or record.get("internal", {}).get("digest") != digest:
+                      raise SystemExit(f"FATAL: provenance does not bind observed tag {tag}")
+                  rows.append({
+                      "tag": tag,
+                      "digest": digest,
+                      "upstream_index_digest": record["upstream"].get("index_digest", record["upstream"]["digest"]),
+                      "selected_child_digest": record["upstream"].get("selected_child_digest"),
+                      "platforms": record["internal"]["platforms"],
+                  })
+              else:
+                  rows.append({
+                      "tag": tag, "digest": digest, "upstream_index_digest": "",
+                      "selected_child_digest": None, "platforms": None,
+                  })
           print(json.dumps(rows))
           PY
 
           ARGS=(
             --upstream-tag "${UPSTREAM_TAG}"
             --upstream-digest "${UPSTREAM_DIGEST}"
+            --selected-child-digest "${SELECTED_CHILD_DIGEST}"
             --observations registry-observations.json
           )
           [ "${FORCE_REPROMOTE}" = "true" ] && ARGS+=(--force-repromote)
-          [ -n "${RECOVER_TAG}" ] && ARGS+=(--recover-tag "${RECOVER_TAG}")
+          if [ -n "${RECOVER_TAG}" ]; then
+            ARGS+=(
+              --recover-tag "${RECOVER_TAG}"
+              --recover-candidate-digest "$(jq -er .recovered_digest validation-context/context.json)"
+            )
+          fi
           RESULT="$(python3 scripts/resolve_internal_tag.py "${ARGS[@]}")"
           INTERNAL_TAG="$(jq -er .internal_tag <<<"${RESULT}")"
           SKIP_COPY="$(jq -er '.skip_copy | tostring' <<<"${RESULT}")"
           {
             echo "skip_copy=${SKIP_COPY}"
             echo "internal_tag=${INTERNAL_TAG}"
+            echo "higher_upstream=$(jq -r .supersedes.higher_upstream <<<"${RESULT}")"
+            echo "original_child_selected=$(jq -r .supersedes.original_child_selected <<<"${RESULT}")"
+            if [ "${SKIP_COPY}" = true ] && [ -z "${RECOVER_TAG}" ]; then
+              REUSE_RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+              [ -f "${REUSE_RECORD}" ] || { echo "FATAL: reusable tag has no Phase 05 provenance"; exit 1; }
+              echo "reuse_candidate_digest=$(jq -er .internal.digest "${REUSE_RECORD}")"
+              echo "reuse_run_url=$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${REUSE_RECORD}")"
+            fi
           } >> "$GITHUB_OUTPUT"
           echo "skip_copy:    ${SKIP_COPY}"
           echo "internal_tag: ${INTERNAL_TAG}"
+
+      - name: Restore the exact reused candidate
+        id: reuse
+        if: steps.tag.outputs.skip_copy == 'true' && inputs.accepted_candidate_run_id == '' && inputs.recover_tag == ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          REUSE_CANDIDATE_DIGEST: ${{ steps.tag.outputs.reuse_candidate_digest }}
+          REUSE_RUN_URL: ${{ steps.tag.outputs.reuse_run_url }}
+        run: |
+          set -euo pipefail
+          REUSE_RUN_ID="${REUSE_RUN_URL##*/}"
+          [[ "${REUSE_RUN_ID}" =~ ^[1-9][0-9]*$ ]] || { echo "FATAL: reused provenance has no run ID"; exit 1; }
+          gh api "repos/${REPO}/actions/runs/${REUSE_RUN_ID}" > reuse-run.json
+          jq -e --arg repo "${REPO}" '.repository.full_name == $repo and .path == ".github/workflows/promote.yaml"' reuse-run.json > /dev/null
+          rm -rf reused-candidate
+          gh run download "${REUSE_RUN_ID}" --repo "${REPO}" --name candidate --dir reused-candidate
+          python3 - "${REUSE_CANDIDATE_DIGEST}" reused-candidate <<'PY'
+          import hashlib
+          import sys
+          from pathlib import Path
+
+          expected, root = sys.argv[1], Path(sys.argv[2])
+          manifest = root / "candidate-manifest.json"
+          actual = "sha256:" + hashlib.sha256(manifest.read_bytes()).hexdigest()
+          blob = root / "candidate-oci" / "blobs" / "sha256" / expected.split(":", 1)[1]
+          if actual != expected or not blob.is_file() or blob.read_bytes() != manifest.read_bytes():
+              raise SystemExit("FATAL: reused candidate bytes do not match its provenance")
+          PY
+          cp reused-candidate/candidate-manifest.json candidate-manifest.json
+          cp reused-candidate/candidate-decision.json original-candidate-decision.json
+          rm -rf candidate-oci
+          cp -a reused-candidate/candidate-oci candidate-oci
+          echo "candidate_digest=${REUSE_CANDIDATE_DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Resolve source registry credentials
         id: creds
@@ -545,14 +757,17 @@ jobs:
           fi
 
       - name: Trivy full scan
+        id: scanbefore
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         env:
+          TRIVY_EXIT_ON_EOL: '1'
           TRIVY_IMAGE_SRC: remote
           TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
           TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
         with:
           version: v0.74.0
-          image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.entry.outputs.upstream_digest }}
+          image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
           format: json
           output: trivy-full.json
@@ -560,6 +775,8 @@ jobs:
           cache: 'true'
           cache-dir: ${{ github.workspace }}/.cache/trivy
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          platform: linux/amd64
+          list-all-pkgs: 'true'
           timeout: 30m0s
 
       - name: Capture Trivy DB metadata
@@ -592,21 +809,27 @@ jobs:
           cat trivy-db-meta-1.txt
 
       - name: Trivy Copa-shaped scan (fixable OS only)
+        id: scanfixable
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         env:
+          TRIVY_EXIT_ON_EOL: '1'
           TRIVY_IMAGE_SRC: remote
           TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
           TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
+          TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true' # no action input exists — env pass-through; reuse scan 1's DB
         with:
           version: v0.74.0
-          image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.entry.outputs.upstream_digest }}
+          image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
           format: json
           output: trivy-copa.json
           vuln-type: os
           ignore-unfixed: 'true'
           cache: 'false'
+          platform: linux/amd64
+          list-all-pkgs: 'true'
           timeout: 30m0s
 
       - name: Assert single DB across scans
@@ -620,6 +843,316 @@ jobs:
           if ! diff -u trivy-db-meta-1.txt trivy-db-meta-2.txt; then
             echo "FATAL: Trivy DB changed between scans (SCAN-03)"
             exit 1
+          fi
+
+      - name: Preserve and gate the pre-patch reports
+        id: fixable
+        shell: bash
+        env:
+          FULL_SCAN_OUTCOME: ${{ steps.scanbefore.outcome }}
+          FIXABLE_SCAN_OUTCOME: ${{ steps.scanfixable.outcome }}
+        run: |
+          set -euo pipefail
+          test -s trivy-full.json
+          test -s trivy-copa.json
+          cp trivy-full.json trivy-before-full.json
+          [ "${FULL_SCAN_OUTCOME}" = success ] && [ "${FIXABLE_SCAN_OUTCOME}" = success ] || {
+            echo "FATAL: pre-patch Trivy scan failed; reports retained"
+            exit 1
+          }
+          jq -e '.Metadata.OS.EOSL == false' trivy-full.json > /dev/null || {
+            echo "FATAL: Metadata.OS.EOSL blocked the pre-patch candidate"
+            exit 1
+          }
+          COUNT="$(jq '[.Results[].Vulnerabilities[]?] | length' trivy-copa.json)"
+          echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
+          echo "fixable OS findings: ${COUNT}"
+
+      - name: Materialize the exact recovered candidate
+        id: recovery
+        if: inputs.recover_tag != '' || steps.reuse.outputs.candidate_digest != ''
+        shell: bash
+        env:
+          RECOVERED_DIGEST: ${{ steps.reuse.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c3fbc8b5d4d336036"
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
+            copy --preserve-digests \
+            oci:/workspace/candidate-oci:candidate \
+            docker-archive:/workspace/recovery-final.tar:recovered:candidate
+          docker load --input recovery-final.tar
+          RECOVERED_DIGEST="${RECOVERED_DIGEST:-$(jq -er .recovered_digest validation-context/context.json)}"
+          [ "$(sha256sum candidate-manifest.json | awk '{print $1}')" = "${RECOVERED_DIGEST#sha256:}" ]
+          echo "candidate_digest=${RECOVERED_DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Pull exact candidate child
+        if: inputs.accepted_candidate_run_id == ''
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            echo "${DOCKERHUB_TOKEN}" | docker login docker.io --username "${DOCKERHUB_USERNAME}" --password-stdin
+          fi
+          docker pull "${UPSTREAM_REF}@${SELECTED_DIGEST}"
+
+      - name: Allocate the immutable patched revision before metadata
+        id: patchtag
+        if: inputs.accepted_candidate_run_id == '' && inputs.recover_tag == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
+        shell: bash
+        env:
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+          UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
+          RECOVER_TAG: ${{ inputs.recover_tag }}
+        run: |
+          set -euo pipefail
+          [ -z "${RECOVER_TAG}" ] || { echo "FATAL: original-child patching cannot recover an immutable published revision"; exit 1; }
+          RESULT="$(python3 scripts/resolve_internal_tag.py \
+            --upstream-tag "${UPSTREAM_TAG}" \
+            --upstream-digest "${UPSTREAM_INDEX_DIGEST}" \
+            --selected-child-digest "${SELECTED_DIGEST}" \
+            --observations registry-observations.json --force-repromote)"
+          echo "internal_tag=$(jq -er .internal_tag <<<"${RESULT}")" >> "$GITHUB_OUTPUT"
+          echo "skip_copy=false" >> "$GITHUB_OUTPUT"
+
+      - name: Pin and verify the Copa action runtime
+        id: copapin
+        if: inputs.recover_tag == '' && inputs.accepted_candidate_run_id == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACTION_SHA=7de81b0830c8a4d1edb4a63a77e65a6d7ef8dc95
+          curl --fail --silent --show-error "https://raw.githubusercontent.com/project-copacetic/copa-action/${ACTION_SHA}/action.yaml" > copa-action.yaml
+          curl --fail --silent --show-error "https://raw.githubusercontent.com/project-copacetic/copa-action/${ACTION_SHA}/entrypoint.sh" > copa-entrypoint.sh
+          printf '%s\n' \
+            'ac737a970f24c5929cd04e9d4813e3ecab458568c73e0e12de1430ecfc4bdc31  copa-action.yaml' \
+            'f8a240115438c09958b0e29784025a314fde8d7b77ef8cb1a06133412b33506d  copa-entrypoint.sh' | sha256sum -c
+          docker pull ghcr.io/project-copacetic/copa-action:v0.15.0@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b
+          docker image inspect ghcr.io/project-copacetic/copa-action@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b             --format '{{json .RepoDigests}}' | grep -F 'sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b'
+          docker tag ghcr.io/project-copacetic/copa-action@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b ghcr.io/project-copacetic/copa-action:v0.15.0
+          docker image inspect ghcr.io/project-copacetic/copa-action:v0.15.0 --format '{{.Id}}' > copa-action-image-id.txt
+
+      - name: Run pinned Copa from the original child
+        id: copa
+        if: inputs.recover_tag == '' && inputs.accepted_candidate_run_id == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
+        continue-on-error: true
+        uses: project-copacetic/copa-action@7de81b0830c8a4d1edb4a63a77e65a6d7ef8dc95
+        with:
+          image: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
+          image-report: trivy-copa.json
+          patched-tag: copa:candidate
+          timeout: 30m
+          copa-version: 0.15.0
+          format: openvex
+          output: copa-output.json
+
+      - name: Capture Copa diagnostics and fail closed
+        if: always() && steps.copa.outcome != 'skipped' && steps.copapin.outcome == 'success'
+        shell: bash
+        env:
+          COPA_OUTCOME: ${{ steps.copa.outcome }}
+        run: |
+          set -euo pipefail
+          docker logs copa-action 2>&1 | sed -E \
+            -e 's#(https?://)[^/@]+:[^/@]+@#\1[redacted]@#g' \
+            -e 's/(Bearer )[A-Za-z0-9._~+\/-]+/\1[redacted]/gI' \
+            -e 's/((token|password|secret|authorization)[=:][[:space:]]*)[^[:space:]&]+/\1[redacted]/gI' \
+            > copa-diagnostics.txt
+          docker image inspect ghcr.io/project-copacetic/copa-action:v0.15.0 --format '{{.Id}}' > copa-action-image-id-after.txt
+          cmp copa-action-image-id.txt copa-action-image-id-after.txt || {
+            echo "FATAL: pinned Copa action runtime changed during patching"
+            exit 1
+          }
+          classification=succeeded
+          if [ "${COPA_OUTCOME}" != success ]; then
+            classification=unknown
+            if grep -Eqi 'gpg|signature verification' copa-diagnostics.txt; then
+              classification=gpg
+            elif grep -Eqi 'end.of.life|eol' copa-diagnostics.txt; then
+              classification=eol
+            elif grep -Eqi 'unsupported|not supported|no supported' copa-diagnostics.txt; then
+              classification=unsupported
+            elif grep -Eqi 'no fix|no fixes|nothing to patch' copa-diagnostics.txt; then
+              classification=no-fix
+            fi
+          fi
+          printf '\ncopa_action_outcome=%s\nclassification=%s\n' "${COPA_OUTCOME}" "${classification}" >> copa-diagnostics.txt
+          [ "${COPA_OUTCOME}" = success ] || {
+            echo "FATAL: Copa action failed (${classification}); diagnostics retained"
+            exit 1
+          }
+          docker image inspect copa:candidate --format '{{.Id}}' > copa-candidate-image-id.txt
+
+      - name: Upload Copa diagnostics
+        if: always() && steps.copapin.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: copa-diagnostics
+          path: |
+            trivy-copa.json
+            copa-diagnostics.txt
+            copa-action.yaml
+            copa-entrypoint.sh
+            copa-action-image-id.txt
+            copa-action-image-id-after.txt
+          retention-days: 8
+          if-no-files-found: warn
+
+      - name: Add only provenance labels and export final bytes
+        id: patched
+        if: inputs.accepted_candidate_run_id == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
+          INTERNAL_TAG: ${{ steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
+        run: |
+          set -euo pipefail
+          docker image inspect copa:candidate --format '{{json .Config.Labels}}' > before-labels.json
+          python3 - before-labels.json <<'PY' > label-changes.json
+          import json
+          import os
+          import sys
+          before = json.load(open(sys.argv[1])) or {}
+          labels = {
+              "org.opencontainers.image.base.digest": os.environ["SELECTED_DIGEST"],
+              "org.opencontainers.image.base.name": os.environ["UPSTREAM_REF"] + ":" + os.environ["UPSTREAM_TAG"],
+              "org.opencontainers.image.source": "https://github.com/bocklabs/trusted-images",
+              "org.opencontainers.image.version": os.environ["INTERNAL_TAG"],
+          }
+          print(json.dumps([f"LABEL {key}={json.dumps(value)}" for key, value in labels.items() if key not in before]))
+          PY
+          CHANGES=()
+          while IFS= read -r CHANGE; do
+            CHANGES+=(--change "${CHANGE}")
+          done < <(jq -r '.[]' label-changes.json)
+          CONTAINER="$(docker create copa:candidate)"
+          trap 'docker rm "${CONTAINER}" > /dev/null' EXIT
+          docker commit "${CHANGES[@]}" "${CONTAINER}" copa:final > /dev/null
+          docker image inspect copa:final --format '{{json .Config.Labels}}' > after-labels.json
+          python3 - before-labels.json after-labels.json <<'PY'
+          import json, sys
+          before = json.load(open(sys.argv[1])) or {}
+          after = json.load(open(sys.argv[2])) or {}
+          allowed = {
+              "org.opencontainers.image.base.digest",
+              "org.opencontainers.image.base.name",
+              "org.opencontainers.image.source",
+              "org.opencontainers.image.version",
+          }
+          if set(after) - set(before) - allowed or any(after[k] != v for k, v in before.items()):
+              raise SystemExit("FATAL: patched labels violate the add-only provenance contract")
+          PY
+          docker save copa:final --output candidate-final.tar
+          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036"
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             inspect --raw oci:/workspace/candidate-oci:candidate > candidate-manifest.json
+          sha256sum candidate-manifest.json | awk '{print "digest=sha256:" $1}' > candidate-digest.txt
+          cat candidate-digest.txt >> "$GITHUB_OUTPUT"
+
+      - name: Rescan the exact patched bytes with the frozen DB
+        id: scanafter
+        if: steps.patched.outputs.digest
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_EXIT_ON_EOL: '1'
+          TRIVY_IMAGE_SRC: docker
+          TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
+          TRIVY_SKIP_DB_UPDATE: 'true'
+        with:
+          version: v0.74.0
+          input: candidate-final.tar
+          scanners: vuln
+          format: json
+          output: trivy-after-full.json
+          ignore-unfixed: 'false'
+          cache: 'false'
+          platform: linux/amd64
+          list-all-pkgs: 'true'
+          timeout: 30m0s
+
+      - name: Rescan the exact preserved accepted bytes with the frozen DB
+        id: scanresumed
+        if: inputs.accepted_candidate_run_id != '' || inputs.recover_tag != '' || steps.reuse.outputs.candidate_digest != ''
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_EXIT_ON_EOL: '1'
+          TRIVY_IMAGE_SRC: docker
+          TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
+          TRIVY_SKIP_DB_UPDATE: 'true'
+        with:
+          version: v0.74.0
+          input: resume-final.tar
+          scanners: vuln
+          format: json
+          output: trivy-after-full.json
+          ignore-unfixed: 'false'
+          cache: 'false'
+          platform: linux/amd64
+          list-all-pkgs: 'true'
+          timeout: 30m0s
+
+      - name: Build the paired patched scan receipt
+        if: steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest
+        shell: bash
+        env:
+          DB_DIGEST: ${{ steps.dbmeta1.outputs.db_digest }}
+          DB_UPDATED: ${{ steps.dbmeta1.outputs.db_updated }}
+          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest }}
+          AFTER_SCAN_OUTCOME: ${{ (steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest) && (steps.patched.outputs.digest && steps.scanafter.outcome || steps.scanresumed.outcome) }}
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
+        run: |
+          set -euo pipefail
+          test -s trivy-after-full.json
+          [ "${AFTER_SCAN_OUTCOME}" = success ] || { echo "FATAL: patched Trivy scan failed; report retained"; exit 1; }
+          jq -e '.Metadata.OS.EOSL == false' trivy-after-full.json > /dev/null
+          trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-after.txt
+          diff -u trivy-db-meta-1.txt trivy-db-meta-after.txt
+          BEFORE_SHA="$(sha256sum trivy-before-full.json | awk '{print $1}')"
+          AFTER_SHA="$(sha256sum trivy-after-full.json | awk '{print $1}')"
+          jq -n             --arg action_sha "ed142fd0673e97e23eac54620cfb913e5ce36c25"             --arg db_digest "${DB_DIGEST}"             --arg db_updated "${DB_UPDATED}"             --arg before_name "$(jq -r .ArtifactName trivy-before-full.json)"             --arg before_id "$(jq -r .Metadata.ImageID trivy-before-full.json)"             --arg before_manifest "${SELECTED_DIGEST}"             --arg before_sha "${BEFORE_SHA}"             --arg after_name "$(jq -r .ArtifactName trivy-after-full.json)"             --arg after_id "$(jq -r .Metadata.ImageID trivy-after-full.json)"             --arg after_manifest "${CANDIDATE_DIGEST}"             --arg after_sha "${AFTER_SHA}"             '{trivy_action_sha:$action_sha,trivy_db_digest:$db_digest,trivy_db_updated_at:$db_updated,before:{artifact_name:$before_name,image_id:$before_id,manifest_digest:$before_manifest,report_sha256:$before_sha},after:{artifact_name:$after_name,image_id:$after_id,manifest_digest:$after_manifest,report_sha256:$after_sha}}'             > scan-receipt.json
+
+      - name: Select the exact final candidate
+        id: final
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
+          PATCHED_DIGEST: ${{ steps.patched.outputs.digest }}
+          RESUME_DIGEST: ${{ steps.resume.outputs.candidate_digest }}
+          RECOVERED_DIGEST: ${{ steps.recovery.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          if [ -n "${PATCHED_DIGEST}" ]; then
+            cp trivy-after-full.json trivy-full.json
+            echo "digest=${PATCHED_DIGEST}" >> "$GITHUB_OUTPUT"
+            echo "ref=copa:final" >> "$GITHUB_OUTPUT"
+            echo "patched=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "${RESUME_DIGEST}" ]; then
+            cp trivy-after-full.json trivy-full.json
+            echo "digest=${RESUME_DIGEST}" >> "$GITHUB_OUTPUT"
+            echo "ref=resume:candidate" >> "$GITHUB_OUTPUT"
+            echo "patched=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "${RECOVERED_DIGEST}" ]; then
+            cp trivy-after-full.json trivy-full.json
+            echo "digest=${RECOVERED_DIGEST}" >> "$GITHUB_OUTPUT"
+            echo "ref=recovered:candidate" >> "$GITHUB_OUTPUT"
+            echo "patched=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "digest=${SELECTED_DIGEST}" >> "$GITHUB_OUTPUT"
+            echo "ref=${UPSTREAM_REF}" >> "$GITHUB_OUTPUT"
+            echo "patched=false" >> "$GITHUB_OUTPUT"
+            cp child-manifest.json candidate-manifest.json
           fi
 
       - name: Convert full report to CycloneDX with parity check
@@ -653,163 +1186,777 @@ jobs:
           printf '{"app":"%s","upstream_ref":"%s","upstream_tag":"%s"}\n' \
             "${APP}" "${UPSTREAM_REF}" "${UPSTREAM_TAG}" > secobserve-upload.json
 
-      - name: Assert destination tag is still absent
-        if: steps.tag.outputs.skip_copy != 'true'
-        shell: bash
-        env:
-          APP: ${{ steps.entry.outputs.app }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
-        run: |
-          set -euo pipefail
-          TOKEN="$(curl --fail-with-body -sS \
-            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
-          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
-          set +e
-          STATUS="$(curl --fail-with-body -sS -I \
-            -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
-            -o /dev/null -w '%{http_code}' \
-            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
-          CURL_STATUS=$?
-          set -e
-          if [ "${CURL_STATUS}" -eq 0 ] || [ "${STATUS}" != 404 ]; then
-            echo "FATAL: destination tag collision before copy (${INTERNAL_TAG}, status ${STATUS})"
-            exit 1
-          fi
 
-      - name: Digest-preserving copy to GHCR
-        id: copy
-        if: steps.tag.outputs.skip_copy != 'true'
+      - name: Run validation
+        id: runval
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
+          CANDIDATE_REF: ${{ steps.final.outputs.ref }}
+          CANDIDATE_DIGEST: ${{ steps.final.outputs.digest }}
+          PATCHED: ${{ steps.final.outputs.patched }}
+          VALIDATION_TYPE: ${{ steps.entry.outputs.validation_type }}
+          VALIDATION_PORT: ${{ steps.entry.outputs.validation_port }}
+          VALIDATION_PATH: ${{ steps.entry.outputs.validation_path }}
+          VALIDATION_EXPECT_STATUS: ${{ steps.entry.outputs.validation_expect_status }}
+          VALIDATION_DURATION_SECONDS: ${{ steps.entry.outputs.validation_duration_seconds }}
+          VALIDATION_TIMEOUT_SECONDS: ${{ steps.entry.outputs.validation_timeout_seconds }}
+          VALIDATION_EXPECTED_EXIT: ${{ steps.entry.outputs.validation_expected_exit }}
+          VALIDATION_COMMAND: ${{ steps.entry.outputs.validation_command }}
+          VALIDATION_EXPECTED_PLATFORMS: ${{ steps.entry.outputs.validation_expected_platforms }}
+          VALIDATION_ENV: ${{ steps.entry.outputs.validation_env }}
+        run: |
+          set -euo pipefail
+          # D-04: workflow-side defaults wherever the inventory entry carries no deviation.
+          ARGS=(
+            --app "${APP}"
+            --ref "${CANDIDATE_REF}"
+            --digest "${CANDIDATE_DIGEST}"
+            --baseline-ref "${UPSTREAM_REF}"
+            --baseline-digest "${SELECTED_DIGEST}"
+            --validation-type "${VALIDATION_TYPE}"
+            --index-file candidate-manifest.json
+            --evidence-out validation-evidence.json
+            --path "${VALIDATION_PATH:-/}"
+            --expect-status "${VALIDATION_EXPECT_STATUS:-200}"
+            --duration-seconds "${VALIDATION_DURATION_SECONDS:-30}"
+            --timeout-seconds "${VALIDATION_TIMEOUT_SECONDS:-60}"
+            --expected-exit "${VALIDATION_EXPECTED_EXIT:-0}"
+            --expected-platforms "${VALIDATION_EXPECTED_PLATFORMS:-linux/amd64}"
+            --command "${VALIDATION_COMMAND:-[]}"
+          )
+          [ "${PATCHED}" != true ] || ARGS+=(--local-image "${CANDIDATE_REF}")
+          if [ -n "${VALIDATION_PORT:-}" ]; then
+            ARGS+=(--port "${VALIDATION_PORT}")
+          fi
+          if [ -n "${VALIDATION_ENV:-}" ]; then
+            while IFS=$'\t' read -r KEY VALUE; do
+              ARGS+=("--env" "${KEY}=${VALUE}")
+            done < <(jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv' <<<"${VALIDATION_ENV}")
+          fi
+          python3 scripts/validate_image.py "${ARGS[@]}"
+
+      - name: Fetch CISA KEV catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEV_URL="https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+          KEV_FETCHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          curl --fail --location --silent --show-error --max-time 30 "${KEV_URL}" > kev.json
+          printf '%s\n' "${KEV_FETCHED_AT}" > kev-fetched-at.txt
+
+      - name: Resolve current KEV risk acceptance
+        shell: bash
+        env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP: ${{ steps.entry.outputs.app }}
+        run: |
+          set -euo pipefail
+          rm -f acceptance.json github-evidence.json
+          python3 - <<'PY'
+          import importlib.util
+          import hashlib
+          import json
+          from pathlib import Path
+
+          spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          report = module.findings(json.loads(Path("trivy-full.json").read_text()), "final report")
+          feed = json.loads(Path("kev.json").read_text())
+          matched = sorted({key.split("|", 2)[2] for key in report} & {row["cveID"] for row in feed["vulnerabilities"]})
+          digest = "sha256:" + hashlib.sha256(Path("candidate-manifest.json").read_bytes()).hexdigest()
+          Path("acceptance-path.txt").write_text(module.acceptance_path(__import__("os").environ["APP"], digest, matched) + "\n")
+          Path("acceptance-matched.txt").write_text("\n".join(matched) + ("\n" if matched else ""))
+          PY
+          if [ ! -s acceptance-matched.txt ]; then
+            echo "no KEV intersection; acceptance is not applicable"
+            exit 0
+          fi
+          RECORD_PATH="$(cat acceptance-path.txt)"
+          set +e
+          STATUS="$(curl --fail-with-body -sS \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -o acceptance-content.json \
+            -w '%{http_code}' \
+            "https://api.github.com/repos/${REPO}/contents/${RECORD_PATH}?ref=main")"
+          CURL_STATUS=$?
+          set -e
+          if [ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]; then
+            echo "current main carries no acceptance for this exact candidate and KEV set"
+            exit 0
+          fi
+          if [ "${CURL_STATUS}" -ne 0 ] || [ "${STATUS}" != 200 ]; then
+            echo "FATAL: acceptance content lookup failed (status ${STATUS:-network error})"
+            exit 1
+          fi
+          python3 - <<'PY'
+          import base64
+          import json
+          from pathlib import Path
+
+          value = json.loads(Path("acceptance-content.json").read_text())
+          encoded = value.get("content", "")
+          if value.get("encoding") != "base64" or not isinstance(encoded, str):
+              raise SystemExit("FATAL: acceptance content API did not return base64 bytes")
+          encoded = encoded.replace("\n", "")
+          Path("acceptance.json").write_bytes(base64.b64decode(encoded, validate=True))
+          PY
+          gh api --method GET "repos/${REPO}/commits" \
+            -f path="${RECORD_PATH}" -F per_page=1 > acceptance-commits.json
+          COMMIT_SHA="$(jq -er '.[0].sha' acceptance-commits.json)"
+          gh api "repos/${REPO}/commits/${COMMIT_SHA}" > acceptance-commit.json
+          gh api "repos/${REPO}/commits/${COMMIT_SHA}/pulls" > acceptance-prs.json
+          PR_NUMBER="$(jq -er '[.[] | select(.merged == true and .base.repo.full_name == env.REPO and .base.ref == "main")][0].number' acceptance-prs.json)"
+          gh api "repos/${REPO}/pulls/${PR_NUMBER}" > acceptance-pr.json
+          ISSUE_NUMBER="$(jq -er .trackingIssue acceptance.json)"
+          gh api "repos/${REPO}/issues/${ISSUE_NUMBER}" > acceptance-issue.json
+          python3 - "${RECORD_PATH}" <<'PY'
+          import hashlib
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          path = sys.argv[1]
+          repository = os.environ["REPO"]
+          content = json.loads(Path("acceptance-content.json").read_text())
+          commits = json.loads(Path("acceptance-commits.json").read_text())
+          commit_detail = json.loads(Path("acceptance-commit.json").read_text())
+          associated = json.loads(Path("acceptance-prs.json").read_text())
+          pull = json.loads(Path("acceptance-pr.json").read_text())
+          issue = json.loads(Path("acceptance-issue.json").read_text())
+          if len(commits) != 1 or content.get("path") != path:
+              raise SystemExit("FATAL: acceptance commit/path is ambiguous")
+          changed = [
+              value for value in commit_detail.get("files", [])
+              if value.get("filename") == path and value.get("sha") == content.get("sha")
+          ]
+          if commit_detail.get("sha") != commits[0]["sha"] or len(changed) != 1:
+              raise SystemExit("FATAL: acceptance commit does not bind the current file bytes")
+
+          def pull_proof(value):
+              return {
+                  "number": value["number"],
+                  "html_url": value["html_url"],
+                  "state": value["state"],
+                  "merged": value["merged"] is True,
+                  "merged_at": value["merged_at"],
+                  "merged_by": {"login": value["merged_by"]["login"]},
+                  "base_repository": value["base"]["repo"]["full_name"],
+                  "base_ref": value["base"]["ref"],
+              }
+
+          def issue_proof(value):
+              return {
+                  "number": value["number"],
+                  "html_url": value["html_url"],
+                  "state": value["state"],
+                  "is_pull_request": "pull_request" in value,
+              }
+
+          proof = {
+              "repository": repository,
+              "path": path,
+              "record_sha256": hashlib.sha256(Path("acceptance.json").read_bytes()).hexdigest(),
+              "content_blob_sha": content["sha"],
+              "commit": {"sha": commits[0]["sha"], "path": path, "blob_sha": content["sha"]},
+              "associated_pull_requests": [pull_proof(value) for value in associated],
+              "pull_request": pull_proof(pull),
+              "issue": issue_proof(issue),
+          }
+          Path("github-evidence.json").write_text(json.dumps(proof, indent=2) + "\n")
+          PY
+
+      - name: Evaluate one promotion decision
+        id: policy
+        continue-on-error: true
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          INTERNAL_TAG: ${{ steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
+          UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          CANDIDATE_DIGEST: ${{ steps.final.outputs.digest }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RESUME_ORIGINAL_RUN_ID: ${{ steps.resume.outputs.original_run_id }}
+          RESUME_ORIGINAL_RUN_ATTEMPT: ${{ steps.resume.outputs.original_run_attempt }}
+          RESUME_ORIGINAL_SOURCE_SHA: ${{ steps.resume.outputs.original_source_sha }}
+          RESUME_ARTIFACT_ID: ${{ steps.resume.outputs.artifact_id }}
+          HIGHER_UPSTREAM: ${{ steps.tag.outputs.higher_upstream }}
+          ORIGINAL_CHILD_SELECTED: ${{ steps.tag.outputs.original_child_selected }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime
+          import json
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          policy = json.loads(Path("validation-context/patch-policy.json").read_text())
+          args = [
+              sys.executable, "scripts/evaluate_promotion.py",
+              "--app", os.environ["APP"],
+              "--source-sha", os.environ["SOURCE_SHA"],
+              "--run-id", os.environ["RUN_ID"],
+              "--run-attempt", os.environ["RUN_ATTEMPT"],
+              "--proposed-tag", os.environ["INTERNAL_TAG"],
+              "--index", "upstream-index.json",
+              "--upstream-index-digest", os.environ["UPSTREAM_INDEX_DIGEST"],
+              "--child-manifest", "child-manifest.json",
+              "--child-config", "child-config.json",
+              "--full-report", "trivy-before-full.json",
+              "--fixable-report", "trivy-copa.json",
+              "--kev", "kev.json",
+              "--kev-fetched-at", Path("kev-fetched-at.txt").read_text().strip(),
+              "--now", datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "--validation-result", json.loads(Path("validation-evidence.json").read_text())["validation"]["result"],
+              "--patch-policy", policy["patchPolicy"],
+              "--out", "candidate-decision.json",
+          ]
+          if policy["patchPolicy"] == "disabled":
+              reason = policy["patchDisabledReason"]
+              args += ["--patch-disabled-class", reason["class"], "--patch-disabled-detail", reason["detail"]]
+          if Path("trivy-after-full.json").is_file():
+              original = json.loads(Path("original-candidate-decision.json").read_text()) if Path("original-candidate-decision.json").is_file() else None
+              classification = "succeeded" if original and original["copa"]["original_child_input"] else "not-required"
+              args += [
+                  "--after-full-report", "trivy-after-full.json",
+                  "--scan-receipt", "scan-receipt.json",
+                  "--candidate-digest", os.environ["CANDIDATE_DIGEST"],
+                  "--copa-classification", classification,
+              ]
+          if Path("acceptance.json").is_file() and Path("github-evidence.json").is_file():
+              args += [
+                  "--acceptance", "acceptance.json",
+                  "--github-evidence", "github-evidence.json",
+                  "--github-repository", os.environ["GITHUB_REPOSITORY"],
+              ]
+          if os.environ.get("RESUME_ORIGINAL_RUN_ID"):
+              args += [
+                  "--resume-original-run-id", os.environ["RESUME_ORIGINAL_RUN_ID"],
+                  "--resume-original-run-attempt", os.environ["RESUME_ORIGINAL_RUN_ATTEMPT"],
+                  "--resume-original-source-sha", os.environ["RESUME_ORIGINAL_SOURCE_SHA"],
+                  "--resume-artifact-id", os.environ["RESUME_ARTIFACT_ID"],
+              ]
+          result = subprocess.run(args)
+          if result.returncode:
+              print("Candidate retained for operator review; publisher will not run.")
+          if Path("candidate-decision.json").is_file():
+              decision = json.loads(Path("candidate-decision.json").read_text())
+              decision["supersedes"] = {
+                  "higher_upstream": os.environ.get("HIGHER_UPSTREAM") == "true",
+                  "original_child_selected": os.environ.get("ORIGINAL_CHILD_SELECTED") == "true",
+              }
+              Path("candidate-decision.json").write_text(json.dumps(decision, indent=2) + "\n")
+              eligible = decision["eligible"]
+              with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open("a") as output:
+                  output.write(f"eligible={str(eligible).lower()}\n")
+          raise SystemExit(result.returncode)
+          PY
+
+      - name: Export checksum-bound candidate artifact
+        id: candidate
+        if: always()
+        shell: bash
+        env:
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
+          SOURCE_SHA: ${{ github.sha }}
           DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          RESUME_INTERNAL_TAG: ${{ steps.resume.outputs.internal_tag }}
+          RESUME_SKIP_COPY: ${{ steps.resume.outputs.skip_copy }}
+          PATCH_INTERNAL_TAG: ${{ steps.patchtag.outputs.internal_tag }}
+          PATCH_SKIP_COPY: ${{ steps.patchtag.outputs.skip_copy }}
+          TAG_INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          TAG_SKIP_COPY: ${{ steps.tag.outputs.skip_copy }}
+        run: |
+          set -euo pipefail
+          if [ ! -s candidate-decision.json ]; then
+            echo "FATAL: no candidate decision to export"
+            exit 1
+          fi
+          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036" # v1.22.2
+          CREDS=()
+          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
+            CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
+          fi
+          if [ ! -d candidate-oci ]; then
+            docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
+              copy --preserve-digests ${CREDS[@]+"${CREDS[@]}"} \
+              "docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" \
+              "oci:/workspace/candidate-oci:candidate"
+          fi
+          mkdir -p candidate-artifact
+          cp upstream-index.json child-manifest.json child-config.json candidate-manifest.json \
+            trivy-before-full.json trivy-full.json trivy-copa.json trivy-full.cdx.json secobserve-upload.json \
+            validation-evidence.json candidate-decision.json candidate-artifact/
+          cp trivy-db-meta-1.txt trivy-db-meta-2.txt kev.json kev-fetched-at.txt candidate-artifact/
+          for evidence in trivy-after-full.json scan-receipt.json trivy-db-meta-after.txt \
+            copa-diagnostics.txt copa-candidate-image-id.txt before-labels.json after-labels.json; do
+            [ ! -f "${evidence}" ] || cp "${evidence}" candidate-artifact/
+          done
+          for evidence in acceptance.json github-evidence.json original-candidate-decision.json \
+            resume-run.json resume-branch.json resume-artifacts.jsonl resume-artifact-id.txt \
+            resume-candidate-image-id.txt; do
+            [ ! -f "${evidence}" ] || cp "${evidence}" candidate-artifact/
+          done
+          cp validation-context/image.yaml candidate-artifact/inventory-image.yaml
+          cp -r validation-logs candidate-artifact/ 2> /dev/null || true
+          printf '%s\n' "${SOURCE_SHA}" > candidate-artifact/source.sha
+          cp -r candidate-oci candidate-artifact/candidate-oci
+          INTERNAL_TAG="${RESUME_INTERNAL_TAG:-${PATCH_INTERNAL_TAG:-${TAG_INTERNAL_TAG}}}"
+          SKIP_COPY="${RESUME_SKIP_COPY:-${PATCH_SKIP_COPY:-${TAG_SKIP_COPY}}}"
+          case "${SKIP_COPY}" in true|false) ;; *) echo "FATAL: invalid tag skip decision"; exit 1 ;; esac
+          jq -n --arg internal_tag "${INTERNAL_TAG}" \
+            --argjson skip_copy "${SKIP_COPY}" \
+            '{internal_tag:$internal_tag, skip_copy:$skip_copy}' > candidate-artifact/tag-decision.json
+          (
+            cd "$PWD"
+            find candidate-artifact -type f ! -name SHA256SUMS -print0 \
+              | sort -z | xargs -0 sha256sum > candidate-artifact/SHA256SUMS
+          )
+          SHA="$(sha256sum candidate-artifact/SHA256SUMS | awk '{print $1}')"
+          echo "manifest_sha256=${SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload candidate artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: candidate
+          path: candidate-artifact/
+          retention-days: 8
+          if-no-files-found: error
+
+      - name: Upload retained patch scan reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: patch-scan-reports
+          path: |
+            trivy-before-full.json
+            trivy-full.json
+            trivy-copa.json
+            trivy-after-full.json
+          retention-days: 8
+          if-no-files-found: warn
+
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: validation-evidence
+          path: validation-evidence.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload validation container logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: validation-container-logs
+          path: validation-logs/
+          retention-days: 14
+          # A sub-second crash can leave no log capture at all (Pitfall 6);
+          # the evidence records the honest absence, the upload just warns.
+          if-no-files-found: warn
+
+      - name: Fail blocked candidate after preservation
+        if: always() && steps.policy.outputs.eligible != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "FATAL: candidate is blocked; exact bytes and decision were retained, publisher will not run"
+          exit 1
+
+  promote:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      checks: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install pinned PyYAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip install -r requirements.txt
+
+      - name: Download validation context
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: validation-context
+          path: validation-context
+
+      - name: Resolve inventory entry
+        id: entry
+        shell: bash
+        env:
+          APP: ${{ inputs.app }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
+            echo "FATAL: app not in inventory: ${APP}"
+            exit 1
+          fi
+          test -s validation-context/image.yaml || { echo "FATAL: validation context is empty"; exit 1; }
+          OUT="$(python3 - validation-context/image.yaml "${APP}" <<'PY'
+          import sys
+          import yaml
+
+          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
+          app = sys.argv[2]
+          if spec["destination"]["package"] != f"ghcr.io/bocklabs/{app}":
+              raise SystemExit("FATAL: validation context destination does not match app")
+          print(f"upstream_ref={spec['upstream']['ref']}")
+          print(f"upstream_tag={spec['upstream']['tag']}")
+          print(f"upstream_digest={spec['upstream']['digest']}")
+          print(f"dest_package={spec['destination']['package']}")
+          print(f"patch_policy={spec['patchPolicy']}")
+          print(f"app={app}")
+          PY
+          )"
+          echo "${OUT}"
+          echo "${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Download candidate artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: candidate
+          path: candidate-artifact
+
+      - name: Verify candidate artifact
+        id: candidate
+        shell: bash
+        env:
+          EXPECTED_MANIFEST_SHA256: ${{ needs.validate.outputs.candidate_manifest_sha256 }}
+          APP: ${{ steps.entry.outputs.app }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+          RESUME_ORIGINAL_RUN_ATTEMPT: ${{ needs.validate.outputs.resume_original_run_attempt }}
+          RESUME_ORIGINAL_SOURCE_SHA: ${{ needs.validate.outputs.resume_original_source_sha }}
+          RESUME_ARTIFACT_ID: ${{ needs.validate.outputs.resume_artifact_id }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "${EXPECTED_MANIFEST_SHA256}" || { echo "FATAL: candidate checksum output is absent"; exit 1; }
+          ACTUAL_MANIFEST_SHA="$(sha256sum candidate-artifact/SHA256SUMS | awk '{print $1}')"
+          [ "${ACTUAL_MANIFEST_SHA}" = "${EXPECTED_MANIFEST_SHA256}" ] || {
+            echo "FATAL: candidate checksum manifest changed (${ACTUAL_MANIFEST_SHA} != ${EXPECTED_MANIFEST_SHA256})"
+            exit 1
+          }
+          sha256sum -c candidate-artifact/SHA256SUMS
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path("candidate-artifact")
+          mandatory = {
+              "candidate-decision.json", "candidate-manifest.json", "child-config.json",
+              "child-manifest.json", "inventory-image.yaml", "secobserve-upload.json",
+              "source.sha", "tag-decision.json", "trivy-before-full.json", "trivy-copa.json",
+              "trivy-full.cdx.json", "trivy-full.json", "upstream-index.json",
+              "validation-evidence.json", "kev.json",
+              "kev-fetched-at.txt", "trivy-db-meta-1.txt", "trivy-db-meta-2.txt", "SHA256SUMS",
+          }
+          optional = {
+              "trivy-after-full.json", "scan-receipt.json", "trivy-db-meta-after.txt",
+              "copa-diagnostics.txt", "copa-candidate-image-id.txt", "before-labels.json",
+              "after-labels.json", "acceptance.json", "github-evidence.json",
+              "original-candidate-decision.json", "resume-run.json", "resume-branch.json",
+              "resume-artifacts.jsonl", "resume-artifact-id.txt", "resume-candidate-image-id.txt",
+          }
+          actual = []
+          for path in root.rglob("*"):
+              relative = path.relative_to(root).as_posix()
+              if path.is_symlink() or path.is_absolute() or ".." in path.parts:
+                  raise SystemExit(f"FATAL: candidate artifact path traversal or symlink: {relative}")
+              if path.is_file():
+                  actual.append(relative)
+          allowed = mandatory | optional | {name for name in actual if name.startswith(("candidate-oci/", "validation-logs/"))}
+          undeclared = set(actual) - allowed
+          if undeclared or not mandatory <= set(actual):
+              raise SystemExit("FATAL: fresh candidate artifact has undeclared or missing files")
+          listed = [line.split("  ", 1)[1] for line in (root / "SHA256SUMS").read_text().splitlines()]
+          if len(listed) != len(set(listed)) or set(listed) != {name for name in actual if name != "SHA256SUMS"}:
+              raise SystemExit("FATAL: fresh candidate checksum manifest is ambiguous")
+          PY
+          if [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+            gh api "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}" > publisher-resume-run.json
+            ARTIFACT_ID="$(jq -er .artifact_id candidate-artifact/resume-artifact-id.txt 2>/dev/null || jq -er '.resume.artifact_id' candidate-artifact/candidate-decision.json)"
+            gh api "repos/${REPO}/actions/artifacts/${ARTIFACT_ID}" > publisher-resume-artifact.json
+          fi
+          [ "$(cat candidate-artifact/source.sha)" = "${SOURCE_SHA}" ] || {
+            echo "FATAL: candidate source SHA binding failed"
+            exit 1
+          }
+          cmp "inventory/${APP}/image.yaml" candidate-artifact/inventory-image.yaml || {
+            echo "FATAL: candidate inventory bytes differ from this run"
+            exit 1
+          }
+          INDEX_SHA="$(sha256sum candidate-artifact/upstream-index.json | awk '{print $1}')"
+          [ "sha256:${INDEX_SHA}" = "${UPSTREAM_INDEX_DIGEST}" ] || {
+            echo "FATAL: candidate upstream index bytes differ from the inventory digest"
+            exit 1
+          }
+          TAG_FROM_ALLOCATION="$(jq -er .internal_tag candidate-artifact/tag-decision.json)"
+          [ "${TAG_FROM_ALLOCATION}" = "$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)" ] || {
+            echo "FATAL: allocated tag differs from the candidate decision"
+            exit 1
+          }
+
+          python3 - candidate-artifact/candidate-decision.json <<'PY'
+          import datetime
+          import importlib.util
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from types import SimpleNamespace
+
+          path = sys.argv[1]
+          decision = json.load(open(path))
+          spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          module.validate_decision(decision)
+          expected = {
+              "app": os.environ["APP"],
+              "source_sha": os.environ["SOURCE_SHA"],
+              "run_id": os.environ["RUN_ID"],
+              "upstream_index_digest": os.environ["UPSTREAM_INDEX_DIGEST"],
+          }
+          mismatches = [f"{key}={decision.get(key)!r}" for key, value in expected.items() if decision.get(key) != value]
+          if decision.get("run_attempt") != int(os.environ["RUN_ATTEMPT"]):
+              mismatches.append(f"run_attempt={decision.get('run_attempt')!r}")
+          if not decision.get("eligible") or decision.get("validation", {}).get("result") != "pass":
+              mismatches.append(f"eligible={decision.get('eligible')!r}")
+          accepted_run = os.environ.get("ACCEPTED_CANDIDATE_RUN_ID", "")
+          if accepted_run:
+              expected_resume = {
+                  "original_run_id": accepted_run,
+                  "original_run_attempt": int(os.environ["RESUME_ORIGINAL_RUN_ATTEMPT"]),
+                  "original_source_sha": os.environ["RESUME_ORIGINAL_SOURCE_SHA"],
+                  "artifact_id": int(os.environ["RESUME_ARTIFACT_ID"]),
+              }
+              if decision.get("resume") != expected_resume:
+                  mismatches.append(f"resume={decision.get('resume')!r}")
+              original = json.load(open("candidate-artifact/original-candidate-decision.json"))
+              module.validate_decision(original)
+              if original.get("run_id") != accepted_run or original.get("eligible") is not False or original.get("reason") != "missing_kev_acceptance":
+                  mismatches.append("original_decision")
+              api_run = json.load(open("publisher-resume-run.json"))
+              api_artifact = json.load(open("publisher-resume-artifact.json"))
+              if (
+                  api_run.get("id") != int(accepted_run)
+                  or api_run.get("repository", {}).get("full_name") != os.environ["REPO"]
+                  or api_run.get("path") != ".github/workflows/promote.yaml"
+                  or api_run.get("event") != "workflow_dispatch"
+                  or api_run.get("head_branch") != "main"
+                  or api_run.get("head_sha") != os.environ["RESUME_ORIGINAL_SOURCE_SHA"]
+                  or api_run.get("run_attempt") != expected_resume["original_run_attempt"]
+                  or api_run.get("status") != "completed"
+              ):
+                  mismatches.append("resume_run_api")
+              if (
+                  api_artifact.get("id") != expected_resume["artifact_id"]
+                  or api_artifact.get("name") != "candidate"
+                  or api_artifact.get("expired") is not False
+                  or api_artifact.get("workflow_run", {}).get("id") != int(accepted_run)
+              ):
+                  mismatches.append("resume_artifact_api")
+          elif decision.get("resume") is not None:
+              mismatches.append("resume")
+          if decision.get("policy", {}).get("acceptance") is not None:
+              proof_args = SimpleNamespace(
+                  acceptance="candidate-artifact/acceptance.json",
+                  github_evidence="candidate-artifact/github-evidence.json",
+                  github_repository=os.environ["REPO"],
+                  app=os.environ["APP"],
+              )
+              now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+              acceptance = module.acceptance_evidence(
+                  proof_args, decision["candidate"]["digest"], decision["policy"]["kev"]["matched"], now
+              )
+              if acceptance != decision["policy"]["acceptance"]:
+                  mismatches.append("acceptance")
+          if mismatches:
+              raise SystemExit("FATAL: candidate decision binding failed: " + ", ".join(mismatches))
+          PY
+
+          INTERNAL_TAG="$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)"
+          SELECTED_CHILD="$(jq -er .selected_child_digest candidate-artifact/candidate-decision.json)"
+          CANDIDATE_DIGEST="$(jq -er .candidate.digest candidate-artifact/candidate-decision.json)"
+          [ "$(sha256sum candidate-artifact/child-manifest.json | awk '{print $1}')" = "${SELECTED_CHILD#sha256:}" ] || { echo "FATAL: child manifest digest mismatch"; exit 1; }
+          [ "$(sha256sum candidate-artifact/candidate-manifest.json | awk '{print $1}')" = "${CANDIDATE_DIGEST#sha256:}" ] || { echo "FATAL: candidate manifest digest mismatch"; exit 1; }
+          CANDIDATE_BLOB="candidate-artifact/candidate-oci/blobs/sha256/${CANDIDATE_DIGEST#sha256:}"
+          cmp candidate-artifact/candidate-manifest.json "${CANDIDATE_BLOB}" || { echo "FATAL: OCI layout does not preserve candidate bytes"; exit 1; }
+          cmp candidate-artifact/child-manifest.json candidate-artifact/candidate-manifest.json \
+            || jq -e '.copa.original_child_input == true and .patching.disabled == false' candidate-artifact/candidate-decision.json > /dev/null
+          TAG_SKIP="$(jq -er .skip_copy candidate-artifact/tag-decision.json)"
+          {
+            echo "internal_tag=${INTERNAL_TAG}"
+            echo "skip_copy=${TAG_SKIP}"
+            echo "selected_child_digest=${SELECTED_CHILD}"
+            echo "candidate_digest=${CANDIDATE_DIGEST}"
+            echo "decision_sha256=$(sha256sum candidate-artifact/candidate-decision.json | awk '{print $1}')"
+          } >> "$GITHUB_OUTPUT"
+          cp candidate-artifact/trivy-full.json candidate-artifact/trivy-full.cdx.json \
+            candidate-artifact/trivy-before-full.json candidate-artifact/trivy-copa.json \
+            candidate-artifact/kev.json candidate-artifact/secobserve-upload.json \
+            candidate-artifact/validation-evidence.json \
+            candidate-artifact/trivy-db-meta-1.txt candidate-artifact/trivy-db-meta-2.txt .
+          cp candidate-artifact/candidate-manifest.json candidate-manifest.json
+
+      - name: Assert destination tag is absent or byte-identical
+        id: occupancy
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          TOKEN="$(curl --fail-with-body -sS \
+            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          MANIFEST_ACCEPT='application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
+          set +e
+          STATUS="$(curl --fail-with-body -sS -I \
+            -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${MANIFEST_ACCEPT}" \
+            -D occupancy.headers -o /dev/null -w '%{http_code}' \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
+          CURL_STATUS=$?
+          set -e
+          if [ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]; then
+            echo "skip_copy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${CURL_STATUS}" -ne 0 ] || [ "${STATUS}" != 200 ]; then
+            echo "FATAL: destination occupancy lookup failed (${INTERNAL_TAG}, status ${STATUS:-network error})"
+            exit 1
+          fi
+          PUSHED="$(tr -d '\r' < occupancy.headers \
+            | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+          if [[ ! "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || [ "${PUSHED}" != "${CANDIDATE_DIGEST}" ]; then
+            echo "FATAL: conflicting occupied tag (${INTERNAL_TAG}, got ${PUSHED:-none}, want ${CANDIDATE_DIGEST})"
+            exit 1
+          fi
+          echo "skip_copy=true" >> "$GITHUB_OUTPUT"
+
+      - name: Digest-preserving copy to GHCR
+        id: copy
+        if: steps.occupancy.outputs.skip_copy != 'true'
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63c5fbc8b5d4d336036" # v1.22.2
-          SRC_CREDS=()
-          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            SRC_CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
-          fi
-          rm -f skopeo-copy.err
-          # --all copies the whole index: no platform filters, no partial-copy modes.
-          if docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-              copy \
-                --all \
-                --preserve-digests \
-                --remove-signatures \
-                --dest-tls-verify \
-                --digestfile /workspace/pushed-digest.txt \
-                "${SRC_CREDS[@]}" \
-                --dest-creds "bocklabs-bot:${GH_TOKEN}" \
-                "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" \
-                "docker://ghcr.io/bocklabs/${APP}:${INTERNAL_TAG}" \
-              2> skopeo-copy.err; then
-            echo "fallback_used=false" >> "$GITHUB_OUTPUT"
-            echo "divergence_note=" >> "$GITHUB_OUTPUT"
-            echo "pushed digest: $(cat pushed-digest.txt)"
-          else
-            if grep -q "Instructed to preserve digests" skopeo-copy.err; then
-              echo "skopeo refused a destination-required conversion — taking the D1 fallback (buildx imagetools create)"
-              # buildx authenticates from the docker CLI config, not skopeo creds.
-              echo "${GH_TOKEN}" | docker login ghcr.io --username bocklabs-bot --password-stdin
-              docker buildx imagetools create \
-                -t "ghcr.io/bocklabs/${APP}:${INTERNAL_TAG}" \
-                "${UPSTREAM_REF}@${UPSTREAM_DIGEST}"
-              # Downstream steps read pushed-digest.txt unconditionally; the fallback
-              # never runs --digestfile, so record the pushed index digest here.
-              TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
-              INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
-              curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
-                "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}" \
-                | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}' > pushed-digest.txt
-              PUSHED="$(cat pushed-digest.txt)"
-              echo "fallback_used=true" >> "$GITHUB_OUTPUT"
-              if [ "${PUSHED}" = "${UPSTREAM_DIGEST}" ]; then
-                echo "divergence_note=" >> "$GITHUB_OUTPUT"
-              else
-                NOTE="D1 fallback: pushed index digest ${PUSHED} differs from upstream ${UPSTREAM_DIGEST}; children preserved per A2"
-                echo "divergence_note=${NOTE}" >> "$GITHUB_OUTPUT"
-                echo "${NOTE}"
-              fi
-            else
-              echo "FATAL: skopeo copy failed"
-              cat skopeo-copy.err
-              exit 1
-            fi
-          fi
+          rm -f pushed-digest.txt
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
+            copy \
+              --preserve-digests \
+              --remove-signatures \
+              --dest-tls-verify \
+              --digestfile /workspace/pushed-digest.txt \
+              --dest-creds "bocklabs-bot:${GH_TOKEN}" \
+              "oci:/workspace/candidate-artifact/candidate-oci:candidate" \
+              "docker://ghcr.io/bocklabs/${APP}:${INTERNAL_TAG}"
+          [ "$(cat pushed-digest.txt)" = "${CANDIDATE_DIGEST}" ] || {
+            echo "FATAL: copied digest differs from the verified candidate"
+            exit 1
+          }
+          echo "fallback_used=false" >> "$GITHUB_OUTPUT"
+          echo "divergence_note=" >> "$GITHUB_OUTPUT"
 
       - name: Assert digest equality
         id: assertdigest
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
         run: |
           set -euo pipefail
-          TOKEN="$(curl --fail-with-body -sS \
-            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
-          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
-          PUSHED="$(curl --fail-with-body -sSI \
-            -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+          TOKEN="$(curl --fail-with-body -sS "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          ACCEPT='application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
+          PUSHED="$(curl --fail-with-body -sSI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${ACCEPT}" \
             "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}" \
             | tr -d '\r' | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
-          [[ "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
-            echo "FATAL: destination tag has no valid digest"
+          [[ "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "FATAL: destination tag has no valid digest"; exit 1; }
+          printf '%s\n' "${PUSHED}" > pushed-digest.txt
+          [ "${PUSHED}" = "${CANDIDATE_DIGEST}" ] || {
+            echo "FATAL: digest divergence (PROMO-01/D-22): pushed=${PUSHED} candidate=${CANDIDATE_DIGEST}"
             exit 1
           }
-          printf '%s\n' "${PUSHED}" > pushed-digest.txt
-          if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
-            echo "D1 fallback path: pushed index digest ${PUSHED} vs upstream ${UPSTREAM_DIGEST} — divergence recorded, continuing"
-          else
-            if [ "${PUSHED}" != "${UPSTREAM_DIGEST}" ]; then
-              echo "FATAL: digest divergence (PROMO-01): pushed=${PUSHED} upstream=${UPSTREAM_DIGEST}"
-              exit 1
-            fi
-            echo "digest equality: PASS (${PUSHED})"
-          fi
+          echo "digest equality: PASS (${PUSHED})"
 
-      - name: Assert platform-set equality
+      - name: Assert exact linux/amd64 manifest
         id: assertplatforms
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
         run: |
           set -euo pipefail
-          TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
-          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
-          PUSHED="$(cat pushed-digest.txt)"
-          curl -s -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
-            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${PUSHED}" \
-            | jq -r '.manifests[] | "\(.platform.os)/\(.platform.architecture)\(.platform.variant // "")"' \
-            | sort -u > pushed.platforms
-          if ! diff -u upstream.platforms pushed.platforms; then
-            echo "FATAL: platform-set divergence (P3)"
-            echo "--- upstream ---"; cat upstream.platforms
-            echo "--- pushed ---"; cat pushed.platforms
+          TOKEN="$(curl --fail-with-body -sS "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          ACCEPT='application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
+          curl --fail-with-body -sS -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${ACCEPT}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CANDIDATE_DIGEST}" > pushed-manifest.json
+          jq -e 'has("manifests") | not' pushed-manifest.json > /dev/null || {
+            echo "FATAL: published candidate is an index (D-20)"
             exit 1
-          fi
+          }
+          cmp pushed-manifest.json candidate-manifest.json || {
+            echo "FATAL: published manifest bytes differ from the verified candidate"
+            exit 1
+          }
 
       - name: Anonymous-pull probe
         id: probe
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
           FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
         run: |
           set -euo pipefail
           # Runs on copy, fallback, and skip paths alike. Success (200 + digest
           # equality) is the only assertable fact: the registry hides private and
           # nonexistent packages behind the same not-found answer.
-          EXPECTED="${UPSTREAM_DIGEST}"
+          EXPECTED="${CANDIDATE_DIGEST}"
           if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
             EXPECTED="$(cat pushed-digest.txt)"
           fi
@@ -830,6 +1977,34 @@ jobs:
           echo "FATAL: package not anonymously readable at expected digest"
           echo "probe digest: ${PUSHED:-none} / expected: ${EXPECTED}"
           exit 1
+
+      - name: Write the verified publication digest into the decision
+        id: publication-decision
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          cp candidate-artifact/candidate-decision.json candidate-decision.json
+          jq --arg digest "${CANDIDATE_DIGEST}" '.published.digest = $digest' \
+            candidate-decision.json > candidate-decision.next.json
+          mv candidate-decision.next.json candidate-decision.json
+          python3 - "${APP}" <<'PY'
+          import importlib.util
+          import json
+          import os
+          import sys
+
+          spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          decision = json.load(open("candidate-decision.json"))
+          module.validate_decision(decision)
+          if decision["app"] != os.environ["APP"] or decision["published"]["digest"] != decision["candidate"]["digest"]:
+              raise SystemExit("FATAL: published decision identity is invalid")
+          PY
+          echo "decision_sha256=$(sha256sum candidate-decision.json | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Upload trivy-full-report artifact
         if: always()
@@ -852,20 +2027,15 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
-      - name: Download validation evidence
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: validation-evidence
-
       - name: Job summary evidence panel
         id: summary
         if: always()
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
-          SKIP_COPY: ${{ steps.tag.outputs.skip_copy }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          SKIP_COPY: ${{ steps.candidate.outputs.skip_copy }}
           FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
           DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
           PROBE_RESULT: ${{ steps.probe.outputs.result }}
@@ -875,28 +2045,16 @@ jobs:
           set -euo pipefail
           DIGEST_LINE="N/A — run failed before a digest was recorded"
           if [ "${SKIP_COPY:-}" = "true" ]; then
-            DIGEST_LINE="PASS — idempotent skip: ${INTERNAL_TAG:-?} verified equal to upstream digest"
+            DIGEST_LINE="PASS — idempotent skip: ${INTERNAL_TAG:-?} verified equal to candidate digest"
           elif [ -f pushed-digest.txt ]; then
             PUSHED="$(cat pushed-digest.txt)"
-            if [ "${PUSHED}" = "${UPSTREAM_DIGEST:-}" ]; then
-              DIGEST_LINE="PASS — pushed ${PUSHED} == upstream"
-            elif [ "${FALLBACK_USED:-}" = "true" ]; then
-              DIGEST_LINE="RECORDED — D1 fallback: pushed ${PUSHED} vs upstream ${UPSTREAM_DIGEST:-?} (children equality enforced)"
+            if [ "${PUSHED}" = "${CANDIDATE_DIGEST:-}" ]; then
+              DIGEST_LINE="PASS — pushed ${PUSHED} == linux/amd64 candidate"
             else
-              DIGEST_LINE="FAIL — pushed ${PUSHED} != upstream ${UPSTREAM_DIGEST:-?}"
+              DIGEST_LINE="FAIL — pushed ${PUSHED} != candidate"
             fi
           fi
-
-          PLATFORM_LINE="N/A — platform sets not produced"
-          if [ -f upstream.platforms ] && [ -f pushed.platforms ]; then
-            if diff -q upstream.platforms pushed.platforms > /dev/null; then
-              PLATFORM_LINE="PASS — $(paste -sd, upstream.platforms)"
-            else
-              PLATFORM_LINE="FAIL — platform sets differ (upstream vs pushed)"
-            fi
-          elif [ -f upstream.platforms ] && [ "${SKIP_COPY:-}" = "true" ]; then
-            PLATFORM_LINE="SKIP — upstream platforms: $(paste -sd, upstream.platforms)"
-          fi
+          PLATFORM_LINE="PASS — exact linux/amd64 manifest verified"
 
           DB_LINE="N/A — DB metadata not captured"
           if [ -f trivy-db-meta-1.txt ] && [ -f trivy-db-meta-2.txt ]; then
@@ -952,14 +2110,10 @@ jobs:
             echo "| Invariant | Result |"
             echo "| --- | --- |"
             echo "| Digest equality | ${DIGEST_LINE} |"
-            echo "| Platform-set equality | ${PLATFORM_LINE} |"
+            echo "| Exact linux/amd64 manifest | ${PLATFORM_LINE} |"
             echo "| Trivy DB match | ${DB_LINE} |"
             echo "| Anonymous pull probe | ${PROBE_LINE} |"
             echo
-            if [ "${FALLBACK_USED:-}" = "true" ]; then
-              echo "> D1 fallback used (buildx imagetools create): ${DIVERGENCE_NOTE:-no divergence note recorded}."
-              echo
-            fi
             echo "### Validation"
             echo
             echo "| Fact | Result |"
@@ -1001,6 +2155,63 @@ jobs:
               echo "> Trivy report unavailable for this run."
             fi
             echo
+          python3 <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+
+          def rows(path):
+              if not Path(path).is_file():
+                  return []
+              report = json.loads(Path(path).read_text(encoding="utf-8"))
+              return [
+                  (finding.get("VulnerabilityID", ""), finding.get("PkgName", ""),
+                   finding.get("Severity", ""), finding.get("SeveritySource", ""))
+                  for result in report.get("Results", [])
+                  for finding in result.get("Vulnerabilities") or []
+              ]
+
+          print("### Before/final CVE evidence")
+          print()
+          print("| Stage | CVE | Package | Severity | Severity source |")
+          print("| --- | --- | --- | --- | --- |")
+          for stage, source in (("before", "trivy-before-full.json"), ("final", "trivy-full.json")):
+              for cve, package, severity, severity_source in sorted(set(rows(source))):
+                  print(f"| {stage} | {cve} | {package} | {severity} | {severity_source or '-'} |")
+          print()
+          decision_path = Path("candidate-decision.json")
+          if decision_path.is_file():
+              decision = json.loads(decision_path.read_text(encoding="utf-8"))
+              print("### Package changes")
+              print()
+              print("| Ecosystem | Package | Change | Before | After |")
+              print("| --- | --- | --- | --- | --- |")
+              changes = decision["packages"]["changes"] + decision["packages"]["downgrades"]
+              for change in sorted(changes, key=lambda value: (value["ecosystem"], value["name"])):
+                  print(f"| {change['ecosystem']} | {change['name']} | {change['change']} | {change['before'] or '-'} | {change['after'] or '-'} |")
+              print()
+              fixable = {row[0] for row in rows("trivy-copa.json")}
+              print("### Warnings")
+              print()
+              for cve, package, severity, severity_source in sorted(set(rows("trivy-full.json"))):
+                  if cve not in fixable:
+                      print(f"- no-fix: {cve} / {package} / {severity} / {severity_source or '-'}")
+              print()
+              catalog = decision["policy"]["kev"]["catalog"]
+              print("### KEV snapshot")
+              print()
+              print(f"- URL: {catalog['url']}")
+              print(f"- SHA256: `{catalog['sha256']}`")
+              print(f"- Version: {catalog['catalog_version']}")
+              print(f"- Released: {catalog['date_released']}")
+              print(f"- Fetched: {catalog['fetched_at']}")
+              print(f"- Matches: {', '.join(decision['policy']['kev']['matched']) or '-'}")
+              acceptance = decision["policy"]["acceptance"]
+              print()
+              print("### Acceptance expiry")
+              print()
+              print(acceptance["expires_at"] if acceptance else "N/A — no KEV exception")
+              print()
+          PY
             echo "### Links"
             echo
             echo "- Run: ${RUN_URL}"
@@ -1022,26 +2233,29 @@ jobs:
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
           UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          MEDIA_TYPE: ${{ steps.index.outputs.media_type }}
+          MEDIA_TYPE: application/vnd.oci.image.index.v1+json
+          SELECTED_CHILD_DIGEST: ${{ steps.candidate.outputs.selected_child_digest }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          DECISION_SHA256: ${{ steps.publication-decision.outputs.decision_sha256 }}
+          DB_DIGEST: ${{ needs.validate.outputs.db_digest }}
+          DB_UPDATED: ${{ needs.validate.outputs.db_updated }}
           DEST_PACKAGE: ${{ steps.entry.outputs.dest_package }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
-          DB_DIGEST: ${{ steps.dbmeta1.outputs.db_digest }}
-          DB_UPDATED: ${{ steps.dbmeta1.outputs.db_updated }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
           FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
           DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           DISPATCHED_BY: ${{ github.actor }}
           RECOVER_TAG: ${{ inputs.recover_tag }}
+          NOW: ${{ steps.publication-decision.outputs.now }}
         run: |
           set -euo pipefail
           FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
           COPA_SHA="$(sha256sum trivy-copa.json | awk '{print $1}')"
-          PLATFORMS="$(paste -sd, upstream.platforms)"
+          PLATFORMS="linux/amd64"
+          NOW="${NOW:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+          echo "now=${NOW}" >> "$GITHUB_OUTPUT"
           # The actual pushed digest; upstream digest when nothing was pushed now (idempotent skip).
-          INTERNAL_DIGEST="${UPSTREAM_DIGEST}"
-          if [ -f pushed-digest.txt ]; then
-            INTERNAL_DIGEST="$(cat pushed-digest.txt)"
-          fi
+          INTERNAL_DIGEST="${CANDIDATE_DIGEST}"
           # D-14: the validation block comes verbatim from the validate job's
           # evidence artifact, never hand-typed; result must be pass (fail-closed).
           VALIDATION_RESULT="$(jq -r '.validation.result' validation-evidence.json)"
@@ -1072,11 +2286,16 @@ jobs:
               --recovered-digest "${INTERNAL_DIGEST}"
             )
           fi
+          COPA_ARGS=()
+          if [ "$(jq -r .copa.original_child_input candidate-decision.json)" = true ]; then
+            COPA_ARGS=(--copa-version 0.15.0)
+          fi
           python3 scripts/generate_provenance.py \
             --app "${APP}" \
             --upstream-ref "${UPSTREAM_REF}" \
             --upstream-tag "${UPSTREAM_TAG}" \
             --upstream-digest "${UPSTREAM_DIGEST}" \
+            --upstream-child-digest "${SELECTED_CHILD_DIGEST}" \
             --media-type "${MEDIA_TYPE}" \
             --internal-package "${DEST_PACKAGE}" \
             --internal-tag "${INTERNAL_TAG}" \
@@ -1093,6 +2312,13 @@ jobs:
             --trivy-db-updated-at "${DB_UPDATED}" \
             --full-report-sha256 "${FULL_SHA}" \
             --copa-report-sha256 "${COPA_SHA}" \
+            --decision-sha256 "${DECISION_SHA256}" \
+            --decision candidate-decision.json \
+            --before-report trivy-before-full.json \
+            --final-report trivy-full.json \
+            --fixable-report trivy-copa.json \
+            --kev-report kev.json \
+            --now "${NOW}" \
             --secobserve-product trusted-images \
             --secobserve-origin "${UPSTREAM_REF}:${UPSTREAM_TAG}" \
             --validation-type "${VALIDATION_TYPE}" \
@@ -1105,6 +2331,7 @@ jobs:
             --validation-cmd "${VALIDATION_CMD}" \
             --validation-env "${VALIDATION_ENV}" \
             "${RECOVERY_ARGS[@]}" \
+            "${COPA_ARGS[@]}" \
             "${NOTES_ARGS[@]}" \
             --out provenance/${APP}/${INTERNAL_TAG}.json
           {
@@ -1130,8 +2357,8 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
           APP: ${{ steps.entry.outputs.app }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -1166,6 +2393,7 @@ jobs:
           git add "provenance/${APP}/${INTERNAL_TAG}.json"
           if git diff --cached --quiet; then
             echo "Provenance record already merged; no write-back needed" >> "$GITHUB_STEP_SUMMARY"
+            echo "pr_url=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
@@ -1177,15 +2405,56 @@ jobs:
 
           PR_URL="$(gh pr list --head "${BRANCH}" --state all --json state,url \
             --jq '[.[] | select(.state == "OPEN")][0].url // ""')"
+          python3 - "${RUN_URL}" "${CANDIDATE_DIGEST}" "${INTERNAL_TAG}" <<'PY' > provenance-body.md
+          import json
+          import sys
+          from pathlib import Path
+
+          run_url, candidate_digest, internal_tag = sys.argv[1:]
+          decision = json.loads(Path("candidate-decision.json").read_text(encoding="utf-8"))
+          print("Machine-generated provenance record per docs/pipeline.md.")
+          print()
+          print(f"- Run: {run_url}")
+          print(f"- Candidate digest: `{candidate_digest}`")
+          print(f"- Internal tag: {internal_tag}")
+          print()
+          print("### Before/final CVE evidence")
+          print()
+          for name, values in decision["delta"]["cves"].items():
+              print(f"- {name}: {', '.join(values) or '-'}")
+          print()
+          print("### Package changes")
+          print()
+          changes = decision["packages"]["changes"] + decision["packages"]["downgrades"]
+          for change in changes:
+              print(f"- {change['ecosystem']}/{change['name']}: {change['change']} {change['before'] or '-'} → {change['after'] or '-'}")
+          print()
+          print("### Warnings")
+          print()
+          print(decision["reason"])
+          print()
+          catalog = decision["policy"]["kev"]["catalog"]
+          print("### KEV snapshot")
+          print()
+          print(f"- URL: {catalog['url']}")
+          print(f"- SHA256: `{catalog['sha256']}`")
+          print(f"- Version: {catalog['catalog_version']}")
+          print(f"- Released: {catalog['date_released']}")
+          print(f"- Fetched: {catalog['fetched_at']}")
+          print(f"- Matches: {', '.join(decision['policy']['kev']['matched']) or '-'}")
+          print()
+          print("### Acceptance expiry")
+          print()
+          acceptance = decision["policy"]["acceptance"]
+          print(acceptance["expires_at"] if acceptance else "N/A — no KEV exception")
+          PY
           if [ -z "${PR_URL}" ]; then
-            BODY="Machine-generated provenance record per docs/pipeline.md."
-            BODY+=$'\n'"- Run: ${RUN_URL}"
-            BODY+=$'\n'"- Upstream digest: ${UPSTREAM_DIGEST}"
-            BODY+=$'\n'"- Internal tag: ${INTERNAL_TAG}"
             PR_URL="$(gh pr create \
               --head "${BRANCH}" \
               --title "provenance: ${APP} ${INTERNAL_TAG}" \
-              --body "${BODY}")"
+              --body-file provenance-body.md)"
+          else
+            gh pr edit "${PR_URL}" --body-file provenance-body.md
           fi
           echo "Provenance PR: ${PR_URL}" >> "$GITHUB_STEP_SUMMARY"
           # The required check's actual payload, re-run against the branch tree.
@@ -1200,3 +2469,64 @@ jobs:
             -f output.title="inventory valid (provenance)" \
             -f output.summary="validate_inventory.py passed on the provenance branch"
           gh pr merge --auto --merge "${PR_URL}"
+          echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify merged provenance and publish the final decision
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+        run: |
+          set -euo pipefail
+          RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+          if [ -n "${PR_URL}" ]; then
+            for _ in $(seq 1 60); do
+              if [ "$(gh pr view "${PR_URL}" --json state --jq .state)" = MERGED ]; then
+                break
+              fi
+              sleep 10
+            done
+            [ "$(gh pr view "${PR_URL}" --json state --jq .state)" = MERGED ] || {
+              echo "FATAL: provenance PR did not merge in time: ${PR_URL}"
+              exit 1
+            }
+          fi
+          git fetch origin main
+          git show "origin/main:${RECORD}" > main-provenance.json
+          cmp "${RECORD}" main-provenance.json || {
+            echo "FATAL: producer main does not carry the exact generated provenance bytes"
+            exit 1
+          }
+          jq '.provenance.merged = true' candidate-decision.json > candidate-decision.next.json
+          mv candidate-decision.next.json candidate-decision.json
+          python3 - "${APP}" "${CANDIDATE_DIGEST}" <<'PY'
+          import importlib.util
+          import json
+          import os
+
+          spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          decision = json.load(open("candidate-decision.json"))
+          module.validate_decision(decision)
+          if (
+              decision["app"] != os.environ["APP"]
+              or decision["published"]["digest"] != os.environ["CANDIDATE_DIGEST"]
+              or decision["provenance"]["merged"] is not True
+          ):
+              raise SystemExit("FATAL: final candidate decision merge state is invalid")
+          PY
+          echo "candidate-decision.json is complete; publication and provenance are verified" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the final candidate decision
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93e77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: candidate-decision
+          path: candidate-decision.json
+          retention-days: 30
+          if-no-files-found: error
