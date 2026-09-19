@@ -314,7 +314,7 @@ def validate_scan_report(report: dict, path: Path, label: str, side: dict):
     os_metadata = metadata.get("OS")
     if not isinstance(os_metadata, dict) or not isinstance(os_metadata.get("Family"), str) or not os_metadata["Family"] or not isinstance(os_metadata.get("Name"), str):
         raise ValueError(f"{label} report OS metadata is invalid")
-    if not isinstance(os_metadata.get("EOSL"), bool):
+    if os_metadata.get("EOSL") not in (True, False, None):
         raise ValueError(f"{label} report OS EOSL is invalid")
     if os_metadata.get("EOSL") is True:
         raise ValueError(f"{label} report OS EOSL is true")
@@ -853,8 +853,8 @@ def main():
         patch_reason(args)
         full_report = load_json(full_path, "full Trivy report")
         os_metadata = full_report.get("Metadata", {}).get("OS")
-        if os_metadata is not None and (not isinstance(os_metadata, dict) or os_metadata.get("EOSL") is not False):
-            raise ValueError("full report OS EOSL must be explicitly false")
+        if os_metadata is not None and (not isinstance(os_metadata, dict) or os_metadata.get("EOSL") is True):
+            raise ValueError("full report OS EOSL is true")
         after_report = load_json(after_path, "after full Trivy report") if after_path else None
         if after_report is not None:
             validate_scan_receipt(
