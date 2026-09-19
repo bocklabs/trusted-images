@@ -283,6 +283,18 @@ class PromoteWorkflowTests(unittest.TestCase):
                 self.assertIn(text, self.workflow)
         self.assertNotIn("tags/list?n=1000", self.workflow)
 
+    def test_registry_artifacts_come_from_verbatim_oci_blobs(self) -> None:
+        workflow = yaml.safe_load(self.workflow)
+        steps = workflow["jobs"]["validate"]["steps"]
+        fetch = next(step for step in steps if step["name"] == "Fetch upstream index")["run"]
+        resolve = next(step for step in steps if step["name"] == "Resolve the exact linux/amd64 child")["run"]
+        self.assertIn("copy --all --preserve-digests", fetch)
+        self.assertIn('cp "upstream-oci/blobs/sha256/${UPSTREAM_DIGEST#sha256:}" upstream-index.json', fetch)
+        self.assertNotIn("inspect --raw", fetch)
+        self.assertIn('cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json', resolve)
+        self.assertIn('cp "upstream-oci/blobs/sha256/${CONFIG_DIGEST#sha256:}" child-config.json', resolve)
+        self.assertNotIn("inspect --config", resolve)
+
     def test_skopeo_copy_writes_workspace_files_as_runner(self) -> None:
         self.assertIn(
             'docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"',

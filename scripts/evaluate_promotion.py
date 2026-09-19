@@ -877,7 +877,7 @@ def main():
         decision["upstream_index_digest"] = index_digest
         validate_decision(decision)
     except ValueError as exc:
-        print(f"[policy] {exc}")
+        print(f"[policy] {exc}", file=sys.stderr)
         return 2
 
     out = Path(args.out)

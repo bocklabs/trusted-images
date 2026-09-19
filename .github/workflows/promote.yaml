@@ -514,11 +514,12 @@ jobs:
           SKOPEO="${SKOPEO_IMAGE}"
           CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
+          CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
           fi
-          docker run --rm -v "$PWD":/workspace "$SKOPEO" \
-            inspect --raw ${CREDS[@]+"${CREDS[@]}"} \
-            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
+            copy --all --preserve-digests ${CREDS[@]+"${CREDS[@]}"} \
+            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" "oci:/workspace/upstream-oci:index"
+          cp "upstream-oci/blobs/sha256/${UPSTREAM_DIGEST#sha256:}" upstream-index.json
           jq -e '.manifests | length > 0' upstream-index.json > /dev/null \
             || { echo "FATAL: upstream index carries no manifests"; exit 1; }
           echo "upstream index bytes: $(wc -c < upstream-index.json)"
@@ -527,24 +528,13 @@ jobs:
         id: child
         shell: bash
         env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
           UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SKOPEO="${SKOPEO_IMAGE}"
-          CREDS=()
-          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
-          fi
           SELECTED_DIGEST="$(jq -er '[.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64")][0].digest' upstream-index.json)"
-          docker run --rm -v "$PWD":/workspace "$SKOPEO" \
-            inspect --raw ${CREDS[@]+"${CREDS[@]}"} \
-            "docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" > child-manifest.json
-          docker run --rm -v "$PWD":/workspace "$SKOPEO" \
-            inspect --config ${CREDS[@]+"${CREDS[@]}"} \
-            "docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" > child-config.json
+          cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json
+          CONFIG_DIGEST="$(jq -er .config.digest child-manifest.json)"
+          cp "upstream-oci/blobs/sha256/${CONFIG_DIGEST#sha256:}" child-config.json
           SELECTED_DIGEST="$(python3 scripts/evaluate_promotion.py --resolve-only \
             --index upstream-index.json \
             --upstream-index-digest "${UPSTREAM_INDEX_DIGEST}" \
