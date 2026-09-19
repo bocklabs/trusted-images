@@ -8,7 +8,7 @@ spec:
   upstream:
     ref: docker.io/library/nginx
     tag: 1.31.6
-    digest: sha256:fd3d3f71bb0786f6af087db3e44e3cc5cdc5e3eca41f9646af23bbc7bc789376
+    digest: sha256:908dc23e643a1447dbfb2e189ed268bfde6a51a5bf9a34d3dd3440a24f58ccf7
   destination:
     package: ghcr.io/bocklabs/nginx-qualification
   patchPolicy: enabled
