@@ -6,7 +6,7 @@
     "helpers:pinGitHubActionDigests",
     ":configMigration"
   ],
-  "automerge": true,
+  "automerge": false,
   "automergeType": "pr",
   "automergeStrategy": "merge",
   "platformAutomerge": true,
