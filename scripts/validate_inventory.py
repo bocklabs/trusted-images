@@ -17,6 +17,9 @@ bind to these exact strings):
   spec.upstream.digest    matches ^sha256:[a-f0-9]{64}$
   spec.destination.package == ghcr.io/bocklabs/<parent folder name>, unique
   spec.patchPolicy        in {enabled, disabled}
+  spec.patchDisabledReason required only when patchPolicy is disabled;
+                          exact mapping with class=unsupported|no-fix and
+                          non-empty detail; forbidden when patching is enabled
   spec.validation         mapping whose "type" is required and must be in
                           {process, http, oneshot}; per-type params below;
                           ANY unknown key inside the mapping is rejected
@@ -53,7 +56,11 @@ KIND = "Image"
 REGISTRY_PREFIX = "ghcr.io/bocklabs/"
 SCHEMA_VERSION = 2
 DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
+UPSTREAM_REF_RE = re.compile(r"^[a-z0-9][a-z0-9._/-]*(?::[0-9]+/[a-z0-9._/-]+)?$")
+UPSTREAM_TAG_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$")
 PATCH_POLICIES = ("enabled", "disabled")
+PATCH_DISABLED_REASON_FIELDS = {"class", "detail"}
+PATCH_DISABLED_REASON_CLASSES = ("unsupported", "no-fix")
 VALIDATION_PROFILES = ("process", "http", "oneshot")
 PLATFORM_RE = re.compile(r"^[a-z0-9]+/[a-z0-9]+(/.+)?$")
 
@@ -173,6 +180,11 @@ def entry_failures(path: Path, data: object) -> list[str]:
         if field in values and (not isinstance(value, str) or not value.strip()):
             fail(f"{field} must be a non-empty string (got {value!r})")
 
+    for field, pattern in (("spec.upstream.ref", UPSTREAM_REF_RE), ("spec.upstream.tag", UPSTREAM_TAG_RE)):
+        value = values.get(field)
+        if isinstance(value, str) and not pattern.fullmatch(value):
+            fail(f"{field} must be a shell-safe container reference component")
+
     if "spec.upstream.digest" in values:
         digest = values["spec.upstream.digest"]
         if not isinstance(digest, str) or not DIGEST_RE.match(digest):
@@ -189,6 +201,33 @@ def entry_failures(path: Path, data: object) -> list[str]:
             f"spec.patchPolicy {values['spec.patchPolicy']!r} "
             f"not in {list(PATCH_POLICIES)}"
         )
+
+    patch_policy = values.get("spec.patchPolicy")
+    reason_present, reason = dig(data, "spec.patchDisabledReason")
+    if patch_policy == "disabled" and not reason_present:
+        fail("spec.patchDisabledReason is required when spec.patchPolicy is disabled")
+    if patch_policy == "enabled" and reason_present:
+        fail("spec.patchDisabledReason is only valid when spec.patchPolicy is disabled")
+    if reason_present:
+        if not isinstance(reason, dict):
+            fail(f"spec.patchDisabledReason must be a mapping (got {type(reason).__name__})")
+        else:
+            for field in sorted(PATCH_DISABLED_REASON_FIELDS - set(reason)):
+                fail(f"missing required field spec.patchDisabledReason.{field}")
+            unknown = sorted(set(reason) - PATCH_DISABLED_REASON_FIELDS)
+            if unknown:
+                fail(
+                    f"spec.patchDisabledReason has unknown keys {unknown} "
+                    f"(allowed: {sorted(PATCH_DISABLED_REASON_FIELDS)})"
+                )
+            if "class" in reason and reason["class"] not in PATCH_DISABLED_REASON_CLASSES:
+                fail(
+                    f"spec.patchDisabledReason.class {reason['class']!r} "
+                    f"not in {list(PATCH_DISABLED_REASON_CLASSES)}"
+                )
+            detail = reason.get("detail")
+            if "detail" in reason and (not isinstance(detail, str) or not detail.strip()):
+                fail(f"spec.patchDisabledReason.detail must be a non-empty string (got {detail!r})")
 
     if "spec.validation.type" in values:
         vtype = values["spec.validation.type"]

@@ -15,11 +15,14 @@ stdlib only.
 """
 
 import argparse
+import hashlib
 import json
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+import evaluate_promotion as promotion
 
 SCHEMA = "trusted-images.bocklabs.dev/provenance-v1"
 PACKAGE_PREFIX = "ghcr.io/bocklabs/"
@@ -34,6 +37,7 @@ FLAGS: dict[str, tuple[str, bool]] = {
     "--upstream-ref": ("text", True),
     "--upstream-tag": ("text", True),
     "--upstream-digest": ("digest", True),
+    "--upstream-child-digest": ("digest", True),
     "--media-type": ("text", True),
     "--internal-package": ("text", True),
     "--internal-tag": ("text", True),
@@ -50,6 +54,16 @@ FLAGS: dict[str, tuple[str, bool]] = {
     "--trivy-db-updated-at": ("text", True),
     "--full-report-sha256": ("sha256", True),
     "--copa-report-sha256": ("sha256", True),
+    "--decision-sha256": ("sha256", True),
+    "--decision": ("path", True),
+    "--before-report": ("path", True),
+    "--final-report": ("path", True),
+    "--fixable-report": ("path", True),
+    "--kev-report": ("path", True),
+    "--now": ("text", True),
+    "--github-evidence": ("path", False),
+    "--github-repository": ("text", False),
+    "--copa-version": ("text", False),
     "--secobserve-product": ("text", True),
     "--secobserve-origin": ("text", True),
     "--validation-type": ("text", True),
@@ -93,6 +107,162 @@ def value_of(args: argparse.Namespace, flag: str) -> str:
     return getattr(args, flag.lstrip("-").replace("-", "_"))
 
 
+def load_json(path: str, label: str) -> dict:
+    value = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"{label} must be a JSON object")
+    return value
+
+
+def file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def parse_utc(value: str, label: str) -> datetime:
+    if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value):
+        raise ValueError(f"{label} must use strict UTC YYYY-MM-DDTHH:MM:SSZ")
+    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+
+
+def finding_rows(findings: dict) -> list[dict]:
+    rows = []
+    for identity, metadata in findings.items():
+        platform, package, cve = identity.split("|", 2)
+        rows.append({"identity": identity, "platform": platform, "package": package, "cve": cve, **metadata})
+    return sorted(rows, key=lambda row: row["identity"])
+
+
+def warning_rows(final: dict, fixable: dict, decision: dict) -> list[dict]:
+    warnings = [
+        {"kind": "no-fix", **row}
+        for row in finding_rows({key: value for key, value in final.items() if key not in fixable})
+    ]
+    if decision["patching"].get("disabled_reason"):
+        warnings.append({"kind": "patching-disabled", **decision["patching"]["disabled_reason"]})
+    return warnings
+
+
+def policy_evidence(args: argparse.Namespace, decision: dict) -> tuple[dict, list[dict], dict]:
+    before = promotion.findings(load_json(value_of(args, "--before-report"), "before report"), "before report")
+    final = promotion.findings(load_json(value_of(args, "--final-report"), "final report"), "final report")
+    fixable = promotion.findings(
+        load_json(value_of(args, "--fixable-report"), "fixable report"), "fixable report", True
+    )
+    if not set(fixable) <= set(before):
+        raise ValueError("fixable report contains a finding absent from the before report")
+    if decision["before"]["fixable_os"] != sorted(fixable):
+        raise ValueError("decision fixable findings do not match the fixable report")
+
+    before_ids, final_ids = set(before), set(final)
+    expected_delta = {
+        "resolved": sorted(before_ids - final_ids),
+        "remaining": sorted(before_ids & final_ids),
+        "introduced": sorted(final_ids - before_ids),
+        "unresolved_fixable": sorted(
+            key for key in final_ids if key.rsplit("|", 1)[1] in {
+                identity.rsplit("|", 1)[1] for identity in fixable
+            }
+        ),
+    }
+    expected_delta["cves"] = promotion.cve_groups(expected_delta)
+    if decision["delta"] != expected_delta:
+        raise ValueError("decision delta does not match the before and final reports")
+
+    before_packages = promotion.package_inventory(
+        load_json(value_of(args, "--before-report"), "before report"), "before report"
+    )
+    final_packages = promotion.package_inventory(
+        load_json(value_of(args, "--final-report"), "final report"), "final report"
+    )
+    changes, downgrades = promotion.package_changes(before_packages, final_packages)
+    if decision["packages"] != {"changes": changes, "downgrades": downgrades}:
+        raise ValueError("decision package changes do not match the before and final reports")
+
+    receipt = promotion.kev_evidence(
+        Path(value_of(args, "--kev-report")),
+        decision["policy"]["kev"]["catalog"]["fetched_at"],
+        value_of(args, "--now"),
+    )
+    if decision["policy"]["kev"]["catalog"] != receipt["catalog"]:
+        raise ValueError("decision KEV catalog receipt does not match the catalog bytes")
+    matched = sorted({key.split("|", 2)[2] for key in final_ids} & {
+        row["cveID"] for row in load_json(value_of(args, "--kev-report"), "KEV catalog")["vulnerabilities"]
+    })
+    if decision["policy"]["kev"]["matched"] != matched:
+        raise ValueError("decision KEV matches do not match the final report and catalog")
+
+    acceptance = decision["policy"]["acceptance"]
+    if not matched:
+        if acceptance is not None:
+            raise ValueError("policy acceptance cannot exist without a KEV match")
+    elif acceptance is None:
+        raise ValueError("nonempty KEV matches require exact acceptance evidence")
+    else:
+        validate_acceptance(args, decision, acceptance, matched)
+
+    catalog = {
+        "url": receipt["catalog"]["url"],
+        "sha256": receipt["catalog"]["sha256"],
+        "fetched_at": receipt["catalog"]["fetched_at"],
+        "catalogVersion": receipt["catalog"]["catalog_version"],
+        "dateReleased": receipt["catalog"]["date_released"],
+    }
+    return {
+        "kev": {"matches": matched, "catalog": catalog},
+        "acceptance": provenance_acceptance(args, acceptance),
+        "patching": decision["patching"],
+        "copa": decision["copa"],
+        "supersedes": decision["supersedes"],
+    }, warning_rows(final, fixable, decision), {
+        "before": finding_rows(before),
+        "final": finding_rows(final),
+        "summary": decision["delta"]["cves"],
+    }
+
+
+def validate_acceptance(args: argparse.Namespace, decision: dict, acceptance: dict, matched: list[str]) -> None:
+    if acceptance["kevs"] != matched or acceptance["candidate_digest"] != decision["candidate"]["digest"]:
+        raise ValueError("acceptance candidate digest or KEV set does not match this candidate")
+    now = parse_utc(value_of(args, "--now"), "--now")
+    merged = parse_utc(acceptance["merged_at"], "acceptance merged_at")
+    expiry = parse_utc(acceptance["expires_at"], "acceptance expires_at")
+    if merged > now or now >= expiry:
+        raise ValueError("acceptance is future-dated or expired")
+    if not value_of(args, "--github-evidence") or not value_of(args, "--github-repository"):
+        raise ValueError("--github-evidence and --github-repository are required with acceptance")
+    evidence = load_json(value_of(args, "--github-evidence"), "GitHub acceptance evidence")
+    pull_request, evidence_merged = promotion.validate_github_evidence(
+        evidence,
+        value_of(args, "--github-repository"),
+        acceptance["path"],
+        acceptance["sha256"],
+    )
+    if (
+        pull_request["number"] != acceptance["pull_request"]
+        or evidence_merged.strftime("%Y-%m-%dT%H:%M:%SZ") != acceptance["merged_at"]
+        or evidence["issue"]["number"] != acceptance["issue"]
+    ):
+        raise ValueError("acceptance GitHub identity does not match the decision")
+
+
+def provenance_acceptance(args: argparse.Namespace, acceptance: dict | None) -> dict | None:
+    if acceptance is None:
+        return None
+    evidence = load_json(value_of(args, "--github-evidence"), "GitHub acceptance evidence")
+    return {
+        "candidate_digest": acceptance["candidate_digest"],
+        "kevs": acceptance["kevs"],
+        "record_path": acceptance["path"],
+        "record_commit": acceptance["commit_sha"],
+        "pr_url": evidence["pull_request"]["html_url"],
+        "merged_by": acceptance["merged_by"],
+        "merged_at": acceptance["merged_at"],
+        "issue_url": evidence["issue"]["html_url"],
+        "issue_state": evidence["issue"]["state"],
+        "expires_at": acceptance["expires_at"],
+    }
+
+
 def collect_violations(args: argparse.Namespace) -> list[str]:
     """Every rule violation, one line each naming the offending field."""
     violations: list[str] = []
@@ -124,6 +294,8 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
                     violations.append(
                         f"{flag} must be a JSON array (got {type(parsed).__name__})"
                     )
+        if kind == "path" and value.strip() and not Path(value).is_file():
+            violations.append(f"{flag} must be an existing JSON file (got {value!r})")
 
     app = value_of(args, "--app")
     package = value_of(args, "--internal-package")
@@ -151,23 +323,95 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
                 f"(got {platforms_raw!r})"
             )
 
+    child_digest = value_of(args, "--upstream-child-digest").strip()
+    decision_sha = value_of(args, "--decision-sha256").strip()
+    try:
+        decision = load_json(value_of(args, "--decision"), "--decision")
+        promotion.validate_decision(decision)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        violations.append(f"decision validation failed: {exc}")
+        decision = None
+    if decision is not None:
+        try:
+            parse_utc(value_of(args, "--now"), "--now")
+        except ValueError as exc:
+            violations.append(str(exc))
+        expected = {
+            "app": app,
+            "upstream_index_digest": value_of(args, "--upstream-digest"),
+            "selected_child_digest": child_digest,
+            "candidate_digest": value_of(args, "--internal-digest"),
+            "proposed_tag": internal_tag,
+        }
+        mismatches = {
+            "app": decision["app"] != expected["app"],
+            "upstream_index_digest": decision["upstream_index_digest"] != expected["upstream_index_digest"],
+            "selected_child_digest": decision["selected_child_digest"] != expected["selected_child_digest"],
+            "candidate_digest": decision["candidate"]["digest"] != expected["candidate_digest"],
+            "proposed_tag": decision["proposed_tag"] != expected["proposed_tag"],
+        }
+        violations.extend(f"decision {key} does not match provenance identity" for key, failed in mismatches.items() if failed)
+        if not decision["eligible"] or decision["validation"]["result"] != "pass":
+            violations.append("decision must be eligible with passing validation")
+        if decision["published"]["digest"] != value_of(args, "--internal-digest"):
+            violations.append("decision published digest must match the provenance candidate")
+        if decision["provenance"]["merged"]:
+            violations.append("decision provenance merged must be false before this run writes provenance")
+        if decision_sha != file_sha256(Path(value_of(args, "--decision"))):
+            violations.append("--decision-sha256 does not match --decision bytes")
+    if child_digest:
+        if platforms != ["linux/amd64"]:
+            violations.append("--platforms must be exactly linux/amd64 for new records")
+        if child_digest == value_of(args, "--upstream-digest"):
+            violations.append("--upstream-child-digest must differ from the index digest")
+
     recovery_values = [value_of(args, flag).strip() for flag in RECOVERY_FLAGS]
-    if any(recovery_values) and not all(recovery_values):
-        violations.append("recovery metadata must provide all recovery fields")
-    if all(recovery_values):
+    original_values, recovered_values = recovery_values[:2], recovery_values[2:]
+    if any(original_values) and not all(original_values):
+        violations.append("original run metadata must provide URL and source SHA")
+    if any(recovered_values) and not all(recovered_values):
+        violations.append("recovery metadata must provide tag and digest")
+    if any(original_values):
         if not SOURCE_SHA_RE.fullmatch(value_of(args, "--original-source-sha")):
             violations.append("--original-source-sha must be 40 lowercase hex digits")
+        if decision is not None and decision["resume"] is None and not all(recovered_values):
+            violations.append("original run metadata requires decision resume or recovery evidence")
+        if decision is not None and decision["resume"] is not None and not all(original_values):
+            violations.append("decision resume requires original run metadata")
+        if value_of(args, "--original-run-url") == value_of(args, "--run-url"):
+            violations.append("--run-url must identify a new recovery run")
+    if any(recovered_values):
+        if not all(original_values):
+            violations.append("recovery metadata requires original run metadata")
         if value_of(args, "--recovered-tag") != internal_tag:
             violations.append("--recovered-tag must equal --internal-tag")
         if value_of(args, "--recovered-digest") != value_of(args, "--internal-digest"):
             violations.append("--recovered-digest must equal --internal-digest")
-        if value_of(args, "--original-run-url") == value_of(args, "--run-url"):
-            violations.append("--run-url must identify a new recovery run")
+
+    if value_of(args, "--full-report-sha256").strip():
+        try:
+            if value_of(args, "--full-report-sha256") != file_sha256(Path(value_of(args, "--final-report"))):
+                violations.append("--full-report-sha256 must match --final-report bytes")
+        except OSError:
+            pass
+    if value_of(args, "--copa-report-sha256").strip():
+        try:
+            if value_of(args, "--copa-report-sha256") != file_sha256(Path(value_of(args, "--fixable-report"))):
+                violations.append("--copa-report-sha256 must match --fixable-report bytes")
+        except OSError:
+            pass
 
     return violations
 
 
-def build_record(args: argparse.Namespace, platforms: list[str]) -> dict:
+def build_record(
+    args: argparse.Namespace,
+    platforms: list[str],
+    policy: dict,
+    warnings: list[dict],
+    cves: dict,
+    decision: dict,
+) -> dict:
     record = {
         "schema": SCHEMA,
         "app": value_of(args, "--app"),
@@ -175,7 +419,12 @@ def build_record(args: argparse.Namespace, platforms: list[str]) -> dict:
             "ref": value_of(args, "--upstream-ref"),
             "tag": value_of(args, "--upstream-tag"),
             "digest": value_of(args, "--upstream-digest"),
+            "index_digest": value_of(args, "--upstream-digest"),
             "media_type": value_of(args, "--media-type"),
+            **({
+                "selected_platform": "linux/amd64",
+                "selected_child_digest": value_of(args, "--upstream-child-digest"),
+            } if value_of(args, "--upstream-child-digest") else {}),
         },
         "internal": {
             "package": value_of(args, "--internal-package"),
@@ -191,6 +440,7 @@ def build_record(args: argparse.Namespace, platforms: list[str]) -> dict:
         "tools": {
             "trivy": value_of(args, "--trivy-version"),
             "trivy_action": value_of(args, "--trivy-action-sha"),
+            "copa": value_of(args, "--copa-version") or None,
             "skopeo": value_of(args, "--skopeo-version"),
             "skopeo_image_digest": value_of(args, "--skopeo-image-digest"),
         },
@@ -201,11 +451,20 @@ def build_record(args: argparse.Namespace, platforms: list[str]) -> dict:
             },
             "full_report_sha256": value_of(args, "--full-report-sha256"),
             "copa_report_sha256": value_of(args, "--copa-report-sha256"),
+            "decision_sha256": value_of(args, "--decision-sha256"),
+            "reports": {
+                "before_sha256": file_sha256(Path(value_of(args, "--before-report"))),
+                "final_sha256": file_sha256(Path(value_of(args, "--final-report"))),
+                "fixable_sha256": file_sha256(Path(value_of(args, "--fixable-report"))),
+            },
             "secobserve": {
                 "product": value_of(args, "--secobserve-product"),
                 "origin": value_of(args, "--secobserve-origin"),
             },
         },
+        "policy": policy | {"outcome": decision["reason"], "eligible": True, "warnings": warnings},
+        "cves": cves,
+        "packages": decision["packages"] | {"downgrade_blocked": bool(decision["packages"]["downgrades"])},
         "validation": {
             "profile": value_of(args, "--validation-type"),
             "result": value_of(args, "--validation-result"),
@@ -223,6 +482,11 @@ def build_record(args: argparse.Namespace, platforms: list[str]) -> dict:
         "notes": args.notes,
     }
     if value_of(args, "--original-run-url"):
+        record["pipeline"]["original_run_url"] = value_of(args, "--original-run-url")
+        record["pipeline"]["original_source_sha"] = value_of(args, "--original-source-sha")
+    if decision["resume"] is not None:
+        record["resume"] = decision["resume"]
+    if value_of(args, "--recovered-tag"):
         record["recovery"] = {
             "original_run_url": value_of(args, "--original-run-url"),
             "original_source_sha": value_of(args, "--original-source-sha"),
@@ -242,7 +506,13 @@ def main() -> int:
         return 1
 
     platforms = [part.strip() for part in value_of(args, "--platforms").split(",")]
-    record = build_record(args, platforms)
+    try:
+        decision = load_json(value_of(args, "--decision"), "--decision")
+        policy, warnings, cves = policy_evidence(args, decision)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        print(f"[provenance] policy evidence validation failed: {exc}")
+        return 1
+    record = build_record(args, platforms, policy, warnings, cves, decision)
 
     out = Path(value_of(args, "--out"))
     out.parent.mkdir(parents=True, exist_ok=True)

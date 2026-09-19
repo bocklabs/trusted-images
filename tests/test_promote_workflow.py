@@ -1,10 +1,15 @@
 """Promotion tag allocation and workflow contract tests."""
 
+import hashlib
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+
+import yaml
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +17,8 @@ WORKFLOW = REPO_ROOT / ".github" / "workflows" / "promote.yaml"
 RESOLVER = REPO_ROOT / "scripts" / "resolve_internal_tag.py"
 DIGEST_A = "sha256:" + "a" * 64
 DIGEST_B = "sha256:" + "b" * 64
+DIGEST_C = "sha256:" + "c" * 64
+DIGEST_D = "sha256:" + "d" * 64
 
 
 class TagAllocationTests(unittest.TestCase):
@@ -22,57 +29,107 @@ class TagAllocationTests(unittest.TestCase):
 
         cls.select = staticmethod(select_internal_tag)
 
-    def observation(self, revision: int, digest: str = DIGEST_A) -> dict[str, str]:
-        return {"tag": f"v1.2.3-bocklabs.{revision}", "digest": digest}
+    def observation(
+        self,
+        revision: int,
+        digest: str = DIGEST_A,
+        child: str | None = DIGEST_A,
+        index: str = DIGEST_C,
+        platforms: tuple[str, ...] = ("linux/amd64",),
+    ) -> dict:
+        return {
+            "tag": f"v1.2.3-bocklabs.{revision}",
+            "digest": digest,
+            "upstream_index_digest": index,
+            "selected_child_digest": child,
+            "platforms": list(platforms),
+        }
 
     def test_normal_rerun_uses_newest_matching_revision(self) -> None:
         result = self.select(
             "v1.2.3",
+            DIGEST_C,
             DIGEST_A,
             [self.observation(2), self.observation(10), self.observation(9)],
         )
-        self.assertEqual(result, ("v1.2.3-bocklabs.10", True))
+        self.assertEqual(result, ("v1.2.3-bocklabs.10", True, False, False))
+
+    def test_same_child_with_changed_index_reuses_clean_or_patched_revision(self) -> None:
+        for digest in (DIGEST_A, DIGEST_B):
+            with self.subTest(digest=digest):
+                result = self.select(
+                    "v1.2.3",
+                    DIGEST_C,
+                    DIGEST_A,
+                    [self.observation(2), self.observation(10, digest=digest, index=DIGEST_D)],
+                )
+                self.assertEqual(result, ("v1.2.3-bocklabs.10", True, True, False))
 
     def test_normal_changed_digest_allocates_after_numeric_maximum(self) -> None:
         result = self.select(
             "v1.2.3",
+            DIGEST_C,
             DIGEST_B,
-            [self.observation(9), self.observation(10)],
+            [self.observation(9, index=DIGEST_D), self.observation(10, index=DIGEST_D)],
         )
-        self.assertEqual(result, ("v1.2.3-bocklabs.11", False))
+        self.assertEqual(result, ("v1.2.3-bocklabs.11", False, True, True))
+
+    def test_historical_multi_platform_revision_is_never_reused(self) -> None:
+        historical = self.observation(
+            10, platforms=("linux/amd64", "linux/arm64"), child=None, index=""
+        )
+        result = self.select("v1.2.3", DIGEST_C, DIGEST_A, [historical])
+        self.assertEqual(result, ("v1.2.3-bocklabs.11", False, False, False))
 
     def test_force_allocates_next_revision_for_identical_digest(self) -> None:
         result = self.select(
             "v1.2.3",
+            DIGEST_C,
             DIGEST_A,
             [self.observation(9), self.observation(10)],
             force_repromote=True,
         )
-        self.assertEqual(result, ("v1.2.3-bocklabs.11", False))
+        self.assertEqual(result, ("v1.2.3-bocklabs.11", False, False, False))
 
     def test_recovery_selects_exact_older_revision(self) -> None:
         result = self.select(
             "v1.2.3",
+            DIGEST_C,
             DIGEST_A,
-            [self.observation(2), self.observation(10)],
+            [self.observation(2), self.observation(10, digest=DIGEST_B)],
             recover_tag="v1.2.3-bocklabs.2",
+            recover_candidate_digest=DIGEST_A,
         )
-        self.assertEqual(result, ("v1.2.3-bocklabs.2", True))
+        self.assertEqual(result, ("v1.2.3-bocklabs.2", True, False, False))
 
     def test_recovery_rejects_absent_or_mismatched_revision(self) -> None:
         with self.assertRaisesRegex(ValueError, "not published"):
-            self.select("v1.2.3", DIGEST_A, [], recover_tag="v1.2.3-bocklabs.2")
+            self.select(
+                "v1.2.3", DIGEST_C, DIGEST_A, [], recover_tag="v1.2.3-bocklabs.2",
+                recover_candidate_digest=DIGEST_A,
+            )
         with self.assertRaisesRegex(ValueError, "digest"):
             self.select(
                 "v1.2.3",
-                DIGEST_B,
+                DIGEST_C,
+                DIGEST_A,
                 [self.observation(2)],
                 recover_tag="v1.2.3-bocklabs.2",
+                recover_candidate_digest=DIGEST_B,
+            )
+        with self.assertRaisesRegex(ValueError, "Phase 05"):
+            self.select(
+                "v1.2.3",
+                DIGEST_C,
+                DIGEST_A,
+                [self.observation(2, child=None, index="", platforms=("linux/amd64", "linux/arm64"))],
+                recover_tag="v1.2.3-bocklabs.2",
+                recover_candidate_digest=DIGEST_A,
             )
 
     def test_force_and_recovery_are_mutually_exclusive(self) -> None:
         with self.assertRaisesRegex(ValueError, "cannot be combined"):
-            self.select("v1.2.3", DIGEST_A, [], True, "v1.2.3-bocklabs.2")
+            self.select("v1.2.3", DIGEST_C, DIGEST_A, [], True, "v1.2.3-bocklabs.2")
 
     def test_malformed_or_incomplete_observations_fail_closed(self) -> None:
         invalid = (
@@ -84,7 +141,7 @@ class TagAllocationTests(unittest.TestCase):
         for observations in invalid:
             with self.subTest(observations=observations):
                 with self.assertRaises(ValueError):
-                    self.select("v1.2.3", DIGEST_A, observations)
+                    self.select("v1.2.3", DIGEST_C, DIGEST_A, observations)
 
     def test_cli_emits_validated_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -97,6 +154,8 @@ class TagAllocationTests(unittest.TestCase):
                     "--upstream-tag",
                     "v1.2.3",
                     "--upstream-digest",
+                    DIGEST_C,
+                    "--selected-child-digest",
                     DIGEST_A,
                     "--observations",
                     str(observations),
@@ -108,7 +167,11 @@ class TagAllocationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
             json.loads(result.stdout),
-            {"internal_tag": "v1.2.3-bocklabs.2", "skip_copy": False},
+            {
+                "internal_tag": "v1.2.3-bocklabs.2",
+                "skip_copy": False,
+                "supersedes": {"higher_upstream": False, "original_child_selected": False},
+            },
         )
 
 
@@ -118,9 +181,92 @@ class PromoteWorkflowTests(unittest.TestCase):
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
 
     def test_dispatch_exposes_force_and_recovery_modes(self) -> None:
-        for text in ("force_repromote:", "recover_tag:", "recovery_run_id:"):
+        for text in ("force_repromote:", "recover_tag:", "recovery_run_id:", "accepted_candidate_run_id:"):
             with self.subTest(text=text):
                 self.assertIn(text, self.workflow)
+
+    def test_kev_block_preserves_candidate_for_acceptance_resume(self) -> None:
+        workflow = yaml.safe_load(self.workflow)
+        candidate_job = workflow["jobs"]["validate"]
+        self.assertEqual(candidate_job["permissions"], {
+            "contents": "read",
+            "actions": "read",
+            "packages": "read",
+            "pull-requests": "read",
+            "issues": "read",
+        })
+        entry = next(step for step in candidate_job["steps"] if step["name"] == "Resolve inventory entry and validation params")["run"]
+        for text in (
+            "force_repromote and accepted_candidate_run_id cannot be combined",
+            "recover inputs and accepted_candidate_run_id cannot be combined",
+            "accepted_candidate_run_id must be numeric",
+        ):
+            with self.subTest(text=text):
+                self.assertIn(text, entry)
+        policy = next(step for step in candidate_job["steps"] if step["name"] == "Evaluate one promotion decision")
+        self.assertTrue(policy["continue-on-error"])
+        candidate_text = self.workflow.split("  validate:\n", 1)[1].split("\n  promote:\n", 1)[0]
+        self.assertLess(candidate_text.index("name: candidate\n"), candidate_text.index("Fail blocked candidate after preservation"))
+
+    def test_acceptance_resume_reuses_exact_preserved_bytes(self) -> None:
+        workflow = yaml.safe_load(self.workflow)
+        steps = workflow["jobs"]["validate"]["steps"]
+        by_name = {step["name"]: step for step in steps}
+        restore = by_name["Restore the exact accepted candidate"]
+        self.assertEqual(restore["if"], "inputs.accepted_candidate_run_id != ''")
+        for text in (
+            "actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}",
+            "--paginate",
+            '.get("expired") is False',
+            "SHA256SUMS",
+            "path traversal",
+            "is_symlink()",
+            "undeclared files",
+            'decision.get("reason") != "missing_kev_acceptance"',
+            "candidate-oci",
+        ):
+            with self.subTest(text=text):
+                self.assertIn(text, restore["run"])
+        copa = by_name["Run pinned Copa from the original child"]
+        self.assertIn("inputs.accepted_candidate_run_id == ''", copa["if"])
+        after = by_name["Rescan the exact preserved accepted bytes with the frozen DB"]
+        self.assertIn("inputs.accepted_candidate_run_id != ''", after["if"])
+        policy = by_name["Evaluate one promotion decision"]
+        for text in ("--acceptance", "--github-evidence", "--github-repository"):
+            with self.subTest(text=text):
+                self.assertIn(text, policy["run"])
+        risk = by_name["Resolve current KEV risk acceptance"]["run"]
+        for text in (
+            '"base_repository": value["base"]["repo"]["full_name"]',
+            '"is_pull_request": "pull_request" in value',
+            "acceptance commit does not bind the current file bytes",
+            '[ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]',
+        ):
+            with self.subTest(text=text):
+                self.assertIn(text, risk)
+        validation = by_name["Run validation"]["run"]
+        self.assertIn('--local-image "${CANDIDATE_REF}"', validation)
+
+    def test_resume_publishes_only_when_destination_is_absent_or_identical(self) -> None:
+        workflow = yaml.safe_load(self.workflow)
+        steps = workflow["jobs"]["promote"]["steps"]
+        by_name = {step["name"]: step for step in steps}
+        occupancy = by_name["Assert destination tag is absent or byte-identical"]
+        copy = by_name["Digest-preserving copy to GHCR"]
+        verify = by_name["Verify candidate artifact"]
+        for key in (
+            "RESUME_ORIGINAL_RUN_ATTEMPT",
+            "RESUME_ORIGINAL_SOURCE_SHA",
+            "RESUME_ARTIFACT_ID",
+        ):
+            with self.subTest(env=key):
+                self.assertIn(key, verify["env"])
+        self.assertIn('api_run.get("path") != ".github/workflows/promote.yaml"', verify["run"])
+        self.assertIn('api_artifact.get("workflow_run", {}).get("id") != int(accepted_run)', verify["run"])
+        self.assertIn('"${STATUS}" = 404', occupancy["run"])
+        self.assertIn('"${PUSHED}" != "${CANDIDATE_DIGEST}"', occupancy["run"])
+        self.assertIn("conflicting occupied tag", occupancy["run"])
+        self.assertEqual(copy["if"], "steps.occupancy.outputs.skip_copy != 'true'")
 
     def test_validation_still_gates_promotion(self) -> None:
         self.assertIn("promote:\n    needs: validate", self.workflow)
@@ -129,7 +275,7 @@ class PromoteWorkflowTests(unittest.TestCase):
     def test_registry_reads_and_copy_fail_closed(self) -> None:
         for text in (
             "--observations registry-observations.json",
-            "Assert destination tag is still absent",
+            "Assert destination tag is absent or byte-identical",
             "curl --fail-with-body",
             'rel="next"',
         ):
@@ -154,12 +300,121 @@ class PromoteWorkflowTests(unittest.TestCase):
                 self.assertIn(text, self.workflow)
 
     def test_skip_and_recovery_still_verify_platforms(self) -> None:
-        platform_step = self.workflow.split("- name: Assert platform-set equality", 1)[1]
+        platform_step = self.workflow.split("- name: Assert exact linux/amd64 manifest", 1)[1]
         platform_step = platform_step.split("- name:", 1)[0]
         self.assertNotIn("skip_copy != 'true'", platform_step)
 
+    def test_candidate_job_is_read_only_and_drives_publisher(self) -> None:
+        candidate = self.workflow.split("  validate:\n", 1)[1].split("\n  promote:\n", 1)[0]
+        publisher = self.workflow.split("\n  promote:\n", 1)[1]
+        self.assertIn("packages: read", candidate)
+        self.assertIn("packages: write", publisher)
+        self.assertIn("promote:\n    needs: validate", self.workflow)
+        for text in (
+            "scripts/evaluate_promotion.py",
+            "known_exploited_vulnerabilities.json",
+            "platform: linux/amd64",
+            "list-all-pkgs: 'true'",
+            "candidate-decision.json",
+            "SHA256SUMS",
+            "retention-days: 8",
+        ):
+            with self.subTest(text=text):
+                self.assertIn(text, candidate)
+        self.assertIn("Verify candidate artifact", publisher)
+        self.assertNotIn("                --all \\\n", self.workflow)
+
+    def test_pinned_copa_path_patches_final_bytes_before_publication(self) -> None:
+        steps = yaml.safe_load(self.workflow)["jobs"]["validate"]["steps"]
+        by_name = {step["name"]: step for step in steps}
+        copa = by_name["Run pinned Copa from the original child"]
+        self.assertEqual(copa["uses"], "project-copacetic/copa-action@7de81b0830c8a4d1edb4a63a77e65a6d7ef8dc95")
+        self.assertEqual(str(copa["with"]["copa-version"]), "0.15.0")
+        self.assertEqual(copa["with"]["patched-tag"], "copa:candidate")
+        self.assertEqual(copa["with"]["image-report"], "trivy-copa.json")
+        self.assertEqual(copa["with"]["image"], "${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}")
+        self.assertNotIn("severity", copa["if"])
+        allocation = by_name["Allocate the immutable patched revision before metadata"]
+        self.assertIn("--force-repromote", allocation["run"])
+        self.assertIn("skip_copy=false", allocation["run"])
+        self.assertIn("steps.patchtag.outputs.internal_tag", by_name["Add only provenance labels and export final bytes"]["env"]["INTERNAL_TAG"])
+        pin = by_name["Pin and verify the Copa action runtime"]["run"]
+        self.assertIn("b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b", pin)
+        self.assertIn("sha256sum -c", pin)
+        diagnostics = by_name["Capture Copa diagnostics and fail closed"]["run"]
+        self.assertIn("docker logs copa-action", diagnostics)
+        self.assertNotIn("docker run", diagnostics)
+        scan = by_name["Rescan the exact patched bytes with the frozen DB"]
+        self.assertEqual(scan["with"]["input"], "candidate-final.tar")
+        self.assertEqual(scan["env"]["TRIVY_SKIP_DB_UPDATE"], "true")
+        self.assertEqual(scan["env"]["TRIVY_EXIT_ON_EOL"], "1")
+        self.assertEqual(scan["with"]["list-all-pkgs"], "true")
+        policy = by_name["Evaluate one promotion decision"]
+        self.assertIn("CANDIDATE_DIGEST", policy["env"])
+        self.assertIn("--full-report", policy["run"])
+        self.assertIn("trivy-before-full.json", policy["run"])
+        self.assertIn("trivy-full.cdx.json\n            secobserve-upload.json", self.workflow)
+
+    def test_patched_metadata_uses_a_stopped_container_and_emits_digest(self):
+        steps = yaml.safe_load(self.workflow)["jobs"]["validate"]["steps"]
+        step = next(step for step in steps if step["name"] == "Add only provenance labels and export final bytes")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            executable = root / "docker"
+            executable.write_text("""#!/usr/bin/env python3
+import json, os, sys
+args = sys.argv[1:]
+with open(os.environ['SPOOL'], 'a') as fh: fh.write(json.dumps(args) + '\\n')
+if args[:2] == ['image', 'inspect']:
+    print('{}')
+elif args[0] == 'create': print('metadata-container')
+elif args[0] == 'commit':
+    if args[-2] != 'metadata-container': sys.exit('commit requires a container')
+    print('sha256:config')
+elif args[0] == 'save':
+    from pathlib import Path
+    Path(args[args.index('--output') + 1]).write_text('final bytes')
+elif args[0] == 'run' and 'inspect' in args: print('{"schemaVersion":2}')
+""")
+            executable.chmod(0o755)
+            env = dict(os.environ, PATH=f"{root}:{os.environ['PATH']}", SPOOL=str(root / "spool"),
+                       GITHUB_OUTPUT=str(root / "output"), UPSTREAM_REF="registry.example/app", UPSTREAM_TAG="v1",
+                       SELECTED_DIGEST=DIGEST_A, INTERNAL_TAG="v1-bocklabs.1")
+            self.assertNotIn("${{", step["run"])
+            result = subprocess.run(['bash', '-c', step['run']], cwd=root, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            output = (root / 'output').read_text()
+            self.assertRegex(output, r'^digest=sha256:[a-f0-9]{64}\n$')
+            calls = [json.loads(line) for line in (root / 'spool').read_text().splitlines()]
+            self.assertTrue(any(call[:1] == ['create'] for call in calls))
+            self.assertTrue(any(call[:1] == ['rm'] for call in calls))
+
+    def test_copa_diagnostics_classify_failures_and_redact_credentials(self):
+        steps = yaml.safe_load(self.workflow)["jobs"]["validate"]["steps"]
+        step = next(step for step in steps if step["name"] == "Capture Copa diagnostics and fail closed")
+        cases = {"unsupported OS": "unsupported", "nothing to patch": "no-fix", "end of life distro": "eol",
+                 "unsupported OS; GPG signature verification failed": "gpg", "unexpected panic": "unknown"}
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            executable = root / "docker"
+            executable.write_text("#!/usr/bin/env python3\nimport os, sys\nprint(os.environ['LOG'] if sys.argv[1] == 'logs' else 'runtime-id')\n")
+            executable.chmod(0o755)
+            (root / 'copa-action-image-id.txt').write_text('runtime-id\n')
+            for message, classification in cases.items():
+                with self.subTest(classification=classification):
+                    env = dict(os.environ, PATH=f"{root}:{os.environ['PATH']}", COPA_OUTCOME='failure',
+                               LOG=message + ' https://user:secret@example.com password=private Bearer hidden-token')
+                    result = subprocess.run(['bash', '-c', step['run']], cwd=root, env=env, capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    diagnostic = (root / 'copa-diagnostics.txt').read_text()
+                    self.assertIn(f'classification={classification}', diagnostic)
+                    for secret in ('user:secret', 'private', 'hidden-token'):
+                        self.assertNotIn(secret, diagnostic)
+
     def test_provenance_writeback_is_scoped_and_reusable(self) -> None:
         for text in (
+            "MEDIA_TYPE: application/vnd.oci.image.index.v1+json",
+            '--upstream-child-digest "${SELECTED_CHILD_DIGEST}"',
             'git add "provenance/${APP}/${INTERNAL_TAG}.json"',
             "git diff --cached --quiet",
             "--force-with-lease=refs/heads/${BRANCH}:",
@@ -169,6 +424,314 @@ class PromoteWorkflowTests(unittest.TestCase):
                 self.assertIn(text, self.workflow)
         self.assertNotIn("git add provenance/", self.workflow)
 
+    def test_same_child_reuse_and_patch_recovery_preserve_identity(self) -> None:
+        for text in (
+            "--selected-child-digest",
+            "selected_child_digest",
+            "upstream_index_digest",
+            "--recover-candidate-digest",
+            "Materialize the exact recovered candidate",
+            "original-child patching cannot recover",
+        ):
+            with self.subTest(text=text):
+                self.assertIn(text, self.workflow)
+        self.assertNotIn("--recover-tag", self.workflow[self.workflow.index("Digest-preserving copy to GHCR"):])
+
+    def test_decision_writers_and_evidence_rendering_are_bounded(self) -> None:
+        workflow = yaml.safe_load(self.workflow)
+        steps = workflow["jobs"]["promote"]["steps"]
+        names = {step["name"] for step in steps}
+        self.assertIn("Write the verified publication digest into the decision", names)
+        self.assertIn("Verify merged provenance and publish the final decision", names)
+        summary = next(step for step in steps if step["name"] == "Job summary evidence panel")["run"]
+        pr = next(step for step in steps if step["name"] == "Open provenance PR and enable merge")["run"]
+        for text in ("Before/final CVE evidence", "Package changes", "Warnings", "KEV snapshot", "Acceptance expiry"):
+            self.assertIn(text, summary)
+            self.assertIn(text, pr)
+        self.assertIn('name: candidate-decision', self.workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CleanChildTracerTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.bin = self.tmp / "bin"
+        self.bin.mkdir()
+        self.spool = self.tmp / "argv.jsonl"
+        self.child = self.tmp / "child-manifest.json"
+        child_value = {
+            "schemaVersion": 2,
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "config": {},
+        }
+        config_value = {"architecture": "amd64", "os": "linux"}
+        self.child.write_text(json.dumps(child_value, indent=2) + "\n", encoding="utf-8")
+        child_digest = "sha256:" + hashlib.sha256((json.dumps(child_value, indent=2) + "\n").encode()).hexdigest()
+        config_digest = "sha256:" + hashlib.sha256((json.dumps(config_value, indent=2) + "\n").encode()).hexdigest()
+        child_value["config"] = {"mediaType": "application/vnd.oci.image.config.v1+json", "digest": config_digest, "size": len(json.dumps(config_value, indent=2).encode()) + 1}
+        self.child.write_text(json.dumps(child_value, indent=2) + "\n", encoding="utf-8")
+        child_digest = "sha256:" + hashlib.sha256((json.dumps(child_value, indent=2) + "\n").encode()).hexdigest()
+        self.index = self.tmp / "upstream-index.json"
+        self.index.write_text(json.dumps({
+            "schemaVersion": 2,
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "manifests": [
+                {"mediaType": "application/vnd.oci.image.manifest.v1+json", "digest": child_digest, "size": self.child.stat().st_size, "platform": {"os": "linux", "architecture": "amd64"}},
+            ],
+        }), encoding="utf-8")
+        self.index_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        self.config = self.tmp / "child-config.json"
+        self.config.write_text(json.dumps(config_value, indent=2) + "\n", encoding="utf-8")
+        self.full = self.tmp / "trivy-full.json"
+        self.full.write_text(json.dumps({"SchemaVersion": 2, "Results": []}), encoding="utf-8")
+        self.fixable = self.tmp / "trivy-fixable.json"
+        self.fixable.write_text(json.dumps({"SchemaVersion": 2, "Results": []}), encoding="utf-8")
+        self.kev = self.tmp / "kev.json"
+        self.kev.write_text(json.dumps({"title": "CISA Catalog of Known Exploited Vulnerabilities", "catalogVersion": "2026.09.13", "dateReleased": "2026-09-13T00:00:00.00000Z", "count": 0, "vulnerabilities": []}), encoding="utf-8")
+        self.decision = self.tmp / "candidate-decision.json"
+        self.provenance = self.tmp / "provenance.json"
+
+    def write_fake(self, name, body):
+        path = self.bin / name
+        path.write_text("#!/usr/bin/env python3\n" + body, encoding="utf-8")
+        path.chmod(0o755)
+        return path
+
+    def run_cli(self, argv):
+        env = os.environ.copy()
+        env["PATH"] = f"{self.bin}:{env['PATH']}"
+        env["FAKE_SPOOL"] = str(self.spool)
+        return subprocess.run(argv, capture_output=True, text=True, env=env)
+
+    def blocked_candidate_artifact(self):
+        from tests.test_policy import kev_feed, report, vuln, write_json
+
+        artifact = self.tmp / "preserved-candidate"
+        if artifact.exists():
+            shutil.rmtree(artifact)
+        artifact.mkdir()
+        finding = vuln("CVE-2026-0001")
+        full = write_json(artifact / "trivy-full.json", report([finding]))
+        fixable = write_json(artifact / "trivy-copa.json", report())
+        write_json(artifact / "trivy-before-full.json", report([finding]))
+        write_json(artifact / "trivy-full.cdx.json", {"vulnerabilities": []})
+        write_json(artifact / "secobserve-upload.json", {"app": "app"})
+        write_json(artifact / "validation-evidence.json", {"validation": {"result": "pass"}})
+        write_json(artifact / "kev.json", kev_feed(("CVE-2026-0001",)))
+        (artifact / "kev-fetched-at.txt").write_text("2026-09-14T00:00:00Z\n")
+        (artifact / "trivy-db-meta-1.txt").write_text("DB\n")
+        (artifact / "trivy-db-meta-2.txt").write_text("DB\n")
+        (artifact / "source.sha").write_text("a" * 40 + "\n")
+        (artifact / "inventory-image.yaml").write_text(
+            "spec:\n  upstream:\n    ref: registry.example/app\n    tag: v1\n    digest: " + self.index_digest + "\n"
+            "  destination:\n    package: ghcr.io/bocklabs/app\n  patchPolicy: enabled\n",
+            encoding="utf-8",
+        )
+        write_json(artifact / "tag-decision.json", {"internal_tag": "v1-bocklabs.1", "skip_copy": False})
+        shutil.copyfile(self.child, artifact / "child-manifest.json")
+        shutil.copyfile(self.child, artifact / "candidate-manifest.json")
+        shutil.copyfile(self.config, artifact / "child-config.json")
+        shutil.copyfile(self.index, artifact / "upstream-index.json")
+        blob = artifact / "candidate-oci" / "blobs" / "sha256" / self._child_digest().split(":", 1)[1]
+        blob.parent.mkdir(parents=True)
+        shutil.copyfile(self.child, blob)
+        (artifact / "candidate-oci" / "oci-layout").write_text('{"imageLayoutVersion":"1.0.0"}\n')
+        write_json(artifact / "candidate-oci" / "index.json", {"manifests": []})
+        decision = artifact / "candidate-decision.json"
+        result = self.run_cli([
+            sys.executable, str(REPO_ROOT / "scripts" / "evaluate_promotion.py"),
+            "--app", "app", "--source-sha", "a" * 40, "--run-id", "123", "--run-attempt", "1",
+            "--proposed-tag", "v1-bocklabs.1", "--index", str(self.index),
+            "--upstream-index-digest", self.index_digest, "--child-manifest", str(self.child),
+            "--child-config", str(self.config), "--full-report", str(full), "--fixable-report", str(fixable),
+            "--kev", str(artifact / "kev.json"), "--kev-fetched-at", "2026-09-14T00:00:00Z",
+            "--now", "2026-09-14T01:00:00Z", "--validation-result", "pass", "--out", str(decision),
+        ])
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(json.loads(decision.read_text())["reason"], "missing_kev_acceptance")
+        subprocess.run(
+            ["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
+            capture_output=True, check=True, cwd=artifact,
+        )
+        return artifact
+
+    def _child_digest(self):
+        return "sha256:" + hashlib.sha256(self.child.read_bytes()).hexdigest()
+
+    def fake_gh(self, fixture, run_id=123):
+        return self.write_fake("gh", f"""import json, shutil, sys
+args=sys.argv[1:]
+if args[:1] == ['api']:
+    url=next((arg for arg in args if arg.startswith('repos/')), '')
+    if '/artifacts' in url:
+        print(json.dumps({{'id':9001,'name':'candidate','expired':False,'workflow_run':{{'id':{run_id}}}}}))
+    elif '/branches/main' in url:
+        print(json.dumps({{'name':'main','commit':{{'sha':'{"a"*40}'}},'protected':True}}))
+    elif '/actions/runs/{run_id}' in url:
+        print(json.dumps({{'id':{run_id},'repository':{{'full_name':'bocklabs/trusted-images'}},'path':'.github/workflows/promote.yaml','event':'workflow_dispatch','head_branch':'main','head_sha':'{"a"*40}','run_attempt':1,'status':'completed','conclusion':'failure'}}))
+    else:
+        print({{}})
+elif args[:2] == ['run', 'download']:
+    shutil.copytree(r'{fixture}', args[args.index('--dir')+1], dirs_exist_ok=True)
+""")
+
+    def test_blocked_candidate_resume_command_exact_tampered_and_wrong_run(self):
+        steps = yaml.safe_load(WORKFLOW.read_text())["jobs"]["validate"]["steps"]
+        step = next(step for step in steps if step["name"] == "Restore the exact accepted candidate")
+        fixture = self.blocked_candidate_artifact()
+        (self.tmp / "scripts").symlink_to(REPO_ROOT / "scripts", target_is_directory=True)
+        (self.tmp / "inventory" / "app").mkdir(parents=True)
+        shutil.copyfile(fixture / "inventory-image.yaml", self.tmp / "inventory" / "app" / "image.yaml")
+        self.fake_gh(fixture)
+        env = dict(os.environ, **{key: "" for key in step["env"]})
+        env.update(
+            PATH=f"{self.bin}:{Path(sys.executable).parent}:{os.environ['PATH']}",
+            ACCEPTED_CANDIDATE_RUN_ID="123", GH_TOKEN="test-token", REPO="bocklabs/trusted-images",
+            APP="app", GITHUB_REPOSITORY="bocklabs/trusted-images", GITHUB_OUTPUT=str(self.tmp / "github-output"),
+        )
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        output = (self.tmp / "github-output").read_text()
+        for text in ("candidate_digest=", "selected_child_digest=", "internal_tag=v1-bocklabs.1", "skip_copy=false"):
+            self.assertIn(text, output)
+        self.assertTrue((self.tmp / "candidate-oci").is_dir())
+
+        (fixture / "undeclared.txt").write_text("tampered\n")
+        subprocess.run(
+            ["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
+            cwd=fixture, capture_output=True, check=True,
+        )
+        self.fake_gh(fixture)
+        env["GITHUB_OUTPUT"] = str(self.tmp / "tampered-output")
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("undeclared files", result.stdout + result.stderr)
+        self.assertFalse((self.tmp / "tampered-output").exists())
+
+        exact_fixture = self.blocked_candidate_artifact()
+        self.fake_gh(exact_fixture, run_id=999)
+        env["GITHUB_OUTPUT"] = str(self.tmp / "wrong-run-output")
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("wrong run", result.stdout + result.stderr)
+        self.assertFalse((self.tmp / "wrong-run-output").exists())
+
+    def test_failed_patched_runtime_validation_never_executes_publication(self):
+        from tests.test_validate_image import FAKE_DOCKER
+        steps = yaml.safe_load(WORKFLOW.read_text())["jobs"]["validate"]["steps"]
+        step = next(step for step in steps if step["name"] == "Run validation")
+        self.assertNotIn("continue-on-error", step)
+        self.write_fake("docker", FAKE_DOCKER.split("\n", 1)[1])
+        scenario = self.tmp / 'scenario.json'
+        scenario.write_text(json.dumps({"image_inspect": [{"Id": json.loads(self.child.read_text())["config"]["digest"], "Os": "linux", "Architecture": "amd64",
+                                                           "Config": {"Entrypoint": ["/app"], "Cmd": None, "Env": []}}],
+                                        "inspect_states": [{"State": {"Running": False}}]}))
+        config_id = json.loads(self.child.read_text())["config"]["digest"]
+        value = json.loads(scenario.read_text())
+        value["image_inspect"][0]["Id"] = config_id
+        scenario.write_text(json.dumps(value))
+        (self.tmp / 'candidate-manifest.json').write_bytes(self.child.read_bytes())
+        (self.tmp / 'scripts').symlink_to(REPO_ROOT / 'scripts', target_is_directory=True)
+        publisher = self.write_fake('skopeo', "from pathlib import Path\nPath('published').write_text('ran')\n")
+        env = dict(os.environ, **{key: '' for key in step['env']})
+        env.update(PATH=f"{self.bin}:{Path(sys.executable).parent}:{os.environ['PATH']}",
+                   FAKE_DOCKER_SPOOL=str(self.spool), FAKE_DOCKER_SCENARIO=str(scenario),
+                   APP='app', UPSTREAM_REF='registry.example/app', SELECTED_DIGEST=DIGEST_A,
+                   CANDIDATE_REF='copa:final', CANDIDATE_DIGEST='sha256:' + hashlib.sha256(self.child.read_bytes()).hexdigest(),
+                   PATCHED='true', VALIDATION_TYPE='process', VALIDATION_DURATION_SECONDS='0')
+        result = subprocess.run(['bash', '-c', step['run'] + '\n' + str(publisher) + ' copy'],
+                                cwd=self.tmp, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        evidence = json.loads((self.tmp / 'validation-evidence.json').read_text())
+        self.assertEqual(evidence['validation']['result'], 'fail')
+        self.assertIn('container not running', result.stdout)
+        self.assertFalse((self.tmp / 'published').exists())
+        calls = [json.loads(line) for line in self.spool.read_text().splitlines()]
+        self.assertTrue(any(call[0] == 'run' and config_id in call for call in calls))
+
+    def test_clean_child_reaches_publisher_only_after_policy_validation_and_provenance(self):
+        docker = self.write_fake("docker", '''import json, os\nspool=os.environ["FAKE_SPOOL"]\nargs=sys.argv[1:] if False else None\n''')
+        # The validator suite owns the detailed fake-docker behavior; this tracer only needs its pass evidence.
+        docker.write_text("""#!/usr/bin/env python3
+import json, os, sys
+with open(os.environ['FAKE_SPOOL'], 'a') as fh: fh.write(json.dumps(sys.argv[1:]) + '\\n')
+if sys.argv[1:3] == ['image', 'inspect']:
+    print(json.dumps([{'Os':'linux','Architecture':'amd64','Config':{'Entrypoint':['/app'],'Cmd':None,'Env':[]}}]))
+elif sys.argv[1] == 'inspect': print(json.dumps([{'State':{'Running':True}}]))
+elif sys.argv[1] == 'run': print('container')
+else: print('')
+""")
+        policy = self.run_cli([
+            sys.executable, str(REPO_ROOT / "scripts" / "evaluate_promotion.py"),
+            "--app", "app", "--source-sha", "a" * 40, "--run-id", "123", "--run-attempt", "1",
+            "--proposed-tag", "v1-bocklabs.1", "--index", str(self.index), "--upstream-index-digest", self.index_digest,
+            "--child-manifest", str(self.child), "--child-config", str(self.config),
+            "--full-report", str(self.full), "--fixable-report", str(self.fixable),
+            "--kev", str(self.kev), "--kev-fetched-at", "2026-09-14T00:00:00Z",
+            "--now", "2026-09-14T01:00:00Z", "--validation-result", "pass",
+            "--out", str(self.decision),
+        ])
+        self.assertEqual(policy.returncode, 0, policy.stdout + policy.stderr)
+        decision = json.loads(self.decision.read_text())
+        self.assertTrue(decision["eligible"])
+        self.assertEqual(decision["platform"], "linux/amd64")
+        self.assertEqual(decision["candidate"]["digest"], decision["selected_child_digest"])
+        self.assertIsNone(decision["published"]["digest"])
+        self.assertFalse(decision["provenance"]["merged"])
+
+        evidence = self.tmp / "validation-evidence.json"
+        validation = self.run_cli([
+            sys.executable, str(REPO_ROOT / "scripts" / "validate_image.py"),
+            "--app", "app", "--ref", "registry.example/app", "--digest", decision["candidate"]["digest"],
+            "--baseline-ref", "registry.example/app", "--baseline-digest", decision["selected_child_digest"],
+            "--validation-type", "process", "--index-file", str(self.child),
+            "--evidence-out", str(evidence), "--duration-seconds", "0",
+        ])
+        self.assertEqual(validation.returncode, 0, validation.stdout + validation.stderr)
+
+        decision["published"]["digest"] = decision["candidate"]["digest"]
+        self.decision.write_text(json.dumps(decision), encoding="utf-8")
+        provenance = self.run_cli([
+            sys.executable, str(REPO_ROOT / "scripts" / "generate_provenance.py"),
+            "--app", "app", "--upstream-ref", "registry.example/app", "--upstream-tag", "v1",
+            "--upstream-digest", decision["upstream_index_digest"], "--upstream-child-digest", decision["selected_child_digest"],
+            "--decision-sha256", hashlib.sha256(self.decision.read_bytes()).hexdigest(),
+            "--decision", str(self.decision), "--before-report", str(self.full),
+            "--final-report", str(self.full), "--fixable-report", str(self.fixable),
+            "--kev-report", str(self.kev), "--now", "2026-09-14T01:00:00Z",
+            "--media-type", "application/vnd.oci.image.index.v1+json", "--internal-package", "ghcr.io/bocklabs/app",
+            "--internal-tag", "v1-bocklabs.1", "--internal-digest", decision["candidate"]["digest"],
+            "--platforms", "linux/amd64", "--run-url", "https://example.invalid/runs/1", "--workflow", "promote",
+            "--dispatched-by", "test", "--trivy-version", "0.74.0", "--trivy-action-sha", "a" * 40,
+            "--skopeo-version", "1.22.2", "--skopeo-image-digest", "sha256:" + "b" * 64,
+            "--trivy-db-check-bundle-digest", "sha256:" + "c" * 64, "--trivy-db-updated-at", "2026-09-14T00:00:00Z",
+            "--full-report-sha256", hashlib.sha256(self.full.read_bytes()).hexdigest(),
+            "--copa-report-sha256", hashlib.sha256(self.fixable.read_bytes()).hexdigest(),
+            "--secobserve-product", "trusted-images", "--secobserve-origin", "app:v1",
+            "--validation-type", "process", "--validation-result", "pass",
+            "--validation-params", "{}", "--validation-timings", "{}", "--validation-health", "{}",
+            "--validation-runner", "test", "--validation-entrypoint", "[]", "--validation-cmd", "[]",
+            "--validation-env", "[]", "--out", str(self.provenance),
+        ])
+        self.assertEqual(provenance.returncode, 0, provenance.stdout + provenance.stderr)
+        record = json.loads(self.provenance.read_text())
+        self.assertEqual(record["upstream"]["digest"], decision["upstream_index_digest"])
+        self.assertEqual(record["upstream"]["selected_child_digest"], decision["selected_child_digest"])
+        self.assertEqual(record["internal"]["digest"], decision["candidate"]["digest"])
+        self.assertTrue(decision["published"]["digest"] == decision["candidate"]["digest"])
+        self.assertFalse(decision["provenance"]["merged"])
+
+        skopeo = self.write_fake("skopeo", """#!/usr/bin/env python3\nimport os, sys\nwith open(os.environ['FAKE_SPOOL'], 'a') as fh: fh.write(' '.join(sys.argv) + '\\n')\n""")
+        publisher = self.run_cli([
+            str(skopeo), "copy", "--dest-creds", "redacted", f"docker://registry.example/app@{decision['candidate']['digest']}",
+            "docker://ghcr.io/bocklabs/app:v1-bocklabs.1",
+        ])
+        self.assertEqual(publisher.returncode, 0, publisher.stdout + publisher.stderr)
+        argv = self.spool.read_text().splitlines()[-1]
+        self.assertNotIn("--all", argv.split())
+        self.assertIn(decision["candidate"]["digest"], argv)

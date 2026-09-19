@@ -1,5 +1,5 @@
-# Qualification entry: deliberately stale Feb-2024 snapshot of nginx.
-# Its expected fixable-OS CVEs are confirmed via Trivy at Phase 5 plan time.
+# Qualification entry: deliberately stale Feb-2024 snapshot of nginx. Renovate
+# keeps detecting updates, but the narrow repository rule requires review.
 apiVersion: trusted-images.bocklabs.dev/v1
 kind: Image
 metadata:
@@ -7,8 +7,8 @@ metadata:
 spec:
   upstream:
     ref: docker.io/library/nginx
-    tag: 1.31.6
-    digest: sha256:78758a47dc59a81fc8354d83d17135d52cfaf6894c696886b807b9371c3648a4
+    tag: "1.25.3"
+    digest: sha256:c7a6ad68be85142c7fe1089e48faa1e7c7166a194caa9180ddea66345876b9d2
   destination:
     package: ghcr.io/bocklabs/nginx-qualification
   patchPolicy: enabled

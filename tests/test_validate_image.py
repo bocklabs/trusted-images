@@ -11,6 +11,7 @@ library.
 """
 
 import json
+import hashlib
 import os
 import subprocess
 import sys
@@ -55,7 +56,10 @@ def next_from(key, default):
 
 
 if ARGS[:2] == ["image", "inspect"]:
-    print(json.dumps(SCENARIO.get("image_inspect", [])))
+    if "image_inspects" in SCENARIO:
+        print(json.dumps(next_from("image_inspects", [])))
+    else:
+        print(json.dumps(SCENARIO.get("image_inspect", [])))
     raise SystemExit(0)
 
 if ARGS[:1] == ["inspect"]:
@@ -83,20 +87,26 @@ if ARGS[:1] == ["run"]:
 raise SystemExit(0)
 """
 
-INDEX_JSON = {"manifests": [{"platform": {"os": "linux", "architecture": "amd64"}}]}
+INDEX_JSON = {
+    "schemaVersion": 2,
+    "mediaType": "application/vnd.oci.image.manifest.v1+json",
+    "config": {"mediaType": "application/vnd.oci.image.config.v1+json", "digest": DIGEST, "size": 123},
+    "annotations": {"org.example": "preserved"},
+}
 
 
-def image_inspect(healthcheck=None) -> list:
-    return [
-        {
-            "Config": {
-                "Entrypoint": ["/bin/app"],
-                "Cmd": [],
-                "Env": ["PATH=/usr/bin"],
-                "Healthcheck": healthcheck,
-            }
-        }
-    ]
+def image_inspect(healthcheck=None, labels=None, config=None, architecture="amd64") -> list:
+    runtime = {
+        "Entrypoint": ["/bin/app"],
+        "Cmd": [],
+        "Env": ["PATH=/usr/bin"],
+        "Labels": {"org.example.existing": "keep"},
+        "Healthcheck": healthcheck,
+    }
+    runtime.update(config or {})
+    if labels is not None:
+        runtime["Labels"] = labels
+    return [{"Os": "linux", "Architecture": architecture, "Config": runtime}]
 
 
 def running(health_status=None) -> dict:
@@ -145,6 +155,25 @@ class ValidateImageTests(unittest.TestCase):
         env.pop("GITHUB_RUN_ID", None)
         return subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120)
 
+    def test_local_image_is_bound_to_manifest_config_and_digest_evidence(self):
+        image = image_inspect()
+        image[0]["Id"] = DIGEST
+        self.write_scenario({"image_inspect": image})
+        manifest_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        result = self.run_cli("process", ("--local-image", "copa:final", "--digest", manifest_digest, "--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        calls = self.spool_entries()
+        self.assertEqual(calls[0], ["image", "inspect", "copa:final"])
+        self.assertTrue(any(DIGEST in call and call[0] == "run" for call in calls))
+        self.assertEqual(self.load_evidence()["validation"]["candidate_digest"], manifest_digest)
+
+        image[0]["Id"] = "sha256:" + "b" * 64
+        self.write_scenario({"image_inspect": image})
+        manifest_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        result = self.run_cli("process", ("--local-image", "copa:final", "--digest", manifest_digest, "--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("config digest", result.stdout + result.stderr)
+
     def load_evidence(self) -> dict:
         return json.loads(self.evidence.read_text(encoding="utf-8"))
 
@@ -158,10 +187,13 @@ class ValidateImageTests(unittest.TestCase):
         for key in ("started_at", "finished_at", "duration_seconds"):
             self.assertIn(key, validation["timings"])
         baseline = validation["baseline"]
-        for key in ("entrypoint", "cmd", "env", "platforms_index", "platforms_expected"):
+        for key in ("entrypoint", "cmd", "env", "platforms_expected"):
             self.assertIn(key, baseline)
         self.assertEqual(baseline["entrypoint"], ["/bin/app"])
-        self.assertEqual(baseline["platforms_index"], ["linux/amd64"])
+        self.assertEqual(ev["validation"]["candidate_platform"], "linux/amd64")
+        self.assertEqual(
+            ev["validation"]["manifest_annotations"], {"org.example": "preserved"}
+        )
 
     def assert_network_isolated(self) -> None:
         for entry in self.spool_entries():
@@ -329,6 +361,85 @@ class ValidateImageTests(unittest.TestCase):
         self.assertIn("log", ev["validation"]["logs_note"].lower())
         self.assert_common_evidence(ev)
         self.assert_network_isolated()
+
+    # --- D-14/D-20 static candidate contracts ---
+
+    def baseline_args(self) -> tuple:
+        return (
+            "--baseline-ref", "quay.io/example/base",
+            "--baseline-digest", "sha256:" + "b1" * 32,
+        )
+
+    def test_permitted_labels_may_only_be_added(self) -> None:
+        existing = {"org.example.existing": "keep"}
+        added = {
+            "org.opencontainers.image.base.digest": DIGEST,
+            "org.opencontainers.image.base.name": "quay.io/example/base:v1",
+            "org.opencontainers.image.source": "https://example.invalid/source",
+            "org.opencontainers.image.version": "v1-bocklabs.1",
+        }
+        self.write_scenario({
+            "image_inspects": [
+                image_inspect(labels=existing),
+                image_inspect(labels={**existing, **added}),
+            ],
+            "inspect_states": [running()],
+        })
+        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        ev = self.load_evidence()
+        self.assertEqual(ev["validation"]["config_drift"], [])
+        self.assertEqual(ev["validation"]["candidate_config"]["Labels"], {**existing, **added})
+
+    def test_null_and_empty_runtime_values_remain_distinct(self) -> None:
+        self.write_scenario({
+            "image_inspects": [
+                image_inspect(config={"Cmd": None}),
+                image_inspect(config={"Cmd": []}),
+            ]
+        })
+        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("D-14", result.stdout + result.stderr)
+
+    def test_config_drift_outside_label_additions_fails(self) -> None:
+        self.write_scenario({
+            "image_inspects": [
+                image_inspect(),
+                image_inspect(config={"Env": ["PATH=/changed"]}),
+            ]
+        })
+        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("D-14", result.stdout + result.stderr)
+        self.assertIn("runtime config changed", result.stdout + result.stderr)
+        self.assertEqual(self.load_evidence()["validation"]["result"], "fail")
+
+    def test_existing_label_value_cannot_change(self) -> None:
+        self.write_scenario({
+            "image_inspects": [
+                image_inspect(),
+                image_inspect(labels={"org.example.existing": "changed"}),
+            ]
+        })
+        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("existing label", result.stdout + result.stderr)
+
+    def test_platform_mismatch_and_candidate_index_fail(self) -> None:
+        self.write_scenario({"image_inspect": image_inspect(architecture="arm64")})
+        result = self.run_cli("process", ("--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("D-20", result.stdout + result.stderr)
+
+        self.index.write_text(
+            json.dumps({"mediaType": "application/vnd.oci.image.index.v1+json", "manifests": []}),
+            encoding="utf-8",
+        )
+        self.write_scenario({"image_inspect": image_inspect()})
+        result = self.run_cli("process", ("--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("index", result.stdout + result.stderr)
 
     # --- invocation-shape + usage contracts ---
 

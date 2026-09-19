@@ -54,6 +54,13 @@
   ],
   "packageRules": [
     {
+      "description": "Hold the deliberately stale nginx qualification pin until its patch qualification is reviewed.",
+      "matchFileNames": [
+        "inventory/nginx-qualification/image.yaml"
+      ],
+      "automerge": false
+    },
+    {
       "description": "Disable Renovate's native GitHub Actions handling for SecObserve. SecObserve vYYYY_MM releases are managed by the custom regex manager so SHA pinning can be retained without native digest lookup failures.",
       "matchManagers": [
         "github-actions"

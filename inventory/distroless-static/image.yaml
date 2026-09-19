@@ -12,9 +12,8 @@ spec:
     digest: sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
   destination:
     package: ghcr.io/bocklabs/distroless-static
-  # no package manager — nothing for a patch step to act on; classification
-  # confirmed at Phase 5 (schema-level reason field is deferred to Phase 5)
-  patchPolicy: disabled
+  # Temporary Plan 09 state: capture a real unsupported/no-fix classification.
+  patchPolicy: enabled
   validation:
     type: oneshot
     command: ["/bocklabs/no-executable"] # image contains no executables at all
