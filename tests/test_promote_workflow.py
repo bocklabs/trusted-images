@@ -294,6 +294,8 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertIn('cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json', resolve)
         self.assertIn('cp "upstream-oci/blobs/sha256/${CONFIG_DIGEST#sha256:}" child-config.json', resolve)
         self.assertNotIn("inspect --config", resolve)
+        self.assertIn("'.Metadata.OS.EOSL != true'", self.workflow)
+        self.assertNotIn("'.Metadata.OS.EOSL == false'", self.workflow)
 
     def test_skopeo_copy_writes_workspace_files_as_runner(self) -> None:
         self.assertIn(

@@ -853,7 +853,7 @@ jobs:
             echo "FATAL: pre-patch Trivy scan failed; reports retained"
             exit 1
           }
-          jq -e '.Metadata.OS.EOSL == false' trivy-full.json > /dev/null || {
+          jq -e '.Metadata.OS.EOSL != true' trivy-full.json > /dev/null || {
             echo "FATAL: Metadata.OS.EOSL blocked the pre-patch candidate"
             exit 1
           }
@@ -1108,7 +1108,7 @@ jobs:
           set -euo pipefail
           test -s trivy-after-full.json
           [ "${AFTER_SCAN_OUTCOME}" = success ] || { echo "FATAL: patched Trivy scan failed; report retained"; exit 1; }
-          jq -e '.Metadata.OS.EOSL == false' trivy-after-full.json > /dev/null
+          jq -e '.Metadata.OS.EOSL != true' trivy-after-full.json > /dev/null
           trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-after.txt
           diff -u trivy-db-meta-1.txt trivy-db-meta-after.txt
           BEFORE_SHA="$(sha256sum trivy-before-full.json | awk '{print $1}')"

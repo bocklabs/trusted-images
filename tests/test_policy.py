@@ -266,6 +266,14 @@ class PolicyTests(unittest.TestCase):
         for finding in findings:
             self.assertIn(f"{finding['VulnerabilityID']}:{finding['Severity']}:{finding['SeveritySource']}", decision["reason"])
 
+    def test_trivy_omitted_eosl_field_is_eligible(self):
+        value = report()
+        del value["Metadata"]["OS"]["EOSL"]
+        write_json(self.full, value)
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(json.loads(self.out.read_text())["eligible"])
+
     def test_positive_fixable_blocks_until_patch_expansion(self):
         finding = vuln("CVE-2026-0007", "LOW", fixed="1.1")
         write_json(self.full, report([finding]))
