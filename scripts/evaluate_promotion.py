@@ -104,7 +104,7 @@ def sha256_file(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-FRACTION_RE = re.compile(r"^(?P<head>.*\.)(?P<frac>\d+)(?P<tail>Z|[+-]\d{2}:?\d{2})?$")
+FRACTION_RE = re.compile(r"^(?P<head>.*\.)(?P<frac>\d+)(?P<tail>Z|[+-]\d{2}:?\d{2})$")
 
 
 def parse_time(value: str, label: str) -> datetime:
@@ -112,8 +112,8 @@ def parse_time(value: str, label: str) -> datetime:
         normalized = value
         match = FRACTION_RE.match(value)
         if match:
-            tail = match.group("tail") or "+00:00"
-            tail = "+00:00" if tail in ("Z", "z") else tail.replace("Z", "+00:00")
+            tail = match.group("tail")
+            tail = "+00:00" if tail == "Z" else tail
             normalized = f"{match.group('head')}{match.group('frac')[:6].ljust(6, '0')}{tail}"
         parsed = datetime.fromisoformat(normalized)
     except ValueError as exc:
