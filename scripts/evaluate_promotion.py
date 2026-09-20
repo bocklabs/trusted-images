@@ -24,6 +24,8 @@ SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 CVE_RE = re.compile(r"^CVE-\d{4}-\d{4,}$")
 LEVELS = ("LOW", "MEDIUM", "HIGH")
+POLICY_NOW = "policy now"
+KEV_CATALOG = "KEV catalog"
 IMAGE_MANIFEST_TYPES = {
     "application/vnd.oci.image.manifest.v1+json",
     "application/vnd.docker.distribution.manifest.v2+json",
@@ -127,7 +129,7 @@ def descriptor(value, label: str):
     return value
 
 
-def select_child(index: dict, manifest_path: Path, config_path: Path):
+def select_amd64_child(index: dict) -> dict:
     if index.get("mediaType") not in INDEX_TYPES:
         raise ValueError("upstream index mediaType is not an OCI/Docker index")
     manifests = index.get("manifests")
@@ -145,7 +147,10 @@ def select_child(index: dict, manifest_path: Path, config_path: Path):
     if selected["platform"].get("variant") not in (None, ""):
         raise ValueError("selected linux/amd64 child carries an unsupported variant")
     descriptor(selected, "selected child")
+    return selected
 
+
+def validate_child_manifest(selected: dict, manifest_path: Path, config_path: Path):
     manifest = load_json(manifest_path, "child manifest")
     if manifest.get("mediaType") not in IMAGE_MANIFEST_TYPES:
         raise ValueError("selected child is not an image manifest")
@@ -165,50 +170,71 @@ def select_child(index: dict, manifest_path: Path, config_path: Path):
         raise ValueError("child config size does not match the manifest descriptor")
     if config.get("os") != "linux" or config.get("architecture") != "amd64":
         raise ValueError("child config platform disagrees with linux/amd64")
+
+
+def select_child(index: dict, manifest_path: Path, config_path: Path):
+    selected = select_amd64_child(index)
+    validate_child_manifest(selected, manifest_path, config_path)
     return selected["digest"]
 
 
-def findings(report: dict, label: str, os_only=False):
+def validate_report_results(report: dict, label: str, os_only: bool) -> list:
     if report.get("SchemaVersion") != 2:
         raise ValueError(f"{label}.SchemaVersion must be 2")
     results = report.get("Results")
     if not isinstance(results, list):
         raise ValueError(f"{label}.Results must be an array")
+    for number, result in enumerate(results):
+        if not isinstance(result, dict):
+            raise ValueError(f"{label}.Results[{number}] is not an object")
+        if os_only and result.get("Class") != "os-pkgs":
+            raise ValueError(f"{label}.Results[{number}] is not an os-pkgs result")
+    return results
+
+
+def finding_identity(finding: dict, label: str) -> tuple[str, str, str, str]:
+    cve = finding.get("VulnerabilityID")
+    package = finding.get("PkgName")
+    severity = finding.get("Severity")
+    source = finding.get("SeveritySource", "")
+    if not all(isinstance(value, str) and value for value in (cve, package, severity)):
+        raise ValueError(f"{label} finding lacks VulnerabilityID, PkgName, or Severity")
+    if not isinstance(source, str):
+        raise ValueError(f"{label}.SeveritySource must be a string")
+    if "|" in package:
+        raise ValueError(f"{label} package identity contains the reserved delimiter |")
+    return cve, package, severity, source
+
+
+def finding_metadata(result: dict, finding: dict, severity: str, source: str, label: str) -> dict:
+    metadata = {
+        "class": result.get("Class", ""),
+        "type": result.get("Type", ""),
+        "target": result.get("Target", ""),
+        "installed_version": finding.get("InstalledVersion", ""),
+        "fixed_version": finding.get("FixedVersion", ""),
+        "severity": severity,
+        "severity_source": source,
+    }
+    if not all(isinstance(value, str) for value in metadata.values()):
+        raise ValueError(f"{label} finding carries malformed ecosystem or target metadata")
+    if not all(metadata[key] for key in ("class", "type", "target")):
+        raise ValueError(f"{label} finding lacks ecosystem or target metadata")
+    return metadata
+
+
+def findings(report: dict, label: str, os_only=False):
+    results = validate_report_results(report, label, os_only)
     normalized = {}
     for result_number, result in enumerate(results):
-        if not isinstance(result, dict):
-            raise ValueError(f"{label}.Results[{result_number}] is not an object")
-        if os_only and result.get("Class") != "os-pkgs":
-            raise ValueError(f"{label}.Results[{result_number}] is not an os-pkgs result")
         vulnerabilities = result.get("Vulnerabilities") or []
         if not isinstance(vulnerabilities, list):
             raise ValueError(f"{label}.Results[{result_number}].Vulnerabilities must be an array")
         for finding in vulnerabilities:
             if not isinstance(finding, dict):
                 raise ValueError(f"{label} contains a non-object finding")
-            cve = finding.get("VulnerabilityID")
-            package = finding.get("PkgName")
-            severity = finding.get("Severity")
-            source = finding.get("SeveritySource", "")
-            if not all(isinstance(value, str) and value for value in (cve, package, severity)):
-                raise ValueError(f"{label} finding lacks VulnerabilityID, PkgName, or Severity")
-            if not isinstance(source, str):
-                raise ValueError(f"{label}.SeveritySource must be a string")
-            if "|" in package:
-                raise ValueError(f"{label} package identity contains the reserved delimiter |")
-            metadata = {
-                "class": result.get("Class", ""),
-                "type": result.get("Type", ""),
-                "target": result.get("Target", ""),
-                "installed_version": finding.get("InstalledVersion", ""),
-                "fixed_version": finding.get("FixedVersion", ""),
-                "severity": severity,
-                "severity_source": source,
-            }
-            if not all(isinstance(value, str) for value in metadata.values()):
-                raise ValueError(f"{label} finding carries malformed ecosystem or target metadata")
-            if not all(metadata[key] for key in ("class", "type", "target")):
-                raise ValueError(f"{label} finding lacks ecosystem or target metadata")
+            cve, package, severity, source = finding_identity(finding, label)
+            metadata = finding_metadata(result, finding, severity, source, label)
             key = f"{PLATFORM}|{package}|{cve}"
             if key in normalized and normalized[key] != metadata:
                 raise ValueError(f"{label} has conflicting duplicate finding: {key}")
@@ -228,8 +254,7 @@ def package_version(package: dict) -> str:
     return f"{value}-{release}" if release else value
 
 
-def package_inventory(report: dict, label: str):
-    inventory = {}
+def report_os_family(report: dict, label: str) -> str:
     metadata = report.get("Metadata", {})
     if not isinstance(metadata, dict):
         raise ValueError(f"{label} Metadata must be an object")
@@ -239,34 +264,49 @@ def package_inventory(report: dict, label: str):
     os_family = os_metadata.get("Family", "")
     if not isinstance(os_family, str):
         raise ValueError(f"{label} Metadata.OS.Family must be a string")
+    return os_family
+
+
+def package_ecosystem(result: dict, os_family: str, label: str) -> str:
+    ecosystem = result.get("Type")
+    if not isinstance(ecosystem, str) or ecosystem not in VERSION_CLASSES:
+        raise ValueError(f"unsupported ecosystem: {ecosystem!r}")
+    if os_family not in VERSION_CLASSES or VERSION_CLASSES[ecosystem] is not VERSION_CLASSES[os_family]:
+        raise ValueError(f"report distro metadata disagrees with package ecosystem: {os_family!r}")
+    if "Packages" not in result:
+        raise ValueError(f"{label} has a missing package inventory")
+    packages = result["Packages"]
+    if not isinstance(packages, list):
+        raise ValueError(f"{label}.Packages must be an array")
+    return ecosystem
+
+
+def add_packages(inventory: dict, packages: list, ecosystem: str, label: str) -> None:
+    for package in packages:
+        if not isinstance(package, dict):
+            raise ValueError(f"{label}.Packages contains a non-object package")
+        name = package.get("Name")
+        if not isinstance(name, str) or not name:
+            raise ValueError(f"{label}.Packages contains a package without Name")
+        key = (ecosystem, name)
+        if key in inventory:
+            raise ValueError(f"{label} has conflicting duplicate package identity (ambiguous package identity): {ecosystem}/{name}")
+        version = package_version(package)
+        try:
+            VERSION_CLASSES[ecosystem](version)
+        except ValueError as exc:
+            raise ValueError(f"malformed version for {ecosystem}/{name}: {version}") from exc
+        inventory[key] = {"ecosystem": ecosystem, "name": name, "version": version}
+
+
+def package_inventory(report: dict, label: str):
+    inventory = {}
+    os_family = report_os_family(report, label)
     for result in report.get("Results", []):
         if result.get("Class") != "os-pkgs":
             continue
-        ecosystem = result.get("Type")
-        if not isinstance(ecosystem, str) or ecosystem not in VERSION_CLASSES:
-            raise ValueError(f"unsupported ecosystem: {ecosystem!r}")
-        if os_family not in VERSION_CLASSES or VERSION_CLASSES[ecosystem] is not VERSION_CLASSES[os_family]:
-            raise ValueError(f"report distro metadata disagrees with package ecosystem: {os_family!r}")
-        if "Packages" not in result:
-            raise ValueError(f"{label} has a missing package inventory")
-        packages = result["Packages"]
-        if not isinstance(packages, list):
-            raise ValueError(f"{label}.Packages must be an array")
-        for package in packages:
-            if not isinstance(package, dict):
-                raise ValueError(f"{label}.Packages contains a non-object package")
-            name = package.get("Name")
-            if not isinstance(name, str) or not name:
-                raise ValueError(f"{label}.Packages contains a package without Name")
-            key = (ecosystem, name)
-            if key in inventory:
-                raise ValueError(f"{label} has conflicting duplicate package identity (ambiguous package identity): {ecosystem}/{name}")
-            version = package_version(package)
-            try:
-                VERSION_CLASSES[ecosystem](version)
-            except ValueError as exc:
-                raise ValueError(f"malformed version for {ecosystem}/{name}: {version}") from exc
-            inventory[key] = {"ecosystem": ecosystem, "name": name, "version": version}
+        ecosystem = package_ecosystem(result, os_family, label)
+        add_packages(inventory, result["Packages"], ecosystem, label)
     return inventory
 
 
@@ -324,6 +364,21 @@ def validate_scan_report(report: dict, path: Path, label: str, side: dict):
         raise ValueError(f"{label} image identity/report receipt does not match its scan receipt")
 
 
+def validate_receipt_side(side: object, name: str, expected_digest: str) -> dict:
+    side_fields = {"artifact_name", "image_id", "manifest_digest", "report_sha256"}
+    if not isinstance(side, dict) or set(side) != side_fields:
+        raise ValueError(f"scan receipt {name} has unknown or missing fields")
+    if not isinstance(side["artifact_name"], str) or not side["artifact_name"]:
+        raise ValueError(f"scan receipt {name} artifact_name is invalid")
+    if not isinstance(side["image_id"], str) or not DIGEST_RE.fullmatch(side["image_id"]):
+        raise ValueError(f"scan receipt {name} image_id is invalid")
+    if side["manifest_digest"] != expected_digest:
+        raise ValueError(f"scan receipt {name} manifest receipt does not match the candidate identity")
+    if not isinstance(side["report_sha256"], str) or not SHA256_RE.fullmatch(side["report_sha256"]):
+        raise ValueError(f"scan receipt {name} report_sha256 is invalid")
+    return side
+
+
 def validate_scan_receipt(receipt: dict, before_path: Path, after_path: Path, before: dict, after: dict, now: str, child_digest: str, candidate_digest: str):
     required = {"trivy_action_sha", "trivy_db_digest", "trivy_db_updated_at", "before", "after"}
     if not isinstance(receipt, dict) or set(receipt) != required:
@@ -335,30 +390,18 @@ def validate_scan_receipt(receipt: dict, before_path: Path, after_path: Path, be
     if not isinstance(receipt["trivy_db_updated_at"], str):
         raise ValueError("scan receipt Trivy DB updated_at must be a string")
     db_updated = parse_time(receipt["trivy_db_updated_at"], "scan receipt Trivy DB updated_at")
-    if db_updated > parse_time(now, "policy now"):
+    if db_updated > parse_time(now, POLICY_NOW):
         raise ValueError("scan receipt Trivy DB is future-dated")
-    side_fields = {"artifact_name", "image_id", "manifest_digest", "report_sha256"}
     sides = {}
     expected_digests = {"before": child_digest, "after": candidate_digest}
     for name in ("before", "after"):
-        side = receipt[name]
-        if not isinstance(side, dict) or set(side) != side_fields:
-            raise ValueError(f"scan receipt {name} has unknown or missing fields")
-        if not isinstance(side["artifact_name"], str) or not side["artifact_name"]:
-            raise ValueError(f"scan receipt {name} artifact_name is invalid")
-        if not isinstance(side["image_id"], str) or not DIGEST_RE.fullmatch(side["image_id"]):
-            raise ValueError(f"scan receipt {name} image_id is invalid")
-        if side["manifest_digest"] != expected_digests[name]:
-            raise ValueError(f"scan receipt {name} manifest receipt does not match the candidate identity")
-        if not isinstance(side["report_sha256"], str) or not SHA256_RE.fullmatch(side["report_sha256"]):
-            raise ValueError(f"scan receipt {name} report_sha256 is invalid")
-        sides[name] = side
+        sides[name] = validate_receipt_side(receipt[name], name, expected_digests[name])
     validate_scan_report(before, before_path, "before report", sides["before"])
     validate_scan_report(after, after_path, "after report", sides["after"])
 
 
 def kev_evidence(path: Path, fetched_at: str, now: str):
-    feed = load_json(path, "KEV catalog")
+    feed = load_json(path, KEV_CATALOG)
     required = ("title", "catalogVersion", "dateReleased", "count", "vulnerabilities")
     if any(not isinstance(feed.get(key), str) or not feed[key] for key in required[:3]):
         raise ValueError("KEV catalog lacks title, catalogVersion, or dateReleased")
@@ -380,7 +423,7 @@ def kev_evidence(path: Path, fetched_at: str, now: str):
     if count != len(cves) or len(cves) != len(set(cves)):
         raise ValueError("KEV count does not equal its unique CVE count")
     fetched = parse_time(fetched_at, "KEV fetched_at")
-    current = parse_time(now, "policy now")
+    current = parse_time(now, POLICY_NOW)
     if fetched > current or (current - fetched).total_seconds() > 24 * 3600:
         raise ValueError("KEV receipt is future-dated or older than 24 hours")
     return {
@@ -445,6 +488,47 @@ def validate_risk_assessment(value: dict):
         raise ValueError("risk acceptance trackingIssue is invalid")
 
 
+def validate_github_commit(value: dict, path: str) -> None:
+    commit = value["commit"]
+    exact_fields(commit, {"sha", "path", "blob_sha"}, "GitHub acceptance commit")
+    if not isinstance(commit["sha"], str) or not SHA40_RE.fullmatch(commit["sha"]):
+        raise ValueError("GitHub acceptance commit SHA is invalid")
+    if commit["path"] != path or commit["blob_sha"] != value["content_blob_sha"]:
+        raise ValueError("GitHub acceptance commit file mismatch")
+
+
+def validate_github_pull(value: dict, repository: str) -> tuple[dict, datetime]:
+    associated = value["associated_pull_requests"]
+    if not isinstance(associated, list) or len(associated) != 1 or associated[0] != value["pull_request"]:
+        raise ValueError("GitHub acceptance PR association is ambiguous")
+    pull_request = value["pull_request"]
+    pull_fields = {
+        "number", "html_url", "state", "merged", "merged_at", "merged_by",
+        "base_repository", "base_ref",
+    }
+    exact_fields(pull_request, pull_fields, "GitHub acceptance pull request")
+    if isinstance(pull_request["number"], bool) or not isinstance(pull_request["number"], int) or pull_request["number"] <= 0:
+        raise ValueError("GitHub acceptance PR number is invalid")
+    expected_url = f"https://github.com/{repository}/pull/{pull_request['number']}"
+    if pull_request["html_url"] != expected_url or pull_request["state"] != "closed" or pull_request["merged"] is not True:
+        raise ValueError("GitHub acceptance PR is not merged")
+    merged_at = parse_time(pull_request["merged_at"], "GitHub acceptance merged_at")
+    merged_by = pull_request["merged_by"]
+    exact_fields(merged_by, {"login"}, "GitHub acceptance merged_by")
+    nonempty_string(merged_by["login"], "GitHub acceptance merged_by login")
+    if pull_request["base_repository"] != repository or pull_request["base_ref"] != "main":
+        raise ValueError("GitHub acceptance PR does not target repository main")
+    return pull_request, merged_at
+
+
+def validate_github_issue(value: dict) -> None:
+    issue = value["issue"]
+    exact_fields(issue, {"number", "html_url", "state", "is_pull_request"}, "GitHub acceptance issue")
+    issue_url = f"https://github.com/{value['repository']}/issues/{issue['number']}"
+    if issue["html_url"] != issue_url or issue["state"] != "open" or issue["is_pull_request"] is not False:
+        raise ValueError("GitHub acceptance tracking issue is not open")
+
+
 def validate_github_evidence(value: dict, repository: str, path: str, record_sha256: str):
     fields = {
         "repository", "path", "record_sha256", "content_blob_sha", "commit",
@@ -459,37 +543,9 @@ def validate_github_evidence(value: dict, repository: str, path: str, record_sha
         raise ValueError("GitHub acceptance record bytes changed")
     if not isinstance(value["content_blob_sha"], str) or not re.fullmatch(r"[a-f0-9]{40}", value["content_blob_sha"]):
         raise ValueError("GitHub acceptance content blob SHA is invalid")
-    commit = value["commit"]
-    exact_fields(commit, {"sha", "path", "blob_sha"}, "GitHub acceptance commit")
-    if not isinstance(commit["sha"], str) or not SHA40_RE.fullmatch(commit["sha"]):
-        raise ValueError("GitHub acceptance commit SHA is invalid")
-    if commit["path"] != path or commit["blob_sha"] != value["content_blob_sha"]:
-        raise ValueError("GitHub acceptance commit file mismatch")
-    pull_fields = {
-        "number", "html_url", "state", "merged", "merged_at", "merged_by",
-        "base_repository", "base_ref",
-    }
-    associated = value["associated_pull_requests"]
-    if not isinstance(associated, list) or len(associated) != 1 or associated[0] != value["pull_request"]:
-        raise ValueError("GitHub acceptance PR association is ambiguous")
-    pull_request = value["pull_request"]
-    exact_fields(pull_request, pull_fields, "GitHub acceptance pull request")
-    if isinstance(pull_request["number"], bool) or not isinstance(pull_request["number"], int) or pull_request["number"] <= 0:
-        raise ValueError("GitHub acceptance PR number is invalid")
-    expected_url = f"https://github.com/{repository}/pull/{pull_request['number']}"
-    if pull_request["html_url"] != expected_url or pull_request["state"] != "closed" or pull_request["merged"] is not True:
-        raise ValueError("GitHub acceptance PR is not merged")
-    merged_at = parse_time(pull_request["merged_at"], "GitHub acceptance merged_at")
-    merged_by = pull_request["merged_by"]
-    exact_fields(merged_by, {"login"}, "GitHub acceptance merged_by")
-    nonempty_string(merged_by["login"], "GitHub acceptance merged_by login")
-    if pull_request["base_repository"] != repository or pull_request["base_ref"] != "main":
-        raise ValueError("GitHub acceptance PR does not target repository main")
-    issue = value["issue"]
-    exact_fields(issue, {"number", "html_url", "state", "is_pull_request"}, "GitHub acceptance issue")
-    issue_url = f"https://github.com/{repository}/issues/{issue['number']}"
-    if issue["html_url"] != issue_url or issue["state"] != "open" or issue["is_pull_request"] is not False:
-        raise ValueError("GitHub acceptance tracking issue is not open")
+    validate_github_commit(value, path)
+    pull_request, merged_at = validate_github_pull(value, repository)
+    validate_github_issue(value)
     return pull_request, merged_at
 
 
@@ -514,7 +570,7 @@ def acceptance_evidence(args, candidate_digest: str, matched: list[str], now: st
         raise ValueError("risk acceptance candidate digest does not match this candidate")
     if record["kevs"] != matched:
         raise ValueError("risk acceptance KEV set does not match this candidate")
-    current = parse_time(now, "policy now")
+    current = parse_time(now, POLICY_NOW)
     expiry = parse_time(record["expiresAt"], "risk acceptance expiresAt")
     if merged_at > current:
         raise ValueError("GitHub acceptance merge is future-dated")
@@ -569,14 +625,7 @@ def patch_reason(args):
     return {"class": reason_class, "detail": detail}
 
 
-def build_decision(args, child_digest: str, full, fixable, after, before_packages, after_packages, kev, acceptance, resume):
-    full_ids = set(full)
-    fixable_ids = sorted(set(fixable))
-    if not set(fixable_ids) <= full_ids:
-        raise ValueError("fixable report contains a finding absent from the full report")
-    fixable_identities = set(fixable_ids)
-    final = after if after is not None else full
-    final_ids = set(final)
+def finding_delta(full_ids: set, final_ids: set, fixable_identities: set) -> dict:
     delta = {
         "resolved": sorted(full_ids - final_ids),
         "remaining": sorted(full_ids & final_ids),
@@ -588,12 +637,10 @@ def build_decision(args, child_digest: str, full, fixable, after, before_package
         ),
     }
     delta["cves"] = cve_groups(delta)
-    changes, downgrades = package_changes(before_packages, after_packages)
-    no_fix = sorted(key for key in final_ids if key not in fixable_identities)
-    kev_cves = {vuln["cveID"] for vuln in load_json(Path(args.kev), "KEV catalog")["vulnerabilities"]}
-    matched = sorted({key.split("|", 2)[2] for key in final_ids} & kev_cves)
-    kev["matched"] = matched
+    return delta
 
+
+def validate_candidate_digest(args, child_digest: str, fixable_ids: list[str], after) -> str:
     candidate_digest = args.candidate_digest or child_digest
     if not DIGEST_RE.fullmatch(candidate_digest):
         raise ValueError("--candidate-digest must be a sha256 digest")
@@ -601,15 +648,81 @@ def build_decision(args, child_digest: str, full, fixable, after, before_package
         raise ValueError("a distinct candidate requires a patch result")
     if after is None and candidate_digest != child_digest:
         raise ValueError("a distinct candidate requires an after full report")
+    return candidate_digest
 
-    patched = after is not None
-    classification = args.copa_classification or ("succeeded" if patched else ("not-required" if not fixable_ids or args.patch_policy == "disabled" else "pending"))
+
+def resolve_copa_classification(args, patched: bool, fixable_ids: list[str]) -> str:
+    if patched:
+        default = "succeeded"
+    elif not fixable_ids or args.patch_policy == "disabled":
+        default = "not-required"
+    else:
+        default = "pending"
+    classification = args.copa_classification or default
     if classification == "not-required" and fixable_ids and args.patch_policy != "disabled":
         raise ValueError("fixable OS findings require Copa classification")
     if classification == "pending" and patched:
         raise ValueError("a patched result requires Copa classification succeeded")
     if classification == "succeeded" and not patched:
         raise ValueError("Copa classification succeeded requires an after full report")
+    return classification
+
+
+def finding_details(keys, final: dict) -> str:
+    return ",".join(
+        f"{key.split('|', 2)[2]}:{final[key]['severity']}:{final[key]['severity_source']}"
+        for key in keys
+    )
+
+
+def decision_reason(args, delta: dict, downgrades: list, fixable_ids: list[str], patched: bool,
+                    classification: str, failed_classification: bool, matched: list[str],
+                    acceptance, disabled_reason, no_fix: list[str], final: dict) -> str:
+    if args.validation_result != "pass":
+        return f"blocked: validation result is {args.validation_result}"
+    if failed_classification:
+        return f"blocked: Copa classification is {classification}"
+    if patched and (delta["introduced"] or delta["unresolved_fixable"] or downgrades):
+        blockers = []
+        if delta["introduced"]:
+            blockers.append(f"introduced CVEs ({','.join(delta['cves']['introduced'])})")
+        if delta["unresolved_fixable"]:
+            blockers.append(f"unresolved supplied CVEs ({','.join(delta['cves']['unresolved_fixable'])})")
+        if downgrades:
+            blockers.append("package downgrades (" + ",".join(f"{item['ecosystem']}/{item['name']}" for item in downgrades) + ")")
+        return "blocked: patched-image integrity failure: " + "; ".join(blockers)
+    if fixable_ids and not patched and args.patch_policy != "disabled":
+        return "blocked: fixable OS findings require the Copa patch path"
+    if matched and acceptance is None:
+        return "missing_kev_acceptance"
+    if disabled_reason:
+        details = finding_details(sorted(final), final)
+        return f"eligible with patching disabled ({disabled_reason['class']}): {disabled_reason['detail']}; findings: {details}"
+    if no_fix:
+        return f"eligible with no-fix warnings: {finding_details(no_fix, final)}"
+    if patched:
+        return "patched"
+    return "clean"
+
+
+def build_decision(args, child_digest: str, full, fixable, after, before_packages, after_packages, kev, acceptance, resume):
+    full_ids = set(full)
+    fixable_ids = sorted(set(fixable))
+    if not set(fixable_ids) <= full_ids:
+        raise ValueError("fixable report contains a finding absent from the full report")
+    fixable_identities = set(fixable_ids)
+    final = after if after is not None else full
+    final_ids = set(final)
+    delta = finding_delta(full_ids, final_ids, fixable_identities)
+    changes, downgrades = package_changes(before_packages, after_packages)
+    no_fix = sorted(key for key in final_ids if key not in fixable_identities)
+    kev_cves = {vuln["cveID"] for vuln in load_json(Path(args.kev), KEV_CATALOG)["vulnerabilities"]}
+    matched = sorted({key.split("|", 2)[2] for key in final_ids} & kev_cves)
+    kev["matched"] = matched
+
+    candidate_digest = validate_candidate_digest(args, child_digest, fixable_ids, after)
+    patched = after is not None
+    classification = resolve_copa_classification(args, patched, fixable_ids)
     failed_classification = classification in ("unsupported", "no-fix", "eol", "gpg", "unknown")
     disabled_reason = patch_reason(args)
     copa_ran = patched or (bool(fixable_ids) and args.patch_policy == "enabled" and failed_classification)
@@ -622,40 +735,10 @@ def build_decision(args, child_digest: str, full, fixable, after, before_package
         and not downgrades
         and (not matched or acceptance is not None)
     )
-    if args.validation_result != "pass":
-        reason = f"blocked: validation result is {args.validation_result}"
-    elif failed_classification:
-        reason = f"blocked: Copa classification is {classification}"
-    elif patched and (delta["introduced"] or delta["unresolved_fixable"] or downgrades):
-        blockers = []
-        if delta["introduced"]:
-            blockers.append(f"introduced CVEs ({','.join(delta['cves']['introduced'])})")
-        if delta["unresolved_fixable"]:
-            blockers.append(f"unresolved supplied CVEs ({','.join(delta['cves']['unresolved_fixable'])})")
-        if downgrades:
-            blockers.append("package downgrades (" + ",".join(f"{item['ecosystem']}/{item['name']}" for item in downgrades) + ")")
-        reason = "blocked: patched-image integrity failure: " + "; ".join(blockers)
-    elif fixable_ids and not patched and args.patch_policy != "disabled":
-        reason = "blocked: fixable OS findings require the Copa patch path"
-    elif matched and acceptance is None:
-        reason = "missing_kev_acceptance"
-    elif disabled_reason:
-        details = ",".join(
-            f"{key.split('|', 2)[2]}:{final[key]['severity']}:{final[key]['severity_source']}"
-            for key in sorted(final_ids)
-        )
-        reason = f"eligible with patching disabled ({disabled_reason['class']}): {disabled_reason['detail']}; findings: {details}"
-    elif no_fix:
-        details = ",".join(
-            f"{key.split('|', 2)[2]}:{final[key]['severity']}:{final[key]['severity_source']}"
-            for key in no_fix
-        )
-        reason = f"eligible with no-fix warnings: {details}"
-    elif patched:
-        reason = "patched"
-    else:
-        reason = "clean"
-
+    reason = decision_reason(
+        args, delta, downgrades, fixable_ids, patched, classification, failed_classification,
+        matched, acceptance, disabled_reason, no_fix, final,
+    )
     return {
         "schema": SCHEMA,
         "eligible": eligible,
@@ -691,17 +774,15 @@ def validate_string_list(value, field):
         raise ValueError(f"{field} must be an array of strings")
 
 
-def validate_decision(decision):
-    if not isinstance(decision, dict):
-        raise ValueError("decision must be an object")
-    top = {
-        "schema", "eligible", "reason", "platform", "app", "source_sha", "run_id", "run_attempt",
-        "proposed_tag", "upstream_index_digest", "selected_child_digest", "candidate", "before",
-        "copa", "delta", "packages", "patching", "policy", "validation", "published", "provenance",
-        "supersedes", "resume",
-    }
-    if set(decision) != top:
-        raise ValueError("decision has unknown or missing top-level fields")
+DECISION_FIELDS = {
+    "schema", "eligible", "reason", "platform", "app", "source_sha", "run_id", "run_attempt",
+    "proposed_tag", "upstream_index_digest", "selected_child_digest", "candidate", "before",
+    "copa", "delta", "packages", "patching", "policy", "validation", "published", "provenance",
+    "supersedes", "resume",
+}
+
+
+def validate_decision_identity(decision):
     simple = {
         "schema": str, "eligible": bool, "reason": str, "platform": str, "app": str,
         "source_sha": str, "run_id": str, "run_attempt": int, "proposed_tag": str,
@@ -716,6 +797,9 @@ def validate_decision(decision):
         raise ValueError("decision source SHA or run ID is invalid")
     if not DIGEST_RE.fullmatch(decision["upstream_index_digest"]) or not DIGEST_RE.fullmatch(decision["selected_child_digest"]):
         raise ValueError("decision upstream or child digest is invalid")
+
+
+def validate_decision_candidate(decision):
     if set(decision["candidate"]) != {"digest"} or not DIGEST_RE.fullmatch(decision["candidate"]["digest"]):
         raise ValueError("decision.candidate is invalid")
     if set(decision["before"]) != {"fixable_os"}:
@@ -723,6 +807,9 @@ def validate_decision(decision):
     validate_string_list(decision["before"]["fixable_os"], "before.fixable_os")
     if set(decision["copa"]) != {"classification", "original_child_input"} or decision["copa"]["classification"] not in COPA_CLASSIFICATIONS or not isinstance(decision["copa"]["original_child_input"], bool):
         raise ValueError(f"decision.copa is invalid {decision['copa']!r}")
+
+
+def validate_decision_delta(decision):
     delta_groups = {"resolved", "remaining", "introduced", "unresolved_fixable"}
     if set(decision["delta"]) != delta_groups | {"cves"}:
         raise ValueError("decision.delta is invalid")
@@ -732,6 +819,19 @@ def validate_decision(decision):
         raise ValueError("decision.delta.cves is invalid")
     for key, value in decision["delta"]["cves"].items():
         validate_string_list(value, f"delta.cves.{key}")
+
+
+def expected_package_change(group: str, item: dict) -> str:
+    if group == "downgrades":
+        return "downgraded"
+    if item["before"] and not item["after"]:
+        return "removed"
+    if item["after"] and not item["before"]:
+        return "added"
+    return "upgraded"
+
+
+def validate_decision_packages(decision):
     if set(decision["packages"]) != {"changes", "downgrades"}:
         raise ValueError("decision.packages is invalid")
     package_fields = {"ecosystem", "name", "change", "before", "after"}
@@ -743,11 +843,13 @@ def validate_decision(decision):
                 raise ValueError(f"decision.packages.{group} ecosystem is invalid")
             if not isinstance(item["name"], str) or not item["name"]:
                 raise ValueError(f"decision.packages.{group} name is invalid")
-            expected_change = "downgraded" if group == "downgrades" else ("removed" if item["before"] and not item["after"] else "added" if item["after"] and not item["before"] else "upgraded")
-            if item["change"] != expected_change:
+            if item["change"] != expected_package_change(group, item):
                 raise ValueError(f"decision.packages.{group} change is invalid")
             if not all(value is None or isinstance(value, str) for value in (item["before"], item["after"])):
                 raise ValueError(f"decision.packages.{group} versions are invalid")
+
+
+def validate_decision_patching(decision):
     patching = decision["patching"]
     if set(patching) not in ({"disabled"}, {"disabled", "disabled_reason"}) or not isinstance(patching["disabled"], bool):
         raise ValueError("decision.patching is invalid")
@@ -759,10 +861,9 @@ def validate_decision(decision):
         reason = patching["disabled_reason"]
         if (not isinstance(reason, dict) or set(reason) != {"class", "detail"} or reason.get("class") not in ("unsupported", "no-fix") or not isinstance(reason.get("detail"), str) or not reason["detail"]):
             raise ValueError("decision.patching.disabled_reason is invalid")
-    if set(decision["policy"]) != {"kev", "acceptance"} or set(decision["policy"]["kev"]) != {"matched", "catalog"}:
-        raise ValueError("decision.policy is invalid")
-    validate_string_list(decision["policy"]["kev"]["matched"], "policy.kev.matched")
-    catalog = decision["policy"]["kev"]["catalog"]
+
+
+def validate_decision_catalog(catalog):
     catalog_fields = {
         "url": str, "sha256": str, "fetched_at": str, "count": int,
         "unique_cves": int, "catalog_version": str, "date_released": str,
@@ -775,28 +876,40 @@ def validate_decision(decision):
             raise ValueError(f"decision.policy.kev.catalog.{key} is invalid")
     if catalog["url"] != KEV_URL or not re.fullmatch(r"[a-f0-9]{64}", catalog["sha256"]):
         raise ValueError("decision.policy.kev.catalog identity is invalid")
-    acceptance = decision["policy"]["acceptance"]
+
+
+def validate_decision_acceptance(acceptance):
     acceptance_fields = {
         "path", "sha256", "candidate_digest", "kevs", "expires_at", "commit_sha",
         "pull_request", "merged_at", "merged_by", "issue",
     }
+    if not isinstance(acceptance, dict) or set(acceptance) != acceptance_fields:
+        raise ValueError("decision.policy.acceptance is invalid")
+    for key in ("path", "sha256", "candidate_digest", "expires_at", "commit_sha", "merged_at", "merged_by"):
+        if not isinstance(acceptance[key], str) or not acceptance[key]:
+            raise ValueError(f"decision.policy.acceptance.{key} is invalid")
+    if not re.fullmatch(r"[a-f0-9]{64}", acceptance["sha256"]):
+        raise ValueError("decision.policy.acceptance.sha256 is invalid")
+    if not DIGEST_RE.fullmatch(acceptance["candidate_digest"]) or not SHA40_RE.fullmatch(acceptance["commit_sha"]):
+        raise ValueError("decision.policy.acceptance identity is invalid")
+    validate_string_list(acceptance["kevs"], "decision.policy.acceptance.kevs")
+    for key in ("pull_request", "issue"):
+        value = acceptance[key]
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError(f"decision.policy.acceptance.{key} is invalid")
+
+
+def validate_decision_policy(decision):
+    if set(decision["policy"]) != {"kev", "acceptance"} or set(decision["policy"]["kev"]) != {"matched", "catalog"}:
+        raise ValueError("decision.policy is invalid")
+    validate_string_list(decision["policy"]["kev"]["matched"], "policy.kev.matched")
+    validate_decision_catalog(decision["policy"]["kev"]["catalog"])
+    acceptance = decision["policy"]["acceptance"]
     if acceptance is not None:
-        if not isinstance(acceptance, dict) or set(acceptance) != acceptance_fields:
-            raise ValueError("decision.policy.acceptance is invalid")
-        for key in ("path", "sha256", "candidate_digest", "expires_at", "commit_sha", "merged_at", "merged_by"):
-            if not isinstance(acceptance[key], str) or not acceptance[key]:
-                raise ValueError(f"decision.policy.acceptance.{key} is invalid")
-        if not re.fullmatch(r"[a-f0-9]{64}", acceptance["sha256"]):
-            raise ValueError("decision.policy.acceptance.sha256 is invalid")
-        if not DIGEST_RE.fullmatch(acceptance["candidate_digest"]) or not SHA40_RE.fullmatch(acceptance["commit_sha"]):
-            raise ValueError("decision.policy.acceptance identity is invalid")
-        validate_string_list(acceptance["kevs"], "decision.policy.acceptance.kevs")
-        for key in ("pull_request", "issue"):
-            value = acceptance[key]
-            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-                raise ValueError(f"decision.policy.acceptance.{key} is invalid")
-    if set(decision["validation"]) != {"result"} or decision["validation"]["result"] not in ("pass", "fail"):
-        raise ValueError("decision.validation is invalid")
+        validate_decision_acceptance(acceptance)
+
+
+def validate_decision_resume(decision):
     resume = decision["resume"]
     resume_fields = {"original_run_id", "original_run_attempt", "original_source_sha", "artifact_id"}
     if resume is not None:
@@ -810,6 +923,12 @@ def validate_decision(decision):
             raise ValueError("decision.resume.original_source_sha is invalid")
         if isinstance(resume["artifact_id"], bool) or not isinstance(resume["artifact_id"], int) or resume["artifact_id"] <= 0:
             raise ValueError("decision.resume.artifact_id is invalid")
+
+
+def validate_decision_publication(decision):
+    if set(decision["validation"]) != {"result"} or decision["validation"]["result"] not in ("pass", "fail"):
+        raise ValueError("decision.validation is invalid")
+    validate_decision_resume(decision)
     if set(decision["published"]) != {"digest"} or not (decision["published"]["digest"] is None or DIGEST_RE.fullmatch(decision["published"]["digest"])):
         raise ValueError("decision.published.digest is invalid")
     if set(decision["provenance"]) != {"merged"} or not isinstance(decision["provenance"]["merged"], bool):
@@ -818,75 +937,99 @@ def validate_decision(decision):
         raise ValueError("decision.supersedes is invalid")
 
 
-def main():
-    args = parse_args()
-    try:
-        if args.resolve_only:
-            if not args.selected_digest_out:
-                raise ValueError("--resolve-only requires --selected-digest-out")
-            index = load_json(Path(args.index), "upstream index")
-            if sha256_file(Path(args.index)) != args.upstream_index_digest:
-                raise ValueError("upstream index bytes do not match the inventory digest")
-            child_digest = select_child(index, Path(args.child_manifest), Path(args.child_config))
-            out = Path(args.selected_digest_out)
-            out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(child_digest + "\n", encoding="utf-8")
-            print(child_digest)
-            return 0
-        if not SHA40_RE.fullmatch(args.source_sha):
-            raise ValueError("--source-sha must be 40 lowercase hex digits")
-        if not args.run_id.isdigit() or args.run_attempt <= 0 or not args.proposed_tag.strip():
-            raise ValueError("--run-id, --run-attempt, or --proposed-tag is invalid")
-        index = load_json(Path(args.index), "upstream index")
-        index_digest = sha256_file(Path(args.index))
-        if index_digest != args.upstream_index_digest:
-            raise ValueError("upstream index bytes do not match the inventory digest")
-        child_digest = select_child(index, Path(args.child_manifest), Path(args.child_config))
-        full_path = Path(args.full_report)
-        after_path = Path(args.after_full_report) if args.after_full_report else None
-        receipt_path = Path(args.scan_receipt) if args.scan_receipt else None
-        if bool(after_path) != bool(receipt_path):
-            raise ValueError("--after-full-report and --scan-receipt must be supplied together")
-        candidate_digest = args.candidate_digest or child_digest
-        if not DIGEST_RE.fullmatch(candidate_digest):
-            raise ValueError("--candidate-digest must be a sha256 digest")
-        patch_reason(args)
-        full_report = load_json(full_path, "full Trivy report")
-        os_metadata = full_report.get("Metadata", {}).get("OS")
-        if os_metadata is not None and (not isinstance(os_metadata, dict) or os_metadata.get("EOSL") is True):
-            raise ValueError("full report OS EOSL is true")
-        after_report = load_json(after_path, "after full Trivy report") if after_path else None
-        if after_report is not None:
-            validate_scan_receipt(
-                load_json(receipt_path, "scan receipt"), full_path, after_path, full_report, after_report,
-                args.now, child_digest, candidate_digest,
-            )
-        full = findings(full_report, "full report")
-        fixable = findings(load_json(Path(args.fixable_report), "fixable Trivy report"), "fixable report", True)
-        after = findings(after_report, "after full report") if after_report is not None else None
-        before_packages = package_inventory(full_report, "full report")
-        after_packages = package_inventory(after_report, "after full report") if after_report is not None else before_packages
-        kev = kev_evidence(Path(args.kev), args.kev_fetched_at, args.now)
-        candidate_digest = args.candidate_digest or child_digest
-        final_ids = set(after if after is not None else full)
-        kev_cves = {item["cveID"] for item in load_json(Path(args.kev), "KEV catalog")["vulnerabilities"]}
-        matched = sorted({key.split("|", 2)[2] for key in final_ids} & kev_cves)
-        resume = resume_evidence(args)
-        acceptance = acceptance_evidence(args, candidate_digest, matched, args.now)
-        decision = build_decision(args, child_digest, full, fixable, after, before_packages, after_packages, kev, acceptance, resume)
-        decision["upstream_index_digest"] = index_digest
-        validate_decision(decision)
-    except ValueError as exc:
-        print(f"[policy] {exc}", file=sys.stderr)
-        return 2
+def validate_decision(decision):
+    if not isinstance(decision, dict):
+        raise ValueError("decision must be an object")
+    if set(decision) != DECISION_FIELDS:
+        raise ValueError("decision has unknown or missing top-level fields")
+    validate_decision_identity(decision)
+    validate_decision_candidate(decision)
+    validate_decision_delta(decision)
+    validate_decision_packages(decision)
+    validate_decision_patching(decision)
+    validate_decision_policy(decision)
+    validate_decision_publication(decision)
 
+
+def run_resolve_only(args) -> int:
+    if not args.selected_digest_out:
+        raise ValueError("--resolve-only requires --selected-digest-out")
+    index = load_json(Path(args.index), "upstream index")
+    if sha256_file(Path(args.index)) != args.upstream_index_digest:
+        raise ValueError("upstream index bytes do not match the inventory digest")
+    child_digest = select_child(index, Path(args.child_manifest), Path(args.child_config))
+    out = Path(args.selected_digest_out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(child_digest + "\n", encoding="utf-8")
+    print(child_digest)
+    return 0
+
+
+def evaluate_candidate(args):
+    if not SHA40_RE.fullmatch(args.source_sha):
+        raise ValueError("--source-sha must be 40 lowercase hex digits")
+    if not args.run_id.isdigit() or args.run_attempt <= 0 or not args.proposed_tag.strip():
+        raise ValueError("--run-id, --run-attempt, or --proposed-tag is invalid")
+    index = load_json(Path(args.index), "upstream index")
+    index_digest = sha256_file(Path(args.index))
+    if index_digest != args.upstream_index_digest:
+        raise ValueError("upstream index bytes do not match the inventory digest")
+    child_digest = select_child(index, Path(args.child_manifest), Path(args.child_config))
+    full_path = Path(args.full_report)
+    after_path = Path(args.after_full_report) if args.after_full_report else None
+    receipt_path = Path(args.scan_receipt) if args.scan_receipt else None
+    if bool(after_path) != bool(receipt_path):
+        raise ValueError("--after-full-report and --scan-receipt must be supplied together")
+    candidate_digest = args.candidate_digest or child_digest
+    if not DIGEST_RE.fullmatch(candidate_digest):
+        raise ValueError("--candidate-digest must be a sha256 digest")
+    patch_reason(args)
+    full_report = load_json(full_path, "full Trivy report")
+    os_metadata = full_report.get("Metadata", {}).get("OS")
+    if os_metadata is not None and (not isinstance(os_metadata, dict) or os_metadata.get("EOSL") is True):
+        raise ValueError("full report OS EOSL is true")
+    after_report = load_json(after_path, "after full Trivy report") if after_path else None
+    if after_report is not None:
+        validate_scan_receipt(
+            load_json(receipt_path, "scan receipt"), full_path, after_path, full_report, after_report,
+            args.now, child_digest, candidate_digest,
+        )
+    full = findings(full_report, "full report")
+    fixable = findings(load_json(Path(args.fixable_report), "fixable Trivy report"), "fixable report", True)
+    after = findings(after_report, "after full report") if after_report is not None else None
+    before_packages = package_inventory(full_report, "full report")
+    after_packages = package_inventory(after_report, "after full report") if after_report is not None else before_packages
+    kev = kev_evidence(Path(args.kev), args.kev_fetched_at, args.now)
+    candidate_digest = args.candidate_digest or child_digest
+    final_ids = set(after if after is not None else full)
+    kev_cves = {item["cveID"] for item in load_json(Path(args.kev), KEV_CATALOG)["vulnerabilities"]}
+    matched = sorted({key.split("|", 2)[2] for key in final_ids} & kev_cves)
+    resume = resume_evidence(args)
+    acceptance = acceptance_evidence(args, candidate_digest, matched, args.now)
+    decision = build_decision(args, child_digest, full, fixable, after, before_packages, after_packages, kev, acceptance, resume)
+    decision["upstream_index_digest"] = index_digest
+    validate_decision(decision)
+    return decision
+
+
+def write_decision(decision, args) -> int:
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(decision, indent=2) + "\n", encoding="utf-8")
     print(out)
-    if not decision["eligible"]:
-        return 1
-    return 0
+    return 1 if not decision["eligible"] else 0
+
+
+def main():
+    args = parse_args()
+    try:
+        if args.resolve_only:
+            return run_resolve_only(args)
+        decision = evaluate_candidate(args)
+    except ValueError as exc:
+        print(f"[policy] {exc}", file=sys.stderr)
+        return 2
+    return write_decision(decision, args)
 
 
 if __name__ == "__main__":

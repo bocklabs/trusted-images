@@ -53,6 +53,7 @@ import hashlib
 import json
 import copy
 import os
+import re
 import subprocess
 import sys
 import time
@@ -70,6 +71,7 @@ ONESHOT_LOG_NOTE = (
     "no incremental log capture: the oneshot container exits under --rm "
     "before docker logs can run; container output streams in the job log"
 )
+SHA256_DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
 
 
 def parse_args() -> argparse.Namespace:
@@ -82,6 +84,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--app", required=True, help="inventory app name")
     parser.add_argument("--ref", required=True, help="candidate image ref")
     parser.add_argument("--local-image", help="local candidate tag; config digest must match the exported manifest")
+    parser.add_argument("--local-image-id", help="Docker image Id committed before OCI export")
     parser.add_argument("--digest", required=True, help="candidate sha256:... digest")
     parser.add_argument("--baseline-ref", help="selected upstream child ref")
     parser.add_argument("--baseline-digest", help="selected upstream child digest")
@@ -252,6 +255,30 @@ def docker_run_args(
     return args + [ref_digest, *command]
 
 
+def probe_http(args, container_name, logs_path):
+    url = f"http://localhost:{args.port}{args.path}"
+    expect = str(args.expect_status)
+    probe_deadline = time.monotonic() + args.timeout_seconds
+    last_status = "none"
+    while time.monotonic() < probe_deadline:
+        append_logs(logs_path, container_name)
+        ok, out = docker(
+            "run", "--rm", "--network", f"container:{container_name}",
+            CURL_IMAGE, "-s", "-o", "/dev/null", "-w", "%{http_code}", url,
+        )
+        last_status = out.strip() if ok else "sidecar-error"
+        if last_status == expect:
+            return None
+        sleep_until(probe_deadline)
+    append_logs(logs_path, container_name)
+    if last_status != expect:
+        return (
+            f"http probe on {url} never returned {expect} within "
+            f"{args.timeout_seconds}s (D-11); last status: {last_status}"
+        )
+    return None
+
+
 def profile_longrunning(
     args: argparse.Namespace,
     container_name: str,
@@ -276,26 +303,9 @@ def profile_longrunning(
         return f"candidate failed to start under --network none: {out}"
     try:
         if args.validation_type == "http":
-            url = f"http://localhost:{args.port}{args.path}"
-            expect = str(args.expect_status)
-            probe_deadline = time.monotonic() + args.timeout_seconds
-            last_status = "none"
-            while time.monotonic() < probe_deadline:
-                append_logs(logs_path, container_name)
-                ok, out = docker(
-                    "run", "--rm", "--network", f"container:{container_name}",
-                    CURL_IMAGE, "-s", "-o", "/dev/null", "-w", "%{http_code}", url,
-                )
-                last_status = out.strip() if ok else "sidecar-error"
-                if last_status == expect:
-                    break
-                sleep_until(probe_deadline)
-            append_logs(logs_path, container_name)
-            if last_status != expect:
-                return (
-                    f"http probe on {url} never returned {expect} within "
-                    f"{args.timeout_seconds}s (D-11); last status: {last_status}"
-                )
+            reason = probe_http(args, container_name, logs_path)
+            if reason is not None:
+                return reason
         deadline = started_mono + args.duration_seconds
         reason = wait_for_healthy(container_name, healthcheck_defined, deadline, logs_path, health)
         if reason is not None:
@@ -344,32 +354,83 @@ def profile_oneshot(
     return None
 
 
+def runtime_inputs(args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
+    expected_platforms = [p.strip() for p in args.expected_platforms.split(",") if p.strip()]
+    if expected_platforms != ["linux/amd64"]:
+        raise ValueError("new candidates must validate exactly linux/amd64 (D-20)")
+    try:
+        command = json.loads(args.command)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"--command is not valid JSON ({exc})") from exc
+    if not isinstance(command, list) or not all(isinstance(item, str) for item in command):
+        raise ValueError("--command must be a JSON array of strings")
+    env_map: dict[str, str] = {}
+    for item in args.env:
+        key, sep, value = item.partition("=")
+        if not sep or not key:
+            raise ValueError(f"--env must be KEY=VALUE (got {item!r})")
+        env_map[key] = value
+    if args.validation_type == "http" and args.port is None:
+        raise ValueError("the http profile requires --port (spec.validation.port)")
+    return command, env_map
+
+
+def load_manifest(path: Path) -> dict:
+    if not path.is_file():
+        raise ValueError(f"index file not found: {path}")
+    try:
+        index = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"index file is not valid JSON ({exc})") from exc
+    if not isinstance(index, dict):
+        raise ValueError("candidate manifest is not an object (D-20)")
+    if "manifests" in index:
+        raise ValueError("candidate manifest is an index; indexes cannot be published (D-20)")
+    if index.get("mediaType") not in IMAGE_MANIFEST_TYPES:
+        raise ValueError("candidate manifest is not an OCI/Docker image manifest (D-20)")
+    return index
+
+
+def inspected_image(ref: str, parse_label: str) -> dict:
+    ok, out = docker("image", "inspect", ref)
+    if not ok:
+        raise ValueError(f"docker image inspect failed for {ref}: {out}")
+    try:
+        inspected = json.loads(out)[0]
+        config = inspected["Config"]
+        if not isinstance(config, dict):
+            raise TypeError("Config is not an object")
+    except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
+        raise ValueError(f"{parse_label} (VAL-01): {exc}") from exc
+    return inspected
+
+
+def local_candidate_error(args: argparse.Namespace, index: dict, index_path: Path, inspected: dict) -> str | None:
+    if not args.local_image:
+        return None
+    if not args.local_image_id or not SHA256_DIGEST_RE.fullmatch(args.local_image_id):
+        return "--local-image-id must be the committed Docker image sha256:... Id"
+    manifest_digest = "sha256:" + hashlib.sha256(index_path.read_bytes()).hexdigest()
+    if manifest_digest != args.digest:
+        return "local candidate manifest digest does not match the exported bytes"
+    descriptor = index.get("config")
+    expected_config = descriptor.get("digest") if isinstance(descriptor, dict) else None
+    if not isinstance(expected_config, str) or not SHA256_DIGEST_RE.fullmatch(expected_config):
+        return "local candidate OCI config descriptor is malformed"
+    if inspected.get("Id") != args.local_image_id:
+        return "local candidate image Id does not match --local-image-id"
+    return None
+
+
 def main() -> int:
     args = parse_args()
     started_wall = datetime.now(timezone.utc)
     started_mono = time.monotonic()
 
-    expected_platforms = [p.strip() for p in args.expected_platforms.split(",") if p.strip()]
-    if expected_platforms != ["linux/amd64"]:
-        print("FATAL: new candidates must validate exactly linux/amd64 (D-20)")
-        return 2
     try:
-        command = json.loads(args.command)
-    except json.JSONDecodeError as exc:
-        print(f"FATAL: --command is not valid JSON ({exc})")
-        return 2
-    if not isinstance(command, list) or not all(isinstance(item, str) for item in command):
-        print("FATAL: --command must be a JSON array of strings")
-        return 2
-    env_map: dict[str, str] = {}
-    for item in args.env:
-        key, sep, value = item.partition("=")
-        if not sep or not key:
-            print(f"FATAL: --env must be KEY=VALUE (got {item!r})")
-            return 2
-        env_map[key] = value
-    if args.validation_type == "http" and args.port is None:
-        print("FATAL: the http profile requires --port (spec.validation.port)")
+        command, env_map = runtime_inputs(args)
+    except ValueError as exc:
+        print(f"FATAL: {exc}")
         return 2
 
     evidence_out = Path(args.evidence_out)
@@ -389,7 +450,7 @@ def main() -> int:
                 "timeoutSeconds": args.timeout_seconds,
                 "expectedExit": args.expected_exit,
                 "command": command,
-                "expectedPlatforms": expected_platforms,
+                "expectedPlatforms": [p.strip() for p in args.expected_platforms.split(",") if p.strip()],
                 "env": env_map,
             },
             "timings": {},
@@ -399,7 +460,7 @@ def main() -> int:
                 "entrypoint": [],
                 "cmd": [],
                 "env": [],
-                "platforms_expected": expected_platforms,
+                "platforms_expected": [p.strip() for p in args.expected_platforms.split(",") if p.strip()],
             },
         },
     }
@@ -422,18 +483,10 @@ def main() -> int:
         return code
 
     index_path = Path(args.index_file)
-    if not index_path.is_file():
-        return fail(f"index file not found: {index_path}")
     try:
-        index = json.loads(index_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        return fail(f"index file is not valid JSON ({exc})")
-    if not isinstance(index, dict):
-        return fail("candidate manifest is not an object (D-20)")
-    if "manifests" in index:
-        return fail("candidate manifest is an index; indexes cannot be published (D-20)")
-    if index.get("mediaType") not in IMAGE_MANIFEST_TYPES:
-        return fail("candidate manifest is not an OCI/Docker image manifest (D-20)")
+        index = load_manifest(index_path)
+    except ValueError as reason:
+        return fail(str(reason))
     ev["validation"]["manifest_annotations"] = index.get("annotations") or {}
 
     baseline_ref_digest = (
@@ -443,35 +496,22 @@ def main() -> int:
     )
     baseline_config = None
     if baseline_ref_digest:
-        ok, out = docker("image", "inspect", baseline_ref_digest)
-        if not ok:
-            return fail(f"docker image inspect failed for baseline {baseline_ref_digest}: {out}")
         try:
-            baseline_config = json.loads(out)[0]["Config"]
-            if not isinstance(baseline_config, dict):
-                raise TypeError("baseline Config is not an object")
-        except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
-            return fail(f"baseline image config does not parse (VAL-01): {exc}")
+            baseline_config = inspected_image(baseline_ref_digest, "baseline image config does not parse")["Config"]
+        except ValueError as exc:
+            return fail(str(exc))
 
     ref_digest = args.local_image or f"{args.ref}@{args.digest}"
-    ok, out = docker("image", "inspect", ref_digest)
-    if not ok:
-        return fail(f"docker image inspect failed for {ref_digest}: {out}")
     try:
-        inspected = json.loads(out)[0]
-        config = inspected["Config"]
-        if not isinstance(config, dict):
-            raise TypeError("Config is not an object")
-    except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
-        return fail(f"image config does not parse (VAL-01): {exc}")
+        inspected = inspected_image(ref_digest, "image config does not parse")
+    except ValueError as exc:
+        return fail(str(exc))
+    config = inspected["Config"]
     if args.local_image:
+        reason = local_candidate_error(args, index, index_path, inspected)
+        if reason is not None:
+            return fail(reason)
         manifest_digest = "sha256:" + hashlib.sha256(index_path.read_bytes()).hexdigest()
-        if manifest_digest != args.digest:
-            return fail("local candidate manifest digest does not match the exported bytes")
-        descriptor = index.get("config")
-        expected_config = descriptor.get("digest") if isinstance(descriptor, dict) else None
-        if not isinstance(expected_config, str) or not expected_config.startswith("sha256:") or inspected.get("Id") != expected_config:
-            return fail("local candidate config digest does not match the exported manifest")
         ref_digest = inspected["Id"]
         ev["validation"]["candidate_digest"] = manifest_digest
         ev["validation"]["candidate_image_id"] = inspected["Id"]

@@ -489,6 +489,7 @@ jobs:
           PY
 
       - name: Materialize preserved candidate for fresh checks
+        id: resume_materialize
         if: inputs.accepted_candidate_run_id != ''
         shell: bash
         run: |
@@ -499,7 +500,9 @@ jobs:
             oci:/workspace/candidate-oci:candidate \
             docker-archive:/workspace/resume-final.tar:resume:candidate
           docker load --input resume-final.tar
-          docker image inspect resume:candidate --format '{{.Id}}' > resume-candidate-image-id.txt
+          RESUME_IMAGE_ID="$(docker image inspect resume:candidate --format '{{.Id}}')"
+          printf '%s\n' "${RESUME_IMAGE_ID}" > resume-candidate-image-id.txt
+          echo "image_id=${RESUME_IMAGE_ID}" >> "$GITHUB_OUTPUT"
 
       - name: Fetch upstream index
         id: index
@@ -875,6 +878,8 @@ jobs:
             oci:/workspace/candidate-oci:candidate \
             docker-archive:/workspace/recovery-final.tar:recovered:candidate
           docker load --input recovery-final.tar
+          RECOVERY_IMAGE_ID="$(docker image inspect recovered:candidate --format '{{.Id}}')"
+          echo "image_id=${RECOVERY_IMAGE_ID}" >> "$GITHUB_OUTPUT"
           RECOVERED_DIGEST="${RECOVERED_DIGEST:-$(jq -er .recovered_digest validation-context/context.json)}"
           [ "$(sha256sum candidate-manifest.json | awk '{print $1}')" = "${RECOVERED_DIGEST#sha256:}" ]
           echo "candidate_digest=${RECOVERED_DIGEST}" >> "$GITHUB_OUTPUT"
@@ -1029,6 +1034,7 @@ jobs:
           CONTAINER="$(docker create copa:candidate)"
           trap 'docker rm "${CONTAINER}" > /dev/null' EXIT
           docker commit "${CHANGES[@]}" "${CONTAINER}" copa:final > /dev/null
+          FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
           docker image inspect copa:final --format '{{json .Config.Labels}}' > after-labels.json
           python3 - before-labels.json after-labels.json <<'PY'
           import json, sys
@@ -1049,6 +1055,7 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             inspect --raw oci:/workspace/candidate-oci:candidate > candidate-manifest.json
           sha256sum candidate-manifest.json | awk '{print "digest=sha256:" $1}' > candidate-digest.txt
           cat candidate-digest.txt >> "$GITHUB_OUTPUT"
+          echo "image_id=${FINAL_IMAGE_ID}" >> "$GITHUB_OUTPUT"
 
       - name: Rescan the exact patched bytes with the frozen DB
         id: scanafter
@@ -1189,6 +1196,7 @@ jobs:
           SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
           CANDIDATE_REF: ${{ steps.final.outputs.ref }}
           CANDIDATE_DIGEST: ${{ steps.final.outputs.digest }}
+          LOCAL_IMAGE_ID: ${{ steps.patched.outputs.image_id || steps.resume_materialize.outputs.image_id || steps.recovery.outputs.image_id }}
           PATCHED: ${{ steps.final.outputs.patched }}
           VALIDATION_TYPE: ${{ steps.entry.outputs.validation_type }}
           VALIDATION_PORT: ${{ steps.entry.outputs.validation_port }}
@@ -1220,7 +1228,7 @@ jobs:
             --expected-platforms "${VALIDATION_EXPECTED_PLATFORMS:-linux/amd64}"
             --command "${VALIDATION_COMMAND:-[]}"
           )
-          [ "${PATCHED}" != true ] || ARGS+=(--local-image "${CANDIDATE_REF}")
+          [ "${PATCHED}" != true ] || ARGS+=(--local-image "${CANDIDATE_REF}" --local-image-id "${LOCAL_IMAGE_ID}")
           if [ -n "${VALIDATION_PORT:-}" ]; then
             ARGS+=(--port "${VALIDATION_PORT}")
           fi

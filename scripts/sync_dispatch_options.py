@@ -16,7 +16,7 @@ def main() -> int:
         return 1
 
     text = WORKFLOW.read_text()
-    match = re.search(r"(# apps-begin\n)((?:          - .+\n)+)(          # apps-end)", text)
+    match = re.search(r"(# apps-begin\n)((?: {10}- .+\n)+)( {10}# apps-end)", text)
     if not match:
         print("FATAL: apps-block not found in promote.yaml")
         return 1
@@ -26,7 +26,7 @@ def main() -> int:
         print("options in sync")
         return 0
 
-    WORKFLOW.write_text(text[: match.start(2)] + "".join(f"          - {a}\n" for a in apps) + text[match.end(2) :])
+    WORKFLOW.write_text(text[: match.start(2)] + "".join(f"{' ' * 10}- {a}\n" for a in apps) + text[match.end(2) :])
     added = [a for a in apps if a not in current]
     removed = [o for o in current if o not in apps]
     print(f"options updated: +{added} -{removed}")

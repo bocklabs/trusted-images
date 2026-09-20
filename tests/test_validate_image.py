@@ -24,6 +24,7 @@ VALIDATE_IMAGE = REPO_ROOT / "scripts" / "validate_image.py"
 APP = "postgres-exporter"
 REF = "quay.io/example/app"
 DIGEST = "sha256:" + "a1" * 32
+DOCKER_IMAGE_ID = "sha256:" + "b" * 64
 REF_DIGEST = f"{REF}@{DIGEST}"
 
 FAKE_DOCKER = """#!/usr/bin/env python3
@@ -155,24 +156,44 @@ class ValidateImageTests(unittest.TestCase):
         env.pop("GITHUB_RUN_ID", None)
         return subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120)
 
-    def test_local_image_is_bound_to_manifest_config_and_digest_evidence(self):
+    def test_local_image_is_bound_to_committed_id_and_manifest_digest_evidence(self):
         image = image_inspect()
-        image[0]["Id"] = DIGEST
+        image[0]["Id"] = DOCKER_IMAGE_ID
         self.write_scenario({"image_inspect": image})
         manifest_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
-        result = self.run_cli("process", ("--local-image", "copa:final", "--digest", manifest_digest, "--duration-seconds", "0"))
+        result = self.run_cli("process", (
+            "--local-image", "copa:final", "--local-image-id", DOCKER_IMAGE_ID,
+            "--digest", manifest_digest, "--duration-seconds", "0",
+        ))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         calls = self.spool_entries()
         self.assertEqual(calls[0], ["image", "inspect", "copa:final"])
-        self.assertTrue(any(DIGEST in call and call[0] == "run" for call in calls))
+        self.assertTrue(any(DOCKER_IMAGE_ID in call and call[0] == "run" for call in calls))
         self.assertEqual(self.load_evidence()["validation"]["candidate_digest"], manifest_digest)
+        self.assertEqual(self.load_evidence()["validation"]["candidate_image_id"], DOCKER_IMAGE_ID)
 
-        image[0]["Id"] = "sha256:" + "b" * 64
+    def test_local_image_id_mismatch_fails_closed(self):
+        image = image_inspect()
+        image[0]["Id"] = "sha256:" + "c" * 64
         self.write_scenario({"image_inspect": image})
         manifest_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
-        result = self.run_cli("process", ("--local-image", "copa:final", "--digest", manifest_digest, "--duration-seconds", "0"))
+        result = self.run_cli("process", (
+            "--local-image", "copa:final", "--local-image-id", DOCKER_IMAGE_ID,
+            "--digest", manifest_digest, "--duration-seconds", "0",
+        ))
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("config digest", result.stdout + result.stderr)
+        self.assertIn("image Id", result.stdout + result.stderr)
+
+    def test_local_image_requires_committed_image_id(self):
+        image = image_inspect()
+        image[0]["Id"] = DOCKER_IMAGE_ID
+        self.write_scenario({"image_inspect": image})
+        manifest_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        result = self.run_cli("process", (
+            "--local-image", "copa:final", "--digest", manifest_digest, "--duration-seconds", "0",
+        ))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("--local-image-id", result.stdout + result.stderr)
 
     def load_evidence(self) -> dict:
         return json.loads(self.evidence.read_text(encoding="utf-8"))

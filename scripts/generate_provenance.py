@@ -29,6 +29,10 @@ PACKAGE_PREFIX = "ghcr.io/bocklabs/"
 DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
 BARE_SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 SOURCE_SHA_RE = re.compile(r"^[a-f0-9]{40}$")
+UTC_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+BEFORE_REPORT = "before report"
+FINAL_REPORT = "final report"
+FIXABLE_REPORT = "fixable report"
 
 # flag -> (kind, required); kind: text | digest (sha256:<64hex>) | sha256
 # (bare 64-hex) | json (object or array — per-flag shape in *_JSON_FLAGS)
@@ -119,9 +123,9 @@ def file_sha256(path: Path) -> str:
 
 
 def parse_utc(value: str, label: str) -> datetime:
-    if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value):
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value):
         raise ValueError(f"{label} must use strict UTC YYYY-MM-DDTHH:MM:SSZ")
-    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    return datetime.strptime(value, UTC_FORMAT).replace(tzinfo=timezone.utc)
 
 
 def finding_rows(findings: dict) -> list[dict]:
@@ -143,13 +147,13 @@ def warning_rows(final: dict, fixable: dict, decision: dict) -> list[dict]:
 
 
 def policy_evidence(args: argparse.Namespace, decision: dict) -> tuple[dict, list[dict], dict]:
-    before = promotion.findings(load_json(value_of(args, "--before-report"), "before report"), "before report")
-    final = promotion.findings(load_json(value_of(args, "--final-report"), "final report"), "final report")
+    before = promotion.findings(load_json(value_of(args, "--before-report"), BEFORE_REPORT), BEFORE_REPORT)
+    final = promotion.findings(load_json(value_of(args, "--final-report"), FINAL_REPORT), FINAL_REPORT)
     fixable = promotion.findings(
-        load_json(value_of(args, "--fixable-report"), "fixable report"), "fixable report", True
+        load_json(value_of(args, "--fixable-report"), FIXABLE_REPORT), FIXABLE_REPORT, True
     )
     if not set(fixable) <= set(before):
-        raise ValueError("fixable report contains a finding absent from the before report")
+        raise ValueError(f"{FIXABLE_REPORT} contains a finding absent from the {BEFORE_REPORT}")
     if decision["before"]["fixable_os"] != sorted(fixable):
         raise ValueError("decision fixable findings do not match the fixable report")
 
@@ -166,17 +170,17 @@ def policy_evidence(args: argparse.Namespace, decision: dict) -> tuple[dict, lis
     }
     expected_delta["cves"] = promotion.cve_groups(expected_delta)
     if decision["delta"] != expected_delta:
-        raise ValueError("decision delta does not match the before and final reports")
+        raise ValueError(f"decision delta does not match the {BEFORE_REPORT} and {FINAL_REPORT}")
 
     before_packages = promotion.package_inventory(
-        load_json(value_of(args, "--before-report"), "before report"), "before report"
+        load_json(value_of(args, "--before-report"), BEFORE_REPORT), BEFORE_REPORT
     )
     final_packages = promotion.package_inventory(
-        load_json(value_of(args, "--final-report"), "final report"), "final report"
+        load_json(value_of(args, "--final-report"), FINAL_REPORT), FINAL_REPORT
     )
     changes, downgrades = promotion.package_changes(before_packages, final_packages)
     if decision["packages"] != {"changes": changes, "downgrades": downgrades}:
-        raise ValueError("decision package changes do not match the before and final reports")
+        raise ValueError(f"decision package changes do not match the {BEFORE_REPORT} and {FINAL_REPORT}")
 
     receipt = promotion.kev_evidence(
         Path(value_of(args, "--kev-report")),
@@ -239,7 +243,7 @@ def validate_acceptance(args: argparse.Namespace, decision: dict, acceptance: di
     )
     if (
         pull_request["number"] != acceptance["pull_request"]
-        or evidence_merged.strftime("%Y-%m-%dT%H:%M:%SZ") != acceptance["merged_at"]
+        or evidence_merged.strftime(UTC_FORMAT) != acceptance["merged_at"]
         or evidence["issue"]["number"] != acceptance["issue"]
     ):
         raise ValueError("acceptance GitHub identity does not match the decision")
@@ -263,40 +267,47 @@ def provenance_acceptance(args: argparse.Namespace, acceptance: dict | None) -> 
     }
 
 
-def collect_violations(args: argparse.Namespace) -> list[str]:
-    """Every rule violation, one line each naming the offending field."""
-    violations: list[str] = []
+def scalar_flag_violation(flag: str, kind: str, value: str) -> str | None:
+    if kind == "digest" and value.strip() and not DIGEST_RE.fullmatch(value):
+        return f"{flag} must be sha256: followed by 64 lowercase hex digits (got {value!r})"
+    if kind == "sha256" and value.strip() and not BARE_SHA256_RE.fullmatch(value):
+        return f"{flag} must be bare 64-hex sha256sum output, no sha256: prefix (got {value!r})"
+    if kind == "path" and value.strip() and not Path(value).is_file():
+        return f"{flag} must be an existing JSON file (got {value!r})"
+    return None
 
+
+def json_flag_violation(flag: str, value: str) -> str | None:
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return f"{flag} must be valid JSON (got {value!r})"
+    if flag in JSON_OBJECT_FLAGS and not isinstance(parsed, dict):
+        return f"{flag} must be a JSON object (got {type(parsed).__name__})"
+    if flag in JSON_ARRAY_FLAGS and not isinstance(parsed, list):
+        return f"{flag} must be a JSON array (got {type(parsed).__name__})"
+    return None
+
+
+def flag_violations(args: argparse.Namespace) -> list[str]:
+    violations = []
     for flag, (kind, required) in FLAGS.items():
         value = value_of(args, flag)
         if required and not value.strip():
             violations.append(f"missing required value for {flag} ({flag.lstrip('-')})")
             continue
-        if kind == "digest" and value.strip() and not DIGEST_RE.fullmatch(value):
-            violations.append(
-                f"{flag} must be sha256: followed by 64 lowercase hex digits (got {value!r})"
-            )
-        if kind == "sha256" and value.strip() and not BARE_SHA256_RE.fullmatch(value):
-            violations.append(
-                f"{flag} must be bare 64-hex sha256sum output, no sha256: prefix (got {value!r})"
-            )
+        violation = scalar_flag_violation(flag, kind, value)
+        if violation:
+            violations.append(violation)
         if kind == "json" and value.strip():
-            try:
-                parsed = json.loads(value)
-            except json.JSONDecodeError:
-                violations.append(f"{flag} must be valid JSON (got {value!r})")
-            else:
-                if flag in JSON_OBJECT_FLAGS and not isinstance(parsed, dict):
-                    violations.append(
-                        f"{flag} must be a JSON object (got {type(parsed).__name__})"
-                    )
-                if flag in JSON_ARRAY_FLAGS and not isinstance(parsed, list):
-                    violations.append(
-                        f"{flag} must be a JSON array (got {type(parsed).__name__})"
-                    )
-        if kind == "path" and value.strip() and not Path(value).is_file():
-            violations.append(f"{flag} must be an existing JSON file (got {value!r})")
+            violation = json_flag_violation(flag, value)
+            if violation:
+                violations.append(violation)
+    return violations
 
+
+def identity_violations(args: argparse.Namespace) -> tuple[list[str], list[str]]:
+    violations = []
     app = value_of(args, "--app")
     package = value_of(args, "--internal-package")
     if app.strip() and package.strip() and package != f"{PACKAGE_PREFIX}{app}":
@@ -315,6 +326,7 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
             )
 
     platforms_raw = value_of(args, "--platforms")
+    platforms: list[str] = []
     if platforms_raw.strip():
         platforms = [part.strip() for part in platforms_raw.split(",")]
         if not all(platforms):
@@ -322,13 +334,31 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
                 f"--platforms must be a comma-separated list of non-empty platforms "
                 f"(got {platforms_raw!r})"
             )
+    return violations, platforms
 
+
+def decision_identity_violations(decision: dict, expected: dict[str, str]) -> list[str]:
+    mismatches = {
+        "app": decision["app"] != expected["app"],
+        "upstream_index_digest": decision["upstream_index_digest"] != expected["upstream_index_digest"],
+        "selected_child_digest": decision["selected_child_digest"] != expected["selected_child_digest"],
+        "candidate_digest": decision["candidate"]["digest"] != expected["candidate_digest"],
+        "proposed_tag": decision["proposed_tag"] != expected["proposed_tag"],
+    }
+    return [
+        f"decision {key} does not match provenance identity"
+        for key, failed in mismatches.items() if failed
+    ]
+
+
+def decision_violations(args: argparse.Namespace, app: str, child_digest: str, internal_tag: str, platforms: list[str]) -> tuple[list[str], dict | None]:
+    violations = []
     child_digest = value_of(args, "--upstream-child-digest").strip()
     decision_sha = value_of(args, "--decision-sha256").strip()
     try:
         decision = load_json(value_of(args, "--decision"), "--decision")
         promotion.validate_decision(decision)
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, ValueError) as exc:
         violations.append(f"decision validation failed: {exc}")
         decision = None
     if decision is not None:
@@ -343,14 +373,7 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
             "candidate_digest": value_of(args, "--internal-digest"),
             "proposed_tag": internal_tag,
         }
-        mismatches = {
-            "app": decision["app"] != expected["app"],
-            "upstream_index_digest": decision["upstream_index_digest"] != expected["upstream_index_digest"],
-            "selected_child_digest": decision["selected_child_digest"] != expected["selected_child_digest"],
-            "candidate_digest": decision["candidate"]["digest"] != expected["candidate_digest"],
-            "proposed_tag": decision["proposed_tag"] != expected["proposed_tag"],
-        }
-        violations.extend(f"decision {key} does not match provenance identity" for key, failed in mismatches.items() if failed)
+        violations.extend(decision_identity_violations(decision, expected))
         if not decision["eligible"] or decision["validation"]["result"] != "pass":
             violations.append("decision must be eligible with passing validation")
         if decision["published"]["digest"] != value_of(args, "--internal-digest"):
@@ -364,7 +387,11 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
             violations.append("--platforms must be exactly linux/amd64 for new records")
         if child_digest == value_of(args, "--upstream-digest"):
             violations.append("--upstream-child-digest must differ from the index digest")
+    return violations, decision
 
+
+def recovery_violations(args: argparse.Namespace, decision: dict | None, internal_tag: str) -> list[str]:
+    violations = []
     recovery_values = [value_of(args, flag).strip() for flag in RECOVERY_FLAGS]
     original_values, recovered_values = recovery_values[:2], recovery_values[2:]
     if any(original_values) and not all(original_values):
@@ -387,7 +414,11 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
             violations.append("--recovered-tag must equal --internal-tag")
         if value_of(args, "--recovered-digest") != value_of(args, "--internal-digest"):
             violations.append("--recovered-digest must equal --internal-digest")
+    return violations
 
+
+def report_hash_violations(args: argparse.Namespace) -> list[str]:
+    violations = []
     if value_of(args, "--full-report-sha256").strip():
         try:
             if value_of(args, "--full-report-sha256") != file_sha256(Path(value_of(args, "--final-report"))):
@@ -401,6 +432,21 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
         except OSError:
             pass
 
+    return violations
+
+
+def collect_violations(args: argparse.Namespace) -> list[str]:
+    """Every rule violation, one line each naming the offending field."""
+    violations = flag_violations(args)
+    identity, platforms = identity_violations(args)
+    violations.extend(identity)
+    app = value_of(args, "--app")
+    child_digest = value_of(args, "--upstream-child-digest").strip()
+    internal_tag = value_of(args, "--internal-tag")
+    decision_issues, decision = decision_violations(args, app, child_digest, internal_tag, platforms)
+    violations.extend(decision_issues)
+    violations.extend(recovery_violations(args, decision, internal_tag))
+    violations.extend(report_hash_violations(args))
     return violations
 
 
@@ -478,7 +524,7 @@ def build_record(
                 "env": json.loads(value_of(args, "--validation-env")),
             },
         },
-        "promoted_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "promoted_at": datetime.now(timezone.utc).strftime(UTC_FORMAT),
         "notes": args.notes,
     }
     if value_of(args, "--original-run-url"):
@@ -509,7 +555,7 @@ def main() -> int:
     try:
         decision = load_json(value_of(args, "--decision"), "--decision")
         policy, warnings, cves = policy_evidence(args, decision)
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, ValueError) as exc:
         print(f"[provenance] policy evidence validation failed: {exc}")
         return 1
     record = build_record(args, platforms, policy, warnings, cves, decision)
