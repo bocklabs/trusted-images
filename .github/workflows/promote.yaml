@@ -1424,7 +1424,7 @@ jobs:
               args += ["--patch-disabled-class", reason["class"], "--patch-disabled-detail", reason["detail"]]
           if Path("trivy-after-full.json").is_file():
               original = json.loads(Path("original-candidate-decision.json").read_text()) if Path("original-candidate-decision.json").is_file() else None
-              classification = "succeeded" if original and original["copa"]["original_child_input"] else "not-required"
+              classification = original["copa"]["classification"] if original else "succeeded"
               args += [
                   "--after-full-report", "trivy-after-full.json",
                   "--scan-receipt", "scan-receipt.json",
