@@ -15,6 +15,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "promote.yaml"
 RESOLVER = REPO_ROOT / "scripts" / "resolve_internal_tag.py"
+SCRIPTS = REPO_ROOT / "scripts"
 DIGEST_A = "sha256:" + "a" * 64
 DIGEST_B = "sha256:" + "b" * 64
 DIGEST_C = "sha256:" + "c" * 64
@@ -220,10 +221,20 @@ class PromoteWorkflowTests(unittest.TestCase):
         by_name = {step["name"]: step for step in steps}
         restore = by_name["Restore the exact accepted candidate"]
         self.assertEqual(restore["if"], "inputs.accepted_candidate_run_id != ''")
+        self.assertIn(
+            "python3 scripts/promote_resume_artifact_id.py",
+            restore["run"],
+        )
+        self.assertIn(
+            "python3 scripts/promote_resume_candidate.py",
+            restore["run"],
+        )
+        artifact_id = (SCRIPTS / "promote_resume_artifact_id.py").read_text(encoding="utf-8")
+        candidate = (SCRIPTS / "promote_resume_candidate.py").read_text(encoding="utf-8")
+        for text in ('.get("expired") is False',):
+            with self.subTest(text=text):
+                self.assertIn(text, artifact_id)
         for text in (
-            "actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}",
-            "--paginate",
-            '.get("expired") is False',
             "SHA256SUMS",
             "path traversal",
             "is_symlink()",
@@ -232,24 +243,25 @@ class PromoteWorkflowTests(unittest.TestCase):
             "candidate-oci",
         ):
             with self.subTest(text=text):
-                self.assertIn(text, restore["run"])
+                self.assertIn(text, candidate)
         copa = by_name["Run pinned Copa from the original child"]
         self.assertIn("inputs.accepted_candidate_run_id == ''", copa["if"])
         after = by_name["Rescan the exact preserved accepted bytes with the frozen DB"]
         self.assertIn("inputs.accepted_candidate_run_id != ''", after["if"])
-        policy = by_name["Evaluate one promotion decision"]
+        policy_script = (SCRIPTS / "promote_candidate_decision.py").read_text(encoding="utf-8")
         for text in ("--acceptance", "--github-evidence", "--github-repository"):
             with self.subTest(text=text):
-                self.assertIn(text, policy["run"])
-        risk = by_name["Resolve current KEV risk acceptance"]["run"]
+                self.assertIn(text, policy_script)
+        evidence = (SCRIPTS / "promote_github_evidence.py").read_text(encoding="utf-8")
         for text in (
             '"base_repository": value["base"]["repo"]["full_name"]',
             '"is_pull_request": "pull_request" in value',
             "acceptance commit does not bind the current file bytes",
-            '[ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]',
         ):
             with self.subTest(text=text):
-                self.assertIn(text, risk)
+                self.assertIn(text, evidence)
+        risk = by_name["Resolve current KEV risk acceptance"]["run"]
+        self.assertIn('[ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]', risk)
         validation = by_name["Run validation"]["run"]
         self.assertIn('--local-image "${CANDIDATE_REF}" --local-image-id "${LOCAL_IMAGE_ID}"', validation)
         self.assertIn("steps.patched.outputs.image_id", by_name["Run validation"]["env"]["LOCAL_IMAGE_ID"])
@@ -268,12 +280,17 @@ class PromoteWorkflowTests(unittest.TestCase):
         ):
             with self.subTest(env=key):
                 self.assertIn(key, verify["env"])
-        self.assertIn('api_run.get("path") != ".github/workflows/promote.yaml"', verify["run"])
-        self.assertIn('api_artifact.get("workflow_run", {}).get("id") != int(accepted_run)', verify["run"])
+        integrity = (SCRIPTS / "promote_decision_integrity.py").read_text(encoding="utf-8")
+        self.assertIn('api_run.get("path") != ".github/workflows/promote.yaml"', integrity)
+        self.assertIn('api_artifact.get("workflow_run", {}).get("id") != int(accepted_run)', integrity)
         self.assertIn('"${STATUS}" = 404', occupancy["run"])
         self.assertIn('"${PUSHED}" != "${CANDIDATE_DIGEST}"', occupancy["run"])
         self.assertIn("conflicting occupied tag", occupancy["run"])
         self.assertEqual(copy["if"], "steps.occupancy.outputs.skip_copy != 'true'")
+
+    def test_workflow_contains_no_inline_python_heredocs(self) -> None:
+        self.assertNotIn("<<'PY'", self.workflow)
+        self.assertNotIn("python3 - <<", self.workflow)
 
     def test_validation_still_gates_promotion(self) -> None:
         self.assertIn("promote:\n    needs: validate", self.workflow)
@@ -284,10 +301,10 @@ class PromoteWorkflowTests(unittest.TestCase):
             "--observations registry-observations.json",
             "Assert destination tag is absent or byte-identical",
             "curl --fail-with-body",
-            'rel="next"',
         ):
             with self.subTest(text=text):
                 self.assertIn(text, self.workflow)
+        self.assertIn('rel="next"', (SCRIPTS / "promote_registry_next_link.py").read_text(encoding="utf-8"))
         self.assertNotIn("tags/list?n=1000", self.workflow)
 
     def test_registry_artifacts_come_from_verbatim_oci_blobs(self) -> None:
@@ -346,9 +363,10 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertNotIn("platform: linux/amd64", candidate)
 
     def test_copa_classification_follows_inline_success_or_original_decision(self) -> None:
+        policy = (SCRIPTS / "promote_candidate_decision.py").read_text(encoding="utf-8")
         self.assertIn(
             'classification = original["copa"]["classification"] if original else "succeeded"',
-            self.workflow,
+            policy,
         )
         self.assertNotIn('else "not-required"', self.workflow)
 
@@ -379,8 +397,9 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertEqual(scan["with"]["list-all-pkgs"], "true")
         policy = by_name["Evaluate one promotion decision"]
         self.assertIn("CANDIDATE_DIGEST", policy["env"])
-        self.assertIn("--full-report", policy["run"])
-        self.assertIn("trivy-before-full.json", policy["run"])
+        policy_script = (SCRIPTS / "promote_candidate_decision.py").read_text(encoding="utf-8")
+        self.assertIn("--full-report", policy_script)
+        self.assertIn("trivy-before-full.json", policy_script)
         self.assertIn("trivy-full.cdx.json\n            secobserve-upload.json", self.workflow)
 
     def test_patched_metadata_uses_a_stopped_container_and_emits_digest(self):
@@ -409,6 +428,7 @@ elif args[0] == 'save':
 elif args[0] == 'run' and 'inspect' in args: print('{"schemaVersion":2}')
 """)
             executable.chmod(0o755)
+            (root / "scripts").symlink_to(REPO_ROOT / "scripts", target_is_directory=True)
             env = dict(os.environ, PATH=f"{root}:{os.environ['PATH']}", SPOOL=str(root / "spool"),
                        SKOPEO_IMAGE=workflow["env"]["SKOPEO_IMAGE"],
                        GITHUB_OUTPUT=str(root / "output"), UPSTREAM_REF="registry.example/app", UPSTREAM_TAG="v1",
@@ -462,13 +482,14 @@ elif args[0] == 'run' and 'inspect' in args: print('{"schemaVersion":2}')
         for text in (
             "--selected-child-digest",
             "selected_child_digest",
-            "upstream_index_digest",
             "--recover-candidate-digest",
             "Materialize the exact recovered candidate",
             "original-child patching cannot recover",
         ):
             with self.subTest(text=text):
                 self.assertIn(text, self.workflow)
+        observations = (SCRIPTS / "promote_registry_observations.py").read_text(encoding="utf-8")
+        self.assertIn("upstream_index_digest", observations)
         self.assertNotIn("--recover-tag", self.workflow[self.workflow.index("Digest-preserving copy to GHCR"):])
 
     def test_decision_writers_and_evidence_rendering_are_bounded(self) -> None:
@@ -477,8 +498,10 @@ elif args[0] == 'run' and 'inspect' in args: print('{"schemaVersion":2}')
         names = {step["name"] for step in steps}
         self.assertIn("Write the verified publication digest into the decision", names)
         self.assertIn("Verify merged provenance and publish the final decision", names)
-        summary = next(step for step in steps if step["name"] == "Job summary evidence panel")["run"]
-        pr = next(step for step in steps if step["name"] == "Open provenance PR and enable merge")["run"]
+        summary = (SCRIPTS / "promote_summary.py").read_text(encoding="utf-8")
+        pr = (SCRIPTS / "promote_provenance_body.py").read_text(encoding="utf-8")
+        steps_text = next(step for step in steps if step["name"] == "Job summary evidence panel")["run"]
+        self.assertIn("python3 scripts/promote_summary.py", steps_text)
         for text in ("Before/final CVE evidence", "Package changes", "Warnings", "KEV snapshot", "Acceptance expiry"):
             self.assertIn(text, summary)
             self.assertIn(text, pr)
