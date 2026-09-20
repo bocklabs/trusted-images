@@ -398,6 +398,7 @@ class ValidateImageTests(unittest.TestCase):
             "org.opencontainers.image.base.name": "quay.io/example/base:v1",
             "org.opencontainers.image.source": "https://example.invalid/source",
             "org.opencontainers.image.version": "v1-bocklabs.1",
+            "BaseImage": "quay.io/example/base:v1",
         }
         self.write_scenario({
             "image_inspects": [
@@ -411,6 +412,19 @@ class ValidateImageTests(unittest.TestCase):
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["config_drift"], [])
         self.assertEqual(ev["validation"]["candidate_config"]["Labels"], {**existing, **added})
+
+    def test_copa_baseimage_label_must_identify_the_baseline(self) -> None:
+        existing = {"org.example.existing": "keep"}
+        self.write_scenario({
+            "image_inspects": [
+                image_inspect(labels=existing),
+                image_inspect(labels={**existing, "BaseImage": "quay.io/other/base:v9"}),
+            ],
+            "inspect_states": [running()],
+        })
+        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("permitted additions", result.stdout + result.stderr)
 
     def test_null_and_empty_runtime_values_remain_distinct(self) -> None:
         self.write_scenario({

@@ -148,7 +148,7 @@ IMAGE_MANIFEST_TYPES = {
 }
 
 
-def label_drift(baseline: dict, candidate: dict) -> list[str]:
+def label_drift(baseline: dict, candidate: dict, baseline_ref: str = "") -> list[str]:
     base = baseline.get("Labels") or {}
     final = candidate.get("Labels") or {}
     if not isinstance(base, dict) or not isinstance(final, dict):
@@ -157,17 +157,18 @@ def label_drift(baseline: dict, candidate: dict) -> list[str]:
         f"existing label {key!r} changed from {base[key]!r} to {final.get(key)!r}"
         for key in base if key not in final or final[key] != base[key]
     ]
-    drift += [
-        f"label {key!r} is not one of the four permitted additions"
-        for key in final.keys() - base.keys() if key not in ALLOWED_NEW_LABELS
-    ]
+    for key in final.keys() - base.keys():
+        if key == "BaseImage" and baseline_ref and isinstance(final[key], str) and final[key].startswith(f"{baseline_ref}:"):
+            continue
+        if key not in ALLOWED_NEW_LABELS:
+            drift.append(f"label {key!r} is not one of the permitted additions")
     return drift
 
 
-def config_drift(baseline: dict, candidate: dict) -> list[str]:
+def config_drift(baseline: dict, candidate: dict, baseline_ref: str = "") -> list[str]:
     before = copy.deepcopy(baseline)
     after = copy.deepcopy(candidate)
-    labels = label_drift(baseline, candidate)
+    labels = label_drift(baseline, candidate, baseline_ref)
     before.pop("Labels", None)
     after.pop("Labels", None)
     drift = [] if before == after else ["runtime config changed outside permitted label additions"]
@@ -525,7 +526,7 @@ def main() -> int:
             f"got {inspected.get('Os')}/{inspected.get('Architecture')}"
         )
     if baseline_config is not None:
-        drift = config_drift(baseline_config, config)
+        drift = config_drift(baseline_config, config, args.baseline_ref or "")
         if drift:
             return fail("runtime configuration drift (D-14): " + "; ".join(drift))
         ev["validation"]["baseline"]["config"] = baseline_config
