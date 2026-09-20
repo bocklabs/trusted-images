@@ -178,7 +178,11 @@ def config_drift(baseline: dict, candidate: dict, baseline_ref: str = "", baseli
     labels = label_drift(baseline, candidate, baseline_ref, baseline_digest)
     before.pop("Labels", None)
     after.pop("Labels", None)
-    drift = [] if before == after else ["runtime config changed outside permitted label additions"]
+    drift = [
+        f"runtime config changed outside permitted label additions: config field {key!r}"
+        for key in sorted(set(before) | set(after))
+        if before.get(key) != after.get(key)
+    ]
     return drift + labels
 
 
@@ -488,6 +492,30 @@ def candidate_runtime_binding(args, index: dict, index_path, ev: dict, baseline_
     return None, ref_digest, config
 
 
+def record_baseline_contract(ev: dict, config: dict, inspected: dict) -> bool:
+    entrypoint = list(config.get("Entrypoint") or [])
+    cmd = list(config.get("Cmd") or [])
+    env = list(config.get("Env") or [])
+    ev["validation"]["baseline"]["entrypoint"] = entrypoint
+    ev["validation"]["baseline"]["cmd"] = cmd
+    ev["validation"]["baseline"]["env"] = env
+    ev["validation"]["candidate_platform"] = f"{inspected['Os']}/{inspected['Architecture']}"
+    ev["validation"]["health"]["defined"] = config.get("Healthcheck") is not None
+    return config.get("Healthcheck") is not None
+
+
+def validation_profile_reason(args, ev, ref_digest, command, env_map, container_name,
+                              healthcheck_defined, started_mono, logs_path):
+    if args.validation_type == "oneshot":
+        ev["validation"]["logs_note"] = ONESHOT_LOG_NOTE
+        ev["validation"]["health"]["final_status"] = "not-applicable"
+        return profile_oneshot(args, container_name, ref_digest, command, env_map)
+    return profile_longrunning(
+        args, container_name, ref_digest, command, env_map,
+        healthcheck_defined, started_mono, logs_path, ev["validation"]["health"],
+    )
+
+
 def main() -> int:
     args = parse_args()
     started_wall = datetime.now(timezone.utc)
@@ -551,33 +579,12 @@ def main() -> int:
     if reason is not None:
         return fail(reason)
 
-    entrypoint = list(config.get("Entrypoint") or [])
-    cmd = list(config.get("Cmd") or [])
-    env = list(config.get("Env") or [])
-    ev["validation"]["baseline"]["entrypoint"] = entrypoint
-    ev["validation"]["baseline"]["cmd"] = cmd
-    ev["validation"]["baseline"]["env"] = env
-    ev["validation"]["candidate_platform"] = f"{inspected['Os']}/{inspected['Architecture']}"
-    healthcheck_defined = config.get("Healthcheck") is not None
-    ev["validation"]["health"]["defined"] = healthcheck_defined
-
+    healthcheck_defined = record_baseline_contract(ev, config, inspected)
     container_name = f"val-{args.app}-{os.environ.get('GITHUB_RUN_ID') or os.getpid()}"
-    if args.validation_type == "oneshot":
-        ev["validation"]["logs_note"] = ONESHOT_LOG_NOTE
-        ev["validation"]["health"]["final_status"] = "not-applicable"
-        reason = profile_oneshot(args, container_name, ref_digest, command, env_map)
-    else:
-        reason = profile_longrunning(
-            args,
-            container_name,
-            ref_digest,
-            command,
-            env_map,
-            healthcheck_defined,
-            started_mono,
-            logs_path,
-            ev["validation"]["health"],
-        )
+    reason = validation_profile_reason(
+        args, ev, ref_digest, command, env_map, container_name,
+        healthcheck_defined, started_mono, logs_path,
+    )
     if reason is not None:
         return fail(reason)
     finish()
