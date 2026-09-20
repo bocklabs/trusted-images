@@ -1703,6 +1703,7 @@ jobs:
           if undeclared or not mandatory <= set(actual):
               raise SystemExit("FATAL: fresh candidate artifact has undeclared or missing files")
           listed = [line.split("  ", 1)[1] for line in (root / "SHA256SUMS").read_text().splitlines()]
+          listed = [name[len("candidate-artifact/"):] if name.startswith("candidate-artifact/") else name for name in listed]
           if len(listed) != len(set(listed)) or set(listed) != {name for name in actual if name != "SHA256SUMS"}:
               raise SystemExit("FATAL: fresh candidate checksum manifest is ambiguous")
           PY
