@@ -105,11 +105,16 @@ def sha256_file(path: Path) -> str:
 
 
 FRACTION_RE = re.compile(r"^(?P<head>.*\.)(?P<frac>\d+)(?P<tail>Z|[+-]\d{2}:?\d{2})$")
+GO_TIME_RE = re.compile(r"^(?P<date>\d{4}-\d{2}-\d{2}) (?P<clock>\d{2}:\d{2}:\d{2}(?:\.\d+)?)(?: (?P<off>[+-]\d{4}))? UTC$")
 
 
 def parse_time(value: str, label: str) -> datetime:
     try:
         normalized = value
+        go = GO_TIME_RE.match(value)
+        if go:
+            offset = (go.group("off") or "+0000")
+            normalized = f"{go.group('date')}T{go.group('clock')}{offset[:3]}:{offset[3:]}"
         match = FRACTION_RE.match(value)
         if match:
             tail = match.group("tail")
