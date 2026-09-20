@@ -102,12 +102,14 @@ class TagAllocationTests(unittest.TestCase):
         )
         self.assertEqual(result, ("v1.2.3-bocklabs.2", True, False, False))
 
-    def test_recovery_rejects_absent_or_mismatched_revision(self) -> None:
+    def test_recovery_rejects_absent_revision(self) -> None:
         with self.assertRaisesRegex(ValueError, "not published"):
             self.select(
                 "v1.2.3", DIGEST_C, DIGEST_A, [], recover_tag="v1.2.3-bocklabs.2",
                 recover_candidate_digest=DIGEST_A,
             )
+
+    def test_recovery_rejects_mismatched_revision(self) -> None:
         with self.assertRaisesRegex(ValueError, "digest"):
             self.select(
                 "v1.2.3",
@@ -117,6 +119,8 @@ class TagAllocationTests(unittest.TestCase):
                 recover_tag="v1.2.3-bocklabs.2",
                 recover_candidate_digest=DIGEST_B,
             )
+
+    def test_recovery_rejects_historical_revision(self) -> None:
         with self.assertRaisesRegex(ValueError, "Phase 05"):
             self.select(
                 "v1.2.3",
@@ -245,7 +249,8 @@ class PromoteWorkflowTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertIn(text, risk)
         validation = by_name["Run validation"]["run"]
-        self.assertIn('--local-image "${CANDIDATE_REF}"', validation)
+        self.assertIn('--local-image "${CANDIDATE_REF}" --local-image-id "${LOCAL_IMAGE_ID}"', validation)
+        self.assertIn("steps.patched.outputs.image_id", by_name["Run validation"]["env"]["LOCAL_IMAGE_ID"])
 
     def test_resume_publishes_only_when_destination_is_absent_or_identical(self) -> None:
         workflow = yaml.safe_load(self.workflow)
@@ -381,7 +386,10 @@ import json, os, sys
 args = sys.argv[1:]
 with open(os.environ['SPOOL'], 'a') as fh: fh.write(json.dumps(args) + '\\n')
 if args[:2] == ['image', 'inspect']:
-    print('{}')
+    if args[-1] == '{{.Id}}':
+        print('sha256:' + 'd' * 64)
+    else:
+        print('{}')
 elif args[0] == 'create': print('metadata-container')
 elif args[0] == 'commit':
     if args[-2] != 'metadata-container': sys.exit('commit requires a container')
@@ -400,7 +408,8 @@ elif args[0] == 'run' and 'inspect' in args: print('{"schemaVersion":2}')
             result = subprocess.run(['bash', '-c', step['run']], cwd=root, env=env, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             output = (root / 'output').read_text()
-            self.assertRegex(output, r'^digest=sha256:[a-f0-9]{64}\n$')
+            self.assertRegex(output, r'(?m)^digest=sha256:[a-f0-9]{64}\n')
+            self.assertRegex(output, r'(?m)^image_id=sha256:[a-f0-9]{64}\n')
             calls = [json.loads(line) for line in (root / 'spool').read_text().splitlines()]
             self.assertTrue(any(call[:1] == ['create'] for call in calls))
             self.assertTrue(any(call[:1] == ['rm'] for call in calls))
@@ -644,13 +653,10 @@ elif args[:2] == ['run', 'download']:
         self.assertNotIn("continue-on-error", step)
         self.write_fake("docker", FAKE_DOCKER.split("\n", 1)[1])
         scenario = self.tmp / 'scenario.json'
-        scenario.write_text(json.dumps({"image_inspect": [{"Id": json.loads(self.child.read_text())["config"]["digest"], "Os": "linux", "Architecture": "amd64",
+        committed_image_id = "sha256:" + "d" * 64
+        scenario.write_text(json.dumps({"image_inspect": [{"Id": committed_image_id, "Os": "linux", "Architecture": "amd64",
                                                            "Config": {"Entrypoint": ["/app"], "Cmd": None, "Env": []}}],
                                         "inspect_states": [{"State": {"Running": False}}]}))
-        config_id = json.loads(self.child.read_text())["config"]["digest"]
-        value = json.loads(scenario.read_text())
-        value["image_inspect"][0]["Id"] = config_id
-        scenario.write_text(json.dumps(value))
         (self.tmp / 'candidate-manifest.json').write_bytes(self.child.read_bytes())
         (self.tmp / 'scripts').symlink_to(REPO_ROOT / 'scripts', target_is_directory=True)
         publisher = self.write_fake('skopeo', "from pathlib import Path\nPath('published').write_text('ran')\n")
@@ -659,6 +665,7 @@ elif args[:2] == ['run', 'download']:
                    FAKE_DOCKER_SPOOL=str(self.spool), FAKE_DOCKER_SCENARIO=str(scenario),
                    APP='app', UPSTREAM_REF='registry.example/app', SELECTED_DIGEST=DIGEST_A,
                    CANDIDATE_REF='copa:final', CANDIDATE_DIGEST='sha256:' + hashlib.sha256(self.child.read_bytes()).hexdigest(),
+                   LOCAL_IMAGE_ID=committed_image_id,
                    PATCHED='true', VALIDATION_TYPE='process', VALIDATION_DURATION_SECONDS='0')
         result = subprocess.run(['bash', '-c', step['run'] + '\n' + str(publisher) + ' copy'],
                                 cwd=self.tmp, env=env, capture_output=True, text=True)
@@ -668,7 +675,7 @@ elif args[:2] == ['run', 'download']:
         self.assertIn('container not running', result.stdout)
         self.assertFalse((self.tmp / 'published').exists())
         calls = [json.loads(line) for line in self.spool.read_text().splitlines()]
-        self.assertTrue(any(call[0] == 'run' and config_id in call for call in calls))
+        self.assertTrue(any(call[0] == 'run' and committed_image_id in call for call in calls))
 
     def test_clean_child_reaches_publisher_only_after_policy_validation_and_provenance(self):
         docker = self.write_fake("docker", '''import json, os\nspool=os.environ["FAKE_SPOOL"]\nargs=sys.argv[1:] if False else None\n''')
@@ -739,7 +746,7 @@ else: print('')
         self.assertEqual(record["upstream"]["digest"], decision["upstream_index_digest"])
         self.assertEqual(record["upstream"]["selected_child_digest"], decision["selected_child_digest"])
         self.assertEqual(record["internal"]["digest"], decision["candidate"]["digest"])
-        self.assertTrue(decision["published"]["digest"] == decision["candidate"]["digest"])
+        self.assertEqual(decision["published"]["digest"], decision["candidate"]["digest"])
         self.assertFalse(decision["provenance"]["merged"])
 
         skopeo = self.write_fake("skopeo", """#!/usr/bin/env python3\nimport os, sys\nwith open(os.environ['FAKE_SPOOL'], 'a') as fh: fh.write(' '.join(sys.argv) + '\\n')\n""")
