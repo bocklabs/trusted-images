@@ -334,7 +334,6 @@ class PromoteWorkflowTests(unittest.TestCase):
         for text in (
             "scripts/evaluate_promotion.py",
             "known_exploited_vulnerabilities.json",
-            "platform: linux/amd64",
             "list-all-pkgs: 'true'",
             "candidate-decision.json",
             "SHA256SUMS",
@@ -344,6 +343,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                 self.assertIn(text, candidate)
         self.assertIn("Verify candidate artifact", publisher)
         self.assertNotIn("                --all \\\n", self.workflow)
+        self.assertNotIn("platform: linux/amd64", candidate)
 
     def test_pinned_copa_path_patches_final_bytes_before_publication(self) -> None:
         steps = yaml.safe_load(self.workflow)["jobs"]["validate"]["steps"]

@@ -142,6 +142,7 @@ ALLOWED_NEW_LABELS = {
     "org.opencontainers.image.source",
     "org.opencontainers.image.version",
 }
+COMMIT_ARTIFACT_FIELDS = {"AttachStdout", "AttachStderr", "Hostname", "Image"}
 IMAGE_MANIFEST_TYPES = {
     "application/vnd.oci.image.manifest.v1+json",
     "application/vnd.docker.distribution.manifest.v2+json",
@@ -178,6 +179,9 @@ def config_drift(baseline: dict, candidate: dict, baseline_ref: str = "", baseli
     labels = label_drift(baseline, candidate, baseline_ref, baseline_digest)
     before.pop("Labels", None)
     after.pop("Labels", None)
+    for field in COMMIT_ARTIFACT_FIELDS:
+        before.pop(field, None)
+        after.pop(field, None)
     drift = [
         f"runtime config changed outside permitted label additions: config field {key!r}"
         for key in sorted(set(before) | set(after))

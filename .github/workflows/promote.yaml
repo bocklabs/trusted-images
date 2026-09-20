@@ -771,7 +771,6 @@ jobs:
           cache: 'true'
           cache-dir: ${{ github.workspace }}/.cache/trivy
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-          platform: linux/amd64
           list-all-pkgs: 'true'
           timeout: 30m0s
 
@@ -824,7 +823,6 @@ jobs:
           vuln-type: os
           ignore-unfixed: 'true'
           cache: 'false'
-          platform: linux/amd64
           list-all-pkgs: 'true'
           timeout: 30m0s
 
@@ -1075,7 +1073,6 @@ jobs:
           output: trivy-after-full.json
           ignore-unfixed: 'false'
           cache: 'false'
-          platform: linux/amd64
           list-all-pkgs: 'true'
           timeout: 30m0s
 
@@ -1097,7 +1094,6 @@ jobs:
           output: trivy-after-full.json
           ignore-unfixed: 'false'
           cache: 'false'
-          platform: linux/amd64
           list-all-pkgs: 'true'
           timeout: 30m0s
 
