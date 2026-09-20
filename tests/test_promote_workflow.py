@@ -345,6 +345,13 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertNotIn("                --all \\\n", self.workflow)
         self.assertNotIn("platform: linux/amd64", candidate)
 
+    def test_copa_classification_follows_inline_success_or_original_decision(self) -> None:
+        self.assertIn(
+            'classification = original["copa"]["classification"] if original else "succeeded"',
+            self.workflow,
+        )
+        self.assertNotIn('else "not-required"', self.workflow)
+
     def test_pinned_copa_path_patches_final_bytes_before_publication(self) -> None:
         steps = yaml.safe_load(self.workflow)["jobs"]["validate"]["steps"]
         by_name = {step["name"]: step for step in steps}
