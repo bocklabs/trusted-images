@@ -148,7 +148,7 @@ IMAGE_MANIFEST_TYPES = {
 }
 
 
-def label_drift(baseline: dict, candidate: dict, baseline_ref: str = "") -> list[str]:
+def label_drift(baseline: dict, candidate: dict, baseline_ref: str = "", baseline_digest: str = "") -> list[str]:
     base = baseline.get("Labels") or {}
     final = candidate.get("Labels") or {}
     if not isinstance(base, dict) or not isinstance(final, dict):
@@ -158,17 +158,24 @@ def label_drift(baseline: dict, candidate: dict, baseline_ref: str = "") -> list
         for key in base if key not in final or final[key] != base[key]
     ]
     for key in final.keys() - base.keys():
-        if key == "BaseImage" and baseline_ref and isinstance(final[key], str) and final[key].startswith(f"{baseline_ref}:"):
+        value = final[key]
+        identifies_baseline = (
+            key == "BaseImage"
+            and isinstance(value, str)
+            and baseline_ref
+            and (value.startswith(f"{baseline_ref}:") or value == f"{baseline_ref}@{baseline_digest}")
+        )
+        if identifies_baseline:
             continue
         if key not in ALLOWED_NEW_LABELS:
             drift.append(f"label {key!r} is not one of the permitted additions")
     return drift
 
 
-def config_drift(baseline: dict, candidate: dict, baseline_ref: str = "") -> list[str]:
+def config_drift(baseline: dict, candidate: dict, baseline_ref: str = "", baseline_digest: str = "") -> list[str]:
     before = copy.deepcopy(baseline)
     after = copy.deepcopy(candidate)
-    labels = label_drift(baseline, candidate, baseline_ref)
+    labels = label_drift(baseline, candidate, baseline_ref, baseline_digest)
     before.pop("Labels", None)
     after.pop("Labels", None)
     drift = [] if before == after else ["runtime config changed outside permitted label additions"]
@@ -454,6 +461,33 @@ def initial_evidence(args, command: str, env_map: dict) -> dict:
     }
 
 
+def candidate_runtime_binding(args, index: dict, index_path, ev: dict, baseline_config, inspected: dict, ref_digest: str):
+    config = inspected["Config"]
+    if args.local_image:
+        reason = local_candidate_error(args, index, index_path, inspected)
+        if reason is not None:
+            return reason, None, None
+        manifest_digest = "sha256:" + hashlib.sha256(index_path.read_bytes()).hexdigest()
+        ref_digest = inspected["Id"]
+        ev["validation"]["candidate_digest"] = manifest_digest
+        ev["validation"]["candidate_image_id"] = inspected["Id"]
+    if inspected.get("Os") != "linux" or inspected.get("Architecture") != "amd64":
+        return (
+            "candidate platform mismatch (D-20): expected linux/amd64, "
+            f"got {inspected.get('Os')}/{inspected.get('Architecture')}",
+            None,
+            None,
+        )
+    if baseline_config is not None:
+        drift = config_drift(baseline_config, config, args.baseline_ref or "", args.baseline_digest or "")
+        if drift:
+            return "runtime configuration drift (D-14): " + "; ".join(drift), None, None
+        ev["validation"]["baseline"]["config"] = baseline_config
+        ev["validation"]["candidate_config"] = config
+        ev["validation"]["config_drift"] = drift
+    return None, ref_digest, config
+
+
 def main() -> int:
     args = parse_args()
     started_wall = datetime.now(timezone.utc)
@@ -511,27 +545,11 @@ def main() -> int:
         inspected = inspected_image(ref_digest, "image config does not parse")
     except ValueError as exc:
         return fail(str(exc))
-    config = inspected["Config"]
-    if args.local_image:
-        reason = local_candidate_error(args, index, index_path, inspected)
-        if reason is not None:
-            return fail(reason)
-        manifest_digest = "sha256:" + hashlib.sha256(index_path.read_bytes()).hexdigest()
-        ref_digest = inspected["Id"]
-        ev["validation"]["candidate_digest"] = manifest_digest
-        ev["validation"]["candidate_image_id"] = inspected["Id"]
-    if inspected.get("Os") != "linux" or inspected.get("Architecture") != "amd64":
-        return fail(
-            "candidate platform mismatch (D-20): expected linux/amd64, "
-            f"got {inspected.get('Os')}/{inspected.get('Architecture')}"
-        )
-    if baseline_config is not None:
-        drift = config_drift(baseline_config, config, args.baseline_ref or "")
-        if drift:
-            return fail("runtime configuration drift (D-14): " + "; ".join(drift))
-        ev["validation"]["baseline"]["config"] = baseline_config
-        ev["validation"]["candidate_config"] = config
-        ev["validation"]["config_drift"] = drift
+    reason, ref_digest, config = candidate_runtime_binding(
+        args, index, index_path, ev, baseline_config, inspected, ref_digest
+    )
+    if reason is not None:
+        return fail(reason)
 
     entrypoint = list(config.get("Entrypoint") or [])
     cmd = list(config.get("Cmd") or [])

@@ -413,6 +413,19 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(ev["validation"]["config_drift"], [])
         self.assertEqual(ev["validation"]["candidate_config"]["Labels"], {**existing, **added})
 
+    def test_copa_baseimage_digest_form_matches_baseline(self) -> None:
+        existing = {"org.example.existing": "keep"}
+        self.write_scenario({
+            "image_inspects": [
+                image_inspect(labels=existing),
+                image_inspect(labels={**existing, "BaseImage": "quay.io/example/base@sha256:" + "b1" * 32}),
+            ],
+            "inspect_states": [running()],
+        })
+        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.load_evidence()["validation"]["config_drift"], [])
+
     def test_copa_baseimage_label_must_identify_the_baseline(self) -> None:
         existing = {"org.example.existing": "keep"}
         self.write_scenario({

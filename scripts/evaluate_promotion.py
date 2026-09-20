@@ -991,7 +991,7 @@ def validate_candidate_inputs(args):
 
 
 def evaluate_candidate(args):
-    index, child_digest, index_digest = validate_candidate_inputs(args)
+    _, child_digest, index_digest = validate_candidate_inputs(args)
     full_path = Path(args.full_report)
     after_path = Path(args.after_full_report) if args.after_full_report else None
     receipt_path = Path(args.scan_receipt) if args.scan_receipt else None

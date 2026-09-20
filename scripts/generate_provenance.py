@@ -362,10 +362,6 @@ def decision_violations(args: argparse.Namespace, app: str, internal_tag: str, p
         violations.append(f"decision validation failed: {exc}")
         decision = None
     if decision is not None:
-        try:
-            parse_utc(value_of(args, "--now"), "--now")
-        except ValueError as exc:
-            violations.append(str(exc))
         expected = {
             "app": app,
             "upstream_index_digest": value_of(args, "--upstream-digest"),
@@ -373,6 +369,22 @@ def decision_violations(args: argparse.Namespace, app: str, internal_tag: str, p
             "candidate_digest": value_of(args, "--internal-digest"),
             "proposed_tag": internal_tag,
         }
+        violations.extend(decision_match_violations(args, decision, expected, decision_sha))
+    if provided_child:
+        if platforms != ["linux/amd64"]:
+            violations.append("--platforms must be exactly linux/amd64 for new records")
+        if provided_child == value_of(args, "--upstream-digest"):
+            violations.append("--upstream-child-digest must differ from the index digest")
+    return violations, decision
+
+
+def decision_match_violations(args: argparse.Namespace, decision: dict, expected: dict, decision_sha: str) -> list[str]:
+    violations = []
+    if decision is not None:
+        try:
+            parse_utc(value_of(args, "--now"), "--now")
+        except ValueError as exc:
+            violations.append(str(exc))
         violations.extend(decision_identity_violations(decision, expected))
         if not decision["eligible"] or decision["validation"]["result"] != "pass":
             violations.append("decision must be eligible with passing validation")
@@ -382,12 +394,7 @@ def decision_violations(args: argparse.Namespace, app: str, internal_tag: str, p
             violations.append("decision provenance merged must be false before this run writes provenance")
         if decision_sha != file_sha256(Path(value_of(args, "--decision"))):
             violations.append("--decision-sha256 does not match --decision bytes")
-    if provided_child:
-        if platforms != ["linux/amd64"]:
-            violations.append("--platforms must be exactly linux/amd64 for new records")
-        if provided_child == value_of(args, "--upstream-digest"):
-            violations.append("--upstream-child-digest must differ from the index digest")
-    return violations, decision
+    return violations
 
 
 def recovery_violations(args: argparse.Namespace, decision: dict | None, internal_tag: str) -> list[str]:
