@@ -1,7 +1,3 @@
-# Pre-commit hooks. Install the git hook once with:
-#   pre-commit install
-# Then run manually across the repo with:
-#   pre-commit run --all-files
 ci:
   autofix_commit_msg: "chore: pre-commit auto-fixes"
   autofix_prs: true

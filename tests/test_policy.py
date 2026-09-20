@@ -12,12 +12,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EVALUATOR = REPO_ROOT / "scripts" / "evaluate_promotion.py"
+
+
 def fixture_digest(value):
     raw = json.dumps(value, indent=2) + "\n"
     return "sha256:" + hashlib.sha256(raw.encode()).hexdigest()
 
 
-CONFIG_VALUE = {"architecture": "amd64", "os": "linux", "rootfs": {"type": "layers", "diff_ids": []}}
+CONFIG_VALUE = {
+    "architecture": "amd64",
+    "os": "linux",
+    "rootfs": {"type": "layers", "diff_ids": []},
+}
 CONFIG_DIGEST = fixture_digest(CONFIG_VALUE)
 CONFIG_SIZE = len((json.dumps(CONFIG_VALUE, indent=2) + "\n").encode())
 
@@ -31,8 +37,18 @@ def child_manifest() -> dict:
     return {
         "schemaVersion": 2,
         "mediaType": "application/vnd.oci.image.manifest.v1+json",
-        "config": {"mediaType": "application/vnd.oci.image.config.v1+json", "digest": CONFIG_DIGEST, "size": CONFIG_SIZE},
-        "layers": [{"mediaType": "application/vnd.oci.image.layer.v1.tar+gzip", "digest": "sha256:" + "40" * 32, "size": 456}],
+        "config": {
+            "mediaType": "application/vnd.oci.image.config.v1+json",
+            "digest": CONFIG_DIGEST,
+            "size": CONFIG_SIZE,
+        },
+        "layers": [
+            {
+                "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+                "digest": "sha256:" + "40" * 32,
+                "size": 456,
+            }
+        ],
     }
 
 
@@ -45,7 +61,15 @@ def package(name, version, epoch=None, release=None):
     return value
 
 
-def report(vulnerabilities=None, packages=None, *, artifact_name="app@child", image_id=CONFIG_DIGEST, result_type="debian", os_family=None):
+def report(
+    vulnerabilities=None,
+    packages=None,
+    *,
+    artifact_name="app@child",
+    image_id=CONFIG_DIGEST,
+    result_type="debian",
+    os_family=None,
+):
     packages = [package("libexample", "1.0")] if packages is None else packages
     family = result_type if os_family is None else os_family
     return {
@@ -58,13 +82,15 @@ def report(vulnerabilities=None, packages=None, *, artifact_name="app@child", im
             "ImageConfig": {"architecture": "amd64", "os": "linux"},
             "OS": {"Family": family, "Name": "12", "EOSL": False},
         },
-        "Results": [{
-            "Target": f"app ({family} 12)",
-            "Class": "os-pkgs",
-            "Type": result_type,
-            "Vulnerabilities": vulnerabilities or [],
-            "Packages": packages,
-        }],
+        "Results": [
+            {
+                "Target": f"app ({family} 12)",
+                "Class": "os-pkgs",
+                "Type": result_type,
+                "Vulnerabilities": vulnerabilities or [],
+                "Packages": packages,
+            }
+        ],
     }
 
 
@@ -97,28 +123,52 @@ def kev_feed(cves=("CVE-2026-0001",)):
     }
 
 
-def acceptance_record(*, candidate_digest=CANDIDATE_DIGEST, kevs=("CVE-2026-0001",),
-                      expires_at="2026-09-18T00:00:00Z", tracking_issue=77):
+def acceptance_record(
+    *,
+    candidate_digest=CANDIDATE_DIGEST,
+    kevs=("CVE-2026-0001",),
+    expires_at="2026-09-18T00:00:00Z",
+    tracking_issue=77,
+):
     return {
         "schema": "trusted-images.bocklabs.dev/risk-acceptance-v1",
         "candidateDigest": candidate_digest,
         "kevs": list(kevs),
         "reason": "Compensating controls while the upstream fix is pending",
         "expiresAt": expires_at,
-        "likelihood": {"level": "MEDIUM", "rationale": "Exploit is public but the service is not exposed"},
-        "impact": {"level": "HIGH", "rationale": "A successful exploit would expose service data"},
+        "likelihood": {
+            "level": "MEDIUM",
+            "rationale": "Exploit is public but the service is not exposed",
+        },
+        "impact": {
+            "level": "HIGH",
+            "rationale": "A successful exploit would expose service data",
+        },
         "owner": "supply-chain-operator",
         "reviewNotes": ["Reviewed against the current incident report"],
         "trackingIssue": tracking_issue,
     }
 
 
-def github_evidence(record, *, repository="bocklabs/trusted-images", merged_at="2026-09-13T00:00:00Z",
-                    issue_state="open", issue_is_pull_request=False, merged_by="approver",
-                    base_repository="bocklabs/trusted-images", base_ref="main"):
+def github_evidence(
+    record,
+    *,
+    repository="bocklabs/trusted-images",
+    merged_at="2026-09-13T00:00:00Z",
+    issue_state="open",
+    issue_is_pull_request=False,
+    merged_by="approver",
+    base_repository="bocklabs/trusted-images",
+    base_ref="main",
+):
     raw = json.dumps(record, indent=2) + "\n"
-    path = "risk-acceptances/app/" + hashlib.sha256(record["candidateDigest"].encode()).hexdigest() + "-" + \
-        hashlib.sha256("\n".join(record["kevs"]).encode()).hexdigest() + ".json"
+    path = (
+        "risk-acceptances/app/"
+        + hashlib.sha256(record["candidateDigest"].encode()).hexdigest()
+        + "-"
+        + hashlib.sha256("\n".join(record["kevs"]).encode()).hexdigest()
+        + ".json"
+    )
     pull_request = {
         "number": 42,
         "html_url": f"https://github.com/{repository}/pull/42",
@@ -154,15 +204,30 @@ class PolicyTests(unittest.TestCase):
         self.tmp = Path(tmp.name)
         self.child = write_json(self.tmp / "child.json", child_manifest())
         self.config = write_json(self.tmp / "config.json", CONFIG_VALUE)
-        self.index = write_json(self.tmp / "index.json", {
-            "schemaVersion": 2,
-            "mediaType": "application/vnd.oci.image.index.v1+json",
-            "manifests": [
-                {"mediaType": "application/vnd.oci.image.manifest.v1+json", "digest": CHILD_DIGEST, "size": self.child.stat().st_size, "platform": {"os": "linux", "architecture": "amd64"}},
-                {"mediaType": "application/vnd.oci.image.manifest.v1+json", "digest": "sha256:" + "21" * 32, "size": 301, "platform": {"os": "linux", "architecture": "arm64"}},
-            ],
-        })
-        self.index_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        self.index = write_json(
+            self.tmp / "index.json",
+            {
+                "schemaVersion": 2,
+                "mediaType": "application/vnd.oci.image.index.v1+json",
+                "manifests": [
+                    {
+                        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+                        "digest": CHILD_DIGEST,
+                        "size": self.child.stat().st_size,
+                        "platform": {"os": "linux", "architecture": "amd64"},
+                    },
+                    {
+                        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+                        "digest": "sha256:" + "21" * 32,
+                        "size": 301,
+                        "platform": {"os": "linux", "architecture": "arm64"},
+                    },
+                ],
+            },
+        )
+        self.index_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
         self.full = write_json(self.tmp / "full.json", report())
         self.fixable = write_json(self.tmp / "fixable.json", report())
         self.after = self.tmp / "after-full.json"
@@ -207,30 +272,59 @@ class PolicyTests(unittest.TestCase):
             argv += ["--github-evidence", str(self.github)]
         return subprocess.run(argv, capture_output=True, text=True)
 
-    def patched(self, before_vulns, after_vulns, before_pkgs, after_pkgs, *, result_type="debian", os_family=None, extra_after_results=()):
-        before = report(before_vulns, before_pkgs, result_type=result_type, os_family=os_family)
-        after = report(after_vulns, after_pkgs, artifact_name="app@candidate", image_id=PATCHED_IMAGE_ID, result_type=result_type, os_family=os_family)
+    def patched(
+        self,
+        before_vulns,
+        after_vulns,
+        before_pkgs,
+        after_pkgs,
+        *,
+        result_type="debian",
+        os_family=None,
+        extra_after_results=(),
+    ):
+        before = report(
+            before_vulns, before_pkgs, result_type=result_type, os_family=os_family
+        )
+        after = report(
+            after_vulns,
+            after_pkgs,
+            artifact_name="app@candidate",
+            image_id=PATCHED_IMAGE_ID,
+            result_type=result_type,
+            os_family=os_family,
+        )
         after["Results"].extend(extra_after_results)
         self.full = write_json(self.full, before)
-        self.fixable = write_json(self.fixable, report(before_vulns, before_pkgs, result_type=result_type, os_family=os_family))
+        self.fixable = write_json(
+            self.fixable,
+            report(
+                before_vulns, before_pkgs, result_type=result_type, os_family=os_family
+            ),
+        )
         self.after = write_json(self.after, after)
-        self.receipt = write_json(self.receipt, {
-            "trivy_action_sha": TRIVY_ACTION_SHA,
-            "trivy_db_digest": TRIVY_DB_DIGEST,
-            "trivy_db_updated_at": "2026-09-14T00:00:00Z",
-            "before": {
-                "artifact_name": before["ArtifactName"],
-                "image_id": before["Metadata"]["ImageID"],
-                "manifest_digest": CHILD_DIGEST,
-                "report_sha256": hashlib.sha256(self.full.read_bytes()).hexdigest(),
+        self.receipt = write_json(
+            self.receipt,
+            {
+                "trivy_action_sha": TRIVY_ACTION_SHA,
+                "trivy_db_digest": TRIVY_DB_DIGEST,
+                "trivy_db_updated_at": "2026-09-14T00:00:00Z",
+                "before": {
+                    "artifact_name": before["ArtifactName"],
+                    "image_id": before["Metadata"]["ImageID"],
+                    "manifest_digest": CHILD_DIGEST,
+                    "report_sha256": hashlib.sha256(self.full.read_bytes()).hexdigest(),
+                },
+                "after": {
+                    "artifact_name": after["ArtifactName"],
+                    "image_id": after["Metadata"]["ImageID"],
+                    "manifest_digest": PATCHED_DIGEST,
+                    "report_sha256": hashlib.sha256(
+                        self.after.read_bytes()
+                    ).hexdigest(),
+                },
             },
-            "after": {
-                "artifact_name": after["ArtifactName"],
-                "image_id": after["Metadata"]["ImageID"],
-                "manifest_digest": PATCHED_DIGEST,
-                "report_sha256": hashlib.sha256(self.after.read_bytes()).hexdigest(),
-            },
-        })
+        )
 
     def test_clean_child_is_eligible_with_exact_schema(self):
         result = self.run_policy()
@@ -264,7 +358,10 @@ class PolicyTests(unittest.TestCase):
         self.assertTrue(decision["eligible"])
         self.assertIn("no-fix", decision["reason"])
         for finding in findings:
-            self.assertIn(f"{finding['VulnerabilityID']}:{finding['Severity']}:{finding['SeveritySource']}", decision["reason"])
+            self.assertIn(
+                f"{finding['VulnerabilityID']}:{finding['Severity']}:{finding['SeveritySource']}",
+                decision["reason"],
+            )
 
     def test_trivy_omitted_eosl_field_is_eligible(self):
         value = report()
@@ -283,7 +380,9 @@ class PolicyTests(unittest.TestCase):
         decision = json.loads(self.out.read_text())
         self.assertFalse(decision["eligible"])
         self.assertIn("fixable", decision["reason"])
-        self.assertEqual(decision["before"]["fixable_os"], ["linux/amd64|libexample|CVE-2026-0007"])
+        self.assertEqual(
+            decision["before"]["fixable_os"], ["linux/amd64|libexample|CVE-2026-0007"]
+        )
 
     def test_disabled_policy_mirrors_reason_without_waiving_gates(self):
         write_json(self.full, report([vuln("CVE-2026-0008", "CRITICAL")]))
@@ -298,7 +397,13 @@ class PolicyTests(unittest.TestCase):
         self.assertTrue(decision["eligible"])
         self.assertEqual(
             decision["patching"],
-            {"disabled": True, "disabled_reason": {"class": "unsupported", "detail": "No OS package manager"}},
+            {
+                "disabled": True,
+                "disabled_reason": {
+                    "class": "unsupported",
+                    "detail": "No OS package manager",
+                },
+            },
         )
         self.assertEqual(decision["copa"]["classification"], "not-required")
         self.assertFalse(decision["copa"]["original_child_input"])
@@ -310,7 +415,9 @@ class PolicyTests(unittest.TestCase):
         write_json(self.kev, kev_feed(("CVE-2026-0008",)))
         result = self.run_policy(**blocked["KEV"])
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertEqual(json.loads(self.out.read_text())["reason"], "missing_kev_acceptance")
+        self.assertEqual(
+            json.loads(self.out.read_text())["reason"], "missing_kev_acceptance"
+        )
 
         result = self.run_policy(**blocked["validation"])
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
@@ -318,10 +425,12 @@ class PolicyTests(unittest.TestCase):
 
         for classification in ("eol", "gpg", "unknown"):
             with self.subTest(disabled_failure=classification):
-                result = self.run_policy(**{
-                    **changes,
-                    "--copa-classification": classification,
-                })
+                result = self.run_policy(
+                    **{
+                        **changes,
+                        "--copa-classification": classification,
+                    }
+                )
                 self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
                 decision = json.loads(self.out.read_text())
                 self.assertFalse(decision["eligible"])
@@ -338,7 +447,9 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(decision["copa"]["classification"], "not-required")
         self.assertFalse(decision["copa"]["original_child_input"])
         self.assertIn("unsupported", decision["reason"])
-        self.assertEqual(decision["before"]["fixable_os"], ["linux/amd64|libexample|CVE-2026-0007"])
+        self.assertEqual(
+            decision["before"]["fixable_os"], ["linux/amd64|libexample|CVE-2026-0007"]
+        )
         spec = importlib.util.spec_from_file_location("evaluate_promotion", EVALUATOR)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -347,8 +458,12 @@ class PolicyTests(unittest.TestCase):
     def test_patching_enabled_resolves_fixable_os_at_every_severity(self):
         for severity in ("UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"):
             with self.subTest(severity=severity):
-                self.patched([vuln("CVE-2026-0007", severity, fixed="1.1")], [],
-                             [package("libexample", "1.0")], [package("libexample", "1.1")])
+                self.patched(
+                    [vuln("CVE-2026-0007", severity, fixed="1.1")],
+                    [],
+                    [package("libexample", "1.0")],
+                    [package("libexample", "1.1")],
+                )
                 result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 decision = json.loads(self.out.read_text())
@@ -356,8 +471,12 @@ class PolicyTests(unittest.TestCase):
                 self.assertTrue(decision["copa"]["original_child_input"])
 
     def test_go_default_time_format_from_trivy_version_is_accepted(self):
-        self.patched([vuln("CVE-2026-0007", "LOW", fixed="1.1")], [],
-                     [package("libexample", "1.0")], [package("libexample", "1.1")])
+        self.patched(
+            [vuln("CVE-2026-0007", "LOW", fixed="1.1")],
+            [],
+            [package("libexample", "1.0")],
+            [package("libexample", "1.1")],
+        )
         receipt = json.loads(self.receipt.read_text())
         receipt["trivy_db_updated_at"] = "2026-09-14 00:00:00.422928923 +0000 UTC"
         self.receipt.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
@@ -366,8 +485,12 @@ class PolicyTests(unittest.TestCase):
         self.assertTrue(json.loads(self.out.read_text())["eligible"])
 
     def test_nanosecond_trivy_db_timestamp_is_accepted(self):
-        self.patched([vuln("CVE-2026-0007", "LOW", fixed="1.1")], [],
-                     [package("libexample", "1.0")], [package("libexample", "1.1")])
+        self.patched(
+            [vuln("CVE-2026-0007", "LOW", fixed="1.1")],
+            [],
+            [package("libexample", "1.0")],
+            [package("libexample", "1.1")],
+        )
         receipt = json.loads(self.receipt.read_text())
         receipt["trivy_db_updated_at"] = "2026-09-14T00:00:00.000000000Z"
         self.receipt.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
@@ -379,8 +502,13 @@ class PolicyTests(unittest.TestCase):
         value = report()
         value["Metadata"]["OS"]["EOSL"] = True
         write_json(self.full, value)
-        result = self.run_policy(**{"--patch-policy": "disabled", "--patch-disabled-class": "unsupported",
-                                    "--patch-disabled-detail": "No OS package manager"})
+        result = self.run_policy(
+            **{
+                "--patch-policy": "disabled",
+                "--patch-disabled-class": "unsupported",
+                "--patch-disabled-detail": "No OS package manager",
+            }
+        )
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("EOSL", result.stdout + result.stderr)
 
@@ -418,18 +546,21 @@ class PolicyTests(unittest.TestCase):
         decision = json.loads(self.out.read_text())
         self.assertTrue(decision["eligible"])
         self.assertIn("no-fix warnings", decision["reason"])
-        self.assertEqual(decision["policy"]["acceptance"], {
-            "path": json.loads(self.github.read_text())["path"],
-            "sha256": hashlib.sha256(self.acceptance.read_bytes()).hexdigest(),
-            "candidate_digest": CANDIDATE_DIGEST,
-            "kevs": ["CVE-2026-0001"],
-            "expires_at": "2026-09-18T00:00:00Z",
-            "commit_sha": "c" * 40,
-            "pull_request": 42,
-            "merged_at": "2026-09-13T00:00:00Z",
-            "merged_by": "approver",
-            "issue": 77,
-        })
+        self.assertEqual(
+            decision["policy"]["acceptance"],
+            {
+                "path": json.loads(self.github.read_text())["path"],
+                "sha256": hashlib.sha256(self.acceptance.read_bytes()).hexdigest(),
+                "candidate_digest": CANDIDATE_DIGEST,
+                "kevs": ["CVE-2026-0001"],
+                "expires_at": "2026-09-18T00:00:00Z",
+                "commit_sha": "c" * 40,
+                "pull_request": 42,
+                "merged_at": "2026-09-13T00:00:00Z",
+                "merged_by": "approver",
+                "issue": 77,
+            },
+        )
 
         result = self.run_policy(**{"--validation-result": "fail"})
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
@@ -475,10 +606,14 @@ class PolicyTests(unittest.TestCase):
                 if "kevs" in change:
                     record["kevs"] = change["kevs"]
                 self.acceptance = write_json(self.acceptance, record)
-                evidence["record_sha256"] = hashlib.sha256(self.acceptance.read_bytes()).hexdigest()
+                evidence["record_sha256"] = hashlib.sha256(
+                    self.acceptance.read_bytes()
+                ).hexdigest()
                 for key, value in change.items():
                     if key in ("issue_state", "issue_is_pull_request"):
-                        evidence["issue"]["state" if key == "issue_state" else "is_pull_request"] = value
+                        evidence["issue"][
+                            "state" if key == "issue_state" else "is_pull_request"
+                        ] = value
                 self.github = write_json(self.github, evidence)
                 result = self.run_policy()
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
@@ -499,14 +634,26 @@ class PolicyTests(unittest.TestCase):
         record = acceptance_record()
         cases = {
             "unknown field": lambda value: value.update(unexpected=True),
-            "wrong path": lambda value: value.update(path="risk-acceptances/app/other.json"),
-            "ambiguous PR": lambda value: value["associated_pull_requests"].append(dict(value["pull_request"], number=43)),
-            "forged merged_by": lambda value: value["pull_request"].update(merged_by={"login": ""}),
+            "wrong path": lambda value: value.update(
+                path="risk-acceptances/app/other.json"
+            ),
+            "ambiguous PR": lambda value: value["associated_pull_requests"].append(
+                dict(value["pull_request"], number=43)
+            ),
+            "forged merged_by": lambda value: value["pull_request"].update(
+                merged_by={"login": ""}
+            ),
             "wrong repository": lambda value: value.update(repository="other/example"),
-            "non-main base": lambda value: value["pull_request"].update(base_ref="feature"),
+            "non-main base": lambda value: value["pull_request"].update(
+                base_ref="feature"
+            ),
             "unmerged PR": lambda value: value["pull_request"].update(merged=False),
-            "commit file mismatch": lambda value: value["commit"].update(blob_sha="d" * 40),
-            "acceptance too old": lambda value: value["pull_request"].update(merged_at="2026-09-01T00:00:00Z"),
+            "commit file mismatch": lambda value: value["commit"].update(
+                blob_sha="d" * 40
+            ),
+            "acceptance too old": lambda value: value["pull_request"].update(
+                merged_at="2026-09-01T00:00:00Z"
+            ),
         }
         expected_messages = {
             "unknown field": "unknown",
@@ -551,7 +698,9 @@ class PolicyTests(unittest.TestCase):
         index = json.loads(self.index.read_text())
         index["manifests"].append(index["manifests"][0])
         self.index = write_json(self.index, index)
-        self.index_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        self.index_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
         result = self.run_policy()
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("exactly one linux/amd64", result.stdout + result.stderr)
@@ -559,7 +708,9 @@ class PolicyTests(unittest.TestCase):
         index["manifests"].pop()
         index["manifests"][0]["platform"]["variant"] = "v8"
         self.index = write_json(self.index, index)
-        self.index_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        self.index_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
         result = self.run_policy()
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("variant", result.stdout + result.stderr)
@@ -569,14 +720,18 @@ class PolicyTests(unittest.TestCase):
         original = index["manifests"][0]["digest"]
         index["manifests"][0]["digest"] = "sha256:" + "22" * 32
         self.index = write_json(self.index, index)
-        self.index_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        self.index_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
         result = self.run_policy()
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("child manifest digest", result.stdout + result.stderr)
 
         index["manifests"][0]["digest"] = original
         self.index = write_json(self.index, index)
-        self.index_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        self.index_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
         config = json.loads(self.config.read_text())
         config["architecture"] = "arm64"
         self.config = write_json(self.config, config)
@@ -588,7 +743,9 @@ class PolicyTests(unittest.TestCase):
         index["manifests"][0]["digest"] = fixture_digest(child)
         index["manifests"][0]["size"] = self.child.stat().st_size
         self.index = write_json(self.index, index)
-        self.index_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        self.index_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
         result = self.run_policy()
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("platform", result.stdout + result.stderr)
@@ -607,26 +764,38 @@ class PolicyTests(unittest.TestCase):
             [package("libexample", "1.0")],
             [package("libexample", "1.1")],
         )
-        result = self.run_policy(**{"--validation-result": "fail", "--candidate-digest": PATCHED_DIGEST})
+        result = self.run_policy(
+            **{"--validation-result": "fail", "--candidate-digest": PATCHED_DIGEST}
+        )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         decision = json.loads(self.out.read_text())
         self.assertFalse(decision["eligible"])
         spool = self.tmp / "publisher.jsonl"
         publisher = self.tmp / "fake-skopeo"
         publisher.write_text(
-            "#!/usr/bin/env python3\nfrom pathlib import Path\nPath(r'" + str(spool) + "').write_text('ran')\n",
+            "#!/usr/bin/env python3\nfrom pathlib import Path\nPath(r'"
+            + str(spool)
+            + "').write_text('ran')\n",
             encoding="utf-8",
         )
         publisher.chmod(0o755)
         if decision["eligible"]:
-            subprocess.run([str(publisher), "copy", decision["candidate"]["digest"]], check=True)
+            subprocess.run(
+                [str(publisher), "copy", decision["candidate"]["digest"]], check=True
+            )
         self.assertFalse(spool.exists())
 
     def test_conflicting_duplicate_package_identity_fails_closed(self):
-        self.full = write_json(self.full, report([vuln("CVE-2026-0007", fixed="1.1")], [
-            package("libexample", "1.0"),
-            package("libexample", "1.1"),
-        ]))
+        self.full = write_json(
+            self.full,
+            report(
+                [vuln("CVE-2026-0007", fixed="1.1")],
+                [
+                    package("libexample", "1.0"),
+                    package("libexample", "1.1"),
+                ],
+            ),
+        )
         result = self.run_policy()
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("conflicting duplicate package", result.stdout + result.stderr)
@@ -637,7 +806,10 @@ class PolicyTests(unittest.TestCase):
             [supplied],
             [],
             [package("libexample", "1.0")],
-            [package("libexample", "1.1", epoch=1, release="1"), package("copa-tooling", "1.0")],
+            [
+                package("libexample", "1.1", epoch=1, release="1"),
+                package("copa-tooling", "1.0"),
+            ],
         )
         result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -646,12 +818,29 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(decision["reason"], "patched")
         self.assertEqual(decision["copa"]["classification"], "succeeded")
         self.assertTrue(decision["copa"]["original_child_input"])
-        self.assertEqual(decision["delta"]["resolved"], ["linux/amd64|libexample|CVE-2026-0007"])
+        self.assertEqual(
+            decision["delta"]["resolved"], ["linux/amd64|libexample|CVE-2026-0007"]
+        )
         self.assertEqual(decision["delta"]["cves"]["resolved"], ["CVE-2026-0007"])
-        self.assertEqual(decision["packages"]["changes"], [
-            {"ecosystem": "debian", "name": "copa-tooling", "change": "added", "before": None, "after": "1.0"},
-            {"ecosystem": "debian", "name": "libexample", "change": "upgraded", "before": "1.0", "after": "1:1.1-1"},
-        ])
+        self.assertEqual(
+            decision["packages"]["changes"],
+            [
+                {
+                    "ecosystem": "debian",
+                    "name": "copa-tooling",
+                    "change": "added",
+                    "before": None,
+                    "after": "1.0",
+                },
+                {
+                    "ecosystem": "debian",
+                    "name": "libexample",
+                    "change": "upgraded",
+                    "before": "1.0",
+                    "after": "1:1.1-1",
+                },
+            ],
+        )
         self.assertEqual(decision["packages"]["downgrades"], [])
 
     def test_low_severity_new_application_cve_blocks(self):
@@ -660,7 +849,9 @@ class PolicyTests(unittest.TestCase):
             "Class": "lang-pkgs",
             "Type": "pip",
             "Packages": [{"Name": "appdep", "Version": "2.0"}],
-            "Vulnerabilities": [vuln("CVE-2026-0008", "LOW", source="pip", pkg_name="appdep")],
+            "Vulnerabilities": [
+                vuln("CVE-2026-0008", "LOW", source="pip", pkg_name="appdep")
+            ],
         }
         self.patched(
             [vuln("CVE-2026-0007", fixed="1.1")],
@@ -674,7 +865,9 @@ class PolicyTests(unittest.TestCase):
         decision = json.loads(self.out.read_text())
         self.assertFalse(decision["eligible"])
         self.assertIn("introduced", decision["reason"])
-        self.assertEqual(decision["delta"]["introduced"], ["linux/amd64|appdep|CVE-2026-0008"])
+        self.assertEqual(
+            decision["delta"]["introduced"], ["linux/amd64|appdep|CVE-2026-0008"]
+        )
         self.assertEqual(decision["delta"]["cves"]["introduced"], ["CVE-2026-0008"])
 
     def test_unresolved_supplied_cve_blocks(self):
@@ -691,7 +884,10 @@ class PolicyTests(unittest.TestCase):
         decision = json.loads(self.out.read_text())
         self.assertFalse(decision["eligible"])
         self.assertIn("unresolved", decision["reason"])
-        self.assertEqual(decision["delta"]["unresolved_fixable"], ["linux/amd64|libother|CVE-2026-0007"])
+        self.assertEqual(
+            decision["delta"]["unresolved_fixable"],
+            ["linux/amd64|libother|CVE-2026-0007"],
+        )
 
     def test_epoch_release_and_alpine_downgrades_block(self):
         cases = (
@@ -713,13 +909,18 @@ class PolicyTests(unittest.TestCase):
                 decision = json.loads(self.out.read_text())
                 self.assertFalse(decision["eligible"])
                 self.assertIn("downgrade", decision["reason"])
-                self.assertEqual(decision["packages"]["downgrades"], [{
-                    "ecosystem": ecosystem,
-                    "name": "libexample",
-                    "change": "downgraded",
-                    "before": before_version,
-                    "after": after_version,
-                }])
+                self.assertEqual(
+                    decision["packages"]["downgrades"],
+                    [
+                        {
+                            "ecosystem": ecosystem,
+                            "name": "libexample",
+                            "change": "downgraded",
+                            "before": before_version,
+                            "after": after_version,
+                        }
+                    ],
+                )
 
     def test_invalid_package_inventory_fails_closed(self):
         before = [package("libexample", "1.0")]
@@ -727,7 +928,9 @@ class PolicyTests(unittest.TestCase):
             "unsupported ecosystem": {"result_type": "fedora"},
             "missing package inventory": {"remove_packages": True},
             "malformed version": {"packages": [package("libexample", "not-a-version")]},
-            "ambiguous package identity": {"packages": before + [package("libexample", "1.1")]},
+            "ambiguous package identity": {
+                "packages": before + [package("libexample", "1.1")]
+            },
         }
         for label, change in cases.items():
             with self.subTest(case=label):
@@ -743,7 +946,9 @@ class PolicyTests(unittest.TestCase):
                     after["Results"][0].pop("Packages")
                     self.after = write_json(self.after, after)
                     receipt = json.loads(self.receipt.read_text())
-                    receipt["after"]["report_sha256"] = hashlib.sha256(self.after.read_bytes()).hexdigest()
+                    receipt["after"]["report_sha256"] = hashlib.sha256(
+                        self.after.read_bytes()
+                    ).hexdigest()
                     self.receipt = write_json(self.receipt, receipt)
                 result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
@@ -759,13 +964,25 @@ class PolicyTests(unittest.TestCase):
         original_after = json.loads(self.after.read_text())
         original_receipt = json.loads(self.receipt.read_text())
         mutations = {
-            "platform": lambda after, receipt: after["Metadata"]["ImageConfig"].update(architecture="arm64"),
+            "platform": lambda after, receipt: after["Metadata"]["ImageConfig"].update(
+                architecture="arm64"
+            ),
             "EOSL": lambda after, receipt: after["Metadata"]["OS"].update(EOSL=True),
-            "image identity": lambda after, receipt: after.update(ArtifactName="wrong@candidate"),
-            "Trivy version": lambda after, receipt: after.update(Trivy={"Version": "0.73.0"}),
-            "action receipt": lambda after, receipt: receipt.update(trivy_action_sha="f" * 40),
-            "manifest receipt": lambda after, receipt: receipt["after"].update(manifest_digest=CHILD_DIGEST),
-            "report receipt": lambda after, receipt: after.update(ArtifactName="tampered@candidate"),
+            "image identity": lambda after, receipt: after.update(
+                ArtifactName="wrong@candidate"
+            ),
+            "Trivy version": lambda after, receipt: after.update(
+                Trivy={"Version": "0.73.0"}
+            ),
+            "action receipt": lambda after, receipt: receipt.update(
+                trivy_action_sha="f" * 40
+            ),
+            "manifest receipt": lambda after, receipt: receipt["after"].update(
+                manifest_digest=CHILD_DIGEST
+            ),
+            "report receipt": lambda after, receipt: after.update(
+                ArtifactName="tampered@candidate"
+            ),
         }
         for label, mutate in mutations.items():
             with self.subTest(check=label):

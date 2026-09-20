@@ -83,41 +83,67 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--app", required=True, help="inventory app name")
     parser.add_argument("--ref", required=True, help="candidate image ref")
-    parser.add_argument("--local-image", help="local candidate tag; config digest must match the exported manifest")
-    parser.add_argument("--local-image-id", help="Docker image Id committed before OCI export")
+    parser.add_argument(
+        "--local-image",
+        help="local candidate tag; config digest must match the exported manifest",
+    )
+    parser.add_argument(
+        "--local-image-id", help="Docker image Id committed before OCI export"
+    )
     parser.add_argument("--digest", required=True, help="candidate sha256:... digest")
     parser.add_argument("--baseline-ref", help="selected upstream child ref")
     parser.add_argument("--baseline-digest", help="selected upstream child digest")
     parser.add_argument(
-        "--validation-type", required=True, choices=PROFILES, help="spec.validation.type"
-    )
-    parser.add_argument("--port", type=int, default=None, help="http: port (required for http)")
-    parser.add_argument("--path", default="/", help="http: request path (D-04 default /)")
-    parser.add_argument(
-        "--expect-status", type=int, default=200, help="http: expected status (D-04 default 200)"
+        "--validation-type",
+        required=True,
+        choices=PROFILES,
+        help="spec.validation.type",
     )
     parser.add_argument(
-        "--duration-seconds", type=int, default=30,
+        "--port", type=int, default=None, help="http: port (required for http)"
+    )
+    parser.add_argument(
+        "--path", default="/", help="http: request path (D-04 default /)"
+    )
+    parser.add_argument(
+        "--expect-status",
+        type=int,
+        default=200,
+        help="http: expected status (D-04 default 200)",
+    )
+    parser.add_argument(
+        "--duration-seconds",
+        type=int,
+        default=30,
         help="stay-running window (D-04 default 30)",
     )
     parser.add_argument(
-        "--timeout-seconds", type=int, default=60,
+        "--timeout-seconds",
+        type=int,
+        default=60,
         help="probe deadline (D-04 default 60)",
     )
     parser.add_argument(
-        "--expected-exit", type=int, default=0,
+        "--expected-exit",
+        type=int,
+        default=0,
         help="oneshot: expected exit code (D-04 default 0)",
     )
     parser.add_argument(
-        "--expected-platforms", default="linux/amd64",
+        "--expected-platforms",
+        default="linux/amd64",
         help="comma list; each must be present in the index (D-04 default linux/amd64)",
     )
     parser.add_argument(
-        "--command", default="[]",
+        "--command",
+        default="[]",
         help="JSON array of argv appended after the image ref",
     )
     parser.add_argument(
-        "--env", action="append", default=[], metavar="KEY=VALUE",
+        "--env",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
         help="candidate container env var; repeatable",
     )
     parser.add_argument(
@@ -149,14 +175,17 @@ IMAGE_MANIFEST_TYPES = {
 }
 
 
-def label_drift(baseline: dict, candidate: dict, baseline_ref: str = "", baseline_digest: str = "") -> list[str]:
+def label_drift(
+    baseline: dict, candidate: dict, baseline_ref: str = "", baseline_digest: str = ""
+) -> list[str]:
     base = baseline.get("Labels") or {}
     final = candidate.get("Labels") or {}
     if not isinstance(base, dict) or not isinstance(final, dict):
         return ["config Labels must be objects or null"]
     drift = [
         f"existing label {key!r} changed from {base[key]!r} to {final.get(key)!r}"
-        for key in base if key not in final or final[key] != base[key]
+        for key in base
+        if key not in final or final[key] != base[key]
     ]
     for key in final.keys() - base.keys():
         value = final[key]
@@ -164,7 +193,10 @@ def label_drift(baseline: dict, candidate: dict, baseline_ref: str = "", baselin
             key == "BaseImage"
             and isinstance(value, str)
             and baseline_ref
-            and (value.startswith(f"{baseline_ref}:") or value == f"{baseline_ref}@{baseline_digest}")
+            and (
+                value.startswith(f"{baseline_ref}:")
+                or value == f"{baseline_ref}@{baseline_digest}"
+            )
         )
         if identifies_baseline:
             continue
@@ -173,7 +205,9 @@ def label_drift(baseline: dict, candidate: dict, baseline_ref: str = "", baselin
     return drift
 
 
-def config_drift(baseline: dict, candidate: dict, baseline_ref: str = "", baseline_digest: str = "") -> list[str]:
+def config_drift(
+    baseline: dict, candidate: dict, baseline_ref: str = "", baseline_digest: str = ""
+) -> list[str]:
     before = copy.deepcopy(baseline)
     after = copy.deepcopy(candidate)
     labels = label_drift(baseline, candidate, baseline_ref, baseline_digest)
@@ -207,7 +241,9 @@ def append_logs(logs_path: Path, container_name: str) -> None:
     with logs_path.open("a", encoding="utf-8") as fh:
         fh.write(out)
         if not ok:
-            fh.write(f"\n[docker logs unavailable for {container_name} — exited before capture]\n")
+            fh.write(
+                f"\n[docker logs unavailable for {container_name} — exited before capture]\n"
+            )
 
 
 def sleep_until(deadline: float) -> None:
@@ -279,8 +315,17 @@ def probe_http(args, container_name, logs_path):
     while time.monotonic() < probe_deadline:
         append_logs(logs_path, container_name)
         ok, out = docker(
-            "run", "--rm", "--network", f"container:{container_name}",
-            CURL_IMAGE, "-s", "-o", "/dev/null", "-w", "%{http_code}", url,
+            "run",
+            "--rm",
+            "--network",
+            f"container:{container_name}",
+            CURL_IMAGE,
+            "-s",
+            "-o",
+            "/dev/null",
+            "-w",
+            "%{http_code}",
+            url,
         )
         last_status = out.strip() if ok else "sidecar-error"
         if last_status == expect:
@@ -314,7 +359,9 @@ def profile_longrunning(
     digest-pinned curl sidecar joined via --network container:<name>
     before the health gate applies. None on pass, FATAL reason on failure.
     """
-    ok, out = docker(*docker_run_args(True, container_name, ref_digest, command, env_map))
+    ok, out = docker(
+        *docker_run_args(True, container_name, ref_digest, command, env_map)
+    )
     if not ok:
         return f"candidate failed to start under --network none: {out}"
     try:
@@ -323,7 +370,9 @@ def profile_longrunning(
             if reason is not None:
                 return reason
         deadline = started_mono + args.duration_seconds
-        reason = wait_for_healthy(container_name, healthcheck_defined, deadline, logs_path, health)
+        reason = wait_for_healthy(
+            container_name, healthcheck_defined, deadline, logs_path, health
+        )
         if reason is not None:
             return reason
         remaining = deadline - time.monotonic()
@@ -364,21 +413,23 @@ def profile_oneshot(
         docker("rm", "-f", container_name)
     actual = proc.returncode
     if actual != args.expected_exit:
-        return (
-            f"oneshot exit code {actual} != expectedExit {args.expected_exit} (D-11)"
-        )
+        return f"oneshot exit code {actual} != expectedExit {args.expected_exit} (D-11)"
     return None
 
 
 def runtime_inputs(args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
-    expected_platforms = [p.strip() for p in args.expected_platforms.split(",") if p.strip()]
+    expected_platforms = [
+        p.strip() for p in args.expected_platforms.split(",") if p.strip()
+    ]
     if expected_platforms != ["linux/amd64"]:
         raise ValueError("new candidates must validate exactly linux/amd64 (D-20)")
     try:
         command = json.loads(args.command)
     except json.JSONDecodeError as exc:
         raise ValueError(f"--command is not valid JSON ({exc})") from exc
-    if not isinstance(command, list) or not all(isinstance(item, str) for item in command):
+    if not isinstance(command, list) or not all(
+        isinstance(item, str) for item in command
+    ):
         raise ValueError("--command must be a JSON array of strings")
     env_map: dict[str, str] = {}
     for item in args.env:
@@ -401,9 +452,13 @@ def load_manifest(path: Path) -> dict:
     if not isinstance(index, dict):
         raise ValueError("candidate manifest is not an object (D-20)")
     if "manifests" in index:
-        raise ValueError("candidate manifest is an index; indexes cannot be published (D-20)")
+        raise ValueError(
+            "candidate manifest is an index; indexes cannot be published (D-20)"
+        )
     if index.get("mediaType") not in IMAGE_MANIFEST_TYPES:
-        raise ValueError("candidate manifest is not an OCI/Docker image manifest (D-20)")
+        raise ValueError(
+            "candidate manifest is not an OCI/Docker image manifest (D-20)"
+        )
     return index
 
 
@@ -421,7 +476,9 @@ def inspected_image(ref: str, parse_label: str) -> dict:
     return inspected
 
 
-def local_candidate_error(args: argparse.Namespace, index: dict, index_path: Path, inspected: dict) -> str | None:
+def local_candidate_error(
+    args: argparse.Namespace, index: dict, index_path: Path, inspected: dict
+) -> str | None:
     if not args.local_image:
         return None
     if not args.local_image_id or not SHA256_DIGEST_RE.fullmatch(args.local_image_id):
@@ -431,7 +488,9 @@ def local_candidate_error(args: argparse.Namespace, index: dict, index_path: Pat
         return "local candidate manifest digest does not match the exported bytes"
     descriptor = index.get("config")
     expected_config = descriptor.get("digest") if isinstance(descriptor, dict) else None
-    if not isinstance(expected_config, str) or not SHA256_DIGEST_RE.fullmatch(expected_config):
+    if not isinstance(expected_config, str) or not SHA256_DIGEST_RE.fullmatch(
+        expected_config
+    ):
         return "local candidate OCI config descriptor is malformed"
     if inspected.get("Id") != args.local_image_id:
         return "local candidate image Id does not match --local-image-id"
@@ -453,7 +512,9 @@ def initial_evidence(args, command: str, env_map: dict) -> dict:
                 "timeoutSeconds": args.timeout_seconds,
                 "expectedExit": args.expected_exit,
                 "command": command,
-                "expectedPlatforms": [p.strip() for p in args.expected_platforms.split(",") if p.strip()],
+                "expectedPlatforms": [
+                    p.strip() for p in args.expected_platforms.split(",") if p.strip()
+                ],
                 "env": env_map,
             },
             "timings": {},
@@ -463,19 +524,31 @@ def initial_evidence(args, command: str, env_map: dict) -> dict:
                 "entrypoint": [],
                 "cmd": [],
                 "env": [],
-                "platforms_expected": [p.strip() for p in args.expected_platforms.split(",") if p.strip()],
+                "platforms_expected": [
+                    p.strip() for p in args.expected_platforms.split(",") if p.strip()
+                ],
             },
         },
     }
 
 
-def candidate_runtime_binding(args, index: dict, index_path, ev: dict, baseline_config, inspected: dict, ref_digest: str):
+def candidate_runtime_binding(
+    args,
+    index: dict,
+    index_path,
+    ev: dict,
+    baseline_config,
+    inspected: dict,
+    ref_digest: str,
+):
     config = inspected["Config"]
     if args.local_image:
         reason = local_candidate_error(args, index, index_path, inspected)
         if reason is not None:
             return reason, None, None
-        manifest_digest = "sha256:" + hashlib.sha256(index_path.read_bytes()).hexdigest()
+        manifest_digest = (
+            "sha256:" + hashlib.sha256(index_path.read_bytes()).hexdigest()
+        )
         ref_digest = inspected["Id"]
         ev["validation"]["candidate_digest"] = manifest_digest
         ev["validation"]["candidate_image_id"] = inspected["Id"]
@@ -487,7 +560,9 @@ def candidate_runtime_binding(args, index: dict, index_path, ev: dict, baseline_
             None,
         )
     if baseline_config is not None:
-        drift = config_drift(baseline_config, config, args.baseline_ref or "", args.baseline_digest or "")
+        drift = config_drift(
+            baseline_config, config, args.baseline_ref or "", args.baseline_digest or ""
+        )
         if drift:
             return "runtime configuration drift (D-14): " + "; ".join(drift), None, None
         ev["validation"]["baseline"]["config"] = baseline_config
@@ -503,20 +578,38 @@ def record_baseline_contract(ev: dict, config: dict, inspected: dict) -> bool:
     ev["validation"]["baseline"]["entrypoint"] = entrypoint
     ev["validation"]["baseline"]["cmd"] = cmd
     ev["validation"]["baseline"]["env"] = env
-    ev["validation"]["candidate_platform"] = f"{inspected['Os']}/{inspected['Architecture']}"
+    ev["validation"][
+        "candidate_platform"
+    ] = f"{inspected['Os']}/{inspected['Architecture']}"
     ev["validation"]["health"]["defined"] = config.get("Healthcheck") is not None
     return config.get("Healthcheck") is not None
 
 
-def validation_profile_reason(args, ev, ref_digest, command, env_map, container_name,
-                              healthcheck_defined, started_mono, logs_path):
+def validation_profile_reason(
+    args,
+    ev,
+    ref_digest,
+    command,
+    env_map,
+    container_name,
+    healthcheck_defined,
+    started_mono,
+    logs_path,
+):
     if args.validation_type == "oneshot":
         ev["validation"]["logs_note"] = ONESHOT_LOG_NOTE
         ev["validation"]["health"]["final_status"] = "not-applicable"
         return profile_oneshot(args, container_name, ref_digest, command, env_map)
     return profile_longrunning(
-        args, container_name, ref_digest, command, env_map,
-        healthcheck_defined, started_mono, logs_path, ev["validation"]["health"],
+        args,
+        container_name,
+        ref_digest,
+        command,
+        env_map,
+        healthcheck_defined,
+        started_mono,
+        logs_path,
+        ev["validation"]["health"],
     )
 
 
@@ -568,7 +661,9 @@ def main() -> int:
     baseline_config = None
     if baseline_ref_digest:
         try:
-            baseline_config = inspected_image(baseline_ref_digest, "baseline image config does not parse")["Config"]
+            baseline_config = inspected_image(
+                baseline_ref_digest, "baseline image config does not parse"
+            )["Config"]
         except ValueError as exc:
             return fail(str(exc))
 
@@ -586,8 +681,15 @@ def main() -> int:
     healthcheck_defined = record_baseline_contract(ev, config, inspected)
     container_name = f"val-{args.app}-{os.environ.get('GITHUB_RUN_ID') or os.getpid()}"
     reason = validation_profile_reason(
-        args, ev, ref_digest, command, env_map, container_name,
-        healthcheck_defined, started_mono, logs_path,
+        args,
+        ev,
+        ref_digest,
+        command,
+        env_map,
+        container_name,
+        healthcheck_defined,
+        started_mono,
+        logs_path,
     )
     if reason is not None:
         return fail(reason)

@@ -180,44 +180,7 @@ jobs:
             rm -rf recovery-candidate
             gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
               --name candidate --dir recovery-candidate
-          python3 - "${PROVENANCE}" recovery-candidate <<'PY'
-          import hashlib
-          import json
-          import sys
-          from pathlib import Path
-
-          provenance, root = Path(sys.argv[1]), Path(sys.argv[2])
-          record = json.loads(provenance.read_text(encoding="utf-8"))
-          manifest = hashlib.sha256((root / "candidate-manifest.json").read_bytes()).hexdigest()
-          expected = {
-              "index": record["upstream"]["index_digest"],
-              "child": record["upstream"]["selected_child_digest"],
-              "candidate": record["internal"]["digest"],
-          }
-          actual = {
-              "index": "sha256:" + hashlib.sha256((root / "upstream-index.json").read_bytes()).hexdigest(),
-              "child": "sha256:" + hashlib.sha256((root / "child-manifest.json").read_bytes()).hexdigest(),
-              "candidate": "sha256:" + manifest,
-          }
-          if actual != expected:
-              raise SystemExit("FATAL: recovery candidate bytes do not match provenance")
-          blob = root / "candidate-oci" / "blobs" / "sha256" / expected["candidate"].split(":", 1)[1]
-          if not blob.is_file() or blob.read_bytes() != (root / "candidate-manifest.json").read_bytes():
-              raise SystemExit("FATAL: recovery OCI layout does not preserve candidate bytes")
-          listed = {
-              line.split("  ", 1)[1]
-              for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
-              if "  " in line
-          }
-          actual_files = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file() and path.name != "SHA256SUMS"}
-          if listed != actual_files:
-              raise SystemExit("FATAL: recovery candidate checksum manifest is ambiguous")
-          for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
-              digest, name = line.split("  ", 1)
-              if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
-                  raise SystemExit(f"FATAL: recovery candidate checksum failed: {name}")
-          Path("original-candidate-decision.json").write_bytes((root / "candidate-decision.json").read_bytes())
-          PY
+          python3 scripts/promote_recovery_candidate.py "${PROVENANCE}" recovery-candidate
             cp recovery-candidate/candidate-manifest.json candidate-manifest.json
             rm -rf candidate-oci
             cp -a recovery-candidate/candidate-oci candidate-oci
@@ -232,22 +195,7 @@ jobs:
             gh api -H "Accept: application/vnd.github.raw+json" \
               "repos/${REPO}/contents/inventory/${APP}/image.yaml?ref=${ORIGINAL_SOURCE_SHA}" \
               > validation-context/image.yaml
-            python3 - validation-context/image.yaml \
-              "${RUNNER_TEMP}/original-report/secobserve-upload.json" "${APP}" <<'PY'
-          import json
-          import sys
-          import yaml
-
-          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
-          manifest = json.load(open(sys.argv[2]))
-          expected = {
-              "app": sys.argv[3],
-              "upstream_ref": spec["upstream"]["ref"],
-              "upstream_tag": spec["upstream"]["tag"],
-          }
-          if manifest != expected:
-              raise SystemExit("FATAL: original report artifact is not bound to the recovered inventory")
-          PY
+            python3 scripts/promote_recovery_report_binding.py validation-context/image.yaml "${RUNNER_TEMP}/original-report/secobserve-upload.json" "${APP}"
             jq -n \
               --arg original_run_url "${ORIGINAL_RUN_URL}" \
               --arg original_source_sha "${ORIGINAL_SOURCE_SHA}" \
@@ -260,53 +208,8 @@ jobs:
             jq -n '{mode:"normal"}' > validation-context/context.json
           fi
 
-          OUT="$(python3 - validation-context/image.yaml "${APP}" "${RECOVER_TAG}" <<'PY'
-          import json
-          import sys
-          import yaml
-
-          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
-          validation = spec["validation"]
-          app = sys.argv[2]
-          recover_tag = sys.argv[3]
-          if spec["destination"]["package"] != f"ghcr.io/bocklabs/{app}":
-              raise SystemExit("FATAL: recovered inventory destination does not match app")
-          if recover_tag and not recover_tag.startswith(spec["upstream"]["tag"] + "-bocklabs."):
-              raise SystemExit("FATAL: recover_tag does not match the original upstream tag")
-          print(f"upstream_ref={spec['upstream']['ref']}")
-          print(f"upstream_tag={spec['upstream']['tag']}")
-          print(f"upstream_digest={spec['upstream']['digest']}")
-          print(f"dest_package={spec['destination']['package']}")
-          print(f"patch_policy={spec['patchPolicy']}")
-          print(f"app={app}")
-          print(f"validation_type={validation['type']}")
-          PARAM_OUTPUTS = {
-              "port": "validation_port",
-              "path": "validation_path",
-              "expectStatus": "validation_expect_status",
-              "durationSeconds": "validation_duration_seconds",
-              "timeoutSeconds": "validation_timeout_seconds",
-              "expectedExit": "validation_expected_exit",
-          }
-          for key, output in PARAM_OUTPUTS.items():
-              if key in validation:
-                  print(f"{output}={validation[key]}")
-          if "command" in validation:
-              print("validation_command=" + json.dumps(validation["command"]))
-          if "expectedPlatforms" in validation:
-              print("validation_expected_platforms=" + ",".join(validation["expectedPlatforms"]))
-          if validation.get("env"):
-              print("validation_env=" + json.dumps(validation["env"]))
-          PY
-          )"
-          python3 - validation-context/image.yaml <<'PY' > validation-context/patch-policy.json
-          import json, sys, yaml
-          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
-          policy = {"patchPolicy": spec["patchPolicy"]}
-          if spec["patchPolicy"] == "disabled":
-              policy["patchDisabledReason"] = spec["patchDisabledReason"]
-          print(json.dumps(policy, sort_keys=True))
-          PY
+          OUT="$(python3 scripts/promote_recovery_context.py validation-context/image.yaml "${APP}" "${RECOVER_TAG}")"
+          python3 scripts/promote_patch_policy.py validation-context/image.yaml > validation-context/patch-policy.json
           echo "${OUT}"
           echo "${OUT}" >> "$GITHUB_OUTPUT"
 
@@ -348,145 +251,11 @@ jobs:
           }
           gh api --paginate "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}/artifacts?per_page=100" \
             --jq '.artifacts[] | select(.name == "candidate")' > resume-artifacts.jsonl
-          ARTIFACT_ID="$(python3 - "${ACCEPTED_CANDIDATE_RUN_ID}" <<'PY'
-          import json
-          import sys
-
-          rows = [json.loads(line) for line in open("resume-artifacts.jsonl", encoding="utf-8") if line.strip()]
-          valid = [row for row in rows if row.get("expired") is False and row.get("workflow_run", {}).get("id") == int(sys.argv[1])]
-          if len(rows) != 1 or len(valid) != 1 or not isinstance(valid[0].get("id"), int) or valid[0]["id"] <= 0:
-              raise SystemExit("FATAL: candidate artifact is missing, expired, or ambiguous")
-          print(valid[0]["id"])
-          PY
-          )"
+          ARTIFACT_ID="$(python3 scripts/promote_resume_artifact_id.py "${ACCEPTED_CANDIDATE_RUN_ID}")"
           printf '%s\n' "${ARTIFACT_ID}" > resume-artifact-id.txt
           gh run download "${ACCEPTED_CANDIDATE_RUN_ID}" --repo "${REPO}" \
             --name candidate --dir resume-download
-          python3 - "${ACCEPTED_CANDIDATE_RUN_ID}" "${ARTIFACT_ID}" <<'PY'
-          import hashlib
-          import importlib.util
-          import json
-          import os
-          import shutil
-          import sys
-          from pathlib import Path, PurePosixPath
-
-          import yaml
-
-          run_id, artifact_id = sys.argv[1], int(sys.argv[2])
-          root = Path("resume-download")
-          mandatory = {
-              "candidate-decision.json", "candidate-manifest.json", "child-config.json",
-              "child-manifest.json", "inventory-image.yaml", "secobserve-upload.json",
-              "source.sha", "tag-decision.json", "trivy-before-full.json", "trivy-copa.json",
-              "upstream-index.json",
-              "trivy-full.cdx.json", "trivy-full.json", "validation-evidence.json", "kev.json",
-              "kev-fetched-at.txt", "trivy-db-meta-1.txt", "trivy-db-meta-2.txt", "SHA256SUMS",
-          }
-          optional = {
-              "trivy-after-full.json", "scan-receipt.json", "trivy-db-meta-after.txt",
-              "copa-diagnostics.txt", "copa-candidate-image-id.txt", "before-labels.json",
-              "after-labels.json",
-          }
-          allowed_prefixes = ("candidate-oci/", "validation-logs/")
-          files = [path for path in root.rglob("*") if path.is_file() or path.is_symlink()]
-          relatives = []
-          for path in files:
-              relative = path.relative_to(root).as_posix()
-              if path.is_symlink() or path.is_absolute() or ".." in path.parts:
-                  raise SystemExit(f"FATAL: candidate artifact path traversal or symlink: {relative}")
-              relatives.append(relative)
-          checksum_lines = (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
-          listed = []
-          for line in checksum_lines:
-              digest, name = line.split("  ", 1)
-              relative_path = PurePosixPath(name)
-              if relative_path.is_absolute() or ".." in relative_path.parts:
-                  raise SystemExit(f"FATAL: candidate checksum manifest path traversal: {name}")
-              path = root / name
-              if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
-                  raise SystemExit(f"FATAL: candidate checksum/digest mismatch: {name}")
-              listed.append(name)
-          actual = [name for name in relatives if name != "SHA256SUMS"]
-          if len(listed) != len(set(listed)) or set(listed) != set(actual):
-              raise SystemExit("FATAL: candidate checksum manifest is incomplete or names undeclared files")
-          allowed = mandatory | optional | {name for name in actual if name.startswith(allowed_prefixes)}
-          undeclared = set(actual) - allowed
-          if undeclared:
-              raise SystemExit("FATAL: candidate artifact has undeclared files: " + ", ".join(sorted(undeclared)))
-          missing = mandatory - (set(actual) | {"SHA256SUMS"})
-          if missing:
-              raise SystemExit("FATAL: candidate artifact is missing required files: " + ", ".join(sorted(missing)))
-
-          spec = yaml.safe_load((root / "inventory-image.yaml").read_text(encoding="utf-8"))["spec"]
-          expected_package = f"ghcr.io/bocklabs/{os.environ['APP']}"
-          if spec["destination"]["package"] != expected_package:
-              raise SystemExit("FATAL: candidate inventory app/package mismatch")
-          current = Path("inventory") / os.environ["APP"] / "image.yaml"
-          if current.read_bytes() != (root / "inventory-image.yaml").read_bytes():
-              raise SystemExit("FATAL: candidate inventory bytes differ from current main")
-
-          decision_path = root / "candidate-decision.json"
-          decision = json.loads(decision_path.read_text(encoding="utf-8"))
-          module_spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
-          module = importlib.util.module_from_spec(module_spec)
-          module_spec.loader.exec_module(module)
-          module.validate_decision(decision)
-          run = json.loads(Path("resume-run.json").read_text(encoding="utf-8"))
-          expected = {
-              "app": os.environ["APP"],
-              "run_id": run_id,
-              "source_sha": run["head_sha"],
-              "upstream_index_digest": spec["upstream"]["digest"],
-          }
-          mismatches = [key for key, value in expected.items() if decision.get(key) != value]
-          if decision.get("run_attempt") != run["run_attempt"] or (root / "source.sha").read_text().strip() != run["head_sha"]:
-              mismatches.append("run_attempt/source.sha")
-          if decision.get("resume") is not None:
-              mismatches.append("resume")
-          if decision.get("eligible") is not False or decision.get("reason") != "missing_kev_acceptance":
-              mismatches.append("blocker")
-          if decision.get("validation", {}).get("result") != "pass":
-              mismatches.append("validation")
-          if mismatches:
-              raise SystemExit("FATAL: candidate decision binding failed (wrong run, app, source, inventory, or blocker): " + ", ".join(mismatches))
-
-          selected = decision["selected_child_digest"]
-          candidate = decision["candidate"]["digest"]
-          for name, digest in (("child-manifest.json", selected), ("candidate-manifest.json", candidate)):
-              actual_digest = "sha256:" + hashlib.sha256((root / name).read_bytes()).hexdigest()
-              if actual_digest != digest:
-                  raise SystemExit(f"FATAL: candidate {name} digest mismatch")
-          if module.sha256_file(root / "upstream-index.json") != spec["upstream"]["digest"]:
-              raise SystemExit("FATAL: candidate upstream index digest mismatch")
-          if module.select_child(json.loads((root / "upstream-index.json").read_text()), root / "child-manifest.json", root / "child-config.json") != selected:
-              raise SystemExit("FATAL: candidate child identity mismatch")
-          blob = root / "candidate-oci" / "blobs" / "sha256" / candidate.split(":", 1)[1]
-          if not blob.is_file() or blob.read_bytes() != (root / "candidate-manifest.json").read_bytes():
-              raise SystemExit("FATAL: candidate OCI layout does not preserve exact bytes")
-          tag = json.loads((root / "tag-decision.json").read_text(encoding="utf-8"))
-          if tag != {"internal_tag": decision["proposed_tag"], "skip_copy": False}:
-              raise SystemExit("FATAL: candidate proposed tag mismatch")
-          if json.loads((root / "validation-evidence.json").read_text()).get("validation", {}).get("result") != "pass":
-              raise SystemExit("FATAL: original candidate validation did not pass")
-
-          for name in mandatory | optional:
-              source = root / name
-              if source.is_file():
-                  shutil.copyfile(source, name)
-          shutil.copytree(root / "candidate-oci", "candidate-oci", dirs_exist_ok=True)
-          shutil.copyfile(root / "candidate-decision.json", "original-candidate-decision.json")
-          with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open("a", encoding="utf-8") as output:
-              output.write(f"candidate_digest={candidate}\n")
-              output.write(f"selected_child_digest={selected}\n")
-              output.write(f"internal_tag={decision['proposed_tag']}\n")
-              output.write("skip_copy=false\n")
-              output.write(f"patched={str(decision['copa']['original_child_input']).lower()}\n")
-              output.write(f"artifact_id={artifact_id}\n")
-              output.write(f"original_run_id={run_id}\n")
-              output.write(f"original_run_attempt={run['run_attempt']}\n")
-              output.write(f"original_source_sha={run['head_sha']}\n")
-          PY
+          python3 scripts/promote_resume_candidate.py "${ACCEPTED_CANDIDATE_RUN_ID}" "${ARTIFACT_ID}"
 
       - name: Materialize preserved candidate for fresh checks
         id: resume_materialize
@@ -589,34 +358,16 @@ jobs:
             [ "${STATUS}" = 200 ] || { echo "FATAL: unexpected tag listing status ${STATUS}"; exit 1; }
             jq -e 'type == "object" and ((.tags // []) | type == "array" and all(type == "string"))' \
               registry-page.json > /dev/null || { echo "FATAL: malformed registry tag page"; exit 1; }
-            jq -r '.tags // [] | .[]' registry-page.json >> registry-tags.txt
-            URL="$(python3 - <<'PY'
-          import re
-          from pathlib import Path
-
-          headers = Path("registry-page.headers").read_text(encoding="utf-8")
-          match = re.search(r'<([^>]+)>;\s*rel="next"', headers, re.IGNORECASE)
-          print(match.group(1) if match else "")
-          PY
-            )"
-            if [ -n "${URL}" ] && [[ "${URL}" != "https://ghcr.io/v2/bocklabs/${APP}/tags/list?"* ]]; then
+          jq -r '.tags // [] | .[]' registry-page.json >> registry-tags.txt
+          URL="$(python3 scripts/promote_registry_next_link.py)"
+          if [ -n "${URL}" ] && [[ "${URL}" != "https://ghcr.io/v2/bocklabs/${APP}/tags/list?"* ]]; then
               echo "FATAL: registry pagination left the expected package URL"
               exit 1
             fi
             FIRST_PAGE=false
           done
 
-          python3 - "${UPSTREAM_TAG}" registry-tags.txt <<'PY' > registry-candidates.txt
-          import re
-          import sys
-          from pathlib import Path
-
-          pattern = re.compile(re.escape(sys.argv[1]) + r"-bocklabs\.[1-9][0-9]*$")
-          tags = Path(sys.argv[2]).read_text(encoding="utf-8").splitlines()
-          for tag in tags:
-              if pattern.fullmatch(tag):
-                  print(tag)
-          PY
+          python3 scripts/promote_registry_candidates.py "${UPSTREAM_TAG}" registry-tags.txt > registry-candidates.txt
           : > registry-observations.tsv
           while IFS= read -r CAND; do
             [ -n "${CAND}" ] || continue
@@ -639,33 +390,7 @@ jobs:
             }
             printf '%s\t%s\n' "${CAND}" "${CAND_DIGEST}" >> registry-observations.tsv
           done < registry-candidates.txt
-          python3 - "${APP}" <<'PY' > registry-observations.json
-          import json
-          import sys
-          from pathlib import Path
-
-          rows = []
-          for line in Path("registry-observations.tsv").read_text(encoding="utf-8").splitlines():
-              tag, digest = line.split("\t")
-              provenance = Path("provenance") / sys.argv[1] / f"{tag}.json"
-              if provenance.is_file():
-                  record = json.loads(provenance.read_text(encoding="utf-8"))
-                  if record.get("schema") != "trusted-images.bocklabs.dev/provenance-v1" or record.get("internal", {}).get("tag") != tag or record.get("internal", {}).get("digest") != digest:
-                      raise SystemExit(f"FATAL: provenance does not bind observed tag {tag}")
-                  rows.append({
-                      "tag": tag,
-                      "digest": digest,
-                      "upstream_index_digest": record["upstream"].get("index_digest", record["upstream"]["digest"]),
-                      "selected_child_digest": record["upstream"].get("selected_child_digest"),
-                      "platforms": record["internal"]["platforms"],
-                  })
-              else:
-                  rows.append({
-                      "tag": tag, "digest": digest, "upstream_index_digest": "",
-                      "selected_child_digest": None, "platforms": None,
-                  })
-          print(json.dumps(rows))
-          PY
+          python3 scripts/promote_registry_observations.py "${APP}" > registry-observations.json
 
           ARGS=(
             --upstream-tag "${UPSTREAM_TAG}"
@@ -717,18 +442,7 @@ jobs:
           jq -e --arg repo "${REPO}" '.repository.full_name == $repo and .path == ".github/workflows/promote.yaml"' reuse-run.json > /dev/null
           rm -rf reused-candidate
           gh run download "${REUSE_RUN_ID}" --repo "${REPO}" --name candidate --dir reused-candidate
-          python3 - "${REUSE_CANDIDATE_DIGEST}" reused-candidate <<'PY'
-          import hashlib
-          import sys
-          from pathlib import Path
-
-          expected, root = sys.argv[1], Path(sys.argv[2])
-          manifest = root / "candidate-manifest.json"
-          actual = "sha256:" + hashlib.sha256(manifest.read_bytes()).hexdigest()
-          blob = root / "candidate-oci" / "blobs" / "sha256" / expected.split(":", 1)[1]
-          if actual != expected or not blob.is_file() or blob.read_bytes() != manifest.read_bytes():
-              raise SystemExit("FATAL: reused candidate bytes do not match its provenance")
-          PY
+          python3 scripts/promote_reused_candidate.py "${REUSE_CANDIDATE_DIGEST}" reused-candidate
           cp reused-candidate/candidate-manifest.json candidate-manifest.json
           cp reused-candidate/candidate-decision.json original-candidate-decision.json
           rm -rf candidate-oci
@@ -1012,19 +726,7 @@ jobs:
         run: |
           set -euo pipefail
           docker image inspect copa:candidate --format '{{json .Config.Labels}}' > before-labels.json
-          python3 - before-labels.json <<'PY' > label-changes.json
-          import json
-          import os
-          import sys
-          before = json.load(open(sys.argv[1])) or {}
-          labels = {
-              "org.opencontainers.image.base.digest": os.environ["SELECTED_DIGEST"],
-              "org.opencontainers.image.base.name": os.environ["UPSTREAM_REF"] + ":" + os.environ["UPSTREAM_TAG"],
-              "org.opencontainers.image.source": "https://github.com/bocklabs/trusted-images",
-              "org.opencontainers.image.version": os.environ["INTERNAL_TAG"],
-          }
-          print(json.dumps([f"LABEL {key}={json.dumps(value)}" for key, value in labels.items() if key not in before]))
-          PY
+          python3 scripts/promote_proposed_labels.py before-labels.json > label-changes.json
           CHANGES=()
           while IFS= read -r CHANGE; do
             CHANGES+=(--change "${CHANGE}")
@@ -1034,19 +736,7 @@ jobs:
           docker commit "${CHANGES[@]}" "${CONTAINER}" copa:final > /dev/null
           FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
           docker image inspect copa:final --format '{{json .Config.Labels}}' > after-labels.json
-          python3 - before-labels.json after-labels.json <<'PY'
-          import json, sys
-          before = json.load(open(sys.argv[1])) or {}
-          after = json.load(open(sys.argv[2])) or {}
-          allowed = {
-              "org.opencontainers.image.base.digest",
-              "org.opencontainers.image.base.name",
-              "org.opencontainers.image.source",
-              "org.opencontainers.image.version",
-          }
-          if set(after) - set(before) - allowed or any(after[k] != v for k, v in before.items()):
-              raise SystemExit("FATAL: patched labels violate the add-only provenance contract")
-          PY
+          python3 scripts/promote_label_changes.py before-labels.json after-labels.json
           docker save copa:final --output candidate-final.tar
           SKOPEO="${SKOPEO_IMAGE}"
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
@@ -1253,22 +943,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -f acceptance.json github-evidence.json
-          python3 - <<'PY'
-          import importlib.util
-          import hashlib
-          import json
-          from pathlib import Path
-
-          spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
-          module = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(module)
-          report = module.findings(json.loads(Path("trivy-full.json").read_text()), "final report")
-          feed = json.loads(Path("kev.json").read_text())
-          matched = sorted({key.split("|", 2)[2] for key in report} & {row["cveID"] for row in feed["vulnerabilities"]})
-          digest = "sha256:" + hashlib.sha256(Path("candidate-manifest.json").read_bytes()).hexdigest()
-          Path("acceptance-path.txt").write_text(module.acceptance_path(__import__("os").environ["APP"], digest, matched) + "\n")
-          Path("acceptance-matched.txt").write_text("\n".join(matched) + ("\n" if matched else ""))
-          PY
+          python3 scripts/promote_acceptance_paths.py
           if [ ! -s acceptance-matched.txt ]; then
             echo "no KEV intersection; acceptance is not applicable"
             exit 0
@@ -1291,18 +966,7 @@ jobs:
             echo "FATAL: acceptance content lookup failed (status ${STATUS:-network error})"
             exit 1
           fi
-          python3 - <<'PY'
-          import base64
-          import json
-          from pathlib import Path
-
-          value = json.loads(Path("acceptance-content.json").read_text())
-          encoded = value.get("content", "")
-          if value.get("encoding") != "base64" or not isinstance(encoded, str):
-              raise SystemExit("FATAL: acceptance content API did not return base64 bytes")
-          encoded = encoded.replace("\n", "")
-          Path("acceptance.json").write_bytes(base64.b64decode(encoded, validate=True))
-          PY
+          python3 scripts/promote_acceptance_decode.py
           gh api --method GET "repos/${REPO}/commits" \
             -f path="${RECORD_PATH}" -F per_page=1 > acceptance-commits.json
           COMMIT_SHA="$(jq -er '.[0].sha' acceptance-commits.json)"
@@ -1312,62 +976,7 @@ jobs:
           gh api "repos/${REPO}/pulls/${PR_NUMBER}" > acceptance-pr.json
           ISSUE_NUMBER="$(jq -er .trackingIssue acceptance.json)"
           gh api "repos/${REPO}/issues/${ISSUE_NUMBER}" > acceptance-issue.json
-          python3 - "${RECORD_PATH}" <<'PY'
-          import hashlib
-          import json
-          import os
-          import sys
-          from pathlib import Path
-
-          path = sys.argv[1]
-          repository = os.environ["REPO"]
-          content = json.loads(Path("acceptance-content.json").read_text())
-          commits = json.loads(Path("acceptance-commits.json").read_text())
-          commit_detail = json.loads(Path("acceptance-commit.json").read_text())
-          associated = json.loads(Path("acceptance-prs.json").read_text())
-          pull = json.loads(Path("acceptance-pr.json").read_text())
-          issue = json.loads(Path("acceptance-issue.json").read_text())
-          if len(commits) != 1 or content.get("path") != path:
-              raise SystemExit("FATAL: acceptance commit/path is ambiguous")
-          changed = [
-              value for value in commit_detail.get("files", [])
-              if value.get("filename") == path and value.get("sha") == content.get("sha")
-          ]
-          if commit_detail.get("sha") != commits[0]["sha"] or len(changed) != 1:
-              raise SystemExit("FATAL: acceptance commit does not bind the current file bytes")
-
-          def pull_proof(value):
-              return {
-                  "number": value["number"],
-                  "html_url": value["html_url"],
-                  "state": value["state"],
-                  "merged": value["merged"] is True,
-                  "merged_at": value["merged_at"],
-                  "merged_by": {"login": value["merged_by"]["login"]},
-                  "base_repository": value["base"]["repo"]["full_name"],
-                  "base_ref": value["base"]["ref"],
-              }
-
-          def issue_proof(value):
-              return {
-                  "number": value["number"],
-                  "html_url": value["html_url"],
-                  "state": value["state"],
-                  "is_pull_request": "pull_request" in value,
-              }
-
-          proof = {
-              "repository": repository,
-              "path": path,
-              "record_sha256": hashlib.sha256(Path("acceptance.json").read_bytes()).hexdigest(),
-              "content_blob_sha": content["sha"],
-              "commit": {"sha": commits[0]["sha"], "path": path, "blob_sha": content["sha"]},
-              "associated_pull_requests": [pull_proof(value) for value in associated],
-              "pull_request": pull_proof(pull),
-              "issue": issue_proof(issue),
-          }
-          Path("github-evidence.json").write_text(json.dumps(proof, indent=2) + "\n")
-          PY
+          python3 scripts/promote_github_evidence.py "${RECORD_PATH}"
 
       - name: Evaluate one promotion decision
         id: policy
@@ -1390,75 +999,7 @@ jobs:
           ORIGINAL_CHILD_SELECTED: ${{ steps.tag.outputs.original_child_selected }}
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import datetime
-          import json
-          import os
-          import subprocess
-          import sys
-          from pathlib import Path
-
-          policy = json.loads(Path("validation-context/patch-policy.json").read_text())
-          args = [
-              sys.executable, "scripts/evaluate_promotion.py",
-              "--app", os.environ["APP"],
-              "--source-sha", os.environ["SOURCE_SHA"],
-              "--run-id", os.environ["RUN_ID"],
-              "--run-attempt", os.environ["RUN_ATTEMPT"],
-              "--proposed-tag", os.environ["INTERNAL_TAG"],
-              "--index", "upstream-index.json",
-              "--upstream-index-digest", os.environ["UPSTREAM_INDEX_DIGEST"],
-              "--child-manifest", "child-manifest.json",
-              "--child-config", "child-config.json",
-              "--full-report", "trivy-before-full.json",
-              "--fixable-report", "trivy-copa.json",
-              "--kev", "kev.json",
-              "--kev-fetched-at", Path("kev-fetched-at.txt").read_text().strip(),
-              "--now", datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "--validation-result", json.loads(Path("validation-evidence.json").read_text())["validation"]["result"],
-              "--patch-policy", policy["patchPolicy"],
-              "--out", "candidate-decision.json",
-          ]
-          if policy["patchPolicy"] == "disabled":
-              reason = policy["patchDisabledReason"]
-              args += ["--patch-disabled-class", reason["class"], "--patch-disabled-detail", reason["detail"]]
-          if Path("trivy-after-full.json").is_file():
-              original = json.loads(Path("original-candidate-decision.json").read_text()) if Path("original-candidate-decision.json").is_file() else None
-              classification = original["copa"]["classification"] if original else "succeeded"
-              args += [
-                  "--after-full-report", "trivy-after-full.json",
-                  "--scan-receipt", "scan-receipt.json",
-                  "--candidate-digest", os.environ["CANDIDATE_DIGEST"],
-                  "--copa-classification", classification,
-              ]
-          if Path("acceptance.json").is_file() and Path("github-evidence.json").is_file():
-              args += [
-                  "--acceptance", "acceptance.json",
-                  "--github-evidence", "github-evidence.json",
-                  "--github-repository", os.environ["GITHUB_REPOSITORY"],
-              ]
-          if os.environ.get("RESUME_ORIGINAL_RUN_ID"):
-              args += [
-                  "--resume-original-run-id", os.environ["RESUME_ORIGINAL_RUN_ID"],
-                  "--resume-original-run-attempt", os.environ["RESUME_ORIGINAL_RUN_ATTEMPT"],
-                  "--resume-original-source-sha", os.environ["RESUME_ORIGINAL_SOURCE_SHA"],
-                  "--resume-artifact-id", os.environ["RESUME_ARTIFACT_ID"],
-              ]
-          result = subprocess.run(args)
-          if result.returncode:
-              print("Candidate retained for operator review; publisher will not run.")
-          if Path("candidate-decision.json").is_file():
-              decision = json.loads(Path("candidate-decision.json").read_text())
-              decision["supersedes"] = {
-                  "higher_upstream": os.environ.get("HIGHER_UPSTREAM") == "true",
-                  "original_child_selected": os.environ.get("ORIGINAL_CHILD_SELECTED") == "true",
-              }
-              Path("candidate-decision.json").write_text(json.dumps(decision, indent=2) + "\n")
-              eligible = decision["eligible"]
-              with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open("a") as output:
-                  output.write(f"eligible={str(eligible).lower()}\n")
-          raise SystemExit(result.returncode)
-          PY
+          python3 scripts/promote_candidate_decision.py
 
       - name: Export checksum-bound candidate artifact
         id: candidate
@@ -1622,22 +1163,7 @@ jobs:
             exit 1
           fi
           test -s validation-context/image.yaml || { echo "FATAL: validation context is empty"; exit 1; }
-          OUT="$(python3 - validation-context/image.yaml "${APP}" <<'PY'
-          import sys
-          import yaml
-
-          spec = yaml.safe_load(open(sys.argv[1]))["spec"]
-          app = sys.argv[2]
-          if spec["destination"]["package"] != f"ghcr.io/bocklabs/{app}":
-              raise SystemExit("FATAL: validation context destination does not match app")
-          print(f"upstream_ref={spec['upstream']['ref']}")
-          print(f"upstream_tag={spec['upstream']['tag']}")
-          print(f"upstream_digest={spec['upstream']['digest']}")
-          print(f"dest_package={spec['destination']['package']}")
-          print(f"patch_policy={spec['patchPolicy']}")
-          print(f"app={app}")
-          PY
-          )"
+          OUT="$(python3 scripts/promote_validation_context.py validation-context/image.yaml "${APP}")"
           echo "${OUT}"
           echo "${OUT}" >> "$GITHUB_OUTPUT"
 
@@ -1672,41 +1198,7 @@ jobs:
             exit 1
           }
           sha256sum -c candidate-artifact/SHA256SUMS
-          python3 - <<'PY'
-          from pathlib import Path
-
-          root = Path("candidate-artifact")
-          mandatory = {
-              "candidate-decision.json", "candidate-manifest.json", "child-config.json",
-              "child-manifest.json", "inventory-image.yaml", "secobserve-upload.json",
-              "source.sha", "tag-decision.json", "trivy-before-full.json", "trivy-copa.json",
-              "trivy-full.cdx.json", "trivy-full.json", "upstream-index.json",
-              "validation-evidence.json", "kev.json",
-              "kev-fetched-at.txt", "trivy-db-meta-1.txt", "trivy-db-meta-2.txt", "SHA256SUMS",
-          }
-          optional = {
-              "trivy-after-full.json", "scan-receipt.json", "trivy-db-meta-after.txt",
-              "copa-diagnostics.txt", "copa-candidate-image-id.txt", "before-labels.json",
-              "after-labels.json", "acceptance.json", "github-evidence.json",
-              "original-candidate-decision.json", "resume-run.json", "resume-branch.json",
-              "resume-artifacts.jsonl", "resume-artifact-id.txt", "resume-candidate-image-id.txt",
-          }
-          actual = []
-          for path in root.rglob("*"):
-              relative = path.relative_to(root).as_posix()
-              if path.is_symlink() or path.is_absolute() or ".." in path.parts:
-                  raise SystemExit(f"FATAL: candidate artifact path traversal or symlink: {relative}")
-              if path.is_file():
-                  actual.append(relative)
-          allowed = mandatory | optional | {name for name in actual if name.startswith(("candidate-oci/", "validation-logs/"))}
-          undeclared = set(actual) - allowed
-          if undeclared or not mandatory <= set(actual):
-              raise SystemExit("FATAL: fresh candidate artifact has undeclared or missing files")
-          listed = [line.split("  ", 1)[1] for line in (root / "SHA256SUMS").read_text().splitlines()]
-          listed = [name[len("candidate-artifact/"):] if name.startswith("candidate-artifact/") else name for name in listed]
-          if len(listed) != len(set(listed)) or set(listed) != {name for name in actual if name != "SHA256SUMS"}:
-              raise SystemExit("FATAL: fresh candidate checksum manifest is ambiguous")
-          PY
+          python3 scripts/promote_candidate_artifact.py
           if [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
             gh api "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}" > publisher-resume-run.json
             ARTIFACT_ID="$(jq -er .artifact_id candidate-artifact/resume-artifact-id.txt 2>/dev/null || jq -er '.resume.artifact_id' candidate-artifact/candidate-decision.json)"
@@ -1731,84 +1223,7 @@ jobs:
             exit 1
           }
 
-          python3 - candidate-artifact/candidate-decision.json <<'PY'
-          import datetime
-          import importlib.util
-          import hashlib
-          import json
-          import os
-          from pathlib import Path
-          from types import SimpleNamespace
-
-          path = sys.argv[1]
-          decision = json.load(open(path))
-          spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
-          module = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(module)
-          module.validate_decision(decision)
-          expected = {
-              "app": os.environ["APP"],
-              "source_sha": os.environ["SOURCE_SHA"],
-              "run_id": os.environ["RUN_ID"],
-              "upstream_index_digest": os.environ["UPSTREAM_INDEX_DIGEST"],
-          }
-          mismatches = [f"{key}={decision.get(key)!r}" for key, value in expected.items() if decision.get(key) != value]
-          if decision.get("run_attempt") != int(os.environ["RUN_ATTEMPT"]):
-              mismatches.append(f"run_attempt={decision.get('run_attempt')!r}")
-          if not decision.get("eligible") or decision.get("validation", {}).get("result") != "pass":
-              mismatches.append(f"eligible={decision.get('eligible')!r}")
-          accepted_run = os.environ.get("ACCEPTED_CANDIDATE_RUN_ID", "")
-          if accepted_run:
-              expected_resume = {
-                  "original_run_id": accepted_run,
-                  "original_run_attempt": int(os.environ["RESUME_ORIGINAL_RUN_ATTEMPT"]),
-                  "original_source_sha": os.environ["RESUME_ORIGINAL_SOURCE_SHA"],
-                  "artifact_id": int(os.environ["RESUME_ARTIFACT_ID"]),
-              }
-              if decision.get("resume") != expected_resume:
-                  mismatches.append(f"resume={decision.get('resume')!r}")
-              original = json.load(open("candidate-artifact/original-candidate-decision.json"))
-              module.validate_decision(original)
-              if original.get("run_id") != accepted_run or original.get("eligible") is not False or original.get("reason") != "missing_kev_acceptance":
-                  mismatches.append("original_decision")
-              api_run = json.load(open("publisher-resume-run.json"))
-              api_artifact = json.load(open("publisher-resume-artifact.json"))
-              if (
-                  api_run.get("id") != int(accepted_run)
-                  or api_run.get("repository", {}).get("full_name") != os.environ["REPO"]
-                  or api_run.get("path") != ".github/workflows/promote.yaml"
-                  or api_run.get("event") != "workflow_dispatch"
-                  or api_run.get("head_branch") != "main"
-                  or api_run.get("head_sha") != os.environ["RESUME_ORIGINAL_SOURCE_SHA"]
-                  or api_run.get("run_attempt") != expected_resume["original_run_attempt"]
-                  or api_run.get("status") != "completed"
-              ):
-                  mismatches.append("resume_run_api")
-              if (
-                  api_artifact.get("id") != expected_resume["artifact_id"]
-                  or api_artifact.get("name") != "candidate"
-                  or api_artifact.get("expired") is not False
-                  or api_artifact.get("workflow_run", {}).get("id") != int(accepted_run)
-              ):
-                  mismatches.append("resume_artifact_api")
-          elif decision.get("resume") is not None:
-              mismatches.append("resume")
-          if decision.get("policy", {}).get("acceptance") is not None:
-              proof_args = SimpleNamespace(
-                  acceptance="candidate-artifact/acceptance.json",
-                  github_evidence="candidate-artifact/github-evidence.json",
-                  github_repository=os.environ["REPO"],
-                  app=os.environ["APP"],
-              )
-              now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-              acceptance = module.acceptance_evidence(
-                  proof_args, decision["candidate"]["digest"], decision["policy"]["kev"]["matched"], now
-              )
-              if acceptance != decision["policy"]["acceptance"]:
-                  mismatches.append("acceptance")
-          if mismatches:
-              raise SystemExit("FATAL: candidate decision binding failed: " + ", ".join(mismatches))
-          PY
+          python3 scripts/promote_decision_integrity.py candidate-artifact/candidate-decision.json
 
           INTERNAL_TAG="$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)"
           SELECTED_CHILD="$(jq -er .selected_child_digest candidate-artifact/candidate-decision.json)"
@@ -1988,20 +1403,7 @@ jobs:
           jq --arg digest "${CANDIDATE_DIGEST}" '.published.digest = $digest' \
             candidate-decision.json > candidate-decision.next.json
           mv candidate-decision.next.json candidate-decision.json
-          python3 - "${APP}" <<'PY'
-          import importlib.util
-          import json
-          import os
-          import sys
-
-          spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
-          module = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(module)
-          decision = json.load(open("candidate-decision.json"))
-          module.validate_decision(decision)
-          if decision["app"] != os.environ["APP"] or decision["published"]["digest"] != decision["candidate"]["digest"]:
-              raise SystemExit("FATAL: published decision identity is invalid")
-          PY
+          python3 scripts/promote_published_decision.py "${APP}"
           echo "decision_sha256=$(sha256sum candidate-decision.json | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Upload trivy-full-report artifact
@@ -2153,63 +1555,7 @@ jobs:
               echo "> Trivy report unavailable for this run."
             fi
             echo
-          python3 <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import json
-          from pathlib import Path
-
-          def rows(path):
-              if not Path(path).is_file():
-                  return []
-              report = json.loads(Path(path).read_text(encoding="utf-8"))
-              return [
-                  (finding.get("VulnerabilityID", ""), finding.get("PkgName", ""),
-                   finding.get("Severity", ""), finding.get("SeveritySource", ""))
-                  for result in report.get("Results", [])
-                  for finding in result.get("Vulnerabilities") or []
-              ]
-
-          print("### Before/final CVE evidence")
-          print()
-          print("| Stage | CVE | Package | Severity | Severity source |")
-          print("| --- | --- | --- | --- | --- |")
-          for stage, source in (("before", "trivy-before-full.json"), ("final", "trivy-full.json")):
-              for cve, package, severity, severity_source in sorted(set(rows(source))):
-                  print(f"| {stage} | {cve} | {package} | {severity} | {severity_source or '-'} |")
-          print()
-          decision_path = Path("candidate-decision.json")
-          if decision_path.is_file():
-              decision = json.loads(decision_path.read_text(encoding="utf-8"))
-              print("### Package changes")
-              print()
-              print("| Ecosystem | Package | Change | Before | After |")
-              print("| --- | --- | --- | --- | --- |")
-              changes = decision["packages"]["changes"] + decision["packages"]["downgrades"]
-              for change in sorted(changes, key=lambda value: (value["ecosystem"], value["name"])):
-                  print(f"| {change['ecosystem']} | {change['name']} | {change['change']} | {change['before'] or '-'} | {change['after'] or '-'} |")
-              print()
-              fixable = {row[0] for row in rows("trivy-copa.json")}
-              print("### Warnings")
-              print()
-              for cve, package, severity, severity_source in sorted(set(rows("trivy-full.json"))):
-                  if cve not in fixable:
-                      print(f"- no-fix: {cve} / {package} / {severity} / {severity_source or '-'}")
-              print()
-              catalog = decision["policy"]["kev"]["catalog"]
-              print("### KEV snapshot")
-              print()
-              print(f"- URL: {catalog['url']}")
-              print(f"- SHA256: `{catalog['sha256']}`")
-              print(f"- Version: {catalog['catalog_version']}")
-              print(f"- Released: {catalog['date_released']}")
-              print(f"- Fetched: {catalog['fetched_at']}")
-              print(f"- Matches: {', '.join(decision['policy']['kev']['matched']) or '-'}")
-              acceptance = decision["policy"]["acceptance"]
-              print()
-              print("### Acceptance expiry")
-              print()
-              print(acceptance["expires_at"] if acceptance else "N/A — no KEV exception")
-              print()
-          PY
+          python3 scripts/promote_summary.py >> "$GITHUB_STEP_SUMMARY"
             echo "### Links"
             echo
             echo "- Run: ${RUN_URL}"
@@ -2405,49 +1751,7 @@ jobs:
 
           PR_URL="$(gh pr list --head "${BRANCH}" --state all --json state,url \
             --jq '[.[] | select(.state == "OPEN")][0].url // ""')"
-          python3 - "${RUN_URL}" "${CANDIDATE_DIGEST}" "${INTERNAL_TAG}" <<'PY' > provenance-body.md
-          import json
-          import sys
-          from pathlib import Path
-
-          run_url, candidate_digest, internal_tag = sys.argv[1:]
-          decision = json.loads(Path("candidate-decision.json").read_text(encoding="utf-8"))
-          print("Machine-generated provenance record per docs/pipeline.md.")
-          print()
-          print(f"- Run: {run_url}")
-          print(f"- Candidate digest: `{candidate_digest}`")
-          print(f"- Internal tag: {internal_tag}")
-          print()
-          print("### Before/final CVE evidence")
-          print()
-          for name, values in decision["delta"]["cves"].items():
-              print(f"- {name}: {', '.join(values) or '-'}")
-          print()
-          print("### Package changes")
-          print()
-          changes = decision["packages"]["changes"] + decision["packages"]["downgrades"]
-          for change in changes:
-              print(f"- {change['ecosystem']}/{change['name']}: {change['change']} {change['before'] or '-'} → {change['after'] or '-'}")
-          print()
-          print("### Warnings")
-          print()
-          print(decision["reason"])
-          print()
-          catalog = decision["policy"]["kev"]["catalog"]
-          print("### KEV snapshot")
-          print()
-          print(f"- URL: {catalog['url']}")
-          print(f"- SHA256: `{catalog['sha256']}`")
-          print(f"- Version: {catalog['catalog_version']}")
-          print(f"- Released: {catalog['date_released']}")
-          print(f"- Fetched: {catalog['fetched_at']}")
-          print(f"- Matches: {', '.join(decision['policy']['kev']['matched']) or '-'}")
-          print()
-          print("### Acceptance expiry")
-          print()
-          acceptance = decision["policy"]["acceptance"]
-          print(acceptance["expires_at"] if acceptance else "N/A — no KEV exception")
-          PY
+          python3 scripts/promote_provenance_body.py "${RUN_URL}" "${CANDIDATE_DIGEST}" "${INTERNAL_TAG}" > provenance-body.md
           if [ -z "${PR_URL}" ]; then
             PR_URL="$(gh pr create \
               --head "${BRANCH}" \
@@ -2503,23 +1807,7 @@ jobs:
           }
           jq '.provenance.merged = true' candidate-decision.json > candidate-decision.next.json
           mv candidate-decision.next.json candidate-decision.json
-          python3 - "${APP}" "${CANDIDATE_DIGEST}" <<'PY'
-          import importlib.util
-          import json
-          import os
-
-          spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
-          module = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(module)
-          decision = json.load(open("candidate-decision.json"))
-          module.validate_decision(decision)
-          if (
-              decision["app"] != os.environ["APP"]
-              or decision["published"]["digest"] != os.environ["CANDIDATE_DIGEST"]
-              or decision["provenance"]["merged"] is not True
-          ):
-              raise SystemExit("FATAL: final candidate decision merge state is invalid")
-          PY
+          python3 scripts/promote_final_decision.py "${APP}" "${CANDIDATE_DIGEST}"
           echo "candidate-decision.json is complete; publication and provenance are verified" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the final candidate decision
