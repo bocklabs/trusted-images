@@ -675,6 +675,17 @@ def finding_details(keys, final: dict) -> str:
     )
 
 
+def patched_integrity_reason(delta: dict, downgrades: list) -> str | None:
+    blockers = []
+    if delta["introduced"]:
+        blockers.append(f"introduced CVEs ({','.join(delta['cves']['introduced'])})")
+    if delta["unresolved_fixable"]:
+        blockers.append(f"unresolved supplied CVEs ({','.join(delta['cves']['unresolved_fixable'])})")
+    if downgrades:
+        blockers.append("package downgrades (" + ",".join(f"{item['ecosystem']}/{item['name']}" for item in downgrades) + ")")
+    return "blocked: patched-image integrity failure: " + "; ".join(blockers) if blockers else None
+
+
 def decision_reason(args, delta: dict, downgrades: list, fixable_ids: list[str], patched: bool,
                     classification: str, failed_classification: bool, matched: list[str],
                     acceptance, disabled_reason, no_fix: list[str], final: dict) -> str:
@@ -683,14 +694,7 @@ def decision_reason(args, delta: dict, downgrades: list, fixable_ids: list[str],
     if failed_classification:
         return f"blocked: Copa classification is {classification}"
     if patched and (delta["introduced"] or delta["unresolved_fixable"] or downgrades):
-        blockers = []
-        if delta["introduced"]:
-            blockers.append(f"introduced CVEs ({','.join(delta['cves']['introduced'])})")
-        if delta["unresolved_fixable"]:
-            blockers.append(f"unresolved supplied CVEs ({','.join(delta['cves']['unresolved_fixable'])})")
-        if downgrades:
-            blockers.append("package downgrades (" + ",".join(f"{item['ecosystem']}/{item['name']}" for item in downgrades) + ")")
-        return "blocked: patched-image integrity failure: " + "; ".join(blockers)
+        return patched_integrity_reason(delta, downgrades)
     if fixable_ids and not patched and args.patch_policy != "disabled":
         return "blocked: fixable OS findings require the Copa patch path"
     if matched and acceptance is None:
@@ -831,22 +835,26 @@ def expected_package_change(group: str, item: dict) -> str:
     return "upgraded"
 
 
+def validate_decision_package(group: str, item):
+    package_fields = {"ecosystem", "name", "change", "before", "after"}
+    if not isinstance(item, dict) or set(item) != package_fields:
+        raise ValueError(f"decision.packages.{group} item is invalid")
+    if not isinstance(item["ecosystem"], str) or item["ecosystem"] not in VERSION_CLASSES:
+        raise ValueError(f"decision.packages.{group} ecosystem is invalid")
+    if not isinstance(item["name"], str) or not item["name"]:
+        raise ValueError(f"decision.packages.{group} name is invalid")
+    if item["change"] != expected_package_change(group, item):
+        raise ValueError(f"decision.packages.{group} change is invalid")
+    if not all(value is None or isinstance(value, str) for value in (item["before"], item["after"])):
+        raise ValueError(f"decision.packages.{group} versions are invalid")
+
+
 def validate_decision_packages(decision):
     if set(decision["packages"]) != {"changes", "downgrades"}:
         raise ValueError("decision.packages is invalid")
-    package_fields = {"ecosystem", "name", "change", "before", "after"}
     for group in decision["packages"]:
         for item in decision["packages"][group]:
-            if not isinstance(item, dict) or set(item) != package_fields:
-                raise ValueError(f"decision.packages.{group} item is invalid")
-            if not isinstance(item["ecosystem"], str) or item["ecosystem"] not in VERSION_CLASSES:
-                raise ValueError(f"decision.packages.{group} ecosystem is invalid")
-            if not isinstance(item["name"], str) or not item["name"]:
-                raise ValueError(f"decision.packages.{group} name is invalid")
-            if item["change"] != expected_package_change(group, item):
-                raise ValueError(f"decision.packages.{group} change is invalid")
-            if not all(value is None or isinstance(value, str) for value in (item["before"], item["after"])):
-                raise ValueError(f"decision.packages.{group} versions are invalid")
+            validate_decision_package(group, item)
 
 
 def validate_decision_patching(decision):
@@ -909,20 +917,24 @@ def validate_decision_policy(decision):
         validate_decision_acceptance(acceptance)
 
 
+def validate_resume_record(resume):
+    resume_fields = {"original_run_id", "original_run_attempt", "original_source_sha", "artifact_id"}
+    if not isinstance(resume, dict) or set(resume) != resume_fields:
+        raise ValueError("decision.resume is invalid")
+    if not isinstance(resume["original_run_id"], str) or not resume["original_run_id"].isdigit():
+        raise ValueError("decision.resume.original_run_id is invalid")
+    if isinstance(resume["original_run_attempt"], bool) or not isinstance(resume["original_run_attempt"], int) or resume["original_run_attempt"] <= 0:
+        raise ValueError("decision.resume.original_run_attempt is invalid")
+    if not isinstance(resume["original_source_sha"], str) or not SHA40_RE.fullmatch(resume["original_source_sha"]):
+        raise ValueError("decision.resume.original_source_sha is invalid")
+    if isinstance(resume["artifact_id"], bool) or not isinstance(resume["artifact_id"], int) or resume["artifact_id"] <= 0:
+        raise ValueError("decision.resume.artifact_id is invalid")
+
+
 def validate_decision_resume(decision):
     resume = decision["resume"]
-    resume_fields = {"original_run_id", "original_run_attempt", "original_source_sha", "artifact_id"}
     if resume is not None:
-        if not isinstance(resume, dict) or set(resume) != resume_fields:
-            raise ValueError("decision.resume is invalid")
-        if not isinstance(resume["original_run_id"], str) or not resume["original_run_id"].isdigit():
-            raise ValueError("decision.resume.original_run_id is invalid")
-        if isinstance(resume["original_run_attempt"], bool) or not isinstance(resume["original_run_attempt"], int) or resume["original_run_attempt"] <= 0:
-            raise ValueError("decision.resume.original_run_attempt is invalid")
-        if not isinstance(resume["original_source_sha"], str) or not SHA40_RE.fullmatch(resume["original_source_sha"]):
-            raise ValueError("decision.resume.original_source_sha is invalid")
-        if isinstance(resume["artifact_id"], bool) or not isinstance(resume["artifact_id"], int) or resume["artifact_id"] <= 0:
-            raise ValueError("decision.resume.artifact_id is invalid")
+        validate_resume_record(resume)
 
 
 def validate_decision_publication(decision):
@@ -965,7 +977,7 @@ def run_resolve_only(args) -> int:
     return 0
 
 
-def evaluate_candidate(args):
+def validate_candidate_inputs(args):
     if not SHA40_RE.fullmatch(args.source_sha):
         raise ValueError("--source-sha must be 40 lowercase hex digits")
     if not args.run_id.isdigit() or args.run_attempt <= 0 or not args.proposed_tag.strip():
@@ -975,6 +987,11 @@ def evaluate_candidate(args):
     if index_digest != args.upstream_index_digest:
         raise ValueError("upstream index bytes do not match the inventory digest")
     child_digest = select_child(index, Path(args.child_manifest), Path(args.child_config))
+    return index, child_digest, index_digest
+
+
+def evaluate_candidate(args):
+    index, child_digest, index_digest = validate_candidate_inputs(args)
     full_path = Path(args.full_report)
     after_path = Path(args.after_full_report) if args.after_full_report else None
     receipt_path = Path(args.scan_receipt) if args.scan_receipt else None

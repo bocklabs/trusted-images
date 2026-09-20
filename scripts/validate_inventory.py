@@ -162,11 +162,11 @@ def command_failure(value: object) -> str | None:
 
 
 def platform_failure(value: object) -> str | None:
-    valid = isinstance(value, list) and value and all(
-        isinstance(item, str) and PLATFORM_RE.match(item) for item in value
-    )
-    if not valid:
-        return f"must be a list of os/arch[/variant] strings (got {value!r})"
+    message = f"must be a list of os/arch[/variant] strings (got {value!r})"
+    if not isinstance(value, list) or not value:
+        return message
+    if any(not isinstance(item, str) or not PLATFORM_RE.match(item) for item in value):
+        return message
     return None
 
 

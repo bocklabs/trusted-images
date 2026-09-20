@@ -351,9 +351,9 @@ def decision_identity_violations(decision: dict, expected: dict[str, str]) -> li
     ]
 
 
-def decision_violations(args: argparse.Namespace, app: str, child_digest: str, internal_tag: str, platforms: list[str]) -> tuple[list[str], dict | None]:
+def decision_violations(args: argparse.Namespace, app: str, internal_tag: str, platforms: list[str]) -> tuple[list[str], dict | None]:
     violations = []
-    child_digest = value_of(args, "--upstream-child-digest").strip()
+    provided_child = value_of(args, "--upstream-child-digest").strip()
     decision_sha = value_of(args, "--decision-sha256").strip()
     try:
         decision = load_json(value_of(args, "--decision"), "--decision")
@@ -369,7 +369,7 @@ def decision_violations(args: argparse.Namespace, app: str, child_digest: str, i
         expected = {
             "app": app,
             "upstream_index_digest": value_of(args, "--upstream-digest"),
-            "selected_child_digest": child_digest,
+            "selected_child_digest": provided_child,
             "candidate_digest": value_of(args, "--internal-digest"),
             "proposed_tag": internal_tag,
         }
@@ -382,10 +382,10 @@ def decision_violations(args: argparse.Namespace, app: str, child_digest: str, i
             violations.append("decision provenance merged must be false before this run writes provenance")
         if decision_sha != file_sha256(Path(value_of(args, "--decision"))):
             violations.append("--decision-sha256 does not match --decision bytes")
-    if child_digest:
+    if provided_child:
         if platforms != ["linux/amd64"]:
             violations.append("--platforms must be exactly linux/amd64 for new records")
-        if child_digest == value_of(args, "--upstream-digest"):
+        if provided_child == value_of(args, "--upstream-digest"):
             violations.append("--upstream-child-digest must differ from the index digest")
     return violations, decision
 
@@ -399,21 +399,34 @@ def recovery_violations(args: argparse.Namespace, decision: dict | None, interna
     if any(recovered_values) and not all(recovered_values):
         violations.append("recovery metadata must provide tag and digest")
     if any(original_values):
-        if not SOURCE_SHA_RE.fullmatch(value_of(args, "--original-source-sha")):
-            violations.append("--original-source-sha must be 40 lowercase hex digits")
-        if decision is not None and decision["resume"] is None and not all(recovered_values):
-            violations.append("original run metadata requires decision resume or recovery evidence")
-        if decision is not None and decision["resume"] is not None and not all(original_values):
-            violations.append("decision resume requires original run metadata")
-        if value_of(args, "--original-run-url") == value_of(args, "--run-url"):
-            violations.append("--run-url must identify a new recovery run")
+        violations.extend(original_run_violations(args, decision, original_values, recovered_values))
     if any(recovered_values):
         if not all(original_values):
             violations.append("recovery metadata requires original run metadata")
-        if value_of(args, "--recovered-tag") != internal_tag:
-            violations.append("--recovered-tag must equal --internal-tag")
-        if value_of(args, "--recovered-digest") != value_of(args, "--internal-digest"):
-            violations.append("--recovered-digest must equal --internal-digest")
+        violations.extend(recovered_tag_violations(args, internal_tag))
+    return violations
+
+
+def original_run_violations(args: argparse.Namespace, decision: dict | None,
+                            original_values: list[str], recovered_values: list[str]) -> list[str]:
+    violations = []
+    if not SOURCE_SHA_RE.fullmatch(value_of(args, "--original-source-sha")):
+        violations.append("--original-source-sha must be 40 lowercase hex digits")
+    if decision is not None and decision["resume"] is None and not all(recovered_values):
+        violations.append("original run metadata requires decision resume or recovery evidence")
+    if decision is not None and decision["resume"] is not None and not all(original_values):
+        violations.append("decision resume requires original run metadata")
+    if value_of(args, "--original-run-url") == value_of(args, "--run-url"):
+        violations.append("--run-url must identify a new recovery run")
+    return violations
+
+
+def recovered_tag_violations(args: argparse.Namespace, internal_tag: str) -> list[str]:
+    violations = []
+    if value_of(args, "--recovered-tag") != internal_tag:
+        violations.append("--recovered-tag must equal --internal-tag")
+    if value_of(args, "--recovered-digest") != value_of(args, "--internal-digest"):
+        violations.append("--recovered-digest must equal --internal-digest")
     return violations
 
 
@@ -441,9 +454,8 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
     identity, platforms = identity_violations(args)
     violations.extend(identity)
     app = value_of(args, "--app")
-    child_digest = value_of(args, "--upstream-child-digest").strip()
     internal_tag = value_of(args, "--internal-tag")
-    decision_issues, decision = decision_violations(args, app, child_digest, internal_tag, platforms)
+    decision_issues, decision = decision_violations(args, app, internal_tag, platforms)
     violations.extend(decision_issues)
     violations.extend(recovery_violations(args, decision, internal_tag))
     violations.extend(report_hash_violations(args))
