@@ -26,6 +26,24 @@ jobs:
           key: ${{ runner.os }}-sonar-${{ hashFiles('.github/workflows/sonarqube.yaml') }}
           restore-keys: ${{ runner.os }}-sonar-
 
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version-file: .python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+
+      - name: Run test suite with coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv pip install --system -r requirements.txt
+          coverage run --branch -m unittest discover -s tests
+          coverage xml
+
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
         env:

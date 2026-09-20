@@ -355,6 +355,16 @@ class PolicyTests(unittest.TestCase):
                 self.assertTrue(decision["eligible"])
                 self.assertTrue(decision["copa"]["original_child_input"])
 
+    def test_go_default_time_format_from_trivy_version_is_accepted(self):
+        self.patched([vuln("CVE-2026-0007", "LOW", fixed="1.1")], [],
+                     [package("libexample", "1.0")], [package("libexample", "1.1")])
+        receipt = json.loads(self.receipt.read_text())
+        receipt["trivy_db_updated_at"] = "2026-09-14 00:00:00.422928923 +0000 UTC"
+        self.receipt.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+        result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(json.loads(self.out.read_text())["eligible"])
+
     def test_nanosecond_trivy_db_timestamp_is_accepted(self):
         self.patched([vuln("CVE-2026-0007", "LOW", fixed="1.1")], [],
                      [package("libexample", "1.0")], [package("libexample", "1.1")])
