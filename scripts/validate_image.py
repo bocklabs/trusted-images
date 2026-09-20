@@ -422,21 +422,8 @@ def local_candidate_error(args: argparse.Namespace, index: dict, index_path: Pat
     return None
 
 
-def main() -> int:
-    args = parse_args()
-    started_wall = datetime.now(timezone.utc)
-    started_mono = time.monotonic()
-
-    try:
-        command, env_map = runtime_inputs(args)
-    except ValueError as exc:
-        print(f"FATAL: {exc}")
-        return 2
-
-    evidence_out = Path(args.evidence_out)
-    logs_path = evidence_out.parent / LOGS_DIRNAME / f"{args.app}.log"
-
-    ev: dict = {
+def initial_evidence(args, command: str, env_map: dict) -> dict:
+    return {
         "app": args.app,
         "validation": {
             "type": args.validation_type,
@@ -464,6 +451,23 @@ def main() -> int:
             },
         },
     }
+
+
+def main() -> int:
+    args = parse_args()
+    started_wall = datetime.now(timezone.utc)
+    started_mono = time.monotonic()
+
+    try:
+        command, env_map = runtime_inputs(args)
+    except ValueError as exc:
+        print(f"FATAL: {exc}")
+        return 2
+
+    evidence_out = Path(args.evidence_out)
+    logs_path = evidence_out.parent / LOGS_DIRNAME / f"{args.app}.log"
+
+    ev: dict = initial_evidence(args, command, env_map)
 
     def finish() -> None:
         finished = datetime.now(timezone.utc)

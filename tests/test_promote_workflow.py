@@ -110,23 +110,25 @@ class TagAllocationTests(unittest.TestCase):
             )
 
     def test_recovery_rejects_mismatched_revision(self) -> None:
+        observation = self.observation(2)
         with self.assertRaisesRegex(ValueError, "digest"):
             self.select(
                 "v1.2.3",
                 DIGEST_C,
                 DIGEST_A,
-                [self.observation(2)],
+                [observation],
                 recover_tag="v1.2.3-bocklabs.2",
                 recover_candidate_digest=DIGEST_B,
             )
 
     def test_recovery_rejects_historical_revision(self) -> None:
+        observation = self.observation(2, child=None, index="", platforms=("linux/amd64", "linux/arm64"))
         with self.assertRaisesRegex(ValueError, "Phase 05"):
             self.select(
                 "v1.2.3",
                 DIGEST_C,
                 DIGEST_A,
-                [self.observation(2, child=None, index="", platforms=("linux/amd64", "linux/arm64"))],
+                [observation],
                 recover_tag="v1.2.3-bocklabs.2",
                 recover_candidate_digest=DIGEST_A,
             )
