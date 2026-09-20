@@ -21,7 +21,9 @@ print("### Package changes")
 print()
 changes = decision["packages"]["changes"] + decision["packages"]["downgrades"]
 for change in changes:
-    print(f"- {change['ecosystem']}/{change['name']}: {change['change']} {change['before'] or '-'} → {change['after'] or '-'}")
+    print(
+        f"- {change['ecosystem']}/{change['name']}: {change['change']} {change['before'] or '-'} → {change['after'] or '-'}"
+    )
 print()
 print("### Warnings")
 print()

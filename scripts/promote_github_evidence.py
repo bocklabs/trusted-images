@@ -17,11 +17,13 @@ issue = json.loads(Path("acceptance-issue.json").read_text())
 if len(commits) != 1 or content.get("path") != path:
     raise SystemExit("FATAL: acceptance commit/path is ambiguous")
 changed = [
-    value for value in commit_detail.get("files", [])
+    value
+    for value in commit_detail.get("files", [])
     if value.get("filename") == path and value.get("sha") == content.get("sha")
 ]
 if commit_detail.get("sha") != commits[0]["sha"] or len(changed) != 1:
     raise SystemExit("FATAL: acceptance commit does not bind the current file bytes")
+
 
 def pull_proof(value):
     return {
@@ -35,6 +37,7 @@ def pull_proof(value):
         "base_ref": value["base"]["ref"],
     }
 
+
 def issue_proof(value):
     return {
         "number": value["number"],
@@ -42,6 +45,19 @@ def issue_proof(value):
         "state": value["state"],
         "is_pull_request": "pull_request" in value,
     }
+
+
+if (
+    pull.get("state") != "closed"
+    or pull.get("merged") is not True
+    or not pull.get("merged_at")
+    or pull.get("base", {}).get("repo", {}).get("full_name") != repository
+    or pull.get("base", {}).get("ref") != "main"
+    or not any(value.get("number") == pull.get("number") for value in associated)
+):
+    raise SystemExit(
+        "FATAL: acceptance pull request is not a merged main-branch approval"
+    )
 
 proof = {
     "repository": repository,

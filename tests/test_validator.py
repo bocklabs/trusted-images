@@ -7,7 +7,6 @@ negative case — that the failure output names the offending file, field, or
 value. stdlib unittest only; PyYAML is used to build the fixtures.
 """
 
-
 import subprocess
 import sys
 import tempfile
@@ -86,7 +85,10 @@ class ValidatorTests(unittest.TestCase):
         self.assert_fails(entry, "spec.upstream.digest")
 
     def test_upstream_action_inputs_reject_shell_syntax(self):
-        for field, value in (("ref", "registry.example/app;echo bad"), ("tag", 'v1$(echo bad)')):
+        for field, value in (
+            ("ref", "registry.example/app;echo bad"),
+            ("tag", "v1$(echo bad)"),
+        ):
             with self.subTest(field=field):
                 entry = valid_entry()
                 entry["spec"]["upstream"][field] = value
@@ -119,7 +121,10 @@ class ValidatorTests(unittest.TestCase):
     def test_disabled_patch_policy_accepts_only_exact_reason(self) -> None:
         entry = valid_entry()
         entry["spec"]["patchPolicy"] = "disabled"
-        entry["spec"]["patchDisabledReason"] = {"class": "unsupported", "detail": "No OS package manager"}
+        entry["spec"]["patchDisabledReason"] = {
+            "class": "unsupported",
+            "detail": "No OS package manager",
+        }
         self.assert_valid(entry)
         cases = (
             ({}, "missing"),
@@ -127,19 +132,41 @@ class ValidatorTests(unittest.TestCase):
             ({"detail": "No OS package manager"}, "missing"),
             ({"class": "eol", "detail": "No OS package manager"}, "class"),
             ({"class": "unsupported", "detail": ""}, "detail"),
-            ({"class": "unsupported", "detail": "No OS package manager", "why": "extra"}, "why"),
+            (
+                {
+                    "class": "unsupported",
+                    "detail": "No OS package manager",
+                    "why": "extra",
+                },
+                "why",
+            ),
         )
         for reason, needle_text in cases:
             with self.subTest(needle_text=needle_text):
                 entry = valid_entry()
                 entry["spec"]["patchPolicy"] = "disabled"
                 entry["spec"]["patchDisabledReason"] = reason
-                self.assert_fails(entry, {"missing": "missing required field spec.patchDisabledReason", "unknown": "spec.patchDisabledReason has unknown keys", "class": "spec.patchDisabledReason.class", "detail": "spec.patchDisabledReason.detail", "why": "unknown keys"}[needle_text])
+                self.assert_fails(
+                    entry,
+                    {
+                        "missing": "missing required field spec.patchDisabledReason",
+                        "unknown": "spec.patchDisabledReason has unknown keys",
+                        "class": "spec.patchDisabledReason.class",
+                        "detail": "spec.patchDisabledReason.detail",
+                        "why": "unknown keys",
+                    }[needle_text],
+                )
 
     def test_enabled_patch_policy_forbids_disabled_reason(self) -> None:
         entry = valid_entry()
-        entry["spec"]["patchDisabledReason"] = {"class": "unsupported", "detail": "No OS package manager"}
-        self.assert_fails(entry, "spec.patchDisabledReason is only valid when spec.patchPolicy is disabled")
+        entry["spec"]["patchDisabledReason"] = {
+            "class": "unsupported",
+            "detail": "No OS package manager",
+        }
+        self.assert_fails(
+            entry,
+            "spec.patchDisabledReason is only valid when spec.patchPolicy is disabled",
+        )
 
     def test_wrong_validation_type_fails(self) -> None:
         entry = valid_entry()
@@ -175,7 +202,10 @@ class ValidatorTests(unittest.TestCase):
 
     def test_expected_platforms_list_passes(self) -> None:
         entry = valid_entry()
-        entry["spec"]["validation"]["expectedPlatforms"] = ["linux/amd64", "linux/arm64"]
+        entry["spec"]["validation"]["expectedPlatforms"] = [
+            "linux/amd64",
+            "linux/arm64",
+        ]
         self.assert_valid(entry)
 
     def test_expected_platforms_non_list_fails(self) -> None:

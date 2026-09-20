@@ -44,7 +44,6 @@ Usage: validate_inventory.py [ROOT]   (ROOT defaults to ./inventory)
 PyYAML 6.0.3 is the one deliberate dependency; everything else is stdlib.
 """
 
-
 import re
 import sys
 from pathlib import Path
@@ -178,7 +177,9 @@ def env_failure(value: object) -> str | None:
     return None
 
 
-def required_field_failures(path: Path, data: dict) -> tuple[dict[str, object], list[str]]:
+def required_field_failures(
+    path: Path, data: dict
+) -> tuple[dict[str, object], list[str]]:
     values: dict[str, object] = {}
     issues = []
     for field in REQUIRED_FIELDS:
@@ -193,7 +194,9 @@ def required_field_failures(path: Path, data: dict) -> tuple[dict[str, object], 
 def identity_failures(path: Path, name: str, values: dict[str, object]) -> list[str]:
     issues = []
     if API_VERSION_FIELD in values and values[API_VERSION_FIELD] != API_VERSION:
-        issues.append(f"apiVersion must be '{API_VERSION}' (got {values[API_VERSION_FIELD]!r})")
+        issues.append(
+            f"apiVersion must be '{API_VERSION}' (got {values[API_VERSION_FIELD]!r})"
+        )
     if KIND_FIELD in values and values[KIND_FIELD] != KIND:
         issues.append(f"kind must be '{KIND}' (got {values[KIND_FIELD]!r})")
     if NAME_FIELD in values and values[NAME_FIELD] != name:
@@ -209,13 +212,20 @@ def upstream_failures(path: Path, values: dict[str, object]) -> list[str]:
         value = values.get(field)
         if field in values and (not isinstance(value, str) or not value.strip()):
             issues.append(f"{field} must be a non-empty string (got {value!r})")
-    for field, pattern in ((UPSTREAM_REF_FIELD, UPSTREAM_REF_RE), (UPSTREAM_TAG_FIELD, UPSTREAM_TAG_RE)):
+    for field, pattern in (
+        (UPSTREAM_REF_FIELD, UPSTREAM_REF_RE),
+        (UPSTREAM_TAG_FIELD, UPSTREAM_TAG_RE),
+    ):
         value = values.get(field)
         if isinstance(value, str) and not pattern.fullmatch(value):
             issues.append(f"{field} must be a shell-safe container reference component")
     digest = values.get(UPSTREAM_DIGEST_FIELD)
-    if UPSTREAM_DIGEST_FIELD in values and (not isinstance(digest, str) or not DIGEST_RE.match(digest)):
-        issues.append(f"spec.upstream.digest {digest!r} is not a valid sha256:64-hex digest")
+    if UPSTREAM_DIGEST_FIELD in values and (
+        not isinstance(digest, str) or not DIGEST_RE.match(digest)
+    ):
+        issues.append(
+            f"spec.upstream.digest {digest!r} is not a valid sha256:64-hex digest"
+        )
     return [f"{path}: {issue}" for issue in issues]
 
 
@@ -223,11 +233,15 @@ def destination_failure(path: Path, name: str, values: dict[str, object]) -> lis
     package = values.get(PACKAGE_FIELD)
     expected = f"{REGISTRY_PREFIX}{name}"
     if PACKAGE_FIELD in values and package != expected:
-        return [f"{path}: spec.destination.package must be '{expected}' (got {package!r})"]
+        return [
+            f"{path}: spec.destination.package must be '{expected}' (got {package!r})"
+        ]
     return []
 
 
-def patch_policy_failures(path: Path, data: dict, values: dict[str, object]) -> list[str]:
+def patch_policy_failures(
+    path: Path, data: dict, values: dict[str, object]
+) -> list[str]:
     issues = []
     patch_policy = values.get(PATCH_POLICY_FIELD)
     if PATCH_POLICY_FIELD in values and patch_policy not in PATCH_POLICIES:
@@ -236,17 +250,27 @@ def patch_policy_failures(path: Path, data: dict, values: dict[str, object]) -> 
         )
     reason_present, reason = dig(data, PATCH_REASON_FIELD)
     if patch_policy == "disabled" and not reason_present:
-        issues.append(f"{PATCH_REASON_FIELD} is required when spec.patchPolicy is disabled")
+        issues.append(
+            f"{PATCH_REASON_FIELD} is required when spec.patchPolicy is disabled"
+        )
     if patch_policy == "enabled" and reason_present:
-        issues.append(f"{PATCH_REASON_FIELD} is only valid when spec.patchPolicy is disabled")
-    return [f"{path}: {issue}" for issue in issues] + patch_disabled_reason_failures(path, reason_present, reason)
+        issues.append(
+            f"{PATCH_REASON_FIELD} is only valid when spec.patchPolicy is disabled"
+        )
+    return [f"{path}: {issue}" for issue in issues] + patch_disabled_reason_failures(
+        path, reason_present, reason
+    )
 
 
-def patch_disabled_reason_failures(path: Path, reason_present: bool, reason: object) -> list[str]:
+def patch_disabled_reason_failures(
+    path: Path, reason_present: bool, reason: object
+) -> list[str]:
     if not reason_present:
         return []
     if not isinstance(reason, dict):
-        return [f"{path}: {PATCH_REASON_FIELD} must be a mapping (got {type(reason).__name__})"]
+        return [
+            f"{path}: {PATCH_REASON_FIELD} must be a mapping (got {type(reason).__name__})"
+        ]
     issues = []
     for field in sorted(PATCH_DISABLED_REASON_FIELDS - set(reason)):
         issues.append(f"missing required field {PATCH_REASON_FIELD}.{field}")
@@ -263,7 +287,9 @@ def patch_disabled_reason_failures(path: Path, reason_present: bool, reason: obj
         )
     detail = reason.get("detail")
     if "detail" in reason and (not isinstance(detail, str) or not detail.strip()):
-        issues.append(f"{PATCH_REASON_FIELD}.detail must be a non-empty string (got {detail!r})")
+        issues.append(
+            f"{PATCH_REASON_FIELD}.detail must be a non-empty string (got {detail!r})"
+        )
     return [f"{path}: {issue}" for issue in issues]
 
 
@@ -273,9 +299,13 @@ def validation_failures(path: Path, data: dict, values: dict[str, object]) -> li
     vtype = values[VALIDATION_TYPE_FIELD]
     validation = dig(data, VALIDATION_FIELD)[1]
     if not isinstance(vtype, str) or vtype not in VALIDATION_PROFILES:
-        return [f"{path}: {VALIDATION_TYPE_FIELD} {vtype!r} not in {list(VALIDATION_PROFILES)}"]
+        return [
+            f"{path}: {VALIDATION_TYPE_FIELD} {vtype!r} not in {list(VALIDATION_PROFILES)}"
+        ]
     if not isinstance(validation, dict):
-        return [f"{path}: {VALIDATION_FIELD} must be a mapping (got {type(validation).__name__})"]
+        return [
+            f"{path}: {VALIDATION_FIELD} must be a mapping (got {type(validation).__name__})"
+        ]
     return validation_param_failures(path, validation, vtype)
 
 
@@ -304,9 +334,15 @@ def version_failure(path: Path, values: dict[str, object]) -> list[str]:
     if VERSION_FIELD not in values:
         return []
     version = values[VERSION_FIELD]
-    invalid = isinstance(version, bool) or not isinstance(version, int) or version != SCHEMA_VERSION
+    invalid = (
+        isinstance(version, bool)
+        or not isinstance(version, int)
+        or version != SCHEMA_VERSION
+    )
     if invalid:
-        return [f"{path}: spec.version must be the integer {SCHEMA_VERSION} (got {version!r})"]
+        return [
+            f"{path}: spec.version must be the integer {SCHEMA_VERSION} (got {version!r})"
+        ]
     return []
 
 
@@ -346,7 +382,9 @@ def validate(root: Path) -> list[str]:
             continue
         failures.extend(entry_failures(entry, data))
 
-        _, package = dig(data if isinstance(data, dict) else {}, "spec.destination.package")
+        _, package = dig(
+            data if isinstance(data, dict) else {}, "spec.destination.package"
+        )
         if isinstance(package, str) and package:
             if package in packages:
                 failures.append(

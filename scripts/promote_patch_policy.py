@@ -3,6 +3,7 @@
 import json
 import sys
 import yaml
+
 spec = yaml.safe_load(open(sys.argv[1]))["spec"]
 policy = {"patchPolicy": spec["patchPolicy"]}
 if spec["patchPolicy"] == "disabled":

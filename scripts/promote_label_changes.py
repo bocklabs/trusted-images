@@ -2,6 +2,7 @@
 
 import json
 import sys
+
 before = json.load(open(sys.argv[1])) or {}
 after = json.load(open(sys.argv[2])) or {}
 allowed = {

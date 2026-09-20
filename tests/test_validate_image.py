@@ -91,12 +91,18 @@ raise SystemExit(0)
 INDEX_JSON = {
     "schemaVersion": 2,
     "mediaType": "application/vnd.oci.image.manifest.v1+json",
-    "config": {"mediaType": "application/vnd.oci.image.config.v1+json", "digest": DIGEST, "size": 123},
+    "config": {
+        "mediaType": "application/vnd.oci.image.config.v1+json",
+        "digest": DIGEST,
+        "size": 123,
+    },
     "annotations": {"org.example": "preserved"},
 }
 
 
-def image_inspect(healthcheck=None, labels=None, config=None, architecture="amd64") -> list:
+def image_inspect(
+    healthcheck=None, labels=None, config=None, architecture="amd64"
+) -> list:
     runtime = {
         "Entrypoint": ["/bin/app"],
         "Cmd": [],
@@ -137,16 +143,24 @@ class ValidateImageTests(unittest.TestCase):
     def write_scenario(self, scenario: dict) -> None:
         self.scenario_path.write_text(json.dumps(scenario), encoding="utf-8")
 
-    def run_cli(self, validation_type: str, extra: tuple = ()) -> subprocess.CompletedProcess:
+    def run_cli(
+        self, validation_type: str, extra: tuple = ()
+    ) -> subprocess.CompletedProcess:
         argv = [
             sys.executable,
             str(VALIDATE_IMAGE),
-            "--app", APP,
-            "--ref", REF,
-            "--digest", DIGEST,
-            "--validation-type", validation_type,
-            "--index-file", str(self.index),
-            "--evidence-out", str(self.evidence),
+            "--app",
+            APP,
+            "--ref",
+            REF,
+            "--digest",
+            DIGEST,
+            "--validation-type",
+            validation_type,
+            "--index-file",
+            str(self.index),
+            "--evidence-out",
+            str(self.evidence),
             *extra,
         ]
         env = os.environ.copy()
@@ -154,33 +168,63 @@ class ValidateImageTests(unittest.TestCase):
         env["FAKE_DOCKER_SPOOL"] = str(self.spool)
         env["FAKE_DOCKER_SCENARIO"] = str(self.scenario_path)
         env.pop("GITHUB_RUN_ID", None)
-        return subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120)
+        return subprocess.run(
+            argv, capture_output=True, text=True, env=env, timeout=120
+        )
 
     def test_local_image_is_bound_to_committed_id_and_manifest_digest_evidence(self):
         image = image_inspect()
         image[0]["Id"] = DOCKER_IMAGE_ID
         self.write_scenario({"image_inspect": image})
-        manifest_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
-        result = self.run_cli("process", (
-            "--local-image", "copa:final", "--local-image-id", DOCKER_IMAGE_ID,
-            "--digest", manifest_digest, "--duration-seconds", "0",
-        ))
+        manifest_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
+        result = self.run_cli(
+            "process",
+            (
+                "--local-image",
+                "copa:final",
+                "--local-image-id",
+                DOCKER_IMAGE_ID,
+                "--digest",
+                manifest_digest,
+                "--duration-seconds",
+                "0",
+            ),
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         calls = self.spool_entries()
         self.assertEqual(calls[0], ["image", "inspect", "copa:final"])
-        self.assertTrue(any(DOCKER_IMAGE_ID in call and call[0] == "run" for call in calls))
-        self.assertEqual(self.load_evidence()["validation"]["candidate_digest"], manifest_digest)
-        self.assertEqual(self.load_evidence()["validation"]["candidate_image_id"], DOCKER_IMAGE_ID)
+        self.assertTrue(
+            any(DOCKER_IMAGE_ID in call and call[0] == "run" for call in calls)
+        )
+        self.assertEqual(
+            self.load_evidence()["validation"]["candidate_digest"], manifest_digest
+        )
+        self.assertEqual(
+            self.load_evidence()["validation"]["candidate_image_id"], DOCKER_IMAGE_ID
+        )
 
     def test_local_image_id_mismatch_fails_closed(self):
         image = image_inspect()
         image[0]["Id"] = "sha256:" + "c" * 64
         self.write_scenario({"image_inspect": image})
-        manifest_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
-        result = self.run_cli("process", (
-            "--local-image", "copa:final", "--local-image-id", DOCKER_IMAGE_ID,
-            "--digest", manifest_digest, "--duration-seconds", "0",
-        ))
+        manifest_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
+        result = self.run_cli(
+            "process",
+            (
+                "--local-image",
+                "copa:final",
+                "--local-image-id",
+                DOCKER_IMAGE_ID,
+                "--digest",
+                manifest_digest,
+                "--duration-seconds",
+                "0",
+            ),
+        )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("image Id", result.stdout + result.stderr)
 
@@ -188,10 +232,20 @@ class ValidateImageTests(unittest.TestCase):
         image = image_inspect()
         image[0]["Id"] = DOCKER_IMAGE_ID
         self.write_scenario({"image_inspect": image})
-        manifest_digest = "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
-        result = self.run_cli("process", (
-            "--local-image", "copa:final", "--digest", manifest_digest, "--duration-seconds", "0",
-        ))
+        manifest_digest = (
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest()
+        )
+        result = self.run_cli(
+            "process",
+            (
+                "--local-image",
+                "copa:final",
+                "--digest",
+                manifest_digest,
+                "--duration-seconds",
+                "0",
+            ),
+        )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("--local-image-id", result.stdout + result.stderr)
 
@@ -234,9 +288,12 @@ class ValidateImageTests(unittest.TestCase):
     # --- negative cases (D-15 layer 1) ---
 
     def test_wrong_port_fails(self) -> None:
-        self.write_scenario({"image_inspect": image_inspect(), "probe_statuses": ["000"]})
+        self.write_scenario(
+            {"image_inspect": image_inspect(), "probe_statuses": ["000"]}
+        )
         result = self.run_cli(
-            "http", ("--port", "9187", "--timeout-seconds", "2", "--duration-seconds", "2")
+            "http",
+            ("--port", "9187", "--timeout-seconds", "2", "--duration-seconds", "2"),
         )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
@@ -251,7 +308,9 @@ class ValidateImageTests(unittest.TestCase):
 
     def test_oneshot_wrong_exit_fails(self) -> None:
         self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 1})
-        result = self.run_cli("oneshot", ("--expected-exit", "0", "--command", '["/bin/true"]'))
+        result = self.run_cli(
+            "oneshot", ("--expected-exit", "0", "--command", '["/bin/true"]')
+        )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
         self.assertIn("FATAL", output)
@@ -262,7 +321,10 @@ class ValidateImageTests(unittest.TestCase):
 
     def test_process_crash_before_duration_fails(self) -> None:
         self.write_scenario(
-            {"image_inspect": image_inspect(), "inspect_states": [{"State": {"Running": False}}]}
+            {
+                "image_inspect": image_inspect(),
+                "inspect_states": [{"State": {"Running": False}}],
+            }
         )
         result = self.run_cli("process", ("--duration-seconds", "2"))
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
@@ -283,7 +345,8 @@ class ValidateImageTests(unittest.TestCase):
             }
         )
         result = self.run_cli(
-            "http", ("--port", "9187", "--timeout-seconds", "2", "--duration-seconds", "2")
+            "http",
+            ("--port", "9187", "--timeout-seconds", "2", "--duration-seconds", "2"),
         )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
@@ -302,7 +365,8 @@ class ValidateImageTests(unittest.TestCase):
             }
         )
         result = self.run_cli(
-            "http", ("--port", "9187", "--timeout-seconds", "2", "--duration-seconds", "2")
+            "http",
+            ("--port", "9187", "--timeout-seconds", "2", "--duration-seconds", "2"),
         )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
@@ -341,13 +405,15 @@ class ValidateImageTests(unittest.TestCase):
             }
         )
         result = self.run_cli(
-            "http", ("--port", "9187", "--timeout-seconds", "3", "--duration-seconds", "2")
+            "http",
+            ("--port", "9187", "--timeout-seconds", "3", "--duration-seconds", "2"),
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "pass")
         self.assertEqual(
-            ev["validation"]["health"], {"defined": False, "final_status": "none-defined"}
+            ev["validation"]["health"],
+            {"defined": False, "final_status": "none-defined"},
         )
         self.assert_common_evidence(ev)
         self.assert_network_isolated()
@@ -364,7 +430,8 @@ class ValidateImageTests(unittest.TestCase):
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "pass")
         self.assertEqual(
-            ev["validation"]["health"], {"defined": False, "final_status": "none-defined"}
+            ev["validation"]["health"],
+            {"defined": False, "final_status": "none-defined"},
         )
         self.assert_common_evidence(ev)
         self.assert_network_isolated()
@@ -372,12 +439,15 @@ class ValidateImageTests(unittest.TestCase):
 
     def test_happy_oneshot_passes(self) -> None:
         self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 0})
-        result = self.run_cli("oneshot", ("--expected-exit", "0", "--command", '["/bin/true"]'))
+        result = self.run_cli(
+            "oneshot", ("--expected-exit", "0", "--command", '["/bin/true"]')
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "pass")
         self.assertEqual(
-            ev["validation"]["health"], {"defined": False, "final_status": "not-applicable"}
+            ev["validation"]["health"],
+            {"defined": False, "final_status": "not-applicable"},
         )
         self.assertIn("log", ev["validation"]["logs_note"].lower())
         self.assert_common_evidence(ev)
@@ -387,8 +457,10 @@ class ValidateImageTests(unittest.TestCase):
 
     def baseline_args(self) -> tuple:
         return (
-            "--baseline-ref", "quay.io/example/base",
-            "--baseline-digest", "sha256:" + "b1" * 32,
+            "--baseline-ref",
+            "quay.io/example/base",
+            "--baseline-digest",
+            "sha256:" + "b1" * 32,
         )
 
     def test_permitted_labels_may_only_be_added(self) -> None:
@@ -400,93 +472,135 @@ class ValidateImageTests(unittest.TestCase):
             "org.opencontainers.image.version": "v1-bocklabs.1",
             "BaseImage": "quay.io/example/base:v1",
         }
-        self.write_scenario({
-            "image_inspects": [
-                image_inspect(labels=existing),
-                image_inspect(labels={**existing, **added}),
-            ],
-            "inspect_states": [running()],
-        })
-        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(labels=existing),
+                    image_inspect(labels={**existing, **added}),
+                ],
+                "inspect_states": [running()],
+            }
+        )
+        result = self.run_cli(
+            "process", (*self.baseline_args(), "--duration-seconds", "0")
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["config_drift"], [])
-        self.assertEqual(ev["validation"]["candidate_config"]["Labels"], {**existing, **added})
+        self.assertEqual(
+            ev["validation"]["candidate_config"]["Labels"], {**existing, **added}
+        )
 
     def test_copa_baseimage_digest_form_matches_baseline(self) -> None:
         existing = {"org.example.existing": "keep"}
-        self.write_scenario({
-            "image_inspects": [
-                image_inspect(labels=existing),
-                image_inspect(labels={**existing, "BaseImage": "quay.io/example/base@sha256:" + "b1" * 32}),
-            ],
-            "inspect_states": [running()],
-        })
-        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(labels=existing),
+                    image_inspect(
+                        labels={
+                            **existing,
+                            "BaseImage": "quay.io/example/base@sha256:" + "b1" * 32,
+                        }
+                    ),
+                ],
+                "inspect_states": [running()],
+            }
+        )
+        result = self.run_cli(
+            "process", (*self.baseline_args(), "--duration-seconds", "0")
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.load_evidence()["validation"]["config_drift"], [])
 
     def test_docker_commit_container_fields_are_ignored(self) -> None:
         existing = {"org.example.existing": "keep"}
-        self.write_scenario({
-            "image_inspects": [
-                image_inspect(labels=existing),
-                image_inspect(labels=existing, config={
-                    "AttachStdout": True, "AttachStderr": True,
-                    "Hostname": "abc123", "Image": "sha256:" + "a" * 64,
-                }),
-            ],
-            "inspect_states": [running()],
-        })
-        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(labels=existing),
+                    image_inspect(
+                        labels=existing,
+                        config={
+                            "AttachStdout": True,
+                            "AttachStderr": True,
+                            "Hostname": "abc123",
+                            "Image": "sha256:" + "a" * 64,
+                        },
+                    ),
+                ],
+                "inspect_states": [running()],
+            }
+        )
+        result = self.run_cli(
+            "process", (*self.baseline_args(), "--duration-seconds", "0")
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.load_evidence()["validation"]["config_drift"], [])
 
     def test_copa_baseimage_label_must_identify_the_baseline(self) -> None:
         existing = {"org.example.existing": "keep"}
-        self.write_scenario({
-            "image_inspects": [
-                image_inspect(labels=existing),
-                image_inspect(labels={**existing, "BaseImage": "quay.io/other/base:v9"}),
-            ],
-            "inspect_states": [running()],
-        })
-        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(labels=existing),
+                    image_inspect(
+                        labels={**existing, "BaseImage": "quay.io/other/base:v9"}
+                    ),
+                ],
+                "inspect_states": [running()],
+            }
+        )
+        result = self.run_cli(
+            "process", (*self.baseline_args(), "--duration-seconds", "0")
+        )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("permitted additions", result.stdout + result.stderr)
 
     def test_null_and_empty_runtime_values_remain_distinct(self) -> None:
-        self.write_scenario({
-            "image_inspects": [
-                image_inspect(config={"Cmd": None}),
-                image_inspect(config={"Cmd": []}),
-            ]
-        })
-        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(config={"Cmd": None}),
+                    image_inspect(config={"Cmd": []}),
+                ]
+            }
+        )
+        result = self.run_cli(
+            "process", (*self.baseline_args(), "--duration-seconds", "0")
+        )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("D-14", result.stdout + result.stderr)
 
     def test_config_drift_outside_label_additions_fails(self) -> None:
-        self.write_scenario({
-            "image_inspects": [
-                image_inspect(),
-                image_inspect(config={"Env": ["PATH=/changed"]}),
-            ]
-        })
-        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(),
+                    image_inspect(config={"Env": ["PATH=/changed"]}),
+                ]
+            }
+        )
+        result = self.run_cli(
+            "process", (*self.baseline_args(), "--duration-seconds", "0")
+        )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("D-14", result.stdout + result.stderr)
         self.assertIn("runtime config changed", result.stdout + result.stderr)
         self.assertEqual(self.load_evidence()["validation"]["result"], "fail")
 
     def test_existing_label_value_cannot_change(self) -> None:
-        self.write_scenario({
-            "image_inspects": [
-                image_inspect(),
-                image_inspect(labels={"org.example.existing": "changed"}),
-            ]
-        })
-        result = self.run_cli("process", (*self.baseline_args(), "--duration-seconds", "0"))
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(),
+                    image_inspect(labels={"org.example.existing": "changed"}),
+                ]
+            }
+        )
+        result = self.run_cli(
+            "process", (*self.baseline_args(), "--duration-seconds", "0")
+        )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("existing label", result.stdout + result.stderr)
 
@@ -497,7 +611,12 @@ class ValidateImageTests(unittest.TestCase):
         self.assertIn("D-20", result.stdout + result.stderr)
 
         self.index.write_text(
-            json.dumps({"mediaType": "application/vnd.oci.image.index.v1+json", "manifests": []}),
+            json.dumps(
+                {
+                    "mediaType": "application/vnd.oci.image.index.v1+json",
+                    "manifests": [],
+                }
+            ),
             encoding="utf-8",
         )
         self.write_scenario({"image_inspect": image_inspect()})
@@ -509,7 +628,9 @@ class ValidateImageTests(unittest.TestCase):
 
     def test_oneshot_command_appended_after_image_ref(self) -> None:
         self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 0})
-        result = self.run_cli("oneshot", ("--expected-exit", "0", "--command", '["/bin/true"]'))
+        result = self.run_cli(
+            "oneshot", ("--expected-exit", "0", "--command", '["/bin/true"]')
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         run_entries = [e for e in self.spool_entries() if e[:1] == ["run"]]
         self.assertTrue(run_entries)

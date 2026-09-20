@@ -4,7 +4,9 @@ import importlib.util
 import json
 import os
 
-spec = importlib.util.spec_from_file_location("evaluate_promotion", "scripts/evaluate_promotion.py")
+spec = importlib.util.spec_from_file_location(
+    "evaluate_promotion", "scripts/evaluate_promotion.py"
+)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 decision = json.load(open("candidate-decision.json"))

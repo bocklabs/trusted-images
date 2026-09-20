@@ -22,7 +22,11 @@ INTERNAL_TAG = "v1.2.3-bocklabs.1"
 DIGEST_A = "sha256:" + "b" * 64
 DIGEST_B = "sha256:" + "c" * 64
 IMAGE_ID = "sha256:" + "d" * 64
-CONFIG_VALUE = {"architecture": "amd64", "os": "linux", "rootfs": {"type": "layers", "diff_ids": []}}
+CONFIG_VALUE = {
+    "architecture": "amd64",
+    "os": "linux",
+    "rootfs": {"type": "layers", "diff_ids": []},
+}
 
 
 def digest_bytes(value: bytes) -> str:
@@ -53,7 +57,13 @@ def child_manifest() -> dict:
             "digest": digest_bytes(encoded.encode()),
             "size": len(encoded.encode()),
         },
-        "layers": [{"mediaType": "application/vnd.oci.image.layer.v1.tar+gzip", "digest": DIGEST_A, "size": 456}],
+        "layers": [
+            {
+                "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+                "digest": DIGEST_A,
+                "size": 456,
+            }
+        ],
     }
 
 
@@ -85,10 +95,19 @@ def inventory(app: str = APP) -> dict:
         "kind": "Image",
         "metadata": {"name": app},
         "spec": {
-            "upstream": {"ref": "example.invalid/app", "tag": "v1.2.3", "digest": digest(index())},
+            "upstream": {
+                "ref": "example.invalid/app",
+                "tag": "v1.2.3",
+                "digest": digest(index()),
+            },
             "destination": {"package": f"ghcr.io/bocklabs/{app}"},
             "patchPolicy": "enabled",
-            "validation": {"type": "http", "port": 8080, "path": "/health", "expectStatus": 200},
+            "validation": {
+                "type": "http",
+                "port": 8080,
+                "path": "/health",
+                "expectStatus": 200,
+            },
         },
     }
 
@@ -98,14 +117,20 @@ def report(vulnerabilities=None) -> dict:
         "SchemaVersion": 2,
         "ArtifactName": "app@candidate",
         "ArtifactType": "container_image",
-        "Metadata": {"ImageID": IMAGE_ID, "ImageConfig": CONFIG_VALUE, "OS": {"Family": "debian", "Name": "12"}},
-        "Results": [{
-            "Target": "app (debian 12)",
-            "Class": "os-pkgs",
-            "Type": "debian",
-            "Vulnerabilities": vulnerabilities or [],
-            "Packages": [{"Name": "libexample", "Version": "1.0"}],
-        }],
+        "Metadata": {
+            "ImageID": IMAGE_ID,
+            "ImageConfig": CONFIG_VALUE,
+            "OS": {"Family": "debian", "Name": "12"},
+        },
+        "Results": [
+            {
+                "Target": "app (debian 12)",
+                "Class": "os-pkgs",
+                "Type": "debian",
+                "Vulnerabilities": vulnerabilities or [],
+                "Packages": [{"Name": "libexample", "Version": "1.0"}],
+            }
+        ],
     }
 
 
@@ -162,11 +187,27 @@ def decision(**changes: object) -> dict:
         "before": {"fixable_os": []},
         "copa": {"classification": "not-required", "original_child_input": False},
         "delta": {
-            "resolved": [], "remaining": [], "introduced": [], "unresolved_fixable": [],
-            "cves": {"resolved": [], "remaining": [], "introduced": [], "unresolved_fixable": []},
+            "resolved": [],
+            "remaining": [],
+            "introduced": [],
+            "unresolved_fixable": [],
+            "cves": {
+                "resolved": [],
+                "remaining": [],
+                "introduced": [],
+                "unresolved_fixable": [],
+            },
         },
         "packages": {
-            "changes": [{"ecosystem": "debian", "name": "libexample", "change": "upgraded", "before": "1.0", "after": "2.0"}],
+            "changes": [
+                {
+                    "ecosystem": "debian",
+                    "name": "libexample",
+                    "change": "upgraded",
+                    "before": "1.0",
+                    "after": "2.0",
+                }
+            ],
             "downgrades": [],
         },
         "patching": {"disabled": False},
@@ -197,7 +238,9 @@ def decision(**changes: object) -> dict:
 
 def checksums(root: Path) -> None:
     lines = []
-    for path in sorted(item for item in root.rglob("*") if item.is_file() and item.name != "SHA256SUMS"):
+    for path in sorted(
+        item for item in root.rglob("*") if item.is_file() and item.name != "SHA256SUMS"
+    ):
         relative = path.relative_to(root).as_posix()
         lines.append(hashlib.sha256(path.read_bytes()).hexdigest() + "  " + relative)
     (root / "SHA256SUMS").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -238,7 +281,12 @@ def candidate_tree(root: Path, decision_value: dict | None = None) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         if name.endswith(".yaml"):
             path.write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
-        elif name in {"source.sha", "kev-fetched-at.txt", "trivy-db-meta-1.txt", "trivy-db-meta-2.txt"}:
+        elif name in {
+            "source.sha",
+            "kev-fetched-at.txt",
+            "trivy-db-meta-1.txt",
+            "trivy-db-meta-2.txt",
+        }:
             path.write_text(str(value), encoding="utf-8")
         else:
             write_json(path, value)
@@ -263,7 +311,11 @@ def github_api_fixtures(path: str) -> tuple[dict, dict, dict, dict, dict]:
         "merged_by": {"login": "approver"},
         "base": {"repo": {"full_name": "bocklabs/trusted-images"}, "ref": "main"},
     }
-    issue = {"number": 77, "html_url": "https://github.com/bocklabs/trusted-images/issues/77", "state": "open"}
+    issue = {
+        "number": 77,
+        "html_url": "https://github.com/bocklabs/trusted-images/issues/77",
+        "state": "open",
+    }
     return content, commits, commit, [pull], pull, issue
 
 
@@ -272,18 +324,26 @@ class PromotionScriptTestCase(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.tmp = Path(tmp.name)
-        (self.tmp / "scripts").symlink_to(REPO_ROOT / "scripts", target_is_directory=True)
+        (self.tmp / "scripts").symlink_to(
+            REPO_ROOT / "scripts", target_is_directory=True
+        )
 
-    def run_script(self, name: str, *args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    def run_script(
+        self, name: str, *args: str, env: dict[str, str] | None = None
+    ) -> subprocess.CompletedProcess[str]:
         child_env = os.environ.copy()
         child_env.update(env or {})
         process_start = child_env.get("COVERAGE_PROCESS_START")
         if process_start:
             site = self.tmp / "coverage-site"
             site.mkdir(exist_ok=True)
-            (site / "sitecustomize.py").write_text("import coverage\ncoverage.process_startup()\n", encoding="utf-8")
+            (site / "sitecustomize.py").write_text(
+                "import coverage\ncoverage.process_startup()\n", encoding="utf-8"
+            )
             existing = child_env.get("PYTHONPATH")
-            child_env["PYTHONPATH"] = str(site) + (os.pathsep + existing if existing else "")
+            child_env["PYTHONPATH"] = str(site) + (
+                os.pathsep + existing if existing else ""
+            )
         return subprocess.run(
             [sys.executable, f"scripts/{name}", *args],
             cwd=self.tmp,
@@ -313,42 +373,70 @@ class RecoveryTests(PromotionScriptTestCase):
         root, record = self.write_recovery_tree()
         provenance = self.tmp / "provenance.json"
         write_json(provenance, record)
-        result = self.run_script("promote_recovery_candidate.py", str(provenance), "recovery-candidate")
+        result = self.run_script(
+            "promote_recovery_candidate.py", str(provenance), "recovery-candidate"
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         copied = self.tmp / "original-candidate-decision.json"
         self.assertTrue(copied.is_file())
-        self.assertEqual(copied.read_bytes(), (root / "candidate-decision.json").read_bytes())
+        self.assertEqual(
+            copied.read_bytes(), (root / "candidate-decision.json").read_bytes()
+        )
 
     def test_recovery_candidate_rejects_mismatched_provenance(self) -> None:
         root, record = self.write_recovery_tree()
         record["internal"]["digest"] = DIGEST_B
         provenance = self.tmp / "provenance.json"
         write_json(provenance, record)
-        result = self.run_script("promote_recovery_candidate.py", str(provenance), "recovery-candidate")
+        result = self.run_script(
+            "promote_recovery_candidate.py", str(provenance), "recovery-candidate"
+        )
         self.assertEqual(result.returncode, 1)
-        self.assertIn("FATAL: recovery candidate bytes do not match provenance", result.stderr)
+        self.assertIn(
+            "FATAL: recovery candidate bytes do not match provenance", result.stderr
+        )
 
     def test_recovery_report_binding_accepts_exact_inventory_identity(self) -> None:
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
         report_manifest = self.tmp / "report-manifest.json"
-        write_json(report_manifest, {"app": APP, "upstream_ref": "example.invalid/app", "upstream_tag": "v1.2.3"})
-        result = self.run_script("promote_recovery_report_binding.py", str(image), str(report_manifest), APP)
+        write_json(
+            report_manifest,
+            {
+                "app": APP,
+                "upstream_ref": "example.invalid/app",
+                "upstream_tag": "v1.2.3",
+            },
+        )
+        result = self.run_script(
+            "promote_recovery_report_binding.py", str(image), str(report_manifest), APP
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_recovery_report_binding_rejects_a_different_app(self) -> None:
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
         report_manifest = self.tmp / "report-manifest.json"
-        write_json(report_manifest, {"app": "other", "upstream_ref": "example.invalid/app", "upstream_tag": "v1.2.3"})
-        result = self.run_script("promote_recovery_report_binding.py", str(image), str(report_manifest), APP)
+        write_json(
+            report_manifest,
+            {
+                "app": "other",
+                "upstream_ref": "example.invalid/app",
+                "upstream_tag": "v1.2.3",
+            },
+        )
+        result = self.run_script(
+            "promote_recovery_report_binding.py", str(image), str(report_manifest), APP
+        )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: original report artifact is not bound", result.stderr)
 
     def test_recovery_context_emits_inventory_outputs_in_workflow_order(self) -> None:
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
-        result = self.run_script("promote_recovery_context.py", str(image), APP, INTERNAL_TAG)
+        result = self.run_script(
+            "promote_recovery_context.py", str(image), APP, INTERNAL_TAG
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
             result.stdout.splitlines(),
@@ -369,7 +457,9 @@ class RecoveryTests(PromotionScriptTestCase):
     def test_recovery_context_rejects_a_mismatched_recover_tag(self) -> None:
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
-        result = self.run_script("promote_recovery_context.py", str(image), APP, "v9.9.9-bocklabs.1")
+        result = self.run_script(
+            "promote_recovery_context.py", str(image), APP, "v9.9.9-bocklabs.1"
+        )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: recover_tag does not match", result.stderr)
 
@@ -377,7 +467,9 @@ class RecoveryTests(PromotionScriptTestCase):
 class ResumeTests(PromotionScriptTestCase):
     def test_resume_artifact_id_selects_the_single_live_run_artifact(self) -> None:
         (self.tmp / "resume-artifacts.jsonl").write_text(
-            json.dumps({"id": 321, "expired": False, "workflow_run": {"id": 123}}) + "\n", encoding="utf-8"
+            json.dumps({"id": 321, "expired": False, "workflow_run": {"id": 123}})
+            + "\n",
+            encoding="utf-8",
         )
         result = self.run_script("promote_resume_artifact_id.py", RUN_ID)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -385,10 +477,14 @@ class ResumeTests(PromotionScriptTestCase):
 
     def test_resume_artifact_id_rejects_ambiguous_artifacts(self) -> None:
         row = {"id": 321, "expired": False, "workflow_run": {"id": 123}}
-        (self.tmp / "resume-artifacts.jsonl").write_text(json.dumps(row) + "\n" + json.dumps(row) + "\n", encoding="utf-8")
+        (self.tmp / "resume-artifacts.jsonl").write_text(
+            json.dumps(row) + "\n" + json.dumps(row) + "\n", encoding="utf-8"
+        )
         result = self.run_script("promote_resume_artifact_id.py", RUN_ID)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("FATAL: candidate artifact is missing, expired, or ambiguous", result.stderr)
+        self.assertIn(
+            "FATAL: candidate artifact is missing, expired, or ambiguous", result.stderr
+        )
 
     def test_resume_candidate_restores_the_exact_preserved_artifact(self) -> None:
         root = self.tmp / "resume-download"
@@ -397,10 +493,14 @@ class ResumeTests(PromotionScriptTestCase):
         run = {"head_sha": SOURCE_SHA, "run_attempt": 1}
         write_json(self.tmp / "resume-run.json", run)
         (self.tmp / "inventory" / APP).mkdir(parents=True)
-        (self.tmp / "inventory" / APP / "image.yaml").write_bytes((root / "inventory-image.yaml").read_bytes())
+        (self.tmp / "inventory" / APP / "image.yaml").write_bytes(
+            (root / "inventory-image.yaml").read_bytes()
+        )
         output = self.tmp / "github-output.txt"
         result = self.run_script(
-            "promote_resume_candidate.py", RUN_ID, "321",
+            "promote_resume_candidate.py",
+            RUN_ID,
+            "321",
             env={"APP": APP, "GITHUB_OUTPUT": str(output)},
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -423,9 +523,13 @@ class ResumeTests(PromotionScriptTestCase):
         root = self.tmp / "resume-download"
         blocker = decision(eligible=False, reason="missing_kev_acceptance")
         candidate_tree(root, blocker)
-        write_json(self.tmp / "resume-run.json", {"head_sha": SOURCE_SHA, "run_attempt": 1})
+        write_json(
+            self.tmp / "resume-run.json", {"head_sha": SOURCE_SHA, "run_attempt": 1}
+        )
         result = self.run_script(
-            "promote_resume_candidate.py", RUN_ID, "321",
+            "promote_resume_candidate.py",
+            RUN_ID,
+            "321",
             env={"APP": "other", "GITHUB_OUTPUT": "/dev/null"},
         )
         self.assertEqual(result.returncode, 1)
@@ -435,7 +539,8 @@ class ResumeTests(PromotionScriptTestCase):
 class RegistryTests(PromotionScriptTestCase):
     def test_registry_next_link_returns_the_exact_pagination_url(self) -> None:
         (self.tmp / "registry-page.headers").write_text(
-            'Link: <https://example.invalid/next?after=2>; rel="next"\n', encoding="utf-8"
+            'Link: <https://example.invalid/next?after=2>; rel="next"\n',
+            encoding="utf-8",
         )
         result = self.run_script("promote_registry_next_link.py")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -448,45 +553,77 @@ class RegistryTests(PromotionScriptTestCase):
 
     def test_registry_candidates_filters_only_this_upstreams_revisions(self) -> None:
         tags = self.tmp / "tags.txt"
-        tags.write_text("v1.2.3-bocklabs.1\nv1.2.3-bocklabs.10\nv1.2.4-bocklabs.2\nv1.2.3\n", encoding="utf-8")
+        tags.write_text(
+            "v1.2.3-bocklabs.1\nv1.2.3-bocklabs.10\nv1.2.4-bocklabs.2\nv1.2.3\n",
+            encoding="utf-8",
+        )
         result = self.run_script("promote_registry_candidates.py", "v1.2.3", str(tags))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(result.stdout.splitlines(), ["v1.2.3-bocklabs.1", "v1.2.3-bocklabs.10"])
+        self.assertEqual(
+            result.stdout.splitlines(), ["v1.2.3-bocklabs.1", "v1.2.3-bocklabs.10"]
+        )
 
     def test_registry_candidates_ignores_a_missing_tags_file(self) -> None:
-        result = self.run_script("promote_registry_candidates.py", "v1.2.3", str(self.tmp / "missing"))
+        result = self.run_script(
+            "promote_registry_candidates.py", "v1.2.3", str(self.tmp / "missing")
+        )
         self.assertNotEqual(result.returncode, 0)
 
     def test_registry_observations_merges_trusted_and_untrusted_rows(self) -> None:
         record = {
             "schema": "trusted-images.bocklabs.dev/provenance-v1",
-            "upstream": {"digest": DIGEST_B, "index_digest": DIGEST_A, "selected_child_digest": DIGEST_B},
-            "internal": {"tag": "v1.2.3-bocklabs.1", "digest": DIGEST_A, "platforms": ["linux/amd64"]},
+            "upstream": {
+                "digest": DIGEST_B,
+                "index_digest": DIGEST_A,
+                "selected_child_digest": DIGEST_B,
+            },
+            "internal": {
+                "tag": "v1.2.3-bocklabs.1",
+                "digest": DIGEST_A,
+                "platforms": ["linux/amd64"],
+            },
         }
         (self.tmp / "provenance" / APP).mkdir(parents=True)
         write_json(self.tmp / "provenance" / APP / "v1.2.3-bocklabs.1.json", record)
         observations = self.tmp / "registry-observations.tsv"
-        observations.write_text("v1.2.3-bocklabs.1\t" + DIGEST_A + "\nunknown\t" + DIGEST_B + "\n", encoding="utf-8")
+        observations.write_text(
+            "v1.2.3-bocklabs.1\t" + DIGEST_A + "\nunknown\t" + DIGEST_B + "\n",
+            encoding="utf-8",
+        )
         result = self.run_script("promote_registry_observations.py", APP)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(json.loads(result.stdout), [
-            {
-                "tag": "v1.2.3-bocklabs.1",
-                "digest": DIGEST_A,
-                "upstream_index_digest": DIGEST_A,
-                "selected_child_digest": DIGEST_B,
-                "platforms": ["linux/amd64"],
-            },
-            {"tag": "unknown", "digest": DIGEST_B, "upstream_index_digest": "", "selected_child_digest": None, "platforms": None},
-        ])
+        self.assertEqual(
+            json.loads(result.stdout),
+            [
+                {
+                    "tag": "v1.2.3-bocklabs.1",
+                    "digest": DIGEST_A,
+                    "upstream_index_digest": DIGEST_A,
+                    "selected_child_digest": DIGEST_B,
+                    "platforms": ["linux/amd64"],
+                },
+                {
+                    "tag": "unknown",
+                    "digest": DIGEST_B,
+                    "upstream_index_digest": "",
+                    "selected_child_digest": None,
+                    "platforms": None,
+                },
+            ],
+        )
 
     def test_registry_observations_fail_closed_on_unbound_provenance(self) -> None:
         provenance = self.tmp / "provenance" / APP
         provenance.mkdir(parents=True)
-        record = {"schema": "trusted-images.bocklabs.dev/provenance-v1", "internal": {"tag": "other", "digest": DIGEST_A}}
+        record = {
+            "schema": "trusted-images.bocklabs.dev/provenance-v1",
+            "internal": {"tag": "other", "digest": DIGEST_A},
+        }
         write_json(provenance / "v1.2.3-bocklabs.1.json", record)
         observations = self.tmp / "registry-observations.tsv"
-        observations.write_text("v1.2.3-bocklabs.1\t" + DIGEST_A + "\n", encoding="utf-8")
+        observations.write_text(
+            "v1.2.3-bocklabs.1\t" + DIGEST_A + "\n", encoding="utf-8"
+        )
         result = self.run_script("promote_registry_observations.py", APP)
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: provenance does not bind observed tag", result.stderr)
@@ -494,14 +631,18 @@ class RegistryTests(PromotionScriptTestCase):
     def test_reused_candidate_accepts_matching_layout_bytes(self) -> None:
         root = self.tmp / "reused-candidate"
         candidate_tree(root)
-        result = self.run_script("promote_reused_candidate.py", digest(child_manifest()), "reused-candidate")
+        result = self.run_script(
+            "promote_reused_candidate.py", digest(child_manifest()), "reused-candidate"
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_reused_candidate_rejects_changed_manifest_bytes(self) -> None:
         root = self.tmp / "reused-candidate"
         candidate_tree(root)
         (root / "candidate-manifest.json").write_text("{}\n", encoding="utf-8")
-        result = self.run_script("promote_reused_candidate.py", digest(child_manifest()), "reused-candidate")
+        result = self.run_script(
+            "promote_reused_candidate.py", digest(child_manifest()), "reused-candidate"
+        )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: reused candidate bytes do not match", result.stderr)
 
@@ -511,19 +652,31 @@ class LabelTests(PromotionScriptTestCase):
         before = self.tmp / "before.json"
         write_json(before, {"existing": "same"})
         result = self.run_script(
-            "promote_proposed_labels.py", str(before),
-            env={"SELECTED_DIGEST": DIGEST_A, "UPSTREAM_REF": "example.invalid/app", "UPSTREAM_TAG": "v1.2.3", "INTERNAL_TAG": INTERNAL_TAG},
+            "promote_proposed_labels.py",
+            str(before),
+            env={
+                "SELECTED_DIGEST": DIGEST_A,
+                "UPSTREAM_REF": "example.invalid/app",
+                "UPSTREAM_TAG": "v1.2.3",
+                "INTERNAL_TAG": INTERNAL_TAG,
+            },
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         values = json.loads(result.stdout)
         self.assertEqual(len(values), 4)
-        self.assertIn('LABEL org.opencontainers.image.base.digest="' + DIGEST_A + '"', values)
-        self.assertIn('LABEL org.opencontainers.image.version="' + INTERNAL_TAG + '"', values)
+        self.assertIn(
+            'LABEL org.opencontainers.image.base.digest="' + DIGEST_A + '"', values
+        )
+        self.assertIn(
+            'LABEL org.opencontainers.image.version="' + INTERNAL_TAG + '"', values
+        )
 
     def test_proposed_labels_fail_closed_without_upstream_identity(self) -> None:
         before = self.tmp / "before.json"
         write_json(before, {})
-        result = self.run_script("promote_proposed_labels.py", str(before), env={"SELECTED_DIGEST": DIGEST_A})
+        result = self.run_script(
+            "promote_proposed_labels.py", str(before), env={"SELECTED_DIGEST": DIGEST_A}
+        )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("UPSTREAM_REF", result.stderr)
 
@@ -531,10 +684,13 @@ class LabelTests(PromotionScriptTestCase):
         before = self.tmp / "before.json"
         after = self.tmp / "after.json"
         write_json(before, {"existing": "same"})
-        write_json(after, {
-            "existing": "same",
-            "org.opencontainers.image.base.name": "example.invalid/app:v1.2.3",
-        })
+        write_json(
+            after,
+            {
+                "existing": "same",
+                "org.opencontainers.image.base.name": "example.invalid/app:v1.2.3",
+            },
+        )
         result = self.run_script("promote_label_changes.py", str(before), str(after))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
@@ -545,7 +701,10 @@ class LabelTests(PromotionScriptTestCase):
         write_json(after, {"existing": "changed"})
         result = self.run_script("promote_label_changes.py", str(before), str(after))
         self.assertEqual(result.returncode, 1)
-        self.assertIn("FATAL: patched labels violate the add-only provenance contract", result.stderr)
+        self.assertIn(
+            "FATAL: patched labels violate the add-only provenance contract",
+            result.stderr,
+        )
 
 
 class AcceptanceTests(PromotionScriptTestCase):
@@ -557,10 +716,19 @@ class AcceptanceTests(PromotionScriptTestCase):
         result = self.run_script("promote_acceptance_paths.py", env={"APP": APP})
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         candidate_digest = digest_bytes(manifest.read_bytes())
-        expected = "risk-acceptances/app/" + hashlib.sha256(candidate_digest.encode()).hexdigest() + "-" + \
-            hashlib.sha256(b"CVE-2026-0001").hexdigest() + ".json"
-        self.assertEqual((self.tmp / "acceptance-path.txt").read_text(), expected + "\n")
-        self.assertEqual((self.tmp / "acceptance-matched.txt").read_text(), "CVE-2026-0001\n")
+        expected = (
+            "risk-acceptances/app/"
+            + hashlib.sha256(candidate_digest.encode()).hexdigest()
+            + "-"
+            + hashlib.sha256(b"CVE-2026-0001").hexdigest()
+            + ".json"
+        )
+        self.assertEqual(
+            (self.tmp / "acceptance-path.txt").read_text(), expected + "\n"
+        )
+        self.assertEqual(
+            (self.tmp / "acceptance-matched.txt").read_text(), "CVE-2026-0001\n"
+        )
 
     def test_acceptance_paths_reject_a_malformed_final_report(self) -> None:
         bad = report([vuln()])
@@ -574,16 +742,25 @@ class AcceptanceTests(PromotionScriptTestCase):
 
     def test_acceptance_decode_writes_exact_base64_bytes(self) -> None:
         encoded = base64.b64encode(b"exact-acceptance-bytes\n").decode()
-        write_json(self.tmp / "acceptance-content.json", {"encoding": "base64", "content": encoded})
+        write_json(
+            self.tmp / "acceptance-content.json",
+            {"encoding": "base64", "content": encoded},
+        )
         result = self.run_script("promote_acceptance_decode.py")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual((self.tmp / "acceptance.json").read_bytes(), b"exact-acceptance-bytes\n")
+        self.assertEqual(
+            (self.tmp / "acceptance.json").read_bytes(), b"exact-acceptance-bytes\n"
+        )
 
     def test_acceptance_decode_rejects_non_base64_content_api_responses(self) -> None:
-        write_json(self.tmp / "acceptance-content.json", {"encoding": "utf-8", "content": "{}"})
+        write_json(
+            self.tmp / "acceptance-content.json", {"encoding": "utf-8", "content": "{}"}
+        )
         result = self.run_script("promote_acceptance_decode.py")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("FATAL: acceptance content API did not return base64 bytes", result.stderr)
+        self.assertIn(
+            "FATAL: acceptance content API did not return base64 bytes", result.stderr
+        )
 
     def test_github_evidence_binds_record_bytes_commit_and_pull(self) -> None:
         record = acceptance_record()
@@ -596,11 +773,16 @@ class AcceptanceTests(PromotionScriptTestCase):
         write_json(self.tmp / "acceptance-prs.json", associated)
         write_json(self.tmp / "acceptance-pr.json", pull)
         write_json(self.tmp / "acceptance-issue.json", issue)
-        result = self.run_script("promote_github_evidence.py", path, env={"REPO": "bocklabs/trusted-images"})
+        result = self.run_script(
+            "promote_github_evidence.py", path, env={"REPO": "bocklabs/trusted-images"}
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         proof = json.loads((self.tmp / "github-evidence.json").read_text())
         self.assertEqual(proof["path"], path)
-        self.assertEqual(proof["record_sha256"], hashlib.sha256((self.tmp / "acceptance.json").read_bytes()).hexdigest())
+        self.assertEqual(
+            proof["record_sha256"],
+            hashlib.sha256((self.tmp / "acceptance.json").read_bytes()).hexdigest(),
+        )
         self.assertEqual(proof["pull_request"]["number"], 42)
         self.assertEqual(proof["issue"]["number"], 77)
 
@@ -614,7 +796,9 @@ class AcceptanceTests(PromotionScriptTestCase):
         write_json(self.tmp / "acceptance-prs.json", associated)
         write_json(self.tmp / "acceptance-pr.json", pull)
         write_json(self.tmp / "acceptance-issue.json", issue)
-        result = self.run_script("promote_github_evidence.py", path, env={"REPO": "bocklabs/trusted-images"})
+        result = self.run_script(
+            "promote_github_evidence.py", path, env={"REPO": "bocklabs/trusted-images"}
+        )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: acceptance commit/path is ambiguous", result.stderr)
 
@@ -624,24 +808,42 @@ class DecisionTests(PromotionScriptTestCase):
         write_json(self.tmp / "upstream-index.json", index())
         write_json(self.tmp / "child-manifest.json", child_manifest())
         write_json(self.tmp / "child-config.json", child_config())
-        write_json(self.tmp / "trivy-before-full.json", report() if full is None else full)
-        write_json(self.tmp / "trivy-copa.json", report() if fixable is None else fixable)
+        write_json(
+            self.tmp / "trivy-before-full.json", report() if full is None else full
+        )
+        write_json(
+            self.tmp / "trivy-copa.json", report() if fixable is None else fixable
+        )
         write_json(self.tmp / "kev.json", kev_feed(()))
-        now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        now = datetime.datetime.now(datetime.timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
         (self.tmp / "kev-fetched-at.txt").write_text(now + "\n", encoding="utf-8")
         (self.tmp / "validation-context").mkdir()
-        write_json(self.tmp / "validation-context" / "patch-policy.json", {"patchPolicy": "enabled"})
-        write_json(self.tmp / "validation-evidence.json", {"validation": {"result": "pass"}})
+        write_json(
+            self.tmp / "validation-context" / "patch-policy.json",
+            {"patchPolicy": "enabled"},
+        )
+        write_json(
+            self.tmp / "validation-evidence.json", {"validation": {"result": "pass"}}
+        )
 
-    def test_candidate_decision_exports_eligible_policy_and_supersede_outputs(self) -> None:
+    def test_candidate_decision_exports_eligible_policy_and_supersede_outputs(
+        self,
+    ) -> None:
         self.policy_inputs()
         output = self.tmp / "github-output.txt"
         result = self.run_script(
             "promote_candidate_decision.py",
             env={
-                "APP": APP, "SOURCE_SHA": SOURCE_SHA, "RUN_ID": RUN_ID, "RUN_ATTEMPT": "1",
-                "INTERNAL_TAG": INTERNAL_TAG, "UPSTREAM_INDEX_DIGEST": digest(index()),
-                "CANDIDATE_DIGEST": DIGEST_A, "GITHUB_REPOSITORY": "bocklabs/trusted-images",
+                "APP": APP,
+                "SOURCE_SHA": SOURCE_SHA,
+                "RUN_ID": RUN_ID,
+                "RUN_ATTEMPT": "1",
+                "INTERNAL_TAG": INTERNAL_TAG,
+                "UPSTREAM_INDEX_DIGEST": digest(index()),
+                "CANDIDATE_DIGEST": DIGEST_A,
+                "GITHUB_REPOSITORY": "bocklabs/trusted-images",
                 "GITHUB_OUTPUT": str(output),
             },
         )
@@ -651,24 +853,63 @@ class DecisionTests(PromotionScriptTestCase):
         self.assertEqual(exported["reason"], "clean")
         self.assertEqual(output.read_text(), "eligible=true\n")
 
-    def test_candidate_decision_retains_the_candidate_when_evaluation_fails(self) -> None:
+    def test_candidate_decision_retains_the_candidate_when_evaluation_fails(
+        self,
+    ) -> None:
         self.policy_inputs(fixable=report([vuln()]))
         result = self.run_script(
             "promote_candidate_decision.py",
             env={
-                "APP": APP, "SOURCE_SHA": SOURCE_SHA, "RUN_ID": RUN_ID, "RUN_ATTEMPT": "1",
-                "INTERNAL_TAG": INTERNAL_TAG, "UPSTREAM_INDEX_DIGEST": digest(index()),
-                "CANDIDATE_DIGEST": DIGEST_A, "GITHUB_REPOSITORY": "bocklabs/trusted-images",
+                "APP": APP,
+                "SOURCE_SHA": SOURCE_SHA,
+                "RUN_ID": RUN_ID,
+                "RUN_ATTEMPT": "1",
+                "INTERNAL_TAG": INTERNAL_TAG,
+                "UPSTREAM_INDEX_DIGEST": digest(index()),
+                "CANDIDATE_DIGEST": DIGEST_A,
+                "GITHUB_REPOSITORY": "bocklabs/trusted-images",
                 "GITHUB_OUTPUT": "/dev/null",
             },
         )
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Candidate retained for operator review; publisher will not run.", result.stdout)
+        self.assertIn(
+            "Candidate retained for operator review; publisher will not run.",
+            result.stdout,
+        )
 
     def test_candidate_artifact_accepts_a_complete_checksum_bound_tree(self) -> None:
         candidate_tree(self.tmp / "candidate-artifact")
         result = self.run_script("promote_candidate_artifact.py")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_candidate_artifact_rejects_tampered_file_bytes(self) -> None:
+        root = self.tmp / "candidate-artifact"
+        candidate_tree(root)
+        target = root / "child-manifest.json"
+        target.write_text('{"tampered": true}\n', encoding="utf-8")
+        result = self.run_script("promote_candidate_artifact.py")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("FATAL: fresh candidate checksum failed:", result.stderr)
+
+    def test_github_evidence_rejects_an_unmerged_pull_request(self) -> None:
+        write_json(self.tmp / "acceptance.json", acceptance_record())
+        path = "risk-acceptances/app/bound.json"
+        content, commits, commit, associated, pull, issue = github_api_fixtures(path)
+        unmerged = {**pull, "merged": False, "merged_at": None}
+        write_json(self.tmp / "acceptance-content.json", content)
+        write_json(self.tmp / "acceptance-commits.json", commits)
+        write_json(self.tmp / "acceptance-commit.json", commit)
+        write_json(self.tmp / "acceptance-prs.json", associated)
+        write_json(self.tmp / "acceptance-pr.json", unmerged)
+        write_json(self.tmp / "acceptance-issue.json", issue)
+        result = self.run_script(
+            "promote_github_evidence.py", path, env={"REPO": "bocklabs/trusted-images"}
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(
+            "FATAL: acceptance pull request is not a merged main-branch approval",
+            result.stderr,
+        )
 
     def test_candidate_artifact_rejects_an_undeclared_file(self) -> None:
         root = self.tmp / "candidate-artifact"
@@ -676,21 +917,40 @@ class DecisionTests(PromotionScriptTestCase):
         (root / "undeclared.txt").write_text("unexpected\n", encoding="utf-8")
         result = self.run_script("promote_candidate_artifact.py")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("FATAL: fresh candidate artifact has undeclared or missing files", result.stderr)
+        self.assertIn(
+            "FATAL: fresh candidate artifact has undeclared or missing files",
+            result.stderr,
+        )
 
     def test_decision_integrity_accepts_a_valid_current_binding(self) -> None:
         path = write_json(self.tmp / "decision.json", decision())
         result = self.run_script(
-            "promote_decision_integrity.py", str(path),
-            env={"APP": APP, "SOURCE_SHA": SOURCE_SHA, "RUN_ID": RUN_ID, "RUN_ATTEMPT": "1", "UPSTREAM_INDEX_DIGEST": digest(index()), "REPO": "bocklabs/trusted-images"},
+            "promote_decision_integrity.py",
+            str(path),
+            env={
+                "APP": APP,
+                "SOURCE_SHA": SOURCE_SHA,
+                "RUN_ID": RUN_ID,
+                "RUN_ATTEMPT": "1",
+                "UPSTREAM_INDEX_DIGEST": digest(index()),
+                "REPO": "bocklabs/trusted-images",
+            },
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_decision_integrity_rejects_a_different_app(self) -> None:
         path = write_json(self.tmp / "decision.json", decision())
         result = self.run_script(
-            "promote_decision_integrity.py", str(path),
-            env={"APP": "other", "SOURCE_SHA": SOURCE_SHA, "RUN_ID": RUN_ID, "RUN_ATTEMPT": "1", "UPSTREAM_INDEX_DIGEST": digest(index()), "REPO": "bocklabs/trusted-images"},
+            "promote_decision_integrity.py",
+            str(path),
+            env={
+                "APP": "other",
+                "SOURCE_SHA": SOURCE_SHA,
+                "RUN_ID": RUN_ID,
+                "RUN_ATTEMPT": "1",
+                "UPSTREAM_INDEX_DIGEST": digest(index()),
+                "REPO": "bocklabs/trusted-images",
+            },
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: candidate decision binding failed", result.stderr)
@@ -707,7 +967,9 @@ class DecisionTests(PromotionScriptTestCase):
         published = decision()
         published["published"] = {"digest": published["candidate"]["digest"]}
         write_json(self.tmp / "candidate-decision.json", published)
-        result = self.run_script("promote_published_decision.py", APP, env={"APP": "other"})
+        result = self.run_script(
+            "promote_published_decision.py", APP, env={"APP": "other"}
+        )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: published decision identity is invalid", result.stderr)
 
@@ -717,7 +979,9 @@ class DecisionTests(PromotionScriptTestCase):
         final["provenance"] = {"merged": True}
         write_json(self.tmp / "candidate-decision.json", final)
         result = self.run_script(
-            "promote_final_decision.py", APP, final["candidate"]["digest"],
+            "promote_final_decision.py",
+            APP,
+            final["candidate"]["digest"],
             env={"APP": APP, "CANDIDATE_DIGEST": final["candidate"]["digest"]},
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -727,11 +991,15 @@ class DecisionTests(PromotionScriptTestCase):
         final["published"] = {"digest": final["candidate"]["digest"]}
         write_json(self.tmp / "candidate-decision.json", final)
         result = self.run_script(
-            "promote_final_decision.py", APP, final["candidate"]["digest"],
+            "promote_final_decision.py",
+            APP,
+            final["candidate"]["digest"],
             env={"APP": APP, "CANDIDATE_DIGEST": final["candidate"]["digest"]},
         )
         self.assertEqual(result.returncode, 1)
-        self.assertIn("FATAL: final candidate decision merge state is invalid", result.stderr)
+        self.assertIn(
+            "FATAL: final candidate decision merge state is invalid", result.stderr
+        )
 
 
 class ContextAndEvidenceTests(PromotionScriptTestCase):
@@ -764,7 +1032,9 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
         result = self.run_script("promote_validation_context.py", str(image), "other")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("FATAL: validation context destination does not match app", result.stderr)
+        self.assertIn(
+            "FATAL: validation context destination does not match app", result.stderr
+        )
 
     def test_summary_renders_reports_and_decision_tables(self) -> None:
         write_json(self.tmp / "trivy-before-full.json", report([vuln()]))
@@ -773,7 +1043,9 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
         write_json(self.tmp / "candidate-decision.json", decision())
         result = self.run_script("promote_summary.py")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("| before | CVE-2026-0001 | libexample | HIGH | debian |", result.stdout)
+        self.assertIn(
+            "| before | CVE-2026-0001 | libexample | HIGH | debian |", result.stdout
+        )
         self.assertIn("| debian | libexample | upgraded | 1.0 | 2.0 |", result.stdout)
         self.assertIn("N/A — no KEV exception", result.stdout)
 
@@ -786,7 +1058,9 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
         write_json(self.tmp / "candidate-decision.json", decision())
         result = self.run_script(
             "promote_provenance_body.py",
-            "https://example.invalid/run/123", DIGEST_A, INTERNAL_TAG,
+            "https://example.invalid/run/123",
+            DIGEST_A,
+            INTERNAL_TAG,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
@@ -806,7 +1080,9 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
     def test_provenance_body_fails_without_a_candidate_decision(self) -> None:
         result = self.run_script(
             "promote_provenance_body.py",
-            "https://example.invalid/run/123", DIGEST_A, INTERNAL_TAG,
+            "https://example.invalid/run/123",
+            DIGEST_A,
+            INTERNAL_TAG,
         )
         self.assertNotEqual(result.returncode, 0)
 

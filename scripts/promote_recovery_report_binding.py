@@ -12,4 +12,6 @@ expected = {
     "upstream_tag": spec["upstream"]["tag"],
 }
 if manifest != expected:
-    raise SystemExit("FATAL: original report artifact is not bound to the recovered inventory")
+    raise SystemExit(
+        "FATAL: original report artifact is not bound to the recovered inventory"
+    )

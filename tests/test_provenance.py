@@ -18,26 +18,41 @@ KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulner
 
 
 def trivy_report(cves=()) -> dict:
-    vulnerabilities = [{
-        "VulnerabilityID": cve, "PkgName": "openssl", "InstalledVersion": "1.0",
-        "FixedVersion": "", "Severity": "HIGH", "SeveritySource": "debian",
-    } for cve in cves]
+    vulnerabilities = [
+        {
+            "VulnerabilityID": cve,
+            "PkgName": "openssl",
+            "InstalledVersion": "1.0",
+            "FixedVersion": "",
+            "Severity": "HIGH",
+            "SeveritySource": "debian",
+        }
+        for cve in cves
+    ]
     return {
         "SchemaVersion": 2,
         "Metadata": {"OS": {"Family": "debian", "EOSL": False}},
-        "Results": [{
-            "Class": "os-pkgs", "Type": "debian", "Target": "debian",
-            "Vulnerabilities": vulnerabilities,
-            "Packages": [{"Name": "openssl", "Version": "1.0", "Epoch": 0, "Release": ""}],
-        }],
+        "Results": [
+            {
+                "Class": "os-pkgs",
+                "Type": "debian",
+                "Target": "debian",
+                "Vulnerabilities": vulnerabilities,
+                "Packages": [
+                    {"Name": "openssl", "Version": "1.0", "Epoch": 0, "Release": ""}
+                ],
+            }
+        ],
     }
 
 
 def kev_report(cves=()) -> dict:
     return {
         "title": "CISA Catalog of Known Exploited Vulnerabilities",
-        "catalogVersion": "2026.09.13", "dateReleased": "2026-09-13T00:00:00Z",
-        "count": len(cves), "vulnerabilities": [{"cveID": cve} for cve in cves],
+        "catalogVersion": "2026.09.13",
+        "dateReleased": "2026-09-13T00:00:00Z",
+        "count": len(cves),
+        "vulnerabilities": [{"cveID": cve} for cve in cves],
     }
 
 
@@ -46,19 +61,37 @@ def valid_decision(cves=()) -> dict:
     return {
         "schema": "trusted-images.bocklabs.dev/candidate-decision-v1",
         "eligible": True,
-        "reason": "eligible with no-fix warnings: " + ",".join(f"{cve}:HIGH:debian" for cve in cves),
-        "platform": "linux/amd64", "app": "postgres-exporter", "source_sha": "d" * 40,
-        "run_id": "123", "run_attempt": 1, "proposed_tag": "v0.20.1-bocklabs.1",
-        "upstream_index_digest": PILOT_UPSTREAM_DIGEST, "selected_child_digest": CHILD_DIGEST,
-        "candidate": {"digest": CHILD_DIGEST}, "before": {"fixable_os": []},
+        "reason": "eligible with no-fix warnings: "
+        + ",".join(f"{cve}:HIGH:debian" for cve in cves),
+        "platform": "linux/amd64",
+        "app": "postgres-exporter",
+        "source_sha": "d" * 40,
+        "run_id": "123",
+        "run_attempt": 1,
+        "proposed_tag": "v0.20.1-bocklabs.1",
+        "upstream_index_digest": PILOT_UPSTREAM_DIGEST,
+        "selected_child_digest": CHILD_DIGEST,
+        "candidate": {"digest": CHILD_DIGEST},
+        "before": {"fixable_os": []},
         "copa": {"classification": "not-required", "original_child_input": False},
         "delta": {
-            "resolved": [], "remaining": identities, "introduced": [], "unresolved_fixable": [],
-            "cves": {"resolved": [], "remaining": list(cves), "introduced": [], "unresolved_fixable": []},
+            "resolved": [],
+            "remaining": identities,
+            "introduced": [],
+            "unresolved_fixable": [],
+            "cves": {
+                "resolved": [],
+                "remaining": list(cves),
+                "introduced": [],
+                "unresolved_fixable": [],
+            },
         },
-        "packages": {"changes": [], "downgrades": []}, "patching": {"disabled": False},
+        "packages": {"changes": [], "downgrades": []},
+        "patching": {"disabled": False},
         "policy": {"kev": {"matched": list(cves), "catalog": {}}, "acceptance": None},
-        "validation": {"result": "pass"}, "resume": None, "published": {"digest": CHILD_DIGEST},
+        "validation": {"result": "pass"},
+        "resume": None,
+        "published": {"digest": CHILD_DIGEST},
         "provenance": {"merged": False},
         "supersedes": {"higher_upstream": False, "original_child_selected": False},
     }
@@ -66,17 +99,28 @@ def valid_decision(cves=()) -> dict:
 
 def github_evidence(path: str, issue: int = 77) -> dict:
     pull = {
-        "number": 42, "html_url": "https://github.com/bocklabs/trusted-images/pull/42",
-        "state": "closed", "merged": True, "merged_at": "2026-09-13T00:00:00Z",
-        "merged_by": {"login": "approver"}, "base_repository": "bocklabs/trusted-images", "base_ref": "main",
+        "number": 42,
+        "html_url": "https://github.com/bocklabs/trusted-images/pull/42",
+        "state": "closed",
+        "merged": True,
+        "merged_at": "2026-09-13T00:00:00Z",
+        "merged_by": {"login": "approver"},
+        "base_repository": "bocklabs/trusted-images",
+        "base_ref": "main",
     }
     return {
-        "repository": "bocklabs/trusted-images", "path": path, "record_sha256": "0" * 64,
-        "content_blob_sha": "b" * 40, "commit": {"sha": "c" * 40, "path": path, "blob_sha": "b" * 40},
-        "associated_pull_requests": [pull], "pull_request": pull,
+        "repository": "bocklabs/trusted-images",
+        "path": path,
+        "record_sha256": "0" * 64,
+        "content_blob_sha": "b" * 40,
+        "commit": {"sha": "c" * 40, "path": path, "blob_sha": "b" * 40},
+        "associated_pull_requests": [pull],
+        "pull_request": pull,
         "issue": {
-            "number": issue, "html_url": f"https://github.com/bocklabs/trusted-images/issues/{issue}",
-            "state": "open", "is_pull_request": False,
+            "number": issue,
+            "html_url": f"https://github.com/bocklabs/trusted-images/issues/{issue}",
+            "state": "open",
+            "is_pull_request": False,
         },
     }
 
@@ -102,38 +146,63 @@ class ProvenanceTests(unittest.TestCase):
         self.kev.write_text(json.dumps(kev_report(cves)), encoding="utf-8")
         decision = valid_decision(cves)
         decision["policy"]["kev"]["catalog"] = {
-            "url": KEV_URL, "sha256": hashlib.sha256(self.kev.read_bytes()).hexdigest(),
-            "fetched_at": "2026-09-14T00:00:00Z", "count": len(cves), "unique_cves": len(cves),
-            "catalog_version": "2026.09.13", "date_released": "2026-09-13T00:00:00Z",
+            "url": KEV_URL,
+            "sha256": hashlib.sha256(self.kev.read_bytes()).hexdigest(),
+            "fetched_at": "2026-09-14T00:00:00Z",
+            "count": len(cves),
+            "unique_cves": len(cves),
+            "catalog_version": "2026.09.13",
+            "date_released": "2026-09-13T00:00:00Z",
         }
         self.decision = decision
         self.decision_path.write_text(json.dumps(decision), encoding="utf-8")
 
     def flags(self) -> dict[str, str]:
         return {
-            "--app": "postgres-exporter", "--upstream-ref": "quay.io/prometheuscommunity/postgres-exporter",
-            "--upstream-tag": "v0.20.1", "--upstream-digest": PILOT_UPSTREAM_DIGEST,
+            "--app": "postgres-exporter",
+            "--upstream-ref": "quay.io/prometheuscommunity/postgres-exporter",
+            "--upstream-tag": "v0.20.1",
+            "--upstream-digest": PILOT_UPSTREAM_DIGEST,
             "--upstream-child-digest": CHILD_DIGEST,
             "--media-type": "application/vnd.oci.image.index.v1+json",
             "--internal-package": "ghcr.io/bocklabs/postgres-exporter",
-            "--internal-tag": "v0.20.1-bocklabs.1", "--internal-digest": CHILD_DIGEST,
-            "--platforms": "linux/amd64", "--run-url": "https://example.invalid/runs/99",
-            "--workflow": "promote", "--dispatched-by": "test", "--trivy-version": "0.74.0",
-            "--trivy-action-sha": "a" * 40, "--skopeo-version": "1.22.2",
+            "--internal-tag": "v0.20.1-bocklabs.1",
+            "--internal-digest": CHILD_DIGEST,
+            "--platforms": "linux/amd64",
+            "--run-url": "https://example.invalid/runs/99",
+            "--workflow": "promote",
+            "--dispatched-by": "test",
+            "--trivy-version": "0.74.0",
+            "--trivy-action-sha": "a" * 40,
+            "--skopeo-version": "1.22.2",
             "--skopeo-image-digest": "sha256:" + "b" * 64,
             "--trivy-db-check-bundle-digest": "sha256:" + "c" * 64,
             "--trivy-db-updated-at": "2026-09-14T00:00:00Z",
             "--full-report-sha256": hashlib.sha256(self.final.read_bytes()).hexdigest(),
-            "--copa-report-sha256": hashlib.sha256(self.fixable.read_bytes()).hexdigest(),
-            "--decision-sha256": hashlib.sha256(self.decision_path.read_bytes()).hexdigest(),
-            "--decision": str(self.decision_path), "--before-report": str(self.before),
-            "--final-report": str(self.final), "--fixable-report": str(self.fixable),
-            "--kev-report": str(self.kev), "--now": "2026-09-14T01:00:00Z",
-            "--secobserve-product": "trusted-images", "--secobserve-origin": "app:v0.20.1",
-            "--validation-type": "http", "--validation-result": "pass",
-            "--validation-params": "{}", "--validation-timings": "{}", "--validation-health": "{}",
-            "--validation-runner": "ubuntu-latest", "--validation-entrypoint": "[]",
-            "--validation-cmd": "[]", "--validation-env": "[]", "--out": str(self.out),
+            "--copa-report-sha256": hashlib.sha256(
+                self.fixable.read_bytes()
+            ).hexdigest(),
+            "--decision-sha256": hashlib.sha256(
+                self.decision_path.read_bytes()
+            ).hexdigest(),
+            "--decision": str(self.decision_path),
+            "--before-report": str(self.before),
+            "--final-report": str(self.final),
+            "--fixable-report": str(self.fixable),
+            "--kev-report": str(self.kev),
+            "--now": "2026-09-14T01:00:00Z",
+            "--secobserve-product": "trusted-images",
+            "--secobserve-origin": "app:v0.20.1",
+            "--validation-type": "http",
+            "--validation-result": "pass",
+            "--validation-params": "{}",
+            "--validation-timings": "{}",
+            "--validation-health": "{}",
+            "--validation-runner": "ubuntu-latest",
+            "--validation-entrypoint": "[]",
+            "--validation-cmd": "[]",
+            "--validation-env": "[]",
+            "--out": str(self.out),
         }
 
     def run_generator(self, flags: dict[str, str]) -> subprocess.CompletedProcess:
@@ -152,7 +221,9 @@ class ProvenanceTests(unittest.TestCase):
                 flags[key] = value
         return flags
 
-    def assert_fails_closed(self, result: subprocess.CompletedProcess, field: str) -> None:
+    def assert_fails_closed(
+        self, result: subprocess.CompletedProcess, field: str
+    ) -> None:
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("[provenance]", result.stdout + result.stderr)
         self.assertIn(field, result.stdout + result.stderr)
@@ -167,7 +238,10 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(record["upstream"]["index_digest"], PILOT_UPSTREAM_DIGEST)
         self.assertEqual(record["upstream"]["selected_child_digest"], CHILD_DIGEST)
         self.assertEqual(record["internal"]["digest"], CHILD_DIGEST)
-        self.assertEqual(record["scan"]["reports"]["before_sha256"], record["scan"]["reports"]["final_sha256"])
+        self.assertEqual(
+            record["scan"]["reports"]["before_sha256"],
+            record["scan"]["reports"]["final_sha256"],
+        )
         self.assertEqual(record["policy"]["outcome"], self.decision["reason"])
         self.assertEqual(record["policy"]["patching"], self.decision["patching"])
         self.assertEqual(record["policy"]["copa"], self.decision["copa"])
@@ -178,7 +252,9 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(record["cves"]["summary"]["remaining"], [])
         self.assertEqual(record["packages"]["changes"], [])
         self.assertFalse(record["packages"]["downgrade_blocked"])
-        self.assertEqual(record["policy"]["kev"]["catalog"]["catalogVersion"], "2026.09.13")
+        self.assertEqual(
+            record["policy"]["kev"]["catalog"]["catalogVersion"], "2026.09.13"
+        )
         self.assertIsNone(record["policy"]["acceptance"])
 
     def test_missing_required_flag_fails(self) -> None:
@@ -197,7 +273,9 @@ class ProvenanceTests(unittest.TestCase):
         flags = self.flags()
         self.decision["candidate"]["digest"] = "sha256:" + "e" * 64
         self.decision_path.write_text(json.dumps(self.decision), encoding="utf-8")
-        flags["--decision-sha256"] = hashlib.sha256(self.decision_path.read_bytes()).hexdigest()
+        flags["--decision-sha256"] = hashlib.sha256(
+            self.decision_path.read_bytes()
+        ).hexdigest()
         self.assert_fails_closed(self.run_generator(flags), "candidate_digest")
 
     def test_exact_acceptance_is_mapped_and_expires_strictly(self) -> None:
@@ -207,39 +285,65 @@ class ProvenanceTests(unittest.TestCase):
         path = (
             "risk-acceptances/postgres-exporter/"
             + hashlib.sha256(CHILD_DIGEST.encode()).hexdigest()
-            + "-" + hashlib.sha256(b"CVE-2026-0001").hexdigest() + ".json"
+            + "-"
+            + hashlib.sha256(b"CVE-2026-0001").hexdigest()
+            + ".json"
         )
         self.github.write_text(json.dumps(github_evidence(path)), encoding="utf-8")
         self.decision["policy"]["acceptance"] = {
-            "path": path, "sha256": "0" * 64, "candidate_digest": CHILD_DIGEST, "kevs": list(cves),
-            "expires_at": "2026-09-18T00:00:00Z", "commit_sha": "c" * 40, "pull_request": 42,
-            "merged_at": "2026-09-13T00:00:00Z", "merged_by": "approver", "issue": 77,
+            "path": path,
+            "sha256": "0" * 64,
+            "candidate_digest": CHILD_DIGEST,
+            "kevs": list(cves),
+            "expires_at": "2026-09-18T00:00:00Z",
+            "commit_sha": "c" * 40,
+            "pull_request": 42,
+            "merged_at": "2026-09-13T00:00:00Z",
+            "merged_by": "approver",
+            "issue": 77,
         }
         self.decision_path.write_text(json.dumps(self.decision), encoding="utf-8")
-        flags.update({
-            "--decision-sha256": hashlib.sha256(self.decision_path.read_bytes()).hexdigest(),
-            "--github-evidence": str(self.github), "--github-repository": "bocklabs/trusted-images",
-        })
+        flags.update(
+            {
+                "--decision-sha256": hashlib.sha256(
+                    self.decision_path.read_bytes()
+                ).hexdigest(),
+                "--github-evidence": str(self.github),
+                "--github-repository": "bocklabs/trusted-images",
+            }
+        )
         result = self.run_generator(flags)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         record = json.loads(self.out.read_text(encoding="utf-8"))
         acceptance = record["policy"]["acceptance"]
         self.assertEqual(record["policy"]["warnings"][0]["severity_source"], "debian")
-        self.assertEqual(acceptance, {
-            "candidate_digest": CHILD_DIGEST, "kevs": list(cves), "record_path": path,
-            "record_commit": "c" * 40, "pr_url": "https://github.com/bocklabs/trusted-images/pull/42",
-            "merged_by": "approver", "merged_at": "2026-09-13T00:00:00Z",
-            "issue_url": "https://github.com/bocklabs/trusted-images/issues/77",
-            "issue_state": "open", "expires_at": "2026-09-18T00:00:00Z",
-        })
+        self.assertEqual(
+            acceptance,
+            {
+                "candidate_digest": CHILD_DIGEST,
+                "kevs": list(cves),
+                "record_path": path,
+                "record_commit": "c" * 40,
+                "pr_url": "https://github.com/bocklabs/trusted-images/pull/42",
+                "merged_by": "approver",
+                "merged_at": "2026-09-13T00:00:00Z",
+                "issue_url": "https://github.com/bocklabs/trusted-images/issues/77",
+                "issue_state": "open",
+                "expires_at": "2026-09-18T00:00:00Z",
+            },
+        )
         self.decision["policy"]["acceptance"]["expires_at"] = "2026-09-14T01:00:00Z"
         self.decision_path.write_text(json.dumps(self.decision), encoding="utf-8")
-        flags["--decision-sha256"] = hashlib.sha256(self.decision_path.read_bytes()).hexdigest()
+        flags["--decision-sha256"] = hashlib.sha256(
+            self.decision_path.read_bytes()
+        ).hexdigest()
         self.out.unlink()
         self.assert_fails_closed(self.run_generator(flags), "expired")
 
     def test_legacy_multi_platform_records_remain_readable(self) -> None:
-        legacy = REPO_ROOT / "provenance" / "postgres-exporter" / "v0.20.1-bocklabs.1.json"
+        legacy = (
+            REPO_ROOT / "provenance" / "postgres-exporter" / "v0.20.1-bocklabs.1.json"
+        )
         record = json.loads(legacy.read_text(encoding="utf-8"))
         self.assertEqual(record["schema"], SCHEMA)
         self.assertIn("linux/amd64", record["internal"]["platforms"])
@@ -247,29 +351,41 @@ class ProvenanceTests(unittest.TestCase):
 
     def test_recovery_preserves_original_and_current_run(self) -> None:
         flags = self.flags()
-        flags.update({
-            "--original-run-url": "https://example.invalid/runs/42", "--original-source-sha": "d" * 40,
-            "--recovered-tag": "v0.20.1-bocklabs.1", "--recovered-digest": CHILD_DIGEST,
-        })
+        flags.update(
+            {
+                "--original-run-url": "https://example.invalid/runs/42",
+                "--original-source-sha": "d" * 40,
+                "--recovered-tag": "v0.20.1-bocklabs.1",
+                "--recovered-digest": CHILD_DIGEST,
+            }
+        )
         result = self.run_generator(flags)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         record = json.loads(self.out.read_text(encoding="utf-8"))
-        self.assertEqual(record["pipeline"]["original_run_url"], "https://example.invalid/runs/42")
+        self.assertEqual(
+            record["pipeline"]["original_run_url"], "https://example.invalid/runs/42"
+        )
         self.assertEqual(record["recovery"]["recovered_digest"], CHILD_DIGEST)
 
     def test_bad_recovery_digest_writes_no_record(self) -> None:
         flags = self.flags()
-        flags.update({
-            "--original-run-url": "https://example.invalid/runs/42", "--original-source-sha": "d" * 40,
-            "--recovered-tag": "v0.20.1-bocklabs.1", "--recovered-digest": "sha256:" + "e" * 64,
-        })
+        flags.update(
+            {
+                "--original-run-url": "https://example.invalid/runs/42",
+                "--original-source-sha": "d" * 40,
+                "--recovered-tag": "v0.20.1-bocklabs.1",
+                "--recovered-digest": "sha256:" + "e" * 64,
+            }
+        )
         self.assert_fails_closed(self.run_generator(flags), "recovered-digest")
 
     def test_unpublished_decision_writes_no_record(self) -> None:
         flags = self.flags()
         self.decision["published"]["digest"] = None
         self.decision_path.write_text(json.dumps(self.decision), encoding="utf-8")
-        flags["--decision-sha256"] = hashlib.sha256(self.decision_path.read_bytes()).hexdigest()
+        flags["--decision-sha256"] = hashlib.sha256(
+            self.decision_path.read_bytes()
+        ).hexdigest()
         self.assert_fails_closed(self.run_generator(flags), "published")
 
 
