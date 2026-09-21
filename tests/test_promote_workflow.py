@@ -303,6 +303,10 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertIn("inputs.accepted_candidate_run_id == ''", copa["if"])
         after = by_name["Rescan the exact preserved accepted bytes with the frozen DB"]
         self.assertIn("inputs.accepted_candidate_run_id != ''", after["if"])
+        recovered = by_name["Materialize the exact recovered candidate"]
+        self.assertIn("resume-final.tar", recovered["run"])
+        self.assertNotIn("recovery-final.tar", recovered["run"])
+        self.assertEqual(after["with"]["input"], "resume-final.tar")
         policy_script = (SCRIPTS / "promote_candidate_decision.py").read_text(
             encoding="utf-8"
         )
@@ -472,6 +476,10 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertIn(
             "uses: ./.github/workflows/promote-publish.yaml", self.orchestrator
         )
+        self.assertIn(
+            "${{ needs.candidate.outputs.candidate_manifest_sha256 }}", self.orchestrator
+        )
+        self.assertNotIn("jobs.candidate.outputs", self.orchestrator)
         for text in (
             "scripts/evaluate_promotion.py",
             "known_exploited_vulnerabilities.json",
@@ -512,6 +520,8 @@ class PromoteWorkflowTests(unittest.TestCase):
             "${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}",
         )
         self.assertNotIn("severity", copa["if"])
+        patched = by_name["Add only provenance labels and export final bytes"]
+        self.assertEqual(patched["if"], copa["if"])
         allocation = by_name["Allocate the immutable patched revision before metadata"]
         self.assertIn("--force-repromote", allocation["run"])
         self.assertIn("skip_copy=false", allocation["run"])
