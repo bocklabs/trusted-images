@@ -1091,5 +1091,66 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
         self.assertNotEqual(result.returncode, 0)
 
 
+class SyncDispatchOptionsTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+
+    def run_sync(self) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, str(REPO_ROOT / "scripts/sync_dispatch_options.py")],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_syncs_apps_and_reports_changed_output(self) -> None:
+        workflow = self.root / ".github/workflows/promote.yaml"
+        workflow.parent.mkdir(parents=True)
+        workflow.write_text(
+            "      options:\n"
+            "          # apps-begin\n"
+            "          - old\n"
+            "          # apps-end\n",
+            encoding="utf-8",
+        )
+        for app in ("app-b", "app-a"):
+            (self.root / "inventory" / app).mkdir(parents=True)
+            (self.root / "inventory" / app / "image.yaml").touch()
+        output = self.root / "github-output"
+        result = subprocess.run(
+            [sys.executable, str(REPO_ROOT / "scripts/sync_dispatch_options.py")],
+            cwd=self.root,
+            env={**os.environ, "GITHUB_OUTPUT": str(output)},
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("options updated: +['app-a', 'app-b'] -['old']", result.stdout)
+        self.assertIn("changed=true", output.read_text(encoding="utf-8"))
+        self.assertIn(
+            "          - app-a\n          - app-b", workflow.read_text(encoding="utf-8")
+        )
+
+    def test_already_synced_options_do_not_change(self) -> None:
+        workflow = self.root / ".github/workflows/promote.yaml"
+        workflow.parent.mkdir(parents=True)
+        workflow.write_text(
+            "          # apps-begin\n          - app\n          # apps-end\n",
+            encoding="utf-8",
+        )
+        (self.root / "inventory" / "app").mkdir(parents=True)
+        (self.root / "inventory" / "app" / "image.yaml").touch()
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "options in sync\n")
+
+    def test_empty_inventory_fails(self) -> None:
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("FATAL: no inventory entries found", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
