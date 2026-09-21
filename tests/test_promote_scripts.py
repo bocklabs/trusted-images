@@ -242,7 +242,11 @@ def checksums(root: Path) -> None:
         item for item in root.rglob("*") if item.is_file() and item.name != "SHA256SUMS"
     ):
         relative = path.relative_to(root).as_posix()
-        lines.append(hashlib.sha256(path.read_bytes()).hexdigest() + "  " + relative)
+        lines.append(
+            hashlib.sha256(path.read_bytes()).hexdigest()
+            + "  candidate-artifact/"
+            + relative
+        )
     (root / "SHA256SUMS").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

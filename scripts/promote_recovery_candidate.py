@@ -31,7 +31,7 @@ if (
 ):
     raise SystemExit("FATAL: recovery OCI layout does not preserve candidate bytes")
 listed = {
-    line.split("  ", 1)[1]
+    line.split("  ", 1)[1].removeprefix("candidate-artifact/")
     for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
     if "  " in line
 }
@@ -48,6 +48,7 @@ if listed != actual_files:
     raise SystemExit("FATAL: recovery candidate checksum manifest is ambiguous")
 for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
     digest, name = line.split("  ", 1)
+    name = name.removeprefix("candidate-artifact/")
     if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
         raise SystemExit(f"FATAL: recovery candidate checksum failed: {name}")
 Path("original-candidate-decision.json").write_bytes(

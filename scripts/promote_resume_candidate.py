@@ -56,6 +56,7 @@ checksum_lines = (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
 listed = []
 for line in checksum_lines:
     digest, name = line.split("  ", 1)
+    name = name.removeprefix("candidate-artifact/")
     relative_path = PurePosixPath(name)
     if relative_path.is_absolute() or ".." in relative_path.parts:
         raise SystemExit(f"FATAL: candidate checksum manifest path traversal: {name}")
