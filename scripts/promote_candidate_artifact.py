@@ -81,5 +81,6 @@ if len(listed) != len(set(listed)) or set(listed) != {
 
 for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
     expected_digest, name = line.split("  ", 1)
+    name = name.removeprefix("candidate-artifact/")
     if hashlib.sha256((root / name).read_bytes()).hexdigest() != expected_digest:
         raise SystemExit(f"FATAL: fresh candidate checksum failed: {name}")
