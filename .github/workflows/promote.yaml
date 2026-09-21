@@ -331,7 +331,7 @@ jobs:
           set -euo pipefail
           TOKEN="$(curl --fail-with-body -sS \
             "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
-          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
           : > registry-tags.txt
           : > registry-pages.txt
           URL="https://ghcr.io/v2/bocklabs/${APP}/tags/list?n=100"
@@ -1376,7 +1376,7 @@ jobs:
             EXPECTED="$(cat pushed-digest.txt)"
           fi
           TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
-          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json'
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
           HDRS="$(curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
             "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
           PUSHED=""
