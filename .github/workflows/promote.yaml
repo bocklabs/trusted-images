@@ -1234,7 +1234,8 @@ jobs:
           CANDIDATE_BLOB="candidate-artifact/candidate-oci/blobs/sha256/${CANDIDATE_DIGEST#sha256:}"
           cmp candidate-artifact/candidate-manifest.json "${CANDIDATE_BLOB}" || { echo "FATAL: OCI layout does not preserve candidate bytes"; exit 1; }
           cmp candidate-artifact/child-manifest.json candidate-artifact/candidate-manifest.json \
-            || jq -e '.copa.original_child_input == true and .patching.disabled == false' candidate-artifact/candidate-decision.json > /dev/null
+            || jq -e '.copa.original_child_input == true and .patching.disabled == false' candidate-artifact/candidate-decision.json > /dev/null \
+            || { echo "FATAL: patched candidate requires copa.original_child_input=true and patching.disabled=false"; jq -c '{copa:.copa,patching:.patching}' candidate-artifact/candidate-decision.json; exit 1; }
           TAG_SKIP="$(jq -er .skip_copy candidate-artifact/tag-decision.json)"
           {
             echo "internal_tag=${INTERNAL_TAG}"
