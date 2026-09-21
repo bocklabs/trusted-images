@@ -526,7 +526,19 @@ elif args[0] == 'commit':
 elif args[0] == 'save':
     from pathlib import Path
     Path(args[args.index('--output') + 1]).write_text('final bytes')
-elif args[0] == 'run' and 'inspect' in args: print('{"schemaVersion":2}')
+elif args[0] == 'run':
+    import hashlib
+    from pathlib import Path as P
+    layout = P(os.environ.get('PWD', '.')) / 'candidate-oci' / 'index.json'
+    layout.parent.mkdir(parents=True, exist_ok=True)
+    if not layout.exists():
+        manifest_text = '{"schemaVersion":2,"mediaType":"application/vnd.oci.image.manifest.v1+json"}'
+        digest = 'sha256:' + hashlib.sha256(manifest_text.encode()).hexdigest()
+        blob_dir = layout.parent / 'blobs' / 'sha256'
+        blob_dir.mkdir(parents=True, exist_ok=True)
+        P(blob_dir / digest.split(':')[1]).write_text(manifest_text)
+        layout.write_text('{"manifests":[{"digest":"' + digest + '"}]}')
+    print(layout.read_text())
 """)
             executable.chmod(0o755)
             (root / "scripts").symlink_to(

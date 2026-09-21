@@ -740,8 +740,9 @@ jobs:
           docker save copa:final --output candidate-final.tar
           SKOPEO="${SKOPEO_IMAGE}"
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             inspect --raw oci:/workspace/candidate-oci:candidate > candidate-manifest.json
-          sha256sum candidate-manifest.json | awk '{print "digest=sha256:" $1}' > candidate-digest.txt
+          CANDIDATE_MANIFEST_DIGEST="$(jq -er '.manifests[0].digest' candidate-oci/index.json)"
+          cp "candidate-oci/blobs/sha256/${CANDIDATE_MANIFEST_DIGEST#sha256:}" candidate-manifest.json
+          sha256sum candidate-manifest.json | awk -v d="${CANDIDATE_MANIFEST_DIGEST}" '{ if ("sha256:" $1 != d) exit 1; print "digest=sha256:" $1 }' > candidate-digest.txt
           cat candidate-digest.txt >> "$GITHUB_OUTPUT"
           echo "image_id=${FINAL_IMAGE_ID}" >> "$GITHUB_OUTPUT"
 
