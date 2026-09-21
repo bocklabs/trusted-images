@@ -10,20 +10,26 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
+DECISION_FILENAME = "candidate-decision.json"
+MANIFEST_FILENAME = "candidate-manifest.json"
+CHILD_FILENAME = "child-manifest.json"
+INVENTORY_FILENAME = "inventory-image.yaml"
+INDEX_FILENAME = "upstream-index.json"
+
 run_id, artifact_id = sys.argv[1], int(sys.argv[2])
 root = Path("resume-download")
 mandatory = {
-    "candidate-decision.json",
-    "candidate-manifest.json",
+    DECISION_FILENAME,
+    MANIFEST_FILENAME,
     "child-config.json",
-    "child-manifest.json",
-    "inventory-image.yaml",
+    CHILD_FILENAME,
+    INVENTORY_FILENAME,
     "secobserve-upload.json",
     "source.sha",
     "tag-decision.json",
     "trivy-before-full.json",
     "trivy-copa.json",
-    "upstream-index.json",
+    INDEX_FILENAME,
     "trivy-full.cdx.json",
     "trivy-full.json",
     "validation-evidence.json",
@@ -87,17 +93,15 @@ if missing:
         + ", ".join(sorted(missing))
     )
 
-spec = yaml.safe_load((root / "inventory-image.yaml").read_text(encoding="utf-8"))[
-    "spec"
-]
+spec = yaml.safe_load((root / INVENTORY_FILENAME).read_text(encoding="utf-8"))["spec"]
 expected_package = f"ghcr.io/bocklabs/{os.environ['APP']}"
 if spec["destination"]["package"] != expected_package:
     raise SystemExit("FATAL: candidate inventory app/package mismatch")
 current = Path("inventory") / os.environ["APP"] / "image.yaml"
-if current.read_bytes() != (root / "inventory-image.yaml").read_bytes():
+if current.read_bytes() != (root / INVENTORY_FILENAME).read_bytes():
     raise SystemExit("FATAL: candidate inventory bytes differ from current main")
 
-decision_path = root / "candidate-decision.json"
+decision_path = root / DECISION_FILENAME
 decision = json.loads(decision_path.read_text(encoding="utf-8"))
 module_spec = importlib.util.spec_from_file_location(
     "evaluate_promotion", "scripts/evaluate_promotion.py"
@@ -136,28 +140,25 @@ if mismatches:
 selected = decision["selected_child_digest"]
 candidate = decision["candidate"]["digest"]
 for name, digest in (
-    ("child-manifest.json", selected),
-    ("candidate-manifest.json", candidate),
+    (CHILD_FILENAME, selected),
+    (MANIFEST_FILENAME, candidate),
 ):
     actual_digest = "sha256:" + hashlib.sha256((root / name).read_bytes()).hexdigest()
     if actual_digest != digest:
         raise SystemExit(f"FATAL: candidate {name} digest mismatch")
-if module.sha256_file(root / "upstream-index.json") != spec["upstream"]["digest"]:
+if module.sha256_file(root / INDEX_FILENAME) != spec["upstream"]["digest"]:
     raise SystemExit("FATAL: candidate upstream index digest mismatch")
 if (
     module.select_child(
-        json.loads((root / "upstream-index.json").read_text()),
-        root / "child-manifest.json",
+        json.loads((root / INDEX_FILENAME).read_text()),
+        root / CHILD_FILENAME,
         root / "child-config.json",
     )
     != selected
 ):
     raise SystemExit("FATAL: candidate child identity mismatch")
 blob = root / "candidate-oci" / "blobs" / "sha256" / candidate.split(":", 1)[1]
-if (
-    not blob.is_file()
-    or blob.read_bytes() != (root / "candidate-manifest.json").read_bytes()
-):
+if not blob.is_file() or blob.read_bytes() != (root / MANIFEST_FILENAME).read_bytes():
     raise SystemExit("FATAL: candidate OCI layout does not preserve exact bytes")
 tag = json.loads((root / "tag-decision.json").read_text(encoding="utf-8"))
 if tag != {"internal_tag": decision["proposed_tag"], "skip_copy": False}:
@@ -175,7 +176,7 @@ for name in mandatory | optional:
     if source.is_file():
         shutil.copyfile(source, name)
 shutil.copytree(root / "candidate-oci", "candidate-oci", dirs_exist_ok=True)
-shutil.copyfile(root / "candidate-decision.json", "original-candidate-decision.json")
+shutil.copyfile(root / DECISION_FILENAME, "original-candidate-decision.json")
 with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open(
     "a", encoding="utf-8"
 ) as output:

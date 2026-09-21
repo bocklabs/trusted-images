@@ -5,6 +5,8 @@ import json
 import sys
 from pathlib import Path
 
+SHA256_PREFIX = "sha256:"
+
 provenance, root = Path(sys.argv[1]), Path(sys.argv[2])
 record = json.loads(provenance.read_text(encoding="utf-8"))
 manifest = hashlib.sha256((root / "candidate-manifest.json").read_bytes()).hexdigest()
@@ -14,11 +16,11 @@ expected = {
     "candidate": record["internal"]["digest"],
 }
 actual = {
-    "index": "sha256:"
+    "index": SHA256_PREFIX
     + hashlib.sha256((root / "upstream-index.json").read_bytes()).hexdigest(),
-    "child": "sha256:"
+    "child": SHA256_PREFIX
     + hashlib.sha256((root / "child-manifest.json").read_bytes()).hexdigest(),
-    "candidate": "sha256:" + manifest,
+    "candidate": SHA256_PREFIX + manifest,
 }
 if actual != expected:
     raise SystemExit("FATAL: recovery candidate bytes do not match provenance")

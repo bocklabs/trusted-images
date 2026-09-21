@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+DECISION_PATH = Path("candidate-decision.json")
+
 policy = json.loads(Path("validation-context/patch-policy.json").read_text())
 args = [
     sys.executable,
@@ -44,7 +46,7 @@ args = [
     "--patch-policy",
     policy["patchPolicy"],
     "--out",
-    "candidate-decision.json",
+    DECISION_PATH,
 ]
 if policy["patchPolicy"] == "disabled":
     reason = policy["patchDisabledReason"]
@@ -94,13 +96,13 @@ if os.environ.get("RESUME_ORIGINAL_RUN_ID"):
 result = subprocess.run(args)
 if result.returncode:
     print("Candidate retained for operator review; publisher will not run.")
-if Path("candidate-decision.json").is_file():
-    decision = json.loads(Path("candidate-decision.json").read_text())
+if DECISION_PATH.is_file():
+    decision = json.loads(DECISION_PATH.read_text())
     decision["supersedes"] = {
         "higher_upstream": os.environ.get("HIGHER_UPSTREAM") == "true",
         "original_child_selected": os.environ.get("ORIGINAL_CHILD_SELECTED") == "true",
     }
-    Path("candidate-decision.json").write_text(json.dumps(decision, indent=2) + "\n")
+    DECISION_PATH.write_text(json.dumps(decision, indent=2) + "\n")
     eligible = decision["eligible"]
     with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open("a") as output:
         output.write(f"eligible={str(eligible).lower()}\n")

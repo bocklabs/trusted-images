@@ -1,0 +1,8 @@
+[run]
+branch = true
+parallel = true
+include =
+    */scripts/*
+
+[xml]
+output = coverage.xml

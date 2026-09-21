@@ -1,0 +1,755 @@
+name: promote-publish
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        type: string
+        required: true
+      candidate_manifest_sha256:
+        type: string
+        required: true
+      db_digest:
+        type: string
+        required: true
+      db_updated:
+        type: string
+        required: true
+      resume_original_run_attempt:
+        type: string
+        required: false
+        default: ""
+      resume_original_source_sha:
+        type: string
+        required: false
+        default: ""
+      resume_artifact_id:
+        type: string
+        required: false
+        default: ""
+      recover_tag:
+        type: string
+        required: false
+        default: ""
+      accepted_candidate_run_id:
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  checks: write
+  actions: read
+
+env:
+  SKOPEO_IMAGE: "quay.io/skopeo/stable:v1.22.2@sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      checks: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version-file: .python-version
+
+      - name: Install pinned PyYAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv pip install --system -r requirements.txt
+
+      - name: Download validation context
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: validation-context
+          path: validation-context
+
+      - name: Resolve inventory entry
+        id: entry
+        shell: bash
+        env:
+          APP: ${{ inputs.app }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
+            echo "FATAL: app not in inventory: ${APP}"
+            exit 1
+          fi
+          test -s validation-context/image.yaml || { echo "FATAL: validation context is empty"; exit 1; }
+          OUT="$(python3 scripts/promote_validation_context.py validation-context/image.yaml "${APP}")"
+          echo "${OUT}"
+          echo "${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Download candidate artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: candidate
+          path: candidate-artifact
+
+      - name: Verify candidate artifact
+        id: candidate
+        shell: bash
+        env:
+          EXPECTED_MANIFEST_SHA256: ${{ inputs.candidate_manifest_sha256 }}
+          APP: ${{ steps.entry.outputs.app }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+          RESUME_ORIGINAL_RUN_ATTEMPT: ${{ inputs.resume_original_run_attempt }}
+          RESUME_ORIGINAL_SOURCE_SHA: ${{ inputs.resume_original_source_sha }}
+          RESUME_ARTIFACT_ID: ${{ inputs.resume_artifact_id }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "${EXPECTED_MANIFEST_SHA256}" || { echo "FATAL: candidate checksum output is absent"; exit 1; }
+          ACTUAL_MANIFEST_SHA="$(sha256sum candidate-artifact/SHA256SUMS | awk '{print $1}')"
+          [ "${ACTUAL_MANIFEST_SHA}" = "${EXPECTED_MANIFEST_SHA256}" ] || {
+            echo "FATAL: candidate checksum manifest changed (${ACTUAL_MANIFEST_SHA} != ${EXPECTED_MANIFEST_SHA256})"
+            exit 1
+          }
+          sha256sum -c candidate-artifact/SHA256SUMS
+          python3 scripts/promote_candidate_artifact.py
+          if [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+            gh api "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}" > publisher-resume-run.json
+            ARTIFACT_ID="$(jq -er .artifact_id candidate-artifact/resume-artifact-id.txt 2>/dev/null || jq -er '.resume.artifact_id' candidate-artifact/candidate-decision.json)"
+            gh api "repos/${REPO}/actions/artifacts/${ARTIFACT_ID}" > publisher-resume-artifact.json
+          fi
+          [ "$(cat candidate-artifact/source.sha)" = "${SOURCE_SHA}" ] || {
+            echo "FATAL: candidate source SHA binding failed"
+            exit 1
+          }
+          cmp "inventory/${APP}/image.yaml" candidate-artifact/inventory-image.yaml || {
+            echo "FATAL: candidate inventory bytes differ from this run"
+            exit 1
+          }
+          INDEX_SHA="$(sha256sum candidate-artifact/upstream-index.json | awk '{print $1}')"
+          [ "sha256:${INDEX_SHA}" = "${UPSTREAM_INDEX_DIGEST}" ] || {
+            echo "FATAL: candidate upstream index bytes differ from the inventory digest"
+            exit 1
+          }
+          TAG_FROM_ALLOCATION="$(jq -er .internal_tag candidate-artifact/tag-decision.json)"
+          [ "${TAG_FROM_ALLOCATION}" = "$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)" ] || {
+            echo "FATAL: allocated tag differs from the candidate decision"
+            exit 1
+          }
+
+          python3 scripts/promote_decision_integrity.py candidate-artifact/candidate-decision.json
+
+          INTERNAL_TAG="$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)"
+          SELECTED_CHILD="$(jq -er .selected_child_digest candidate-artifact/candidate-decision.json)"
+          CANDIDATE_DIGEST="$(jq -er .candidate.digest candidate-artifact/candidate-decision.json)"
+          [ "$(sha256sum candidate-artifact/child-manifest.json | awk '{print $1}')" = "${SELECTED_CHILD#sha256:}" ] || { echo "FATAL: child manifest digest mismatch"; exit 1; }
+          [ "$(sha256sum candidate-artifact/candidate-manifest.json | awk '{print $1}')" = "${CANDIDATE_DIGEST#sha256:}" ] || { echo "FATAL: candidate manifest digest mismatch"; exit 1; }
+          CANDIDATE_BLOB="candidate-artifact/candidate-oci/blobs/sha256/${CANDIDATE_DIGEST#sha256:}"
+          cmp candidate-artifact/candidate-manifest.json "${CANDIDATE_BLOB}" || { echo "FATAL: OCI layout does not preserve candidate bytes"; exit 1; }
+          cmp candidate-artifact/child-manifest.json candidate-artifact/candidate-manifest.json \
+            || jq -e '.copa.original_child_input == true and .patching.disabled == false' candidate-artifact/candidate-decision.json > /dev/null \
+            || { echo "FATAL: patched candidate requires copa.original_child_input=true and patching.disabled=false"; jq -c '{copa:.copa,patching:.patching}' candidate-artifact/candidate-decision.json; exit 1; }
+          TAG_SKIP="$(jq -r .skip_copy candidate-artifact/tag-decision.json)"
+          {
+            echo "internal_tag=${INTERNAL_TAG}"
+            echo "skip_copy=${TAG_SKIP}"
+            echo "selected_child_digest=${SELECTED_CHILD}"
+            echo "candidate_digest=${CANDIDATE_DIGEST}"
+            echo "decision_sha256=$(sha256sum candidate-artifact/candidate-decision.json | awk '{print $1}')"
+          } >> "$GITHUB_OUTPUT"
+          cp candidate-artifact/trivy-full.json candidate-artifact/trivy-full.cdx.json \
+            candidate-artifact/trivy-before-full.json candidate-artifact/trivy-copa.json \
+            candidate-artifact/kev.json candidate-artifact/secobserve-upload.json \
+            candidate-artifact/validation-evidence.json \
+            candidate-artifact/trivy-db-meta-1.txt candidate-artifact/trivy-db-meta-2.txt .
+          cp candidate-artifact/candidate-manifest.json candidate-manifest.json
+
+      - name: Assert destination tag is absent or byte-identical
+        id: occupancy
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          TOKEN="$(curl --fail-with-body -sS \
+            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          MANIFEST_ACCEPT='application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
+          set +e
+          STATUS="$(curl --fail-with-body -sS -I \
+            -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${MANIFEST_ACCEPT}" \
+            -D occupancy.headers -o /dev/null -w '%{http_code}' \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
+          CURL_STATUS=$?
+          set -e
+          if [ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]; then
+            echo "skip_copy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${CURL_STATUS}" -ne 0 ] || [ "${STATUS}" != 200 ]; then
+            echo "FATAL: destination occupancy lookup failed (${INTERNAL_TAG}, status ${STATUS:-network error})"
+            exit 1
+          fi
+          PUSHED="$(tr -d '\r' < occupancy.headers \
+            | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+          if [[ ! "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || [ "${PUSHED}" != "${CANDIDATE_DIGEST}" ]; then
+            echo "FATAL: conflicting occupied tag (${INTERNAL_TAG}, got ${PUSHED:-none}, want ${CANDIDATE_DIGEST})"
+            exit 1
+          fi
+          echo "skip_copy=true" >> "$GITHUB_OUTPUT"
+
+      - name: Digest-preserving copy to GHCR
+        id: copy
+        if: steps.occupancy.outputs.skip_copy != 'true'
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SKOPEO="${SKOPEO_IMAGE}"
+          rm -f pushed-digest.txt
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
+            copy \
+              --preserve-digests \
+              --remove-signatures \
+              --dest-tls-verify \
+              --digestfile /workspace/pushed-digest.txt \
+              --dest-creds "bocklabs-bot:${GH_TOKEN}" \
+              "oci:/workspace/candidate-artifact/candidate-oci:candidate" \
+              "docker://ghcr.io/bocklabs/${APP}:${INTERNAL_TAG}"
+          [ "$(cat pushed-digest.txt)" = "${CANDIDATE_DIGEST}" ] || {
+            echo "FATAL: copied digest differs from the verified candidate"
+            exit 1
+          }
+          echo "fallback_used=false" >> "$GITHUB_OUTPUT"
+          echo "divergence_note=" >> "$GITHUB_OUTPUT"
+
+      - name: Assert digest equality
+        id: assertdigest
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          TOKEN="$(curl --fail-with-body -sS "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          ACCEPT='application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
+          PUSHED="$(curl --fail-with-body -sSI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${ACCEPT}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}" \
+            | tr -d '\r' | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+          [[ "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "FATAL: destination tag has no valid digest"; exit 1; }
+          printf '%s\n' "${PUSHED}" > pushed-digest.txt
+          [ "${PUSHED}" = "${CANDIDATE_DIGEST}" ] || {
+            echo "FATAL: digest divergence (PROMO-01/D-22): pushed=${PUSHED} candidate=${CANDIDATE_DIGEST}"
+            exit 1
+          }
+          echo "digest equality: PASS (${PUSHED})"
+
+      - name: Assert exact linux/amd64 manifest
+        id: assertplatforms
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          TOKEN="$(curl --fail-with-body -sS "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          ACCEPT='application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
+          curl --fail-with-body -sS -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${ACCEPT}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CANDIDATE_DIGEST}" > pushed-manifest.json
+          jq -e 'has("manifests") | not' pushed-manifest.json > /dev/null || {
+            echo "FATAL: published candidate is an index (D-20)"
+            exit 1
+          }
+          cmp pushed-manifest.json candidate-manifest.json || {
+            echo "FATAL: published manifest bytes differ from the verified candidate"
+            exit 1
+          }
+
+      - name: Anonymous-pull probe
+        id: probe
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+        run: |
+          set -euo pipefail
+          # Runs on copy, fallback, and skip paths alike. Success (200 + digest
+          # equality) is the only assertable fact: the registry hides private and
+          # nonexistent packages behind the same not-found answer.
+          EXPECTED="${CANDIDATE_DIGEST}"
+          if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
+            EXPECTED="$(cat pushed-digest.txt)"
+          fi
+          TOKEN="$(curl -s "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -r .token)"
+          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
+          HDRS="$(curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${INDEX_ACCEPT}" \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
+          PUSHED=""
+          if echo "${HDRS}" | grep -qi '^HTTP/2 200'; then
+            PUSHED="$(echo "${HDRS}" | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}')"
+            if [ -n "${PUSHED}" ] && [ "${PUSHED}" = "${EXPECTED}" ]; then
+              echo "result=pass" >> "$GITHUB_OUTPUT"
+              echo "probe: anonymous 200 + docker-content-digest match (${PUSHED})"
+              exit 0
+            fi
+          fi
+          echo "result=fail" >> "$GITHUB_OUTPUT"
+          echo "FATAL: package not anonymously readable at expected digest"
+          echo "probe digest: ${PUSHED:-none} / expected: ${EXPECTED}"
+          exit 1
+
+      - name: Write the verified publication digest into the decision
+        id: publication-decision
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          cp candidate-artifact/candidate-decision.json candidate-decision.json
+          jq --arg digest "${CANDIDATE_DIGEST}" '.published.digest = $digest' \
+            candidate-decision.json > candidate-decision.next.json
+          mv candidate-decision.next.json candidate-decision.json
+          python3 scripts/promote_published_decision.py "${APP}"
+          echo "decision_sha256=$(sha256sum candidate-decision.json | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload trivy-full-report artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: trivy-full-report
+          path: |
+            trivy-full.json
+            trivy-full.cdx.json
+            secobserve-upload.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload trivy-copa-report artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: trivy-copa-report
+          path: trivy-copa.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Job summary evidence panel
+        id: summary
+        if: always()
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          SKIP_COPY: ${{ steps.candidate.outputs.skip_copy }}
+          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+          DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
+          PROBE_RESULT: ${{ steps.probe.outputs.result }}
+          SECOBSERVE_API_BASE_URL: ${{ vars.SECOBSERVE_API_BASE_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          DIGEST_LINE="N/A — run failed before a digest was recorded"
+          if [ "${SKIP_COPY:-}" = "true" ]; then
+            DIGEST_LINE="PASS — idempotent skip: ${INTERNAL_TAG:-?} verified equal to candidate digest"
+          elif [ -f pushed-digest.txt ]; then
+            PUSHED="$(cat pushed-digest.txt)"
+            if [ "${PUSHED}" = "${CANDIDATE_DIGEST:-}" ]; then
+              DIGEST_LINE="PASS — pushed ${PUSHED} == linux/amd64 candidate"
+            else
+              DIGEST_LINE="FAIL — pushed ${PUSHED} != candidate"
+            fi
+          fi
+          PLATFORM_LINE="PASS — exact linux/amd64 manifest verified"
+
+          DB_LINE="N/A — DB metadata not captured"
+          if [ -f trivy-db-meta-1.txt ] && [ -f trivy-db-meta-2.txt ]; then
+            if diff -q trivy-db-meta-1.txt trivy-db-meta-2.txt > /dev/null; then
+              DB_LINE="PASS — identical Trivy DB metadata across both scans"
+            else
+              DB_LINE="FAIL — Trivy DB metadata changed between scans"
+            fi
+          elif [ -f trivy-db-meta-1.txt ]; then
+            DB_LINE="PARTIAL — only scan 1 metadata captured"
+          fi
+
+          PROBE_LINE="N/A — probe did not run"
+          if [ "${PROBE_RESULT:-}" = "pass" ]; then
+            PROBE_LINE="PASS — anonymous 200 with matching docker-content-digest"
+          elif [ "${PROBE_RESULT:-}" = "fail" ]; then
+            PROBE_LINE="FAIL — anonymous probe failed"
+          fi
+
+          # D-14.2: the panel displays what the validate job recorded in the
+          # evidence artifact — never recomputes or overrides the result.
+          if [ -f validation-evidence.json ]; then
+            V_RESULT="$(jq -r '.validation.result // "unknown"' validation-evidence.json)"
+            V_TYPE="$(jq -r '.validation.type // "?"' validation-evidence.json)"
+            V_PARAMS="$(jq -c '.validation.params // {}' validation-evidence.json)"
+            V_HSTATUS="$(jq -r '.validation.health.final_status // "?"' validation-evidence.json)"
+            V_TIMINGS="$(jq -r '.validation.timings | "\(.started_at) → \(.finished_at) (\(.duration_seconds)s)"' validation-evidence.json)"
+            V_RUNNER="$(jq -r '.validation.runner // "?"' validation-evidence.json)"
+            V_BASELINE="$(jq -c '{entrypoint: .validation.baseline.entrypoint, cmd: .validation.baseline.cmd, env: .validation.baseline.env}' validation-evidence.json)"
+            VALID_RESULT_LINE="N/A — result '${V_RESULT}' not recorded"
+            if [ "${V_RESULT}" = "pass" ]; then
+              VALID_RESULT_LINE="PASS — validation recorded pass"
+            elif [ "${V_RESULT}" = "fail" ]; then
+              VALID_RESULT_LINE="FAIL — validation recorded fail"
+            fi
+            HEALTH_LINE="FAIL — HEALTHCHECK stuck in '${V_HSTATUS}' at the deadline (D-10)"
+            if [ "${V_HSTATUS}" = "healthy" ]; then
+              HEALTH_LINE="PASS — HEALTHCHECK reached healthy (D-10)"
+            elif [ "${V_HSTATUS}" = "none-defined" ]; then
+              HEALTH_LINE="PASS — no HEALTHCHECK defined; profile check is the gate (D-10)"
+            elif [ "${V_HSTATUS}" = "not-applicable" ]; then
+              HEALTH_LINE="N/A — oneshot profile: container exits by design"
+            elif [ "${V_HSTATUS}" = "unhealthy" ] || [ "${V_HSTATUS}" = "gone" ]; then
+              HEALTH_LINE="FAIL — HEALTHCHECK status '${V_HSTATUS}' (D-10)"
+            fi
+          fi
+
+          {
+            echo "## Promotion evidence — ${APP:-<unknown app>}"
+            echo
+            echo "### Invariants"
+            echo
+            echo "| Invariant | Result |"
+            echo "| --- | --- |"
+            echo "| Digest equality | ${DIGEST_LINE} |"
+            echo "| Exact linux/amd64 manifest | ${PLATFORM_LINE} |"
+            echo "| Trivy DB match | ${DB_LINE} |"
+            echo "| Anonymous pull probe | ${PROBE_LINE} |"
+            echo
+            echo "### Validation"
+            echo
+            echo "| Fact | Result |"
+            echo "| --- | --- |"
+            if [ -f validation-evidence.json ]; then
+              echo "| Profile + params | ${V_TYPE} — ${V_PARAMS} |"
+              echo "| Validation result | ${VALID_RESULT_LINE} |"
+              echo "| Health (D-10) | ${HEALTH_LINE} |"
+              echo "| Timings | ${V_TIMINGS} |"
+              echo "| Runner | ${V_RUNNER} |"
+              echo "| Baseline (entrypoint/cmd/env) | ${V_BASELINE} |"
+            else
+              echo "| Validation | N/A — evidence artifact absent; validation did not complete |"
+            fi
+            echo
+            echo "### Vulnerabilities (deduped, full report)"
+            echo
+            if [ -s trivy-full.json ]; then
+              echo "| Severity | Count |"
+              echo "| --- | ---: |"
+              jq -r '
+                (
+                  [.Results[].Vulnerabilities[]?]
+                  | unique_by([
+                      .VulnerabilityID,
+                      .PkgName,
+                      .InstalledVersion
+                    ])
+                ) as $v
+                |
+                "| Critical | \([$v[] | select(.Severity == "CRITICAL")] | length) |\n"
+                + "| High | \([$v[] | select(.Severity == "HIGH")] | length) |\n"
+                + "| Medium | \([$v[] | select(.Severity == "MEDIUM")] | length) |\n"
+                + "| Low | \([$v[] | select(.Severity == "LOW")] | length) |\n"
+                + "| Unknown | \([$v[] | select(.Severity == "UNKNOWN")] | length) |\n"
+                + "| **Total** | \($v | length) |"
+              ' trivy-full.json
+            else
+              echo "> Trivy report unavailable for this run."
+            fi
+            echo
+          python3 scripts/promote_summary.py >> "$GITHUB_STEP_SUMMARY"
+            echo "### Links"
+            echo
+            echo "- Run: ${RUN_URL}"
+            echo "- GHCR package: https://github.com/bocklabs/${APP:-?}/pkgs/container/${APP:-?}"
+            if [ -n "${SECOBSERVE_API_BASE_URL:-}" ]; then
+              echo "- SecObserve UI (product trusted-images): ${SECOBSERVE_API_BASE_URL%/api}"
+            else
+              echo "- SecObserve UI: not configured (vars.SECOBSERVE_API_BASE_URL missing)"
+            fi
+            echo "- Artifacts: \`trivy-full-report\`, \`trivy-copa-report\`"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate provenance record
+        id: prov
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
+          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
+          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
+          MEDIA_TYPE: application/vnd.oci.image.index.v1+json
+          SELECTED_CHILD_DIGEST: ${{ steps.candidate.outputs.selected_child_digest }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          DECISION_SHA256: ${{ steps.publication-decision.outputs.decision_sha256 }}
+          DB_DIGEST: ${{ inputs.db_digest }}
+          DB_UPDATED: ${{ inputs.db_updated }}
+          DEST_PACKAGE: ${{ steps.entry.outputs.dest_package }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
+          DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DISPATCHED_BY: ${{ github.actor }}
+          RECOVER_TAG: ${{ inputs.recover_tag }}
+          NOW: ${{ steps.publication-decision.outputs.now }}
+        run: |
+          set -euo pipefail
+          SKOPEO_VERSION="${SKOPEO_IMAGE#*:}"
+          SKOPEO_VERSION="${SKOPEO_VERSION%%@*}"
+          FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
+          COPA_SHA="$(sha256sum trivy-copa.json | awk '{print $1}')"
+          PLATFORMS="linux/amd64"
+          NOW="${NOW:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+          echo "now=${NOW}" >> "$GITHUB_OUTPUT"
+          # The actual pushed digest; upstream digest when nothing was pushed now (idempotent skip).
+          INTERNAL_DIGEST="${CANDIDATE_DIGEST}"
+          # D-14: the validation block comes verbatim from the validate job's
+          # evidence artifact, never hand-typed; result must be pass (fail-closed).
+          VALIDATION_RESULT="$(jq -r '.validation.result' validation-evidence.json)"
+          if [ "${VALIDATION_RESULT}" != "pass" ]; then
+            echo "FATAL: validation evidence result is '${VALIDATION_RESULT}', not 'pass' — refusing to write provenance (D-12/D-14)"
+            exit 1
+          fi
+          VALIDATION_TYPE="$(jq -r '.validation.type' validation-evidence.json)"
+          VALIDATION_PARAMS="$(jq -c '.validation.params' validation-evidence.json)"
+          VALIDATION_TIMINGS="$(jq -c '.validation.timings' validation-evidence.json)"
+          VALIDATION_HEALTH="$(jq -c '.validation.health' validation-evidence.json)"
+          VALIDATION_RUNNER="$(jq -r '.validation.runner' validation-evidence.json)"
+          VALIDATION_ENTRYPOINT="$(jq -c '.validation.baseline.entrypoint' validation-evidence.json)"
+          VALIDATION_CMD="$(jq -c '.validation.baseline.cmd' validation-evidence.json)"
+          VALIDATION_ENV="$(jq -c '.validation.baseline.env' validation-evidence.json)"
+          NOTES_ARGS=()
+          if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ] && [ -n "${DIVERGENCE_NOTE:-}" ]; then
+            NOTES_ARGS+=(--notes "${DIVERGENCE_NOTE}")
+          fi
+          RECOVERY_ARGS=()
+          if [ -n "${RECOVER_TAG}" ]; then
+            ORIGINAL_RUN_URL="$(jq -er .original_run_url validation-context/context.json)"
+            ORIGINAL_SOURCE_SHA="$(jq -er .original_source_sha validation-context/context.json)"
+            RECOVERY_ARGS=(
+              --original-run-url "${ORIGINAL_RUN_URL}"
+              --original-source-sha "${ORIGINAL_SOURCE_SHA}"
+              --recovered-tag "${INTERNAL_TAG}"
+              --recovered-digest "${INTERNAL_DIGEST}"
+            )
+          fi
+          COPA_ARGS=()
+          if [ "$(jq -r .copa.original_child_input candidate-decision.json)" = true ]; then
+            COPA_ARGS=(--copa-version 0.15.0)
+          fi
+          python3 scripts/generate_provenance.py \
+            --app "${APP}" \
+            --upstream-ref "${UPSTREAM_REF}" \
+            --upstream-tag "${UPSTREAM_TAG}" \
+            --upstream-digest "${UPSTREAM_DIGEST}" \
+            --upstream-child-digest "${SELECTED_CHILD_DIGEST}" \
+            --media-type "${MEDIA_TYPE}" \
+            --internal-package "${DEST_PACKAGE}" \
+            --internal-tag "${INTERNAL_TAG}" \
+            --internal-digest "${INTERNAL_DIGEST}" \
+            --platforms "${PLATFORMS}" \
+            --run-url "${RUN_URL}" \
+            --workflow promote \
+            --dispatched-by "${DISPATCHED_BY}" \
+            --trivy-version 0.74.0 \
+            --trivy-action-sha ed142fd0673e97e23eac54620cfb913e5ce36c25 \
+            --skopeo-version "${SKOPEO_VERSION}" \
+            --skopeo-image-digest "${SKOPEO_IMAGE##*@}" \
+            --trivy-db-check-bundle-digest "${DB_DIGEST}" \
+            --trivy-db-updated-at "${DB_UPDATED}" \
+            --full-report-sha256 "${FULL_SHA}" \
+            --copa-report-sha256 "${COPA_SHA}" \
+            --decision-sha256 "${DECISION_SHA256}" \
+            --decision candidate-decision.json \
+            --before-report trivy-before-full.json \
+            --final-report trivy-full.json \
+            --fixable-report trivy-copa.json \
+            --kev-report kev.json \
+            --now "${NOW}" \
+            --secobserve-product trusted-images \
+            --secobserve-origin "${UPSTREAM_REF}:${UPSTREAM_TAG}" \
+            --validation-type "${VALIDATION_TYPE}" \
+            --validation-result "${VALIDATION_RESULT}" \
+            --validation-params "${VALIDATION_PARAMS}" \
+            --validation-timings "${VALIDATION_TIMINGS}" \
+            --validation-health "${VALIDATION_HEALTH}" \
+            --validation-runner "${VALIDATION_RUNNER}" \
+            --validation-entrypoint "${VALIDATION_ENTRYPOINT}" \
+            --validation-cmd "${VALIDATION_CMD}" \
+            --validation-env "${VALIDATION_ENV}" \
+            "${RECOVERY_ARGS[@]}" \
+            "${COPA_ARGS[@]}" \
+            "${NOTES_ARGS[@]}" \
+            --out provenance/${APP}/${INTERNAL_TAG}.json
+          {
+            echo "### Provenance record"
+            echo
+            echo '```json'
+            cat "provenance/${APP}/${INTERNAL_TAG}.json"
+            echo '```'
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Mint bocklabs-release app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.RELEASE_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_KEY }}
+
+      - name: Open provenance PR and enable merge
+        id: pr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # GITHUB_TOKEN-authored PRs trigger no workflows, so this step re-validates
+          # the branch itself and self-posts the required `inventory` check.
+          BRANCH="provenance/${APP}/${INTERNAL_TAG}"
+          RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+          git config user.name "bocklabs-release[bot]"
+          git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
+          APP_TOKEN="${{ steps.app-token.outputs.token }}"
+          REMOTE="https://x-access-token:${APP_TOKEN}@github.com/${REPO}.git"
+          GENERATED="$(mktemp)"
+          cp "${RECORD}" "${GENERATED}"
+          git fetch origin main
+          REMOTE_SHA="$(git ls-remote "${REMOTE}" "refs/heads/${BRANCH}" | awk '{print $1}')"
+          if [ -n "${REMOTE_SHA}" ]; then
+            git fetch origin "refs/heads/${BRANCH}"
+            AUTHOR="$(git log -1 --format=%ae FETCH_HEAD)"
+            [ "${AUTHOR}" = "302587774+bocklabs-release[bot]@users.noreply.github.com" ] || {
+              echo "FATAL: existing provenance branch is not owned by the release App"
+              exit 1
+            }
+            OTHER="$(git diff --name-only origin/main...FETCH_HEAD | grep -vxF "${RECORD}" || true)"
+            [ -z "${OTHER}" ] || {
+              echo "FATAL: existing provenance branch changes files outside ${RECORD}"
+              exit 1
+            }
+          fi
+          git checkout -B "${BRANCH}" origin/main
+          mkdir -p "$(dirname "${RECORD}")"
+          cp "${GENERATED}" "${RECORD}"
+          git add "provenance/${APP}/${INTERNAL_TAG}.json"
+          if git diff --cached --quiet; then
+            echo "Provenance record already merged; no write-back needed" >> "$GITHUB_STEP_SUMMARY"
+            echo "pr_url=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
+          if [ -n "${REMOTE_SHA}" ]; then
+            git push --force-with-lease=refs/heads/${BRANCH}:${REMOTE_SHA} "${REMOTE}" "HEAD:${BRANCH}"
+          else
+            git push "${REMOTE}" "HEAD:${BRANCH}"
+          fi
+
+          PR_URL="$(gh pr list --head "${BRANCH}" --state all --json state,url \
+            --jq '[.[] | select(.state == "OPEN")][0].url // ""')"
+          python3 scripts/promote_provenance_body.py "${RUN_URL}" "${CANDIDATE_DIGEST}" "${INTERNAL_TAG}" > provenance-body.md
+          if [ -z "${PR_URL}" ]; then
+            PR_URL="$(gh pr create \
+              --head "${BRANCH}" \
+              --title "provenance: ${APP} ${INTERNAL_TAG}" \
+              --body-file provenance-body.md)"
+          else
+            gh pr edit "${PR_URL}" --body-file provenance-body.md
+          fi
+          echo "Provenance PR: ${PR_URL}" >> "$GITHUB_STEP_SUMMARY"
+          # The required check's actual payload, re-run against the branch tree.
+          python3 scripts/validate_inventory.py
+          HEAD_SHA="$(git rev-parse HEAD)"
+
+          GH_TOKEN="${{ github.token }}" gh api "repos/${REPO}/check-runs" \
+            -f name=inventory \
+            -f head_sha="${HEAD_SHA}" \
+            -f status=completed \
+            -f conclusion=success \
+            -f output.title="inventory valid (provenance)" \
+            -f output.summary="validate_inventory.py passed on the provenance branch"
+          gh pr merge --auto --merge "${PR_URL}"
+          echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify merged provenance and publish the final decision
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+        run: |
+          set -euo pipefail
+          RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+          if [ -n "${PR_URL}" ]; then
+            for _ in $(seq 1 60); do
+              if [ "$(gh pr view "${PR_URL}" --json state --jq .state)" = MERGED ]; then
+                break
+              fi
+              sleep 10
+            done
+            [ "$(gh pr view "${PR_URL}" --json state --jq .state)" = MERGED ] || {
+              echo "FATAL: provenance PR did not merge in time: ${PR_URL}"
+              exit 1
+            }
+          fi
+          git fetch origin main
+          git show "origin/main:${RECORD}" > main-provenance.json
+          cmp "${RECORD}" main-provenance.json || {
+            echo "FATAL: producer main does not carry the exact generated provenance bytes"
+            exit 1
+          }
+          jq '.provenance.merged = true' candidate-decision.json > candidate-decision.next.json
+          mv candidate-decision.next.json candidate-decision.json
+          python3 scripts/promote_final_decision.py "${APP}" "${CANDIDATE_DIGEST}"
+          echo "candidate-decision.json is complete; publication and provenance are verified" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the final candidate decision
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: candidate-decision
+          path: candidate-decision.json
+          retention-days: 30
+          if-no-files-found: error

@@ -13,7 +13,10 @@ import yaml
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = REPO_ROOT / ".github" / "workflows" / "promote.yaml"
+ORCHESTRATOR_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "promote.yaml"
+CANDIDATE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "promote-candidate.yaml"
+PUBLISHER_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "promote-publish.yaml"
+WORKFLOW = CANDIDATE_WORKFLOW
 RESOLVER = REPO_ROOT / "scripts" / "resolve_internal_tag.py"
 SCRIPTS = REPO_ROOT / "scripts"
 DIGEST_A = "sha256:" + "a" * 64
@@ -199,7 +202,20 @@ class TagAllocationTests(unittest.TestCase):
 class PromoteWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.workflow = WORKFLOW.read_text(encoding="utf-8")
+        cls.orchestrator = ORCHESTRATOR_WORKFLOW.read_text(encoding="utf-8")
+        cls.candidate_workflow = CANDIDATE_WORKFLOW.read_text(encoding="utf-8")
+        cls.publisher_workflow = PUBLISHER_WORKFLOW.read_text(encoding="utf-8")
+        cls.workflow = cls.candidate_workflow + "\n" + cls.publisher_workflow
+
+    def loaded_workflow(self):
+        candidate = yaml.safe_load(self.candidate_workflow)
+        publisher = yaml.safe_load(self.publisher_workflow)
+        return {
+            "jobs": {
+                "validate": candidate["jobs"]["validate"],
+                "promote": publisher["jobs"]["promote"],
+            }
+        }
 
     def test_dispatch_exposes_force_and_recovery_modes(self) -> None:
         for text in (
@@ -212,7 +228,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                 self.assertIn(text, self.workflow)
 
     def test_kev_block_preserves_candidate_for_acceptance_resume(self) -> None:
-        workflow = yaml.safe_load(self.workflow)
+        workflow = self.loaded_workflow()
         candidate_job = workflow["jobs"]["validate"]
         self.assertEqual(
             candidate_job["permissions"],
@@ -251,7 +267,7 @@ class PromoteWorkflowTests(unittest.TestCase):
         )
 
     def test_acceptance_resume_reuses_exact_preserved_bytes(self) -> None:
-        workflow = yaml.safe_load(self.workflow)
+        workflow = self.loaded_workflow()
         steps = workflow["jobs"]["validate"]["steps"]
         by_name = {step["name"]: step for step in steps}
         restore = by_name["Restore the exact accepted candidate"]
@@ -316,7 +332,7 @@ class PromoteWorkflowTests(unittest.TestCase):
     def test_resume_publishes_only_when_destination_is_absent_or_identical(
         self,
     ) -> None:
-        workflow = yaml.safe_load(self.workflow)
+        workflow = self.loaded_workflow()
         steps = workflow["jobs"]["promote"]["steps"]
         by_name = {step["name"]: step for step in steps}
         occupancy = by_name["Assert destination tag is absent or byte-identical"]
@@ -349,8 +365,15 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertNotIn("python3 - <<", self.workflow)
 
     def test_validation_still_gates_promotion(self) -> None:
-        self.assertIn("promote:\n    needs: validate", self.workflow)
-        self.assertIn("cancel-in-progress: true", self.workflow)
+        self.assertIn(
+            "candidate:\n    uses: ./.github/workflows/promote-candidate.yaml",
+            self.orchestrator,
+        )
+        self.assertIn("publish:\n    needs: candidate", self.orchestrator)
+        self.assertIn(
+            "uses: ./.github/workflows/promote-publish.yaml", self.orchestrator
+        )
+        self.assertIn("cancel-in-progress: true", self.orchestrator)
 
     def test_registry_reads_and_copy_fail_closed(self) -> None:
         for text in (
@@ -366,8 +389,28 @@ class PromoteWorkflowTests(unittest.TestCase):
         )
         self.assertNotIn("tags/list?n=1000", self.workflow)
 
+    def test_absent_destination_package_is_an_explicit_first_run_case(self) -> None:
+        workflow = yaml.safe_load(self.candidate_workflow)
+        tag_step = next(
+            step
+            for step in workflow["jobs"]["validate"]["steps"]
+            if step["name"] == "Compute internal tag and detect skip"
+        )
+        run = tag_step["run"]
+        for text in (
+            '[ "${TOKEN_STATUS}" = "403" ]',
+            'any(.code == "DENIED")',
+            "GHCR package is not created yet",
+            'if [ -z "${TOKEN}" ]; then',
+            'URL=""',
+            "FATAL: GHCR token request failed",
+            '${AUTH[@]+"${AUTH[@]}"}',
+        ):
+            with self.subTest(text=text):
+                self.assertIn(text, run)
+
     def test_registry_artifacts_come_from_verbatim_oci_blobs(self) -> None:
-        workflow = yaml.safe_load(self.workflow)
+        workflow = self.loaded_workflow()
         steps = workflow["jobs"]["validate"]["steps"]
         fetch = next(step for step in steps if step["name"] == "Fetch upstream index")[
             "run"
@@ -425,7 +468,10 @@ class PromoteWorkflowTests(unittest.TestCase):
         publisher = self.workflow.split("\n  promote:\n", 1)[1]
         self.assertIn("packages: read", candidate)
         self.assertIn("packages: write", publisher)
-        self.assertIn("promote:\n    needs: validate", self.workflow)
+        self.assertIn("publish:\n    needs: candidate", self.orchestrator)
+        self.assertIn(
+            "uses: ./.github/workflows/promote-publish.yaml", self.orchestrator
+        )
         for text in (
             "scripts/evaluate_promotion.py",
             "known_exploited_vulnerabilities.json",
@@ -451,7 +497,7 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertNotIn('else "not-required"', self.workflow)
 
     def test_pinned_copa_path_patches_final_bytes_before_publication(self) -> None:
-        steps = yaml.safe_load(self.workflow)["jobs"]["validate"]["steps"]
+        steps = self.loaded_workflow()["jobs"]["validate"]["steps"]
         by_name = {step["name"]: step for step in steps}
         copa = by_name["Run pinned Copa from the original child"]
         self.assertEqual(
@@ -500,7 +546,7 @@ class PromoteWorkflowTests(unittest.TestCase):
         )
 
     def test_patched_metadata_uses_a_stopped_container_and_emits_digest(self):
-        workflow = yaml.safe_load(self.workflow)
+        workflow = yaml.safe_load(self.candidate_workflow)
         steps = workflow["jobs"]["validate"]["steps"]
         step = next(
             step
@@ -574,7 +620,7 @@ elif args[0] == 'run':
             self.assertTrue(any(call[:1] == ["rm"] for call in calls))
 
     def test_copa_diagnostics_classify_failures_and_redact_credentials(self):
-        steps = yaml.safe_load(self.workflow)["jobs"]["validate"]["steps"]
+        steps = self.loaded_workflow()["jobs"]["validate"]["steps"]
         step = next(
             step
             for step in steps
@@ -652,7 +698,7 @@ elif args[0] == 'run':
         )
 
     def test_decision_writers_and_evidence_rendering_are_bounded(self) -> None:
-        workflow = yaml.safe_load(self.workflow)
+        workflow = self.loaded_workflow()
         steps = workflow["jobs"]["promote"]["steps"]
         names = {step["name"] for step in steps}
         self.assertIn("Write the verified publication digest into the decision", names)
