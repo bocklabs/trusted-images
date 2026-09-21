@@ -62,12 +62,12 @@ jobs:
     uses: ./.github/workflows/promote-publish.yaml
     with:
       app: ${{ inputs.app }}
-      candidate_manifest_sha256: ${{ jobs.candidate.outputs.candidate_manifest_sha256 }}
-      db_digest: ${{ jobs.candidate.outputs.db_digest }}
-      db_updated: ${{ jobs.candidate.outputs.db_updated }}
-      resume_original_run_attempt: ${{ jobs.candidate.outputs.resume_original_run_attempt }}
-      resume_original_source_sha: ${{ jobs.candidate.outputs.resume_original_source_sha }}
-      resume_artifact_id: ${{ jobs.candidate.outputs.resume_artifact_id }}
+      candidate_manifest_sha256: ${{ needs.candidate.outputs.candidate_manifest_sha256 }}
+      db_digest: ${{ needs.candidate.outputs.db_digest }}
+      db_updated: ${{ needs.candidate.outputs.db_updated }}
+      resume_original_run_attempt: ${{ needs.candidate.outputs.resume_original_run_attempt }}
+      resume_original_source_sha: ${{ needs.candidate.outputs.resume_original_source_sha }}
+      resume_artifact_id: ${{ needs.candidate.outputs.resume_artifact_id }}
       recover_tag: ${{ inputs.recover_tag }}
       accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}
     secrets: inherit

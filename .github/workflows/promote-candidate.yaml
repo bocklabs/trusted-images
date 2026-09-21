@@ -613,8 +613,8 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
             copy --preserve-digests \
             oci:/workspace/candidate-oci:candidate \
-            docker-archive:/workspace/recovery-final.tar:recovered:candidate
-          docker load --input recovery-final.tar
+            docker-archive:/workspace/resume-final.tar:recovered:candidate
+          docker load --input resume-final.tar
           RECOVERY_IMAGE_ID="$(docker image inspect recovered:candidate --format '{{.Id}}')"
           echo "image_id=${RECOVERY_IMAGE_ID}" >> "$GITHUB_OUTPUT"
           RECOVERED_DIGEST="${RECOVERED_DIGEST:-$(jq -er .recovered_digest validation-context/context.json)}"
@@ -741,7 +741,7 @@ jobs:
 
       - name: Add only provenance labels and export final bytes
         id: patched
-        if: inputs.accepted_candidate_run_id == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
+        if: inputs.recover_tag == '' && inputs.accepted_candidate_run_id == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
         shell: bash
         env:
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
