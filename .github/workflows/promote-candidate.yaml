@@ -292,10 +292,9 @@ jobs:
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
           CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
           fi
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-            copy --all --preserve-digests ${CREDS[@]+"${CREDS[@]}"} \
-            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" "oci:/workspace/upstream-oci:index"
-          cp "upstream-oci/blobs/sha256/${UPSTREAM_DIGEST#sha256:}" upstream-index.json
+          docker run --rm --user "$(id -u):$(id -g)" "$SKOPEO" \
+            inspect --raw ${CREDS[@]+"${CREDS[@]}"} \
+            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
           jq -e '.manifests | length > 0' upstream-index.json > /dev/null \
             || { echo "FATAL: upstream index carries no manifests"; exit 1; }
           echo "upstream index bytes: $(wc -c < upstream-index.json)"
