@@ -428,12 +428,23 @@ class PromoteWorkflowTests(unittest.TestCase):
             for step in steps
             if step["name"] == "Resolve the exact linux/amd64 child"
         )["run"]
-        self.assertIn("copy --all --preserve-digests", fetch)
+        self.assertIn("inspect --raw", fetch)
         self.assertIn(
-            'cp "upstream-oci/blobs/sha256/${UPSTREAM_DIGEST#sha256:}" upstream-index.json',
+            '"docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json',
             fetch,
         )
-        self.assertNotIn("inspect --raw", fetch)
+        self.assertNotIn("copy --all", fetch)
+        self.assertIn("CREDS=(--creds", fetch)
+        self.assertNotIn("--src-creds", fetch)
+        self.assertIn("copy --preserve-digests", resolve)
+        self.assertIn(
+            '"docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" "oci:/workspace/upstream-oci:child"',
+            resolve,
+        )
+        self.assertLess(
+            resolve.index("copy --preserve-digests"),
+            resolve.index('cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json'),
+        )
         self.assertIn(
             'cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json',
             resolve,
