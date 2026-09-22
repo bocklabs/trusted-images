@@ -1,0 +1,133 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "distroless-static",
+  "upstream": {
+    "ref": "gcr.io/distroless/static-debian12",
+    "tag": "nonroot",
+    "digest": "sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
+    "index_digest": "sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "selected_platform": "linux/amd64",
+    "selected_child_digest": "sha256:52dcfbabb7457ea47c82f6e13af8c8a4a1d9f7b0145142b3ecab20f2b888411d"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/distroless-static",
+    "tag": "nonroot-bocklabs.1",
+    "digest": "sha256:52dcfbabb7457ea47c82f6e13af8c8a4a1d9f7b0145142b3ecab20f2b888411d",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/35689384716",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.74.0",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "copa": null,
+    "skopeo": "v1.22.2",
+    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:96a80116eb3b9728417d3f97258beb3230b44652ac64622df72b0780ff4f6b34",
+      "updated_at": "2026-09-22 02:00:05.774028462 +0000 UTC"
+    },
+    "full_report_sha256": "c097764365b71e0d989e7010cc398494ed4359e17a541becc9fb14b1584e4628",
+    "copa_report_sha256": "222410b6af0ef4ba14f57baa29ae13a925181ae9cc544a1d6d329987616902d1",
+    "decision_sha256": "8e4863ee21f76adfdfb7d54b3d07745b563c7a6ef9088e0bd021f039fee631e2",
+    "reports": {
+      "before_sha256": "c097764365b71e0d989e7010cc398494ed4359e17a541becc9fb14b1584e4628",
+      "final_sha256": "c097764365b71e0d989e7010cc398494ed4359e17a541becc9fb14b1584e4628",
+      "fixable_sha256": "222410b6af0ef4ba14f57baa29ae13a925181ae9cc544a1d6d329987616902d1"
+    },
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "gcr.io/distroless/static-debian12:nonroot"
+    }
+  },
+  "policy": {
+    "kev": {
+      "matches": [],
+      "catalog": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "sha256": "e0b2bc151428bdddd6a9c695224c4cfccdd6a8f328ce9e71a163bca934493276",
+        "fetched_at": "2026-09-22T05:06:57Z",
+        "catalogVersion": "2026.09.21",
+        "dateReleased": "2026-09-21T18:46:35.0873Z"
+      }
+    },
+    "acceptance": null,
+    "patching": {
+      "disabled": false
+    },
+    "copa": {
+      "classification": "not-required",
+      "original_child_input": false
+    },
+    "supersedes": {
+      "higher_upstream": false,
+      "original_child_selected": false
+    },
+    "outcome": "clean",
+    "eligible": true,
+    "warnings": []
+  },
+  "cves": {
+    "before": [],
+    "final": [],
+    "summary": {
+      "resolved": [],
+      "remaining": [],
+      "introduced": [],
+      "unresolved_fixable": []
+    }
+  },
+  "packages": {
+    "changes": [],
+    "downgrades": [],
+    "downgrade_blocked": false
+  },
+  "validation": {
+    "profile": "oneshot",
+    "result": "pass",
+    "params": {
+      "type": "oneshot",
+      "port": null,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 60,
+      "expectedExit": 127,
+      "command": [
+        "/bocklabs/no-executable"
+      ],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-09-22T05:06:54Z",
+      "finished_at": "2026-09-22T05:06:57Z",
+      "duration_seconds": 2.6
+    },
+    "health": {
+      "defined": false,
+      "final_status": "not-applicable"
+    },
+    "runner": "GitHub Actions 1000010325",
+    "baseline": {
+      "entrypoint": [],
+      "cmd": [],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+      ]
+    }
+  },
+  "promoted_at": "2026-09-22T05:07:36Z",
+  "notes": ""
+}
