@@ -20,8 +20,7 @@ for line in Path("registry-observations.tsv").read_text(encoding="utf-8").splitl
             {
                 "tag": tag,
                 "digest": digest,
-                "upstream_index_digest": record["upstream"].get("index_digest")
-                or record["upstream"].get("digest"),
+                "upstream_index_digest": record["upstream"].get("index_digest") or "",
                 "selected_child_digest": record["upstream"].get(
                     "selected_child_digest"
                 ),

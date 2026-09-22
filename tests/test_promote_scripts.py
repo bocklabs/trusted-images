@@ -616,6 +616,37 @@ class RegistryTests(PromotionScriptTestCase):
             ],
         )
 
+    def test_registry_observations_keep_legacy_digest_out_of_phase05_index(self) -> None:
+        provenance = self.tmp / "provenance" / APP
+        provenance.mkdir(parents=True)
+        tag = "v1.2.3-bocklabs.1"
+        record = {
+            "schema": "trusted-images.bocklabs.dev/provenance-v1",
+            "upstream": {"digest": DIGEST_A},
+            "internal": {
+                "tag": tag,
+                "digest": DIGEST_B,
+                "platforms": ["linux/amd64", "linux/arm64"],
+            },
+        }
+        write_json(provenance / f"{tag}.json", record)
+        observations = self.tmp / "registry-observations.tsv"
+        observations.write_text(f"{tag}\t{DIGEST_B}\n", encoding="utf-8")
+
+        result = self.run_script("promote_registry_observations.py", APP)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout),
+            [{
+                "tag": tag,
+                "digest": DIGEST_B,
+                "upstream_index_digest": "",
+                "selected_child_digest": None,
+                "platforms": ["linux/amd64", "linux/arm64"],
+            }],
+        )
+
     def test_registry_observations_fail_closed_on_unbound_provenance(self) -> None:
         provenance = self.tmp / "provenance" / APP
         provenance.mkdir(parents=True)
