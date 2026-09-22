@@ -40,6 +40,7 @@ permissions:
   pull-requests: write
   checks: write
   actions: read
+  issues: read
 
 concurrency:
   group: promote-${{ inputs.app }}

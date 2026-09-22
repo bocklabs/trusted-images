@@ -466,6 +466,17 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertNotIn("skip_copy != 'true'", platform_step)
 
     def test_candidate_job_is_read_only_and_drives_publisher(self) -> None:
+        caller = yaml.safe_load(self.orchestrator)
+        rank = {"read": 0, "write": 1}
+        for workflow in (
+            yaml.safe_load(self.candidate_workflow),
+            yaml.safe_load(self.publisher_workflow),
+        ):
+            for scope, level in workflow["permissions"].items():
+                self.assertIn(scope, caller["permissions"])
+                self.assertLessEqual(
+                    rank[level], rank[caller["permissions"][scope]]
+                )
         candidate = self.workflow.split("  validate:\n", 1)[1].split(
             "\n  promote:\n", 1
         )[0]
