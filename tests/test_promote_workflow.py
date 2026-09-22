@@ -434,6 +434,15 @@ class PromoteWorkflowTests(unittest.TestCase):
             fetch,
         )
         self.assertNotIn("copy --all", fetch)
+        self.assertIn("copy --preserve-digests", resolve)
+        self.assertIn(
+            '"docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" "oci:/workspace/upstream-oci:child"',
+            resolve,
+        )
+        self.assertLess(
+            resolve.index("copy --preserve-digests"),
+            resolve.index('cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json'),
+        )
         self.assertIn(
             'cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json',
             resolve,
