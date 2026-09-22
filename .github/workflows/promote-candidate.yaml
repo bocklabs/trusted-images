@@ -290,7 +290,7 @@ jobs:
           SKOPEO="${SKOPEO_IMAGE}"
           CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-          CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
+          CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
           fi
           docker run --rm --user "$(id -u):$(id -g)" "$SKOPEO" \
             inspect --raw ${CREDS[@]+"${CREDS[@]}"} \

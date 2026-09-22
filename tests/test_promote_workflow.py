@@ -434,6 +434,8 @@ class PromoteWorkflowTests(unittest.TestCase):
             fetch,
         )
         self.assertNotIn("copy --all", fetch)
+        self.assertIn("CREDS=(--creds", fetch)
+        self.assertNotIn("--src-creds", fetch)
         self.assertIn("copy --preserve-digests", resolve)
         self.assertIn(
             '"docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" "oci:/workspace/upstream-oci:child"',
