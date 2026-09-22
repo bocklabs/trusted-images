@@ -193,8 +193,23 @@ jobs:
           CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
         run: |
           set -euo pipefail
-          TOKEN="$(curl --fail-with-body -sS \
-            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull" | jq -er .token)"
+          set +e
+          TOKEN_STATUS="$(curl --fail-with-body -sS \
+            -o occupancy-token.json -w '%{http_code}' \
+            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull")"
+          CURL_STATUS=$?
+          set -e
+          if [ "${CURL_STATUS}" -eq 0 ]; then
+            TOKEN="$(jq -er .token occupancy-token.json)"
+          elif [ "${TOKEN_STATUS}" = "403" ] && \
+            jq -e '(.errors // []) | any(.code == "DENIED")' occupancy-token.json > /dev/null; then
+            echo "destination package does not exist yet"
+            echo "skip_copy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          else
+            echo "FATAL: GHCR token request failed (${TOKEN_STATUS:-network error})"
+            exit 1
+          fi
           MANIFEST_ACCEPT='application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
           set +e
           STATUS="$(curl --fail-with-body -sS -I \

@@ -360,6 +360,10 @@ class PromoteWorkflowTests(unittest.TestCase):
             integrity,
         )
         self.assertIn('"${STATUS}" = 404', occupancy["run"])
+        self.assertIn('[ "${TOKEN_STATUS}" = "403" ]', occupancy["run"])
+        self.assertIn('any(.code == "DENIED")', occupancy["run"])
+        self.assertIn("destination package does not exist yet", occupancy["run"])
+        self.assertIn('echo "skip_copy=false" >> "$GITHUB_OUTPUT"', occupancy["run"])
         self.assertIn('"${PUSHED}" != "${CANDIDATE_DIGEST}"', occupancy["run"])
         self.assertIn("conflicting occupied tag", occupancy["run"])
         self.assertEqual(copy["if"], "steps.occupancy.outputs.skip_copy != 'true'")
