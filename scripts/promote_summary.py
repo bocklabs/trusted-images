@@ -8,9 +8,7 @@ def rows(path):
     if not Path(path).is_file():
         return []
     report = json.loads(Path(path).read_text(encoding="utf-8"))
-    if "Results" not in report:
-        raise ValueError("Trivy report Results is missing")
-    results = report["Results"]
+    results = report.get("Results")
     if results is None:
         results = []
     elif not isinstance(results, list):

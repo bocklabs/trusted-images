@@ -220,9 +220,7 @@ def select_child(index: dict, manifest_path: Path, config_path: Path):
 def validate_report_results(report: dict, label: str, os_only: bool) -> list:
     if report.get("SchemaVersion") != 2:
         raise ValueError(f"{label}.SchemaVersion must be 2")
-    if "Results" not in report:
-        raise ValueError(f"{label}.Results must be an array")
-    results = report["Results"]
+    results = report.get("Results")
     if results is None:
         results = []
     elif not isinstance(results, list):
