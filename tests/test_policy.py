@@ -371,6 +371,32 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue(json.loads(self.out.read_text())["eligible"])
 
+    def test_null_results_are_empty_for_policy_and_package_inventory(self):
+        full_report = report()
+        fixable_report = report()
+        full_report["Results"] = None
+        fixable_report["Results"] = None
+        write_json(self.full, full_report)
+        write_json(self.fixable, fixable_report)
+
+        result = self.run_policy()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        decision = json.loads(self.out.read_text())
+        self.assertTrue(decision["eligible"])
+        self.assertEqual(decision["before"]["fixable_os"], [])
+        self.assertEqual(decision["packages"]["changes"], [])
+
+    def test_missing_results_still_fails_closed(self):
+        full_report = report()
+        del full_report["Results"]
+        write_json(self.full, full_report)
+
+        result = self.run_policy()
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("full report.Results must be an array", result.stderr)
+
     def test_positive_fixable_blocks_until_patch_expansion(self):
         finding = vuln("CVE-2026-0007", "LOW", fixed="1.1")
         write_json(self.full, report([finding]))
