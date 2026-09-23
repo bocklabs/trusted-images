@@ -486,7 +486,7 @@ jobs:
               echo "| --- | ---: |"
               jq -r '
                 (
-                  [.Results[].Vulnerabilities[]?]
+                  [((.Results // [])[] | .Vulnerabilities[]?)]
                   | unique_by([
                       .VulnerabilityID,
                       .PkgName,

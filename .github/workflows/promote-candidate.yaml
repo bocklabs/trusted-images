@@ -607,7 +607,7 @@ jobs:
             echo "FATAL: Metadata.OS.EOSL blocked the pre-patch candidate"
             exit 1
           }
-          COUNT="$(jq '[.Results[].Vulnerabilities[]?] | length' trivy-copa.json)"
+          COUNT="$(jq '[((.Results // [])[] | .Vulnerabilities[]?)] | length' trivy-copa.json)"
           echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
           echo "fixable OS findings: ${COUNT}"
 
@@ -885,7 +885,7 @@ jobs:
           trivy convert --format cyclonedx --output trivy-full.cdx.json trivy-full.json
           test -s trivy-full.json
           test -s trivy-full.cdx.json
-          JSON_COUNT="$(jq '[.Results[].Vulnerabilities[]?] | unique_by([.VulnerabilityID, .PkgName, .InstalledVersion]) | length' trivy-full.json)"
+          JSON_COUNT="$(jq '[((.Results // [])[] | .Vulnerabilities[]?)] | unique_by([.VulnerabilityID, .PkgName, .InstalledVersion]) | length' trivy-full.json)"
           CDX_COUNT="$(jq '.vulnerabilities | length' trivy-full.cdx.json)"
           {
             echo "cyclonedx findings in JSON report: ${JSON_COUNT}"
