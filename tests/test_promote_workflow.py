@@ -217,6 +217,11 @@ class PromoteWorkflowTests(unittest.TestCase):
             }
         }
 
+    def test_trivy_result_counts_treat_null_as_empty(self) -> None:
+        self.assertEqual(
+            self.workflow.count("((.Results // [])[] | .Vulnerabilities[]?)"), 3
+        )
+
     def test_dispatch_exposes_force_and_recovery_modes(self) -> None:
         for text in (
             "force_repromote:",
