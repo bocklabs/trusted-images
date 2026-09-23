@@ -1106,6 +1106,17 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("Results must be an array or null", result.stderr)
 
+    def test_summary_handles_missing_trivy_results(self) -> None:
+        for filename in ("trivy-before-full.json", "trivy-full.json", "trivy-copa.json"):
+            value = report()
+            del value["Results"]
+            write_json(self.tmp / filename, value)
+
+        result = self.run_script("promote_summary.py")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("CVE-2026-", result.stdout)
+
     def test_summary_fails_closed_on_a_malformed_report(self) -> None:
         (self.tmp / "trivy-before-full.json").write_text("{\n", encoding="utf-8")
         result = self.run_script("promote_summary.py")
