@@ -8,6 +8,13 @@ def rows(path):
     if not Path(path).is_file():
         return []
     report = json.loads(Path(path).read_text(encoding="utf-8"))
+    if "Results" not in report:
+        raise ValueError("Trivy report Results is missing")
+    results = report["Results"]
+    if results is None:
+        results = []
+    elif not isinstance(results, list):
+        raise ValueError("Trivy report Results must be an array or null")
     return [
         (
             finding.get("VulnerabilityID", ""),
@@ -15,7 +22,7 @@ def rows(path):
             finding.get("Severity", ""),
             finding.get("SeveritySource", ""),
         )
-        for result in report.get("Results", [])
+        for result in results
         for finding in result.get("Vulnerabilities") or []
     ]
 
