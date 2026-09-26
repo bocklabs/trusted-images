@@ -45,9 +45,10 @@ jobs:
           SITE_DIR="$(python -c 'import site; print(site.getsitepackages()[0])')"
           printf 'import coverage; coverage.process_startup()\n' \
             > "$SITE_DIR/999-coverage-subprocess.pth"
-          coverage run --branch -m unittest discover -s tests
-          coverage combine --quiet
-          coverage xml
+          python -m coverage run --branch -m unittest discover -s tests
+          python -m coverage combine --quiet
+          python -m coverage report --fail-under=80
+          python -m coverage xml
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2

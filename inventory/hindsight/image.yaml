@@ -1,0 +1,20 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: hindsight
+spec:
+  upstream:
+    ref: ghcr.io/vectorize-io/hindsight
+    tag: 0.10.1
+    digest: sha256:b4d3b76f363aa40cf348450e7f8f52a50653008731b99824b14623a196182e73
+  destination:
+    package: ghcr.io/bocklabs/hindsight
+  patchPolicy: enabled
+  validation:
+    type: http
+    port: 8888
+    path: /health
+    durationSeconds: 180
+    env:
+      HINDSIGHT_API_LLM_PROVIDER: none
+  version: 2

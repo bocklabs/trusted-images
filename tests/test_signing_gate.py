@@ -248,6 +248,48 @@ else:
             with self.assertRaisesRegex(ValueError, "attachment mismatch"):
                 reverify_signing.verify(IMAGE, "0" * 64, expected_hash, identity)
 
+    def test_historical_verifier_accepts_bound_record_and_rejects_wrong_identity(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
+        import reverify_signing
+
+        identity = json.loads(IDENTITY.read_text())
+        signature_bytes = b"signature attachment\n"
+        attestation_bytes = b"attestation attachment\n"
+        record = {
+            "schema": "trusted-images.bocklabs.dev/provenance-v1", "app": "example",
+            "internal": {"package": "ghcr.io/bocklabs/example", "digest": DIGEST},
+            "policy": {"eligible": True},
+            "signing": {
+                "result": "pass",
+                "image_signature": {**identity, "bundle_sha256": "a" * 64,
+                                    "attachment_sha256": hashlib.sha256(signature_bytes).hexdigest()},
+                "sbom_attestation": {"predicate_type": "https://cyclonedx.org/bom",
+                                     "bundle_sha256": "b" * 64, "predicate_sha256": "c" * 64,
+                                     "attachment_sha256": hashlib.sha256(attestation_bytes).hexdigest()},
+                "tools": {"cosign": COSIGN_RELEASE, "trivy": "0.74.0"},
+                "rekor": {key: {"log_index": 42, "log_id": "log", "signed_entry_timestamp": "proof"}
+                          for key in ("signature", "sbom_attestation")},
+            },
+        }
+        (self.dir / "config").mkdir()
+        (self.dir / "config/signing-identity.json").write_text(json.dumps(identity))
+        path = self.dir / "provenance/example/one.json"
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps(record))
+        verified_signature = json.dumps([{"critical": {"image": {"docker-manifest-digest": DIGEST}}}]).encode()
+        verified_attestation = json.dumps([{"payload": base64.b64encode(json.dumps(self.statement).encode()).decode()}]).encode()
+        outputs = [verified_signature, verified_attestation, signature_bytes, attestation_bytes]
+        with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
+            reverify_signing, "old_signed_paths", return_value={"provenance/example/one.json"}
+        ), mock.patch.object(reverify_signing, "cosign", side_effect=outputs), mock.patch.object(
+            sys, "argv", ["reverify_signing.py", "--base", "base"]
+        ):
+            self.assertEqual(reverify_signing.main(), 0)
+            record["signing"]["image_signature"]["certificate_identity"] = "https://wrong.example/workflow"
+            path.write_text(json.dumps(record))
+            self.assertEqual(reverify_signing.main(), 1)
+
     def test_historical_verifier_empty_window_and_record_loss(self):
         sys.path.insert(0, str(ROOT / "scripts"))
         self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
@@ -264,11 +306,12 @@ else:
         with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
             reverify_signing, "old_signed_paths", return_value={"provenance/example/one.json"}
         ):
+            identity = json.loads(IDENTITY.read_text())
             with self.assertRaisesRegex(ValueError, "lost its evidence"):
-                reverify_signing.signed_records("base", json.loads(IDENTITY.read_text()))
+                reverify_signing.signed_records("base", identity)
             quarantined.unlink()
             with self.assertRaisesRegex(ValueError, "missing signed record"):
-                reverify_signing.signed_records("base", json.loads(IDENTITY.read_text()))
+                reverify_signing.signed_records("base", identity)
 
 
 if __name__ == "__main__":

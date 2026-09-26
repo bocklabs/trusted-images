@@ -565,6 +565,66 @@ def report_hash_violations(args: argparse.Namespace) -> list[str]:
     return violations
 
 
+def signing_hash_violations(path, group, item) -> list[str]:
+    errors = []
+    sources = {
+        "signature": {"bundle_sha256": "sign-bundle.json", "attachment_sha256": "signature-attachment.json"},
+        "sbom_attestation": {"bundle_sha256": "sbom-bundle.json", "attachment_sha256": "sbom-attestation-attachment.json", "predicate_sha256": "trivy-full.cdx.json"},
+    }
+    for key, filename in sources[group].items():
+        if not BARE_SHA256_RE.fullmatch(str(item.get(key, ""))):
+            errors.append(f"signing-evidence {group}.{key} is invalid")
+            continue
+        try:
+            if item[key] != file_sha256(Path(path).parent / filename):
+                errors.append(f"signing-evidence {group}.{key} differs from local bytes")
+        except OSError:
+            errors.append(f"signing-evidence {group}.{key} source file is missing")
+    return errors
+
+
+def signing_attachment_violations(path, group, item) -> list[str]:
+    errors = []
+    if not isinstance(item, dict):
+        return [f"signing-evidence {group} is missing"]
+    errors.extend(signing_hash_violations(path, group, item))
+    if group == "sbom_attestation" and item.get("predicate_type") != "https://cyclonedx.org/bom":
+        errors.append("signing-evidence sbom_attestation.predicate_type is invalid")
+    rekor = item.get("rekor")
+    if not isinstance(rekor, dict) or not (
+        isinstance(rekor.get("log_index"), int) and not isinstance(rekor.get("log_index"), bool)
+        and rekor["log_index"] >= 0 and isinstance(rekor.get("log_id"), str) and rekor["log_id"]
+        and any(isinstance(rekor.get(key), str) and rekor[key] for key in ("signed_entry_timestamp", "inclusion_root_hash"))
+    ):
+        errors.append(f"signing-evidence {group}.rekor is invalid")
+    return errors
+
+
+def successful_signing_violations(args, path, evidence) -> list[str]:
+    errors = []
+    digest = value_of(args, "--internal-digest")
+    package = value_of(args, "--internal-package")
+    if evidence.get("digest") != digest or evidence.get("image") != f"{package}@{digest}":
+        errors.append("signing-evidence digest or image differs from published candidate")
+    identity = load_json(str(Path(__file__).resolve().parent.parent / "config/signing-identity.json"), "signing identity")
+    for key in ("certificate_identity", "certificate_oidc_issuer"):
+        if evidence.get(key) != identity[key]:
+            errors.append(f"signing-evidence {key} differs from pinned identity")
+    if not re.fullmatch(r"v?\d+\.\d+\.\d+", str(evidence.get("cosign_version", ""))):
+        errors.append("signing-evidence cosign_version is invalid")
+    if evidence.get("trivy_version") != value_of(args, "--trivy-version"):
+        errors.append("signing-evidence trivy_version differs from pinned Trivy version")
+    for group in ("signature", "sbom_attestation"):
+        errors.extend(signing_attachment_violations(path, group, evidence.get(group)))
+    try:
+        predicate = load_json(str(Path(path).parent / "trivy-full.cdx.json"), "signing predicate")
+        if predicate.get("bomFormat") != "CycloneDX" or not isinstance(predicate.get("components"), list):
+            errors.append("signing-evidence predicate is not a CycloneDX BOM")
+    except (OSError, ValueError) as exc:
+        errors.append(f"signing-evidence predicate is invalid: {exc}")
+    return errors
+
+
 def signing_violations(args: argparse.Namespace) -> list[str]:
     result = value_of(args, "--signing-result")
     failure = value_of(args, "--signing-failure")
@@ -580,7 +640,7 @@ def signing_violations(args: argparse.Namespace) -> list[str]:
         return errors
     try:
         evidence = load_json(path, "--signing-evidence")
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
         return errors + [f"--signing-evidence is invalid: {exc}"]
     if evidence.get("result") != result:
         errors.append("signing-evidence result differs from --signing-result")
@@ -588,53 +648,7 @@ def signing_violations(args: argparse.Namespace) -> list[str]:
         if evidence.get("reason") != failure:
             errors.append("signing-evidence reason differs from --signing-failure")
         return errors
-    digest = value_of(args, "--internal-digest")
-    package = value_of(args, "--internal-package")
-    if evidence.get("digest") != digest or evidence.get("image") != f"{package}@{digest}":
-        errors.append("signing-evidence digest or image differs from published candidate")
-    identity = load_json(str(Path(__file__).resolve().parent.parent / "config/signing-identity.json"), "signing identity")
-    for key in ("certificate_identity", "certificate_oidc_issuer"):
-        if evidence.get(key) != identity[key]:
-            errors.append(f"signing-evidence {key} differs from pinned identity")
-    if not re.fullmatch(r"v?\d+\.\d+\.\d+", str(evidence.get("cosign_version", ""))):
-        errors.append("signing-evidence cosign_version is invalid")
-    if evidence.get("trivy_version") != value_of(args, "--trivy-version"):
-        errors.append("signing-evidence trivy_version differs from pinned Trivy version")
-    for group in ("signature", "sbom_attestation"):
-        item = evidence.get(group)
-        if not isinstance(item, dict):
-            errors.append(f"signing-evidence {group} is missing")
-            continue
-        hashes = ("bundle_sha256", "attachment_sha256") + (("predicate_sha256",) if group == "sbom_attestation" else ())
-        sources = {
-            "signature": {"bundle_sha256": "sign-bundle.json", "attachment_sha256": "signature-attachment.json"},
-            "sbom_attestation": {"bundle_sha256": "sbom-bundle.json", "attachment_sha256": "sbom-attestation-attachment.json", "predicate_sha256": "trivy-full.cdx.json"},
-        }
-        for key in hashes:
-            if not BARE_SHA256_RE.fullmatch(str(item.get(key, ""))):
-                errors.append(f"signing-evidence {group}.{key} is invalid")
-            else:
-                try:
-                    if item[key] != file_sha256(Path(path).parent / sources[group][key]):
-                        errors.append(f"signing-evidence {group}.{key} differs from local bytes")
-                except OSError:
-                    errors.append(f"signing-evidence {group}.{key} source file is missing")
-        if group == "sbom_attestation" and item.get("predicate_type") != "https://cyclonedx.org/bom":
-            errors.append("signing-evidence sbom_attestation.predicate_type is invalid")
-        rekor = item.get("rekor")
-        if not isinstance(rekor, dict) or not (
-            isinstance(rekor.get("log_index"), int) and not isinstance(rekor.get("log_index"), bool)
-            and rekor["log_index"] >= 0 and isinstance(rekor.get("log_id"), str) and rekor["log_id"]
-            and any(isinstance(rekor.get(key), str) and rekor[key] for key in ("signed_entry_timestamp", "inclusion_root_hash"))
-        ):
-            errors.append(f"signing-evidence {group}.rekor is invalid")
-    try:
-        predicate = load_json(str(Path(path).parent / "trivy-full.cdx.json"), "signing predicate")
-        if predicate.get("bomFormat") != "CycloneDX" or not isinstance(predicate.get("components"), list):
-            errors.append("signing-evidence predicate is not a CycloneDX BOM")
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        errors.append(f"signing-evidence predicate is invalid: {exc}")
-    return errors
+    return errors + successful_signing_violations(args, path, evidence)
 
 
 def collect_violations(args: argparse.Namespace) -> list[str]:
