@@ -10,7 +10,10 @@ on:
         options:
           # apps-begin
           - distroless-static
+          - hindsight
           - nginx-qualification
+          - ollama
+          - open-webui-qualification
           - postgres-exporter
           # apps-end
       force_repromote:
