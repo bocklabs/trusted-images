@@ -1093,7 +1093,8 @@ jobs:
           cp validation-context/image.yaml candidate-artifact/inventory-image.yaml
           cp -r validation-logs candidate-artifact/ 2> /dev/null || true
           printf '%s\n' "${SOURCE_SHA}" > candidate-artifact/source.sha
-          cp -r candidate-oci candidate-artifact/candidate-oci
+          rm -f candidate-final.tar resume-final.tar
+          mv candidate-oci candidate-artifact/candidate-oci
           INTERNAL_TAG="${RESUME_INTERNAL_TAG:-${PATCH_INTERNAL_TAG:-${TAG_INTERNAL_TAG}}}"
           SKIP_COPY="${RESUME_SKIP_COPY:-${PATCH_SKIP_COPY:-${TAG_SKIP_COPY}}}"
           case "${SKIP_COPY}" in true|false) ;; *) echo "FATAL: invalid tag skip decision"; exit 1 ;; esac

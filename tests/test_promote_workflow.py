@@ -230,6 +230,8 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertLess(names.index("Select the exact final candidate"), names.index("Convert full report to CycloneDX with parity check"))
         self.assertLess(names.index("Convert full report to CycloneDX with parity check"), names.index("Export checksum-bound candidate artifact"))
         self.assertIn("trivy-full.cdx.json", export)
+        self.assertIn("rm -f candidate-final.tar resume-final.tar", export)
+        self.assertIn("mv candidate-oci candidate-artifact/candidate-oci", export)
         self.assertIn("Packages", convert)
         self.assertIn("components", convert)
         self.assertIn("operating-system", convert)

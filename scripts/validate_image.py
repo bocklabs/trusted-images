@@ -206,7 +206,11 @@ def label_drift(
 
 
 def config_drift(
-    baseline: dict, candidate: dict, baseline_ref: str = "", baseline_digest: str = ""
+    baseline: dict,
+    candidate: dict,
+    baseline_ref: str = "",
+    baseline_digest: str = "",
+    allow_args_escaped_normalization: bool = False,
 ) -> list[str]:
     before = copy.deepcopy(baseline)
     after = copy.deepcopy(candidate)
@@ -216,10 +220,16 @@ def config_drift(
     for field in COMMIT_ARTIFACT_FIELDS:
         before.pop(field, None)
         after.pop(field, None)
+    if (
+        allow_args_escaped_normalization
+        and before.get("ArgsEscaped") is True
+        and "ArgsEscaped" not in after
+    ):
+        before.pop("ArgsEscaped")
     drift = [
         f"runtime config changed outside permitted label additions: config field {key!r}"
         for key in sorted(set(before) | set(after))
-        if before.get(key) != after.get(key)
+        if key not in before or key not in after or before[key] != after[key]
     ]
     return drift + labels
 
@@ -561,7 +571,11 @@ def candidate_runtime_binding(
         )
     if baseline_config is not None:
         drift = config_drift(
-            baseline_config, config, args.baseline_ref or "", args.baseline_digest or ""
+            baseline_config,
+            config,
+            args.baseline_ref or "",
+            args.baseline_digest or "",
+            args.local_image is not None,
         )
         if drift:
             return "runtime configuration drift (D-14): " + "; ".join(drift), None, None
