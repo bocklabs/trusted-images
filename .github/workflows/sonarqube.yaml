@@ -41,10 +41,6 @@ jobs:
         run: |
           set -euo pipefail
           uv pip install --system -r requirements.txt
-          export COVERAGE_PROCESS_START="$PWD/.coveragerc"
-          SITE_DIR="$(python -c 'import site; print(site.getsitepackages()[0])')"
-          printf 'import coverage; coverage.process_startup()\n' \
-            > "$SITE_DIR/999-coverage-subprocess.pth"
           python -m coverage run --branch -m unittest discover -s tests
           python -m coverage combine --quiet
           python -m coverage report --fail-under=80
