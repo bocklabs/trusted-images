@@ -463,6 +463,17 @@ class ValidateImageTests(unittest.TestCase):
             "sha256:" + "b1" * 32,
         )
 
+    def patched_args(self) -> tuple:
+        return (
+            *self.baseline_args(),
+            "--local-image",
+            "copa:final",
+            "--local-image-id",
+            DOCKER_IMAGE_ID,
+            "--digest",
+            "sha256:" + hashlib.sha256(self.index.read_bytes()).hexdigest(),
+        )
+
     def test_permitted_labels_may_only_be_added(self) -> None:
         existing = {"org.example.existing": "keep"}
         added = {
@@ -538,6 +549,25 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.load_evidence()["validation"]["config_drift"], [])
 
+    def test_copa_args_escaped_true_may_normalize_to_absent(self) -> None:
+        candidate = image_inspect()
+        candidate[0]["Id"] = DOCKER_IMAGE_ID
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(config={"ArgsEscaped": True}),
+                    candidate,
+                ],
+                "inspect_states": [running()],
+            }
+        )
+        result = self.run_cli(
+            "process",
+            (*self.patched_args(), "--duration-seconds", "0"),
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.load_evidence()["validation"]["config_drift"], [])
+
     def test_copa_baseimage_label_must_identify_the_baseline(self) -> None:
         existing = {"org.example.existing": "keep"}
         self.write_scenario(
@@ -572,12 +602,12 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("D-14", result.stdout + result.stderr)
 
-    def test_config_drift_outside_label_additions_fails(self) -> None:
+    def test_added_null_runtime_field_is_drift(self) -> None:
         self.write_scenario(
             {
                 "image_inspects": [
                     image_inspect(),
-                    image_inspect(config={"Env": ["PATH=/changed"]}),
+                    image_inspect(config={"User": None}),
                 ]
             }
         )
@@ -585,9 +615,43 @@ class ValidateImageTests(unittest.TestCase):
             "process", (*self.baseline_args(), "--duration-seconds", "0")
         )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("config field 'User'", result.stdout + result.stderr)
+
+    def test_config_drift_outside_label_additions_fails(self) -> None:
+        candidate = image_inspect(config={"Env": ["PATH=/changed"]})
+        candidate[0]["Id"] = DOCKER_IMAGE_ID
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(config={"ArgsEscaped": True}),
+                    candidate,
+                ]
+            }
+        )
+        result = self.run_cli(
+            "process",
+            (*self.patched_args(), "--duration-seconds", "0"),
+        )
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("D-14", result.stdout + result.stderr)
         self.assertIn("runtime config changed", result.stdout + result.stderr)
+        self.assertIn("config field 'Env'", result.stdout + result.stderr)
         self.assertEqual(self.load_evidence()["validation"]["result"], "fail")
+
+    def test_args_escaped_normalization_requires_patched_candidate(self) -> None:
+        self.write_scenario(
+            {
+                "image_inspects": [
+                    image_inspect(config={"ArgsEscaped": True}),
+                    image_inspect(),
+                ]
+            }
+        )
+        result = self.run_cli(
+            "process", (*self.baseline_args(), "--duration-seconds", "0")
+        )
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("config field 'ArgsEscaped'", result.stdout + result.stderr)
 
     def test_existing_label_value_cannot_change(self) -> None:
         self.write_scenario(
