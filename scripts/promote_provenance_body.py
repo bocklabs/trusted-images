@@ -15,19 +15,21 @@ print()
 print("### Before/final CVE evidence")
 print()
 for name, values in decision["delta"]["cves"].items():
-    print(f"- {name}: {', '.join(values) or '-'}")
+    print(f"- {name}: {len(values)} IDs; sample: {', '.join(values[:20]) or '-'}")
 print()
 print("### Package changes")
 print()
 changes = decision["packages"]["changes"] + decision["packages"]["downgrades"]
-for change in changes:
+print(f"Total package changes: {len(changes)}; showing at most 20.")
+for change in changes[:20]:
     print(
-        f"- {change['ecosystem']}/{change['name']}: {change['change']} {change['before'] or '-'} → {change['after'] or '-'}"
+        f"- {change['ecosystem'][:120]}/{change['name'][:120]}: {change['change']} {(change['before'] or '-')[:120]} → {(change['after'] or '-')[:120]}"
     )
 print()
 print("### Warnings")
 print()
-print(decision["reason"])
+print(decision["reason"][:300])
+print("\nPresentation is abbreviated. Complete CVEs, package changes and warnings are in this PR's provenance JSON and the run's candidate-decision/trivy-full-report artifacts.")
 print()
 catalog = decision["policy"]["kev"]["catalog"]
 print("### KEV snapshot")
@@ -37,7 +39,8 @@ print(f"- SHA256: `{catalog['sha256']}`")
 print(f"- Version: {catalog['catalog_version']}")
 print(f"- Released: {catalog['date_released']}")
 print(f"- Fetched: {catalog['fetched_at']}")
-print(f"- Matches: {', '.join(decision['policy']['kev']['matched']) or '-'}")
+matches = decision['policy']['kev']['matched']
+print(f"- Matches: {len(matches)}; sample: {', '.join(matches[:20]) or '-'}")
 print()
 print("### Acceptance expiry")
 print()

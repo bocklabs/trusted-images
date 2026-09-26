@@ -1,5 +1,6 @@
 """Render the promotion run summary."""
 
+from collections import Counter
 import json
 from pathlib import Path
 
@@ -15,6 +16,7 @@ def rows(path):
         raise ValueError("Trivy report Results must be an array or null")
     return [
         (
+            result.get("Class", "unknown"),
             finding.get("VulnerabilityID", ""),
             finding.get("PkgName", ""),
             finding.get("Severity", ""),
@@ -27,16 +29,15 @@ def rows(path):
 
 print("### Before/final CVE evidence")
 print()
-print("| Stage | CVE | Package | Severity | Severity source |")
-print("| --- | --- | --- | --- | --- |")
+print("| Stage | Class | Severity | Package/CVE entries |")
+print("| --- | --- | --- | ---: |")
 for stage, source in (
     ("before", "trivy-before-full.json"),
     ("final", "trivy-full.json"),
 ):
-    for cve, package, severity, severity_source in sorted(set(rows(source))):
-        print(
-            f"| {stage} | {cve} | {package} | {severity} | {severity_source or '-'} |"
-        )
+    counts = Counter((row[0], row[3]) for row in set(rows(source)))
+    for (kind, severity), count in sorted(counts.items()):
+        print(f"| {stage} | {kind} | {severity} | {count} |")
 print()
 decision_path = Path("candidate-decision.json")
 if decision_path.is_file():
@@ -46,21 +47,17 @@ if decision_path.is_file():
     print("| Ecosystem | Package | Change | Before | After |")
     print("| --- | --- | --- | --- | --- |")
     changes = decision["packages"]["changes"] + decision["packages"]["downgrades"]
-    for change in sorted(
-        changes, key=lambda value: (value["ecosystem"], value["name"])
-    ):
+    for change in sorted(changes, key=lambda value: (value["ecosystem"], value["name"]))[:20]:
         print(
-            f"| {change['ecosystem']} | {change['name']} | {change['change']} | {change['before'] or '-'} | {change['after'] or '-'} |"
+            f"| {change['ecosystem'][:120]} | {change['name'][:120]} | {change['change']} | {(change['before'] or '-')[:120]} | {(change['after'] or '-')[:120]} |"
         )
     print()
-    fixable = {row[0] for row in rows("trivy-copa.json")}
+    print(f"Total package changes: {len(changes)}; showing at most 20.")
+    print()
     print("### Warnings")
     print()
-    for cve, package, severity, severity_source in sorted(set(rows("trivy-full.json"))):
-        if cve not in fixable:
-            print(
-                f"- no-fix: {cve} / {package} / {severity} / {severity_source or '-'}"
-            )
+    print(decision["reason"][:300])
+    print("Presentation is abbreviated; complete findings, package changes and warnings remain in candidate-decision/trivy-full-report artifacts and provenance JSON.")
     print()
     catalog = decision["policy"]["kev"]["catalog"]
     print("### KEV snapshot")
@@ -70,7 +67,8 @@ if decision_path.is_file():
     print(f"- Version: {catalog['catalog_version']}")
     print(f"- Released: {catalog['date_released']}")
     print(f"- Fetched: {catalog['fetched_at']}")
-    print(f"- Matches: {', '.join(decision['policy']['kev']['matched']) or '-'}")
+    matches = decision['policy']['kev']['matched']
+    print(f"- Matches: {len(matches)}; sample: {', '.join(matches[:20]) or '-'}")
     acceptance = decision["policy"]["acceptance"]
     print()
     print("### Acceptance expiry")
