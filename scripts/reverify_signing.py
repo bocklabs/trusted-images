@@ -26,13 +26,49 @@ def old_signed_paths(base):
     }
 
 
-def signed_records(base, identity):
-    previous = old_signed_paths(base)
+def signed_record(record, path, identity):
+    signing = record["signing"]
+    app = record.get("app")
+    internal = record.get("internal", {})
+    signature = signing.get("image_signature", {})
+    sbom = signing.get("sbom_attestation", {})
+    tools = signing.get("tools", {})
+    rekor = signing.get("rekor", {})
+    image = f"{internal.get('package')}@{internal.get('digest')}"
+    if (record.get("schema") != "trusted-images.bocklabs.dev/provenance-v1"
+            or not isinstance(app, str) or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", app)
+            or image != f"ghcr.io/bocklabs/{app}@{internal.get('digest')}"
+            or not IMAGE_RE.fullmatch(image)
+            or signing.get("result") != "pass" or record.get("policy", {}).get("eligible") is not True
+            or signature.get("certificate_identity") != identity["certificate_identity"]
+            or signature.get("certificate_oidc_issuer") != identity["certificate_oidc_issuer"]
+            or sbom.get("predicate_type") != PREDICATE_TYPE
+            or any(not SHA256.fullmatch(str(section.get(key, ""))) for section, keys in (
+                (signature, ("bundle_sha256", "attachment_sha256")),
+                (sbom, ("bundle_sha256", "attachment_sha256", "predicate_sha256")),
+            ) for key in keys)
+            or any(not VERSION.fullmatch(str(tools.get(key, ""))) for key in ("cosign", "trivy"))
+            or not isinstance(rekor, dict)
+            or any(not isinstance(rekor.get(key), dict) or
+                   not isinstance(rekor[key].get("log_index"), int) or
+                   not rekor[key].get("log_id") or
+                   not (rekor[key].get("signed_entry_timestamp") or rekor[key].get("inclusion_root_hash"))
+                   for key in ("signature", "sbom_attestation"))):
+        raise ValueError(f"invalid signed record: {path}")
+    return image, signature["attachment_sha256"], sbom["attachment_sha256"]
+
+
+def check_signed_history(previous):
     for name in previous:
         if not (ROOT / name).is_file():
             raise ValueError(f"missing signed record: {name}")
         if json.loads((ROOT / name).read_text()).get("signing", {}).get("result") != "pass":
             raise ValueError(f"successful signed record lost its evidence: {name}")
+
+
+def signed_records(base, identity):
+    previous = old_signed_paths(base)
+    check_signed_history(previous)
     records = sorted((ROOT / "provenance").glob("*/*.json"))
     signed = []
     for path in records:
@@ -46,34 +82,7 @@ def signed_records(base, identity):
             if record.get("policy", {}).get("eligible") is not False or not signing.get("failure"):
                 raise ValueError(f"invalid quarantine record: {path}")
             continue
-        app = record.get("app")
-        internal = record.get("internal", {})
-        signature = signing.get("image_signature", {})
-        sbom = signing.get("sbom_attestation", {})
-        tools = signing.get("tools", {})
-        rekor = signing.get("rekor", {})
-        image = f"{internal.get('package')}@{internal.get('digest')}"
-        if (record.get("schema") != "trusted-images.bocklabs.dev/provenance-v1"
-                or not isinstance(app, str) or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", app)
-                or image != f"ghcr.io/bocklabs/{app}@{internal.get('digest')}"
-                or not IMAGE_RE.fullmatch(image)
-                or signing.get("result") != "pass" or record.get("policy", {}).get("eligible") is not True
-                or signature.get("certificate_identity") != identity["certificate_identity"]
-                or signature.get("certificate_oidc_issuer") != identity["certificate_oidc_issuer"]
-                or sbom.get("predicate_type") != PREDICATE_TYPE
-                or any(not SHA256.fullmatch(str(section.get(key, ""))) for section, keys in (
-                    (signature, ("bundle_sha256", "attachment_sha256")),
-                    (sbom, ("bundle_sha256", "attachment_sha256", "predicate_sha256")),
-                ) for key in keys)
-                or any(not VERSION.fullmatch(str(tools.get(key, ""))) for key in ("cosign", "trivy"))
-                or not isinstance(rekor, dict)
-                or any(not isinstance(rekor.get(key), dict) or
-                       not isinstance(rekor[key].get("log_index"), int) or
-                       not rekor[key].get("log_id") or
-                       not (rekor[key].get("signed_entry_timestamp") or rekor[key].get("inclusion_root_hash"))
-                       for key in ("signature", "sbom_attestation"))):
-            raise ValueError(f"invalid signed record: {path}")
-        signed.append((image, signature["attachment_sha256"], sbom["attachment_sha256"]))
+        signed.append(signed_record(record, path, identity))
     if not signed:
         if previous:
             raise ValueError("reverify: signed records missing")
@@ -120,9 +129,13 @@ def main():
         records = signed_records(args.base, identity)
         for record in records:
             verify(*record, identity)
-    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as error:
-        reason = (f"cosign {error.cmd[1]} failed" if isinstance(error, subprocess.CalledProcessError)
-                  else str(error) if isinstance(error, ValueError) else type(error).__name__)
+    except (OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError) as error:
+        if isinstance(error, subprocess.CalledProcessError):
+            reason = f"cosign {error.cmd[1]} failed"
+        elif isinstance(error, ValueError):
+            reason = str(error)
+        else:
+            reason = type(error).__name__
         print(f"FATAL: reverify failed ({reason})", file=sys.stderr)
         return 1
     return 0

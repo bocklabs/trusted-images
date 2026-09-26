@@ -1,0 +1,17 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: ollama
+spec:
+  upstream:
+    ref: docker.io/ollama/ollama
+    tag: 0.34.4
+    digest: sha256:8262851b2846b87c649eddf3e76beb270c52f4d1bc94559f47efde16b0841551
+  destination:
+    package: ghcr.io/bocklabs/ollama
+  patchPolicy: enabled
+  validation:
+    type: http
+    port: 11434
+    path: /api/version
+  version: 2

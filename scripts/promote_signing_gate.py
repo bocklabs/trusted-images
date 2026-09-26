@@ -91,6 +91,34 @@ def downloaded_rows(data):
     return rows
 
 
+def verify_signature_attachment(attachment, bundle, image_digest):
+    local_signature = base64.b64decode(bundle["messageSignature"]["signature"], validate=True)
+    matched_signature = False
+    for row in downloaded_rows(attachment):
+        signature = row.get("Base64Signature")
+        payload = row.get("Payload")
+        if not isinstance(signature, str) or not signature or not isinstance(payload, str) or not payload:
+            raise ValueError("downloaded signature lacks signature or payload")
+        signed_payload = json.loads(base64.b64decode(payload, validate=True))
+        if not isinstance(signed_payload, dict) or not isinstance(signed_payload.get("Critical"), dict) or not isinstance(signed_payload["Critical"].get("Image"), dict):
+            raise ValueError("downloaded signature payload is malformed")
+        if signed_payload["Critical"]["Image"].get("Docker-manifest-digest") != image_digest:
+            raise ValueError("downloaded signature subject digest differs")
+        matched_signature |= base64.b64decode(signature, validate=True) == local_signature
+    if not local_signature or not matched_signature:
+        raise ValueError("downloaded signature differs from local bundle")
+
+
+def verify_attestation_attachment(attachment, bundle):
+    matched_attestation = False
+    for row in downloaded_rows(attachment):
+        if not isinstance(row.get("payloadType"), str) or not isinstance(row.get("payload"), str) or not row.get("signatures"):
+            raise ValueError("downloaded attestation is not a DSSE envelope")
+        matched_attestation |= row == bundle["dsseEnvelope"]
+    if not matched_attestation:
+        raise ValueError("downloaded attestation differs from local bundle")
+
+
 def build_evidence(args):
     match = IMAGE_RE.fullmatch(args.image)
     if not match:
@@ -126,28 +154,8 @@ def build_evidence(args):
                                       output="signature-attachment.json")
     attestation_attachment = run_cosign("download", "attestation", "--predicate-type", PREDICATE_TYPE,
                                         args.image, output="sbom-attestation-attachment.json")
-    local_signature = base64.b64decode(sign["messageSignature"]["signature"], validate=True)
-    matched_signature = False
-    for row in downloaded_rows(signature_attachment):
-        signature = row.get("Base64Signature")
-        payload = row.get("Payload")
-        if not isinstance(signature, str) or not signature or not isinstance(payload, str) or not payload:
-            raise ValueError("downloaded signature lacks signature or payload")
-        signed_payload = json.loads(base64.b64decode(payload, validate=True))
-        if not isinstance(signed_payload, dict) or not isinstance(signed_payload.get("Critical"), dict) or not isinstance(signed_payload["Critical"].get("Image"), dict):
-            raise ValueError("downloaded signature payload is malformed")
-        if signed_payload["Critical"]["Image"].get("Docker-manifest-digest") != image_digest:
-            raise ValueError("downloaded signature subject digest differs")
-        matched_signature |= base64.b64decode(signature, validate=True) == local_signature
-    if not local_signature or not matched_signature:
-        raise ValueError("downloaded signature differs from local bundle")
-    matched_attestation = False
-    for row in downloaded_rows(attestation_attachment):
-        if not isinstance(row.get("payloadType"), str) or not isinstance(row.get("payload"), str) or not row.get("signatures"):
-            raise ValueError("downloaded attestation is not a DSSE envelope")
-        matched_attestation |= row == sbom["dsseEnvelope"]
-    if not matched_attestation:
-        raise ValueError("downloaded attestation differs from local bundle")
+    verify_signature_attachment(signature_attachment, sign, image_digest)
+    verify_attestation_attachment(attestation_attachment, sbom)
     version = re.search(r"(?m)^GitVersion:\s*(v\d+\.\d+\.\d+)\s*$", run_cosign("version").decode())
     if not version:
         raise ValueError("Cosign version is not a release semver")
@@ -175,9 +183,13 @@ def main():
     args = parser.parse_args()
     try:
         evidence = build_evidence(args)
-    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, subprocess.CalledProcessError) as error:
-        reason = (error.cmd[1] if isinstance(error, subprocess.CalledProcessError)
-                  else str(error) if isinstance(error, ValueError) else type(error).__name__)
+    except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as error:
+        if isinstance(error, subprocess.CalledProcessError):
+            reason = error.cmd[1]
+        elif isinstance(error, ValueError):
+            reason = str(error)
+        else:
+            reason = type(error).__name__
         args.out.write_text(json.dumps({"result": "fail", "reason": reason}) + "\n")
         print(f"FATAL: signing gate failed ({reason})", file=sys.stderr)
         return 1
