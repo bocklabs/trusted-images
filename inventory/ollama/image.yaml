@@ -5,8 +5,8 @@ metadata:
 spec:
   upstream:
     ref: docker.io/ollama/ollama
-    tag: 0.34.4
-    digest: sha256:8262851b2846b87c649eddf3e76beb270c52f4d1bc94559f47efde16b0841551
+    tag: 0.40.0-rc0-rocm
+    digest: sha256:215f960591137e844e17b5f735fb877b9e4f022322bcc22aeb8574f5fe0ecf08
   destination:
     package: ghcr.io/bocklabs/ollama
   patchPolicy: enabled
