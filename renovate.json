@@ -21,7 +21,7 @@
         "ref:\\s*(?<depName>[^\\s]+)\\n\\s*tag:\\s*['\\\"]?(?<currentValue>[^'\\\"\\s]+)['\\\"]?\\n\\s*digest:\\s*['\\\"]?(?<currentDigest>sha256:[a-f0-9]{64})['\\\"]?"
       ],
       "datasourceTemplate": "docker",
-      "versioningTemplate": "loose",
+      "versioningTemplate": "docker",
       "autoReplaceStringTemplate": "ref: {{{depName}}}\n    tag: {{{newValue}}}\n    digest: {{{newDigest}}}"
     },
     {
@@ -77,6 +77,12 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "Inventory images receive stable major and minor releases only.",
+      "matchFileNames": ["inventory/**/image.yaml"],
+      "matchUpdateTypes": ["patch", "digest", "pin", "pinDigest"],
+      "enabled": false
+    },
     {
       "description": "Automerge Cosign action and CLI pins through required validation.",
       "matchPackageNames": ["sigstore/cosign-installer", "sigstore/cosign"],
