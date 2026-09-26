@@ -240,15 +240,25 @@ class PromoteWorkflowTests(unittest.TestCase):
         by_name = {step["name"]: step for step in steps}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "trivy-full.json").write_text(json.dumps({"Results": [{"Packages": [{"Name": "old", "Version": "1"}]}]}))
-            (root / "trivy-after-full.json").write_text(json.dumps({"Results": [{"Packages": [{"Name": "new", "Version": "2"}, {"Name": "lang", "Version": "3"}], "Vulnerabilities": []}]}))
+            (root / "trivy-full.json").write_text(json.dumps({"Results": [{"Packages": [{"Name": "old", "Identifier": {"PURL": "pkg:generic/old@1"}}]}]}))
+            (root / "trivy-after-full.json").write_text(json.dumps({"Results": [{"Packages": [
+                {"Name": "deb", "Version": "2", "Identifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
+                {"Name": "lang", "Version": "3", "Identifier": {"PURL": "pkg:pypi/lang@3"}},
+            ], "Vulnerabilities": [
+                {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
+                {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:pypi/lang@3"}},
+            ]}]}))
             cdx = root / "fixture-cdx.json"
             cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [
                 {"type": "operating-system", "name": "os"},
-                {"type": "library", "name": "new", "version": "2"},
-                {"type": "library", "name": "lang", "version": "3"}], "vulnerabilities": []}))
+                {"type": "library", "name": "deb", "version": "2-1", "purl": "pkg:deb/debian/deb@2-1?arch=amd64"},
+                {"type": "library", "name": "lang", "version": "3", "purl": "pkg:pypi/lang@3"}],
+                "vulnerabilities": [{"id": "CVE-2026-0001", "affects": [
+                    {"ref": "pkg:deb/debian/deb@2-1?arch=amd64"},
+                    {"ref": "pkg:pypi/lang@3"},
+                ]}]}))
             fake_trivy = root / "trivy"
-            fake_trivy.write_text('#!/bin/sh\ncp "$CDX_FIXTURE" "$5"\n')
+            fake_trivy.write_text('#!/bin/sh\ncp "$CDX_FIXTURE" trivy-full.cdx.json\n')
             fake_trivy.chmod(0o755)
             env = dict(os.environ, PATH=f"{root}:{os.environ['PATH']}", CDX_FIXTURE=str(cdx),
                        PATCHED_DIGEST=DIGEST_B, RESUME_DIGEST="", RECOVERED_DIGEST="",
