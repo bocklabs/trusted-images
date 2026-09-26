@@ -112,3 +112,37 @@ if (failures > 0) {
   console.error(`${failures} mismatch(es) — regex/schema drift detected`);
   process.exit(1);
 }
+
+const tools = [
+  { files: [".github/workflows/promote-publish.yaml", ".github/workflows/validate.yaml"], cliFiles: [".github/workflows/promote-publish.yaml"], action: "sigstore/cosign-installer", cli: "sigstore/cosign" },
+  { files: [".github/workflows/promote-candidate.yaml"], cliFiles: [".github/workflows/promote-candidate.yaml"], action: "aquasecurity/trivy-action", cli: "aquasecurity/trivy" },
+];
+for (const tool of tools) {
+  const manager = managers.find((item) => item.depNameTemplate === tool.cli &&
+    tool.cliFiles.every((file) => item.managerFilePatterns?.some((pattern) => compileFilePattern(pattern).test(file))));
+  if (!manager) throw new Error(`miss: ${tool.cli} CLI pin extraction`);
+  const rule = config.packageRules.find((item) => item.automerge === true &&
+    item.matchPackageNames?.length === 2 &&
+    item.matchPackageNames.includes(tool.action) && item.matchPackageNames.includes(tool.cli));
+  if (!rule || JSON.stringify([...rule.matchFileNames].sort()) !== JSON.stringify([...tool.files].sort()) ||
+      entries.some((entry) => rule.matchFileNames.includes(entry))) throw new Error(`miss: tool-only automerge for ${tool.cli}`);
+  const actionHashes = new Set();
+  const releaseVersions = new Set();
+  for (const file of tool.files) {
+    const content = readFileSync(join(root, file), "utf8");
+    const actions = [...content.matchAll(new RegExp(`uses: ${tool.action}@([a-f0-9]{40}) # v\\d+`, "g"))];
+    const releases = manager.matchStrings.flatMap((source) => [...content.matchAll(new RegExp(source, "g"))]);
+    actions.forEach((match) => actionHashes.add(match[1]));
+    releases.forEach((match) => releaseVersions.add(match.groups?.currentValue));
+    if (!actions.length || releases.length !== (tool.cliFiles.includes(file) ? actions.length : 0) ||
+        releases.some((match) => !/^v\d+\.\d+\.\d+$/.test(match.groups?.currentValue))) {
+      throw new Error(`miss: ${tool.action} digest or ${tool.cli} release in ${file}`);
+    }
+  }
+  if (actionHashes.size !== 1) throw new Error(`miss: ${tool.action} installer SHA pins diverged`);
+  if (releaseVersions.size !== 1) throw new Error(`miss: ${tool.cli} release pins diverged`);
+  console.log(`tool: ${tool.action} digest and ${tool.cli} ${[...releaseVersions][0]} -> automerge`);
+}
+if (config.automerge !== false || !config.platformAutomerge || config.automergeStrategy !== "merge") {
+  throw new Error("miss: required-check automerge defaults drifted");
+}

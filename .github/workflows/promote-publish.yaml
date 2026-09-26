@@ -42,6 +42,7 @@ permissions:
   pull-requests: write
   checks: write
   actions: read
+  id-token: write
 
 env:
   SKOPEO_IMAGE: "quay.io/skopeo/stable:v1.22.2@sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
@@ -56,6 +57,7 @@ jobs:
       pull-requests: write
       checks: write
       actions: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -341,8 +343,48 @@ jobs:
           echo "probe digest: ${PUSHED:-none} / expected: ${EXPECTED}"
           exit 1
 
+      - name: Install pinned Cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      - name: Sign and attest published digest
+        id: signing
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
+          printf '%s' "${GH_TOKEN}" | cosign login ghcr.io --username "${ACTOR}" --password-stdin
+          cosign sign --yes --bundle sign-bundle.json "${IMAGE}"
+          cosign attest --yes --bundle sbom-bundle.json --predicate trivy-full.cdx.json --type cyclonedx "${IMAGE}"
+
+      - name: Verify signing evidence
+        id: signing-gate
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
+          python3 scripts/promote_signing_gate.py \
+            --image "${IMAGE}" \
+            --identity-config config/signing-identity.json \
+            --sign-bundle sign-bundle.json \
+            --sbom-bundle sbom-bundle.json \
+            --predicate trivy-full.cdx.json \
+            --out signing-evidence.json
+          jq --arg trivy 0.74.0 '. + {trivy_version: $trivy}' signing-evidence.json > signing-evidence.next.json
+          mv signing-evidence.next.json signing-evidence.json
+
       - name: Write the verified publication digest into the decision
         id: publication-decision
+        if: ${{ success() && steps.signing-gate.outcome == 'success' }}
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
@@ -355,6 +397,26 @@ jobs:
           mv candidate-decision.next.json candidate-decision.json
           python3 scripts/promote_published_decision.py "${APP}"
           echo "decision_sha256=$(sha256sum candidate-decision.json | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Record quarantined publication after failed verification
+        id: quarantine-decision
+        if: ${{ failure() && steps.probe.outputs.result == 'pass' && steps.signing-gate.outcome == 'failure' }}
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          REASON="$(jq -r '.reason // "verification failed" | gsub("[^A-Za-z0-9 .:_/-]"; " ") | .[:160]' signing-evidence.json 2>/dev/null || echo 'verification failed')"
+          REASON="${REASON:-verification failed}"
+          jq -n --arg reason "${REASON}" '{result:"fail",reason:$reason}' > signing-evidence.json
+          cp candidate-artifact/candidate-decision.json candidate-decision.json
+          jq --arg digest "${CANDIDATE_DIGEST}" '.eligible = false | .reason = "signing verification failed" | .published.digest = $digest | .provenance.merged = false' \
+            candidate-decision.json > candidate-decision.next.json
+          mv candidate-decision.next.json candidate-decision.json
+          python3 scripts/promote_published_decision.py "${APP}"
+          echo "decision_sha256=$(sha256sum candidate-decision.json | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "failure=${REASON}" >> "$GITHUB_OUTPUT"
 
       - name: Upload trivy-full-report artifact
         if: always()
@@ -377,6 +439,21 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+      - name: Upload signing evidence artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: signing-evidence
+          path: |
+            sign-bundle.json
+            sbom-bundle.json
+            signature-attachment.json
+            sbom-attestation-attachment.json
+            verify-signature.json
+            verify-attestation.json
+            signing-evidence.json
+          if-no-files-found: warn
+
       - name: Job summary evidence panel
         id: summary
         if: always()
@@ -389,6 +466,8 @@ jobs:
           FALLBACK_USED: ${{ steps.copy.outputs.fallback_used }}
           DIVERGENCE_NOTE: ${{ steps.copy.outputs.divergence_note }}
           PROBE_RESULT: ${{ steps.probe.outputs.result }}
+          SIGNING_RESULT: ${{ steps.signing.outcome }}
+          SIGNING_GATE_RESULT: ${{ steps.signing-gate.outcome }}
           SECOBSERVE_API_BASE_URL: ${{ vars.SECOBSERVE_API_BASE_URL }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
@@ -422,6 +501,16 @@ jobs:
             PROBE_LINE="PASS — anonymous 200 with matching docker-content-digest"
           elif [ "${PROBE_RESULT:-}" = "fail" ]; then
             PROBE_LINE="FAIL — anonymous probe failed"
+          fi
+
+          SIGNING_LINE="N/A — signing did not run"
+          if [ "${SIGNING_RESULT:-}" = "failure" ]; then
+            SIGNING_LINE="FAIL — signing or attestation failed; promotion unsuccessful"
+          elif [ "${SIGNING_GATE_RESULT:-}" = "failure" ]; then
+            REASON="$(jq -r '.reason // "verification failed"' signing-evidence.json 2>/dev/null || echo 'verification failed')"
+            SIGNING_LINE="FAIL — ${REASON}; promotion unsuccessful"
+          elif [ "${SIGNING_GATE_RESULT:-}" = "success" ]; then
+            SIGNING_LINE="PASS — signature and CycloneDX attestation verified"
           fi
 
           # D-14.2: the panel displays what the validate job recorded in the
@@ -463,6 +552,7 @@ jobs:
             echo "| Exact linux/amd64 manifest | ${PLATFORM_LINE} |"
             echo "| Trivy DB match | ${DB_LINE} |"
             echo "| Anonymous pull probe | ${PROBE_LINE} |"
+            echo "| Signing gate | ${SIGNING_LINE} |"
             echo
             echo "### Validation"
             echo
@@ -521,6 +611,7 @@ jobs:
 
       - name: Generate provenance record
         id: prov
+        if: ${{ !cancelled() && (success() || (failure() && steps.quarantine-decision.outcome == 'success')) }}
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
@@ -530,7 +621,9 @@ jobs:
           MEDIA_TYPE: application/vnd.oci.image.index.v1+json
           SELECTED_CHILD_DIGEST: ${{ steps.candidate.outputs.selected_child_digest }}
           CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
-          DECISION_SHA256: ${{ steps.publication-decision.outputs.decision_sha256 }}
+          DECISION_SHA256: ${{ steps.publication-decision.outputs.decision_sha256 || steps.quarantine-decision.outputs.decision_sha256 }}
+          SIGNING_FAILURE: ${{ steps.quarantine-decision.outputs.failure }}
+          SIGNING_RESULT: ${{ steps.quarantine-decision.outcome == 'success' && 'fail' || 'pass' }}
           DB_DIGEST: ${{ inputs.db_digest }}
           DB_UPDATED: ${{ inputs.db_updated }}
           DEST_PACKAGE: ${{ steps.entry.outputs.dest_package }}
@@ -540,7 +633,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           DISPATCHED_BY: ${{ github.actor }}
           RECOVER_TAG: ${{ inputs.recover_tag }}
-          NOW: ${{ steps.publication-decision.outputs.now }}
+          NOW: ${{ steps.publication-decision.outputs.now || steps.quarantine-decision.outputs.now }}
         run: |
           set -euo pipefail
           SKOPEO_VERSION="${SKOPEO_IMAGE#*:}"
@@ -586,6 +679,10 @@ jobs:
           if [ "$(jq -r .copa.original_child_input candidate-decision.json)" = true ]; then
             COPA_ARGS=(--copa-version 0.15.0)
           fi
+          SIGNING_ARGS=(--signing-result pass)
+          if [ "${SIGNING_RESULT}" = fail ]; then
+            SIGNING_ARGS=(--signing-result fail --signing-failure "${SIGNING_FAILURE}")
+          fi
           python3 scripts/generate_provenance.py \
             --app "${APP}" \
             --upstream-ref "${UPSTREAM_REF}" \
@@ -626,6 +723,8 @@ jobs:
             --validation-entrypoint "${VALIDATION_ENTRYPOINT}" \
             --validation-cmd "${VALIDATION_CMD}" \
             --validation-env "${VALIDATION_ENV}" \
+            --signing-evidence "$PWD/signing-evidence.json" \
+            "${SIGNING_ARGS[@]}" \
             "${RECOVERY_ARGS[@]}" \
             "${COPA_ARGS[@]}" \
             "${NOTES_ARGS[@]}" \
@@ -641,6 +740,7 @@ jobs:
 
       - name: Mint bocklabs-release app token
         id: app-token
+        if: ${{ !cancelled() && steps.prov.outcome == 'success' && (steps.signing-gate.outcome == 'success' || steps.quarantine-decision.outcome == 'success') }}
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ secrets.RELEASE_CLIENT_ID }}
@@ -648,6 +748,7 @@ jobs:
 
       - name: Open provenance PR and enable merge
         id: pr
+        if: ${{ !cancelled() && steps.app-token.outcome == 'success' && (steps.signing-gate.outcome == 'success' || steps.quarantine-decision.outcome == 'success') }}
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -726,6 +827,7 @@ jobs:
           echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Verify merged provenance and publish the final decision
+        if: ${{ success() && steps.signing-gate.outcome == 'success' }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

@@ -79,6 +79,9 @@ FLAGS: dict[str, tuple[str, bool]] = {
     "--validation-entrypoint": ("json", True),
     "--validation-cmd": ("json", True),
     "--validation-env": ("json", True),
+    "--signing-evidence": ("path", True),
+    "--signing-result": ("text", True),
+    "--signing-failure": ("text", False),
     "--notes": ("text", False),
     "--original-run-url": ("text", False),
     "--original-source-sha": ("text", False),
@@ -460,8 +463,11 @@ def decision_match_violations(
         except ValueError as exc:
             violations.append(str(exc))
         violations.extend(decision_identity_violations(decision, expected))
-        if not decision["eligible"] or decision["validation"]["result"] != "pass":
-            violations.append("decision must be eligible with passing validation")
+        quarantine = value_of(args, "--signing-result") == "fail"
+        if decision["validation"]["result"] != "pass" or (decision["eligible"] == quarantine):
+            violations.append("decision eligible state must match signing result with passing validation")
+        if quarantine and decision["reason"] != "signing verification failed":
+            violations.append("quarantine decision reason must be signing verification failed")
         if decision["published"]["digest"] != value_of(args, "--internal-digest"):
             violations.append(
                 "decision published digest must match the provenance candidate"
@@ -559,6 +565,78 @@ def report_hash_violations(args: argparse.Namespace) -> list[str]:
     return violations
 
 
+def signing_violations(args: argparse.Namespace) -> list[str]:
+    result = value_of(args, "--signing-result")
+    failure = value_of(args, "--signing-failure")
+    errors = []
+    if result not in ("pass", "fail"):
+        errors.append("--signing-result must be pass or fail")
+    if result == "pass" and failure:
+        errors.append("--signing-failure is only allowed for failed signing")
+    if result == "fail" and not re.fullmatch(r"[A-Za-z0-9 .:_/-]{1,160}", failure):
+        errors.append("--signing-failure must be a bounded single-line reason")
+    path = value_of(args, "--signing-evidence")
+    if not path or not Path(path).is_file():
+        return errors
+    try:
+        evidence = load_json(path, "--signing-evidence")
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return errors + [f"--signing-evidence is invalid: {exc}"]
+    if evidence.get("result") != result:
+        errors.append("signing-evidence result differs from --signing-result")
+    if result == "fail":
+        if evidence.get("reason") != failure:
+            errors.append("signing-evidence reason differs from --signing-failure")
+        return errors
+    digest = value_of(args, "--internal-digest")
+    package = value_of(args, "--internal-package")
+    if evidence.get("digest") != digest or evidence.get("image") != f"{package}@{digest}":
+        errors.append("signing-evidence digest or image differs from published candidate")
+    identity = load_json(str(Path(__file__).resolve().parent.parent / "config/signing-identity.json"), "signing identity")
+    for key in ("certificate_identity", "certificate_oidc_issuer"):
+        if evidence.get(key) != identity[key]:
+            errors.append(f"signing-evidence {key} differs from pinned identity")
+    if not re.fullmatch(r"v?\d+\.\d+\.\d+", str(evidence.get("cosign_version", ""))):
+        errors.append("signing-evidence cosign_version is invalid")
+    if evidence.get("trivy_version") != value_of(args, "--trivy-version"):
+        errors.append("signing-evidence trivy_version differs from pinned Trivy version")
+    for group in ("signature", "sbom_attestation"):
+        item = evidence.get(group)
+        if not isinstance(item, dict):
+            errors.append(f"signing-evidence {group} is missing")
+            continue
+        hashes = ("bundle_sha256", "attachment_sha256") + (("predicate_sha256",) if group == "sbom_attestation" else ())
+        sources = {
+            "signature": {"bundle_sha256": "sign-bundle.json", "attachment_sha256": "signature-attachment.json"},
+            "sbom_attestation": {"bundle_sha256": "sbom-bundle.json", "attachment_sha256": "sbom-attestation-attachment.json", "predicate_sha256": "trivy-full.cdx.json"},
+        }
+        for key in hashes:
+            if not BARE_SHA256_RE.fullmatch(str(item.get(key, ""))):
+                errors.append(f"signing-evidence {group}.{key} is invalid")
+            else:
+                try:
+                    if item[key] != file_sha256(Path(path).parent / sources[group][key]):
+                        errors.append(f"signing-evidence {group}.{key} differs from local bytes")
+                except OSError:
+                    errors.append(f"signing-evidence {group}.{key} source file is missing")
+        if group == "sbom_attestation" and item.get("predicate_type") != "https://cyclonedx.org/bom":
+            errors.append("signing-evidence sbom_attestation.predicate_type is invalid")
+        rekor = item.get("rekor")
+        if not isinstance(rekor, dict) or not (
+            isinstance(rekor.get("log_index"), int) and not isinstance(rekor.get("log_index"), bool)
+            and rekor["log_index"] >= 0 and isinstance(rekor.get("log_id"), str) and rekor["log_id"]
+            and any(isinstance(rekor.get(key), str) and rekor[key] for key in ("signed_entry_timestamp", "inclusion_root_hash"))
+        ):
+            errors.append(f"signing-evidence {group}.rekor is invalid")
+    try:
+        predicate = load_json(str(Path(path).parent / "trivy-full.cdx.json"), "signing predicate")
+        if predicate.get("bomFormat") != "CycloneDX" or not isinstance(predicate.get("components"), list):
+            errors.append("signing-evidence predicate is not a CycloneDX BOM")
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"signing-evidence predicate is invalid: {exc}")
+    return errors
+
+
 def collect_violations(args: argparse.Namespace) -> list[str]:
     """Every rule violation, one line each naming the offending field."""
     violations = flag_violations(args)
@@ -570,6 +648,7 @@ def collect_violations(args: argparse.Namespace) -> list[str]:
     violations.extend(decision_issues)
     violations.extend(recovery_violations(args, decision, internal_tag))
     violations.extend(report_hash_violations(args))
+    violations.extend(signing_violations(args))
     return violations
 
 
@@ -636,7 +715,7 @@ def build_record(
             },
         },
         "policy": policy
-        | {"outcome": decision["reason"], "eligible": True, "warnings": warnings},
+        | {"outcome": decision["reason"], "eligible": decision["eligible"], "warnings": warnings},
         "cves": cves,
         "packages": decision["packages"]
         | {"downgrade_blocked": bool(decision["packages"]["downgrades"])},
@@ -656,6 +735,22 @@ def build_record(
         "promoted_at": datetime.now(timezone.utc).strftime(UTC_FORMAT),
         "notes": args.notes,
     }
+    signing = load_json(value_of(args, "--signing-evidence"), "--signing-evidence")
+    if value_of(args, "--signing-result") == "fail":
+        record["signing"] = {"result": "fail", "failure": value_of(args, "--signing-failure")}
+    else:
+        record["signing"] = {
+            "result": "pass",
+            "image_signature": {
+                "bundle_sha256": signing["signature"]["bundle_sha256"],
+                "attachment_sha256": signing["signature"]["attachment_sha256"],
+                "certificate_identity": signing["certificate_identity"],
+                "certificate_oidc_issuer": signing["certificate_oidc_issuer"],
+            },
+            "sbom_attestation": {key: signing["sbom_attestation"][key] for key in ("predicate_type", "predicate_sha256", "bundle_sha256", "attachment_sha256")},
+            "rekor": {key: signing[key]["rekor"] for key in ("signature", "sbom_attestation")},
+            "tools": {"cosign": signing["cosign_version"], "trivy": signing["trivy_version"]},
+        }
     if value_of(args, "--original-run-url"):
         record["pipeline"]["original_run_url"] = value_of(args, "--original-run-url")
         record["pipeline"]["original_source_sha"] = value_of(

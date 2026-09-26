@@ -137,6 +137,30 @@ class ProvenanceTests(unittest.TestCase):
         self.kev = root / "kev.json"
         self.decision_path = root / "candidate-decision.json"
         self.github = root / "github-evidence.json"
+        self.signing_evidence = root / "signing-evidence.json"
+        signing_files = {
+            "sign-bundle.json": b"signature bundle",
+            "signature-attachment.json": b"signature attachment",
+            "sbom-bundle.json": b"SBOM bundle",
+            "sbom-attestation-attachment.json": b"attestation attachment",
+            "trivy-full.cdx.json": b'{"bomFormat":"CycloneDX","components":[]}',
+        }
+        for name, content in signing_files.items():
+            (root / name).write_bytes(content)
+        def sha(name):
+            return hashlib.sha256(signing_files[name]).hexdigest()
+        self.signing_evidence.write_text(json.dumps({
+            "result": "pass", "image": f"ghcr.io/bocklabs/postgres-exporter@{CHILD_DIGEST}",
+            "digest": CHILD_DIGEST,
+            "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+            "certificate_oidc_issuer": "https://token.actions.githubusercontent.com",
+            "cosign_version": "v3.1.3", "trivy_version": "0.74.0",
+            "signature": {"bundle_sha256": sha("sign-bundle.json"), "attachment_sha256": sha("signature-attachment.json"),
+                          "rekor": {"log_index": 1, "log_id": "log-id", "signed_entry_timestamp": "set", "inclusion_root_hash": None}},
+            "sbom_attestation": {"predicate_type": "https://cyclonedx.org/bom", "predicate_sha256": sha("trivy-full.cdx.json"),
+                                 "bundle_sha256": sha("sbom-bundle.json"), "attachment_sha256": sha("sbom-attestation-attachment.json"),
+                                 "rekor": {"log_index": 2, "log_id": "log-id", "signed_entry_timestamp": "set", "inclusion_root_hash": None}},
+        }), encoding="utf-8")
         self.write_inputs(())
 
     def write_inputs(self, cves) -> None:
@@ -202,6 +226,8 @@ class ProvenanceTests(unittest.TestCase):
             "--validation-entrypoint": "[]",
             "--validation-cmd": "[]",
             "--validation-env": "[]",
+            "--signing-evidence": str(self.signing_evidence),
+            "--signing-result": "pass",
             "--out": str(self.out),
         }
 
@@ -256,6 +282,69 @@ class ProvenanceTests(unittest.TestCase):
             record["policy"]["kev"]["catalog"]["catalogVersion"], "2026.09.13"
         )
         self.assertIsNone(record["policy"]["acceptance"])
+        self.assertEqual(record["signing"]["result"], "pass")
+        self.assertEqual(record["signing"]["image_signature"]["certificate_identity"], json.loads(self.signing_evidence.read_text())["certificate_identity"])
+        self.assertEqual(record["signing"]["sbom_attestation"]["predicate_sha256"], hashlib.sha256((self.signing_evidence.parent / "trivy-full.cdx.json").read_bytes()).hexdigest())
+        self.assertEqual(record["signing"]["tools"], {"cosign": "v3.1.3", "trivy": "0.74.0"})
+
+    def test_signing_evidence_is_required_and_digest_bound(self) -> None:
+        self.assert_fails_closed(self.run_generator(self.mutated(signing_evidence=None)), "signing-evidence")
+        original = json.loads(self.signing_evidence.read_text())
+        for path, value in (("certificate_identity", ""), ("digest", "sha256:" + "e" * 64),
+                            ("cosign_version", ""), ("trivy_version", "")):
+            with self.subTest(path=path):
+                evidence = dict(original)
+                evidence[path] = value
+                self.signing_evidence.write_text(json.dumps(evidence))
+                self.assert_fails_closed(self.run_generator(self.flags()), path)
+
+        for group, path, value in (("signature", "attachment_sha256", "bad"),
+                                   ("sbom_attestation", "predicate_sha256", ""),
+                                   ("signature", "rekor", {}),
+                                   ("sbom_attestation", "rekor", {})):
+            with self.subTest(group=group, path=path):
+                evidence = json.loads(json.dumps(original))
+                evidence[group][path] = value
+                self.signing_evidence.write_text(json.dumps(evidence))
+                self.assert_fails_closed(self.run_generator(self.flags()), path)
+
+    def test_new_record_without_signing_result_fails(self) -> None:
+        flags = self.flags()
+        del flags["--signing-result"]
+        self.assert_fails_closed(self.run_generator(flags), "signing-result")
+
+    def test_signing_hashes_must_match_local_evidence_bytes(self) -> None:
+        (self.signing_evidence.parent / "sign-bundle.json").write_text("changed")
+        self.assert_fails_closed(self.run_generator(self.flags()), "bundle_sha256")
+
+    def test_signing_predicate_must_be_cyclonedx(self) -> None:
+        predicate = self.signing_evidence.parent / "trivy-full.cdx.json"
+        predicate.write_text("{}")
+        evidence = json.loads(self.signing_evidence.read_text())
+        evidence["sbom_attestation"]["predicate_sha256"] = hashlib.sha256(predicate.read_bytes()).hexdigest()
+        self.signing_evidence.write_text(json.dumps(evidence))
+        self.assert_fails_closed(self.run_generator(self.flags()), "predicate")
+
+    def test_quarantine_is_explicit_and_non_promotable(self) -> None:
+        self.decision["eligible"] = False
+        self.decision["reason"] = "signing verification failed"
+        self.decision_path.write_text(json.dumps(self.decision))
+        flags = self.flags()
+        flags["--decision-sha256"] = hashlib.sha256(self.decision_path.read_bytes()).hexdigest()
+        flags["--signing-result"] = "fail"
+        flags["--signing-failure"] = "verification failed"
+        self.signing_evidence.write_text(json.dumps({"result": "fail", "reason": "verification failed"}))
+        result = self.run_generator(flags)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        record = json.loads(self.out.read_text())
+        self.assertFalse(record["policy"]["eligible"])
+        self.assertEqual(record["policy"]["outcome"], "signing verification failed")
+        self.assertEqual(record["signing"], {"result": "fail", "failure": "verification failed"})
+        self.out.unlink()
+        self.decision["eligible"] = True
+        self.decision_path.write_text(json.dumps(self.decision))
+        flags["--decision-sha256"] = hashlib.sha256(self.decision_path.read_bytes()).hexdigest()
+        self.assert_fails_closed(self.run_generator(flags), "eligible")
 
     def test_missing_required_flag_fails(self) -> None:
         result = self.run_generator(self.mutated(run_url=None))
@@ -348,6 +437,8 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(record["schema"], SCHEMA)
         self.assertIn("linux/amd64", record["internal"]["platforms"])
         self.assertNotIn("selected_child_digest", record["upstream"])
+        signed_era_marker = REPO_ROOT / "provenance" / "postgres-exporter" / "v0.20.1-bocklabs.5.json"
+        self.assertNotIn("signing", json.loads(signed_era_marker.read_text()))
 
     def test_recovery_preserves_original_and_current_run(self) -> None:
         flags = self.flags()

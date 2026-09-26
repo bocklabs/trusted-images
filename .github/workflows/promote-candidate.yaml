@@ -885,15 +885,21 @@ jobs:
           trivy convert --format cyclonedx --output trivy-full.cdx.json trivy-full.json
           test -s trivy-full.json
           test -s trivy-full.cdx.json
+          jq -e '.bomFormat == "CycloneDX" and (.components | type == "array") and ([.components[] | select(.type == "operating-system")] | length <= 1)' trivy-full.cdx.json > /dev/null
+          JSON_PACKAGES="$(jq -c '[((.Results // [])[] | .Packages[]?) | {name: .Name, version: .Version}] | sort_by(.name, .version)' trivy-full.json)"
+          CDX_PACKAGES="$(jq -c '[.components[] | select(.type == "library") | {name, version}] | sort_by(.name, .version)' trivy-full.cdx.json)"
+          [ "${JSON_PACKAGES}" = "${CDX_PACKAGES}" ] || { echo "FATAL: CycloneDX library components differ from Trivy packages"; exit 1; }
+          JSON_PACKAGE_COUNT="$(jq 'length' <<< "${JSON_PACKAGES}")"
+          CDX_PACKAGE_COUNT="$(jq '[.components[] | select(.type != "operating-system")] | length' trivy-full.cdx.json)"
+          [ "${JSON_PACKAGE_COUNT}" -eq "${CDX_PACKAGE_COUNT}" ] || { echo "FATAL: CycloneDX component count differs from Trivy package count"; exit 1; }
           JSON_COUNT="$(jq '[((.Results // [])[] | .Vulnerabilities[]?)] | unique_by([.VulnerabilityID, .PkgName, .InstalledVersion]) | length' trivy-full.json)"
           CDX_COUNT="$(jq '.vulnerabilities | length' trivy-full.cdx.json)"
           {
             echo "cyclonedx findings in JSON report: ${JSON_COUNT}"
             echo "cyclonedx findings in CDX file:   ${CDX_COUNT}"
           } >> "$GITHUB_STEP_SUMMARY"
-          # An empty findings array is not conversion loss.
-          if [ "${JSON_COUNT}" -gt 0 ] && [ "${CDX_COUNT}" -eq 0 ]; then
-            echo "FATAL: CycloneDX conversion lost findings"
+          if [ "${JSON_COUNT}" -ne "${CDX_COUNT}" ]; then
+            echo "FATAL: CycloneDX conversion changed findings count"
             exit 1
           fi
 

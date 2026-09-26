@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Set up uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
@@ -63,6 +65,48 @@ jobs:
         run: |
           set -euo pipefail
           node tests/renovate-manager-match.mjs
+
+      - name: Detect Cosign verifier pin change
+        id: cosign-pin
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ "${EVENT_NAME}" == pull_request ]]; then
+            BASE="$(git merge-base HEAD "origin/${BASE_REF}")"
+          else
+            BASE="${BEFORE}"
+          fi
+          git rev-parse --verify "${BASE}^{commit}" > /dev/null
+          echo "base=${BASE}" >> "$GITHUB_OUTPUT"
+          mapfile -t VERSIONS < <(sed -nE 's/^[[:space:]]+cosign-release: (v[0-9]+\.[0-9]+\.[0-9]+)$/\1/p' .github/workflows/promote-publish.yaml)
+          if [[ "${#VERSIONS[@]}" -ne 1 ]]; then
+            echo 'FATAL: expected one checked-out Cosign release pin' >&2
+            exit 1
+          fi
+          echo "version=${VERSIONS[0]}" >> "$GITHUB_OUTPUT"
+          if git diff --unified=0 "${BASE}" HEAD -- .github/workflows/promote-publish.yaml .github/workflows/validate.yaml |
+            grep -Eq '^[+-][[:space:]]*([u]ses:[[:space:]]+sigstore/cosign-installer@[a-f0-9]{40}|cosign-release:[[:space:]]+v[0-9]+\.[0-9]+\.[0-9]+)'; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install candidate Cosign
+        if: steps.cosign-pin.outputs.changed == 'true'
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: ${{ steps.cosign-pin.outputs.version }}
+
+      - name: Reverify signed provenance
+        if: steps.cosign-pin.outputs.changed == 'true'
+        shell: bash
+        env:
+          BASE: ${{ steps.cosign-pin.outputs.base }}
+        run: |
+          set -euo pipefail
+          python3 scripts/reverify_signing.py --base "${BASE}"
 
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
