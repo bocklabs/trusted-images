@@ -1,6 +1,7 @@
 [run]
 branch = true
 parallel = true
+patch = subprocess
 include =
     */scripts/*
 
