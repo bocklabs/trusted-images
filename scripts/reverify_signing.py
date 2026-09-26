@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from promote_signing_gate import IMAGE_RE, PREDICATE_TYPE, field, load_identity, statement_from_verified
+from promote_signing_gate import IMAGE_RE, PREDICATE_TYPE, SIGNATURE_TYPE, field, load_identity, statement_from_verified
 
 ROOT = Path(__file__).resolve().parent.parent
 SHA256 = re.compile(r"[a-f0-9]{64}\Z")
@@ -113,7 +113,7 @@ def verify(image, signature_hash, attestation_hash, identity):
             or not any(field(row, "name") == package and field(row, "digest", "sha256") == digest[7:]
                        for row in statement.get("subject", []))):
         raise ValueError(f"attestation digest or type mismatch: {image}")
-    for args, expected in ((["download", "signature", image], signature_hash),
+    for args, expected in ((["download", "attestation", "--predicate-type", SIGNATURE_TYPE, image], signature_hash),
                            (["download", "attestation", "--predicate-type", PREDICATE_TYPE, image], attestation_hash)):
         if hashlib.sha256(cosign(*args)).hexdigest() != expected:
             raise ValueError(f"public {args[1]} attachment mismatch: {image}")

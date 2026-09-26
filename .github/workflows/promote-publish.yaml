@@ -823,7 +823,7 @@ jobs:
             -f conclusion=success \
             -f output.title="inventory valid (provenance)" \
             -f output.summary="validate_inventory.py passed on the provenance branch"
-          gh pr merge --auto --merge "${PR_URL}"
+          gh pr merge --merge "${PR_URL}"
           echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Verify merged provenance and publish the final decision

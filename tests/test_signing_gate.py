@@ -48,7 +48,14 @@ class SigningGateTests(unittest.TestCase):
             "predicateType": "https://cyclonedx.org/bom",
             "predicate": {"bomFormat": "CycloneDX", "specVersion": "1.6"},
         }
-        self.signature = bundle({"messageSignature": {"messageDigest": {"algorithm": "SHA2_256", "digest": "YQ=="}, "signature": "c2ln"}})
+        self.signature_statement = {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [{"digest": {"sha256": DIGEST[7:]}}],
+            "predicateType": "https://sigstore.dev/cosign/sign/v1", "predicate": {},
+        }
+        self.signature = bundle({"dsseEnvelope": {"payloadType": "application/vnd.in-toto+json",
+            "payload": base64.b64encode(json.dumps(self.signature_statement).encode()).decode(),
+            "signatures": [{"sig": "c2ln"}]}})
         self.attestation = bundle({"dsseEnvelope": {"payloadType": "application/vnd.in-toto+json", "payload": base64.b64encode(json.dumps(self.statement).encode()).decode(), "signatures": [{"sig": "c2ln"}]}})
         (self.dir / "sign-bundle.json").write_text(json.dumps(self.signature))
         (self.dir / "sbom-bundle.json").write_text(json.dumps(self.attestation))
@@ -69,20 +76,24 @@ if args[0] == "version":
 elif args[0] == "verify" and scenario in ("missing-signature", "command-error"):
     sys.exit(1)
 elif args[0] == "verify":
-    print(json.dumps([{"critical": {"image": {"docker-manifest-digest": os.environ["DIGEST"]}}}]))
+    print(json.dumps([{"critical": {"image": {"docker-manifest-digest": os.environ["DIGEST"]}, "type": "https://sigstore.dev/cosign/sign/v1"}}]))
 elif args[0] == "verify-attestation" and scenario == "missing-attestation":
     sys.exit(1)
 elif args[0] == "verify-attestation":
     statement = json.loads((root / "statement.json").read_text())
-    print(json.dumps([{"payload": __import__("base64").b64encode(json.dumps(statement).encode()).decode()}]))
-elif args[:2] == ["download", "signature"]:
-    signature = json.loads((root / "sign-bundle.json").read_text())["messageSignature"]["signature"]
-    payload = {"Critical": {"Image": {"Docker-manifest-digest": "sha256:" + "b" * 64 if scenario == "wrong-download-digest" else os.environ["DIGEST"]}}}
-    if scenario == "detached-attachment":
-        signature = "b3RoZXI="
-    print(json.dumps({"Base64Signature": []} if scenario == "malformed-download" else {"Base64Signature": signature, "Payload": __import__("base64").b64encode(json.dumps(payload).encode()).decode()}))
+    print(json.dumps({"payload": __import__("base64").b64encode(json.dumps(statement).encode()).decode()}))
 elif args[:2] == ["download", "attestation"]:
-    print(json.dumps(json.loads((root / "sbom-bundle.json").read_text())["dsseEnvelope"]))
+    path = "sign-bundle.json" if args[args.index("--predicate-type") + 1] == "https://sigstore.dev/cosign/sign/v1" else "sbom-bundle.json"
+    attachment = json.loads((root / path).read_text())
+    if scenario == "detached-attachment":
+        attachment["dsseEnvelope"]["signatures"][0]["sig"] = "b3RoZXI="
+    elif scenario == "wrong-download-digest":
+        payload = json.loads(__import__("base64").b64decode(attachment["dsseEnvelope"]["payload"]))
+        payload["subject"][0]["digest"]["sha256"] = "b" * 64
+        attachment["dsseEnvelope"]["payload"] = __import__("base64").b64encode(json.dumps(payload).encode()).decode()
+    elif scenario == "malformed-download":
+        attachment = {"dsseEnvelope": {"payload": []}}
+    print(json.dumps(attachment))
 else:
     sys.exit(2)
 ''')
@@ -128,9 +139,9 @@ else:
                 self.assertEqual(evidence["result"], "fail")
                 self.assertNotIn("signature", evidence)
                 if scenario == "malformed-download":
-                    self.assertIn("lacks signature or payload", evidence["reason"])
+                    self.assertIn("not a DSSE envelope", evidence["reason"])
                 elif scenario == "wrong-download-digest":
-                    self.assertIn("subject digest differs", evidence["reason"])
+                    self.assertIn("differs from local bundle", evidence["reason"])
                 elif scenario == "detached-attachment":
                     self.assertIn("differs from local bundle", evidence["reason"])
 
@@ -226,7 +237,7 @@ else:
 
         identity = json.loads(IDENTITY.read_text())
         signature = json.dumps([{"critical": {"image": {"docker-manifest-digest": DIGEST}}}]).encode()
-        attestation = json.dumps([{"payload": base64.b64encode(json.dumps(self.statement).encode()).decode()}]).encode()
+        attestation = json.dumps({"payload": base64.b64encode(json.dumps(self.statement).encode()).decode()}).encode()
         attachment = b"public attachment\n"
         expected_hash = hashlib.sha256(attachment).hexdigest()
         flags = ("--certificate-identity", identity["certificate_identity"],
@@ -239,7 +250,7 @@ else:
             if args[0] == "verify-attestation":
                 self.assertEqual(args, ("verify-attestation", "--type", "cyclonedx", *flags, IMAGE))
                 return attestation
-            self.assertIn(args, (("download", "signature", IMAGE),
+            self.assertIn(args, (("download", "attestation", "--predicate-type", "https://sigstore.dev/cosign/sign/v1", IMAGE),
                                  ("download", "attestation", "--predicate-type", "https://cyclonedx.org/bom", IMAGE)))
             return attachment
 
@@ -278,7 +289,7 @@ else:
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps(record))
         verified_signature = json.dumps([{"critical": {"image": {"docker-manifest-digest": DIGEST}}}]).encode()
-        verified_attestation = json.dumps([{"payload": base64.b64encode(json.dumps(self.statement).encode()).decode()}]).encode()
+        verified_attestation = json.dumps({"payload": base64.b64encode(json.dumps(self.statement).encode()).decode()}).encode()
         outputs = [verified_signature, verified_attestation, signature_bytes, attestation_bytes]
         with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
             reverify_signing, "old_signed_paths", return_value={"provenance/example/one.json"}

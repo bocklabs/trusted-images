@@ -11,6 +11,7 @@ from pathlib import Path
 
 IMAGE_RE = re.compile(r"^ghcr\.io/bocklabs/[a-z0-9][a-z0-9._-]*@(sha256:[a-f0-9]{64})$")
 PREDICATE_TYPE = "https://cyclonedx.org/bom"
+SIGNATURE_TYPE = "https://sigstore.dev/cosign/sign/v1"
 
 
 def digest(data):
@@ -72,9 +73,7 @@ def read_bundle(path, content_key):
 
 
 def statement_from_verified(data):
-    rows = json.loads(data)
-    if not isinstance(rows, list) or not rows or not isinstance(rows[0], dict):
-        raise ValueError("verified attestation is empty")
+    rows = downloaded_rows(data)
     payload = rows[0].get("payload")
     if not isinstance(payload, str) or not payload:
         raise ValueError("verified attestation has no payload")
@@ -91,30 +90,12 @@ def downloaded_rows(data):
     return rows
 
 
-def verify_signature_attachment(attachment, bundle, image_digest):
-    local_signature = base64.b64decode(bundle["messageSignature"]["signature"], validate=True)
-    matched_signature = False
-    for row in downloaded_rows(attachment):
-        signature = row.get("Base64Signature")
-        payload = row.get("Payload")
-        if not isinstance(signature, str) or not signature or not isinstance(payload, str) or not payload:
-            raise ValueError("downloaded signature lacks signature or payload")
-        signed_payload = json.loads(base64.b64decode(payload, validate=True))
-        if not isinstance(signed_payload, dict) or not isinstance(signed_payload.get("Critical"), dict) or not isinstance(signed_payload["Critical"].get("Image"), dict):
-            raise ValueError("downloaded signature payload is malformed")
-        if signed_payload["Critical"]["Image"].get("Docker-manifest-digest") != image_digest:
-            raise ValueError("downloaded signature subject digest differs")
-        matched_signature |= base64.b64decode(signature, validate=True) == local_signature
-    if not local_signature or not matched_signature:
-        raise ValueError("downloaded signature differs from local bundle")
-
-
 def verify_attestation_attachment(attachment, bundle):
     matched_attestation = False
     for row in downloaded_rows(attachment):
-        if not isinstance(row.get("payloadType"), str) or not isinstance(row.get("payload"), str) or not row.get("signatures"):
+        if not isinstance(field(row, "dsseEnvelope", "payloadType"), str) or not isinstance(field(row, "dsseEnvelope", "payload"), str) or not field(row, "dsseEnvelope", "signatures"):
             raise ValueError("downloaded attestation is not a DSSE envelope")
-        matched_attestation |= row == bundle["dsseEnvelope"]
+        matched_attestation |= row["dsseEnvelope"] == bundle["dsseEnvelope"]
     if not matched_attestation:
         raise ValueError("downloaded attestation differs from local bundle")
 
@@ -125,8 +106,16 @@ def build_evidence(args):
         raise ValueError("image must be an exact lowercase GHCR digest reference")
     image_digest = match.group(1)
     identity = load_identity(args.identity_config)
-    sign, sign_rekor, sign_hash = read_bundle(args.sign_bundle, "messageSignature")
+    sign, sign_rekor, sign_hash = read_bundle(args.sign_bundle, "dsseEnvelope")
     sbom, sbom_rekor, sbom_hash = read_bundle(args.sbom_bundle, "dsseEnvelope")
+    local_signature = json.loads(base64.b64decode(sign["dsseEnvelope"]["payload"], validate=True))
+    if (sign["dsseEnvelope"].get("payloadType") != "application/vnd.in-toto+json"
+            or not sign["dsseEnvelope"].get("signatures")
+            or field(local_signature, "_type") != "https://in-toto.io/Statement/v1"
+            or field(local_signature, "predicateType") != SIGNATURE_TYPE
+            or not any(field(subject, "digest", "sha256") == image_digest[7:]
+                       for subject in local_signature.get("subject", []))):
+        raise ValueError("local signature subject digest or type differs")
     predicate = json.loads(args.predicate.read_bytes())
     if not isinstance(predicate, dict) or predicate.get("bomFormat") != "CycloneDX":
         raise ValueError("predicate is not a CycloneDX BOM")
@@ -135,7 +124,8 @@ def build_evidence(args):
     verified_signature = run_cosign("verify", *flags, args.image, output="verify-signature.json")
     rows = json.loads(verified_signature)
     if not isinstance(rows, list) or not rows or not any(
-        field(row, "critical", "image", "docker-manifest-digest") == image_digest for row in rows
+        field(row, "critical", "image", "docker-manifest-digest") == image_digest
+        and field(row, "critical", "type") == SIGNATURE_TYPE for row in rows
     ):
         raise ValueError("verified signature subject digest differs")
     verified_attestation = run_cosign("verify-attestation", "--type", "cyclonedx", *flags,
@@ -150,11 +140,11 @@ def build_evidence(args):
     local_statement = json.loads(base64.b64decode(sbom["dsseEnvelope"]["payload"], validate=True))
     if local_statement != statement:
         raise ValueError("local attestation bundle differs from verified attachment")
-    signature_attachment = run_cosign("download", "signature", args.image,
+    signature_attachment = run_cosign("download", "attestation", "--predicate-type", SIGNATURE_TYPE, args.image,
                                       output="signature-attachment.json")
     attestation_attachment = run_cosign("download", "attestation", "--predicate-type", PREDICATE_TYPE,
                                         args.image, output="sbom-attestation-attachment.json")
-    verify_signature_attachment(signature_attachment, sign, image_digest)
+    verify_attestation_attachment(signature_attachment, sign)
     verify_attestation_attachment(attestation_attachment, sbom)
     version = re.search(r"(?m)^GitVersion:\s*(v\d+\.\d+\.\d+)\s*$", run_cosign("version").decode())
     if not version:
