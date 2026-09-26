@@ -41,6 +41,7 @@ permissions:
   checks: write
   actions: read
   issues: read
+  id-token: write
 
 concurrency:
   group: promote-${{ inputs.app }}

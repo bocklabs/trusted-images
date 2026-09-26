@@ -217,6 +217,53 @@ class PromoteWorkflowTests(unittest.TestCase):
             }
         }
 
+    def test_final_report_precedes_complete_cyclonedx_export(self) -> None:
+        steps = self.loaded_workflow()["jobs"]["validate"]["steps"]
+        names = [step["name"] for step in steps]
+        select = steps[names.index("Select the exact final candidate")]["run"]
+        convert = steps[names.index("Convert full report to CycloneDX with parity check")]["run"]
+        export = steps[names.index("Export checksum-bound candidate artifact")]["run"]
+        for digest in ("PATCHED_DIGEST", "RESUME_DIGEST", "RECOVERED_DIGEST"):
+            self.assertIn(digest, select)
+        self.assertEqual(select.count("cp trivy-after-full.json trivy-full.json"), 3)
+        self.assertLess(names.index("Rescan the exact patched bytes with the frozen DB"), names.index("Select the exact final candidate"))
+        self.assertLess(names.index("Select the exact final candidate"), names.index("Convert full report to CycloneDX with parity check"))
+        self.assertLess(names.index("Convert full report to CycloneDX with parity check"), names.index("Export checksum-bound candidate artifact"))
+        self.assertIn("trivy-full.cdx.json", export)
+        self.assertIn("Packages", convert)
+        self.assertIn("components", convert)
+        self.assertIn("operating-system", convert)
+        self.assertIn("vulnerabilities", convert)
+
+    def test_patched_conversion_rejects_original_child_components(self) -> None:
+        steps = self.loaded_workflow()["jobs"]["validate"]["steps"]
+        by_name = {step["name"]: step for step in steps}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "trivy-full.json").write_text(json.dumps({"Results": [{"Packages": [{"Name": "old", "Version": "1"}]}]}))
+            (root / "trivy-after-full.json").write_text(json.dumps({"Results": [{"Packages": [{"Name": "new", "Version": "2"}, {"Name": "lang", "Version": "3"}], "Vulnerabilities": []}]}))
+            cdx = root / "fixture-cdx.json"
+            cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [
+                {"type": "operating-system", "name": "os"},
+                {"type": "library", "name": "new", "version": "2"},
+                {"type": "library", "name": "lang", "version": "3"}], "vulnerabilities": []}))
+            fake_trivy = root / "trivy"
+            fake_trivy.write_text('#!/bin/sh\ncp "$CDX_FIXTURE" "$5"\n')
+            fake_trivy.chmod(0o755)
+            env = dict(os.environ, PATH=f"{root}:{os.environ['PATH']}", CDX_FIXTURE=str(cdx),
+                       PATCHED_DIGEST=DIGEST_B, RESUME_DIGEST="", RECOVERED_DIGEST="",
+                       SELECTED_DIGEST=DIGEST_A, UPSTREAM_REF="registry.example/app",
+                       GITHUB_OUTPUT=str(root / "output"), GITHUB_STEP_SUMMARY=str(root / "summary"))
+            select = subprocess.run(["bash", "-c", by_name["Select the exact final candidate"]["run"]], cwd=root, env=env, capture_output=True, text=True)
+            self.assertEqual(select.returncode, 0, select.stdout + select.stderr)
+            convert = by_name["Convert full report to CycloneDX with parity check"]["run"]
+            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [{"type": "library", "name": "old", "version": "1"}], "vulnerabilities": []}))
+            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("components differ", result.stdout)
+
     def test_trivy_result_counts_treat_null_as_empty(self) -> None:
         self.assertEqual(
             self.workflow.count("((.Results // [])[] | .Vulnerabilities[]?)"), 3
@@ -718,6 +765,25 @@ elif args[0] == 'run':
             with self.subTest(text=text):
                 self.assertIn(text, self.workflow)
         self.assertNotIn("git add provenance/", self.workflow)
+
+    def test_publisher_requires_verified_signing_for_success_or_quarantine(self) -> None:
+        steps = self.loaded_workflow()["jobs"]["promote"]["steps"]
+        by_name = {step["name"]: step for step in steps}
+        quarantine = by_name["Record quarantined publication after failed verification"]
+        self.assertIn("probe.outputs.result == 'pass'", quarantine["if"])
+        self.assertIn("signing-gate.outcome == 'failure'", quarantine["if"])
+        self.assertIn(".eligible = false", quarantine["run"])
+        self.assertIn(".published.digest", quarantine["run"])
+        provenance = by_name["Generate provenance record"]
+        self.assertIn("quarantine-decision.outcome == 'success'", provenance.get("if", ""))
+        self.assertIn("--signing-evidence", provenance["run"])
+        self.assertIn("--signing-result", provenance["run"])
+        self.assertIn("signing-gate.outcome == 'success'", by_name["Verify merged provenance and publish the final decision"].get("if", ""))
+        for name in ("Mint bocklabs-release app token", "Open provenance PR and enable merge"):
+            self.assertIn("quarantine-decision.outcome == 'success'", by_name[name].get("if", ""))
+        self.assertEqual(by_name["Job summary evidence panel"]["run"].count("promotion unsuccessful"), 2)
+        self.assertNotIn("cosign attest", self.publisher_workflow[self.publisher_workflow.index("Generate provenance record"):])
+        self.assertNotIn("gh api -X DELETE", self.publisher_workflow)
 
     def test_same_child_reuse_and_patch_recovery_preserve_identity(self) -> None:
         for text in (
@@ -1241,6 +1307,26 @@ else: print('')
 
         decision["published"]["digest"] = decision["candidate"]["digest"]
         self.decision.write_text(json.dumps(decision), encoding="utf-8")
+        identity = json.loads((REPO_ROOT / "config" / "signing-identity.json").read_text())
+        rekor = {"log_index": 1, "log_id": "log-id", "signed_entry_timestamp": "set", "inclusion_root_hash": None}
+        signing = self.tmp / "signing-evidence.json"
+        signing_files = {
+            "sign-bundle.json": b"signature bundle", "signature-attachment.json": b"signature attachment",
+            "sbom-bundle.json": b"SBOM bundle", "sbom-attestation-attachment.json": b"attestation attachment",
+            "trivy-full.cdx.json": b'{"bomFormat":"CycloneDX","components":[]}',
+        }
+        for name, content in signing_files.items():
+            (self.tmp / name).write_bytes(content)
+        def sha(name):
+            return hashlib.sha256(signing_files[name]).hexdigest()
+        signing.write_text(json.dumps({
+            "result": "pass", "image": f"ghcr.io/bocklabs/app@{decision['candidate']['digest']}",
+            "digest": decision["candidate"]["digest"], **identity,
+            "cosign_version": "v3.1.3", "trivy_version": "0.74.0",
+            "signature": {"bundle_sha256": sha("sign-bundle.json"), "attachment_sha256": sha("signature-attachment.json"), "rekor": rekor},
+            "sbom_attestation": {"predicate_type": "https://cyclonedx.org/bom", "predicate_sha256": sha("trivy-full.cdx.json"),
+                                 "bundle_sha256": sha("sbom-bundle.json"), "attachment_sha256": sha("sbom-attestation-attachment.json"), "rekor": rekor},
+        }))
         provenance = self.run_cli(
             [
                 sys.executable,
@@ -1323,6 +1409,10 @@ else: print('')
                 "[]",
                 "--validation-env",
                 "[]",
+                "--signing-evidence",
+                str(signing),
+                "--signing-result",
+                "pass",
                 "--out",
                 str(self.provenance),
             ]

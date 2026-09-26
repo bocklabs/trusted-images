@@ -50,9 +50,45 @@
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "Cosign CLI release used by signing; validation reads this pin.",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/promote-publish\\.yaml$/"
+      ],
+      "matchStrings": [
+        "cosign-release: (?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "sigstore/cosign",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Trivy CLI release used by the Trivy action.",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/promote-candidate\\.yaml$/"
+      ],
+      "matchStrings": [
+        "uses: aquasecurity/trivy-action@[a-f0-9]{40}[^\\n]*\\n        env:\\n(?:          [^\\n]+\\n)+        with:\\n          version: (?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "aquasecurity/trivy",
+      "datasourceTemplate": "github-releases"
     }
   ],
   "packageRules": [
+    {
+      "description": "Automerge Cosign action and CLI pins through required validation.",
+      "matchPackageNames": ["sigstore/cosign-installer", "sigstore/cosign"],
+      "matchFileNames": [".github/workflows/promote-publish.yaml", ".github/workflows/validate.yaml"],
+      "automerge": true
+    },
+    {
+      "description": "Automerge Trivy action and CLI pins through required validation.",
+      "matchPackageNames": ["aquasecurity/trivy-action", "aquasecurity/trivy"],
+      "matchFileNames": [".github/workflows/promote-candidate.yaml"],
+      "automerge": true
+    },
     {
       "description": "Hold the deliberately stale nginx qualification pin until its patch qualification is reviewed.",
       "matchFileNames": [

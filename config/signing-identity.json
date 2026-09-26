@@ -1,0 +1,4 @@
+{
+  "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+  "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
+}
