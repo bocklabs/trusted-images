@@ -732,9 +732,7 @@ jobs:
           {
             echo "### Provenance record"
             echo
-            echo '```json'
-            cat "provenance/${APP}/${INTERNAL_TAG}.json"
-            echo '```'
+            echo "Full machine-readable record: provenance/${APP}/${INTERNAL_TAG}.json (see provenance PR below)."
             echo
           } >> "$GITHUB_STEP_SUMMARY"
 

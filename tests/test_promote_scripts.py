@@ -1079,7 +1079,7 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
         result = self.run_script("promote_summary.py")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn(
-            "| before | CVE-2026-0001 | libexample | HIGH | debian |", result.stdout
+            "| before | os-pkgs | HIGH | 1 |", result.stdout
         )
         self.assertIn("| debian | libexample | upgraded | 1.0 | 2.0 |", result.stdout)
         self.assertIn("N/A — no KEV exception", result.stdout)
@@ -1142,8 +1142,29 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
                 "",
             ],
         )
-        self.assertIn("- resolved: -", result.stdout)
+        self.assertIn("- resolved: 0 IDs; sample: -", result.stdout)
         self.assertIn("N/A — no KEV exception", result.stdout)
+
+    def test_large_evidence_presentations_fit_github_limits(self) -> None:
+        value = decision(reason="eligible with no-fix warnings: " + "warning," * 15000)
+        cves = [f"CVE-2026-{number:06d}" for number in range(4000)]
+        for name in value["delta"]["cves"]:
+            value["delta"]["cves"][name] = cves
+        value["policy"]["kev"]["matched"] = cves
+        value["packages"]["changes"] *= 4000
+        write_json(self.tmp / "candidate-decision.json", value)
+        write_json(self.tmp / "trivy-full.json", report([vuln(cve) for cve in cves]))
+        before = (self.tmp / "candidate-decision.json").read_bytes()
+        for script, args in (("promote_summary.py", ()),
+                             ("promote_provenance_body.py", ("https://example.invalid/run/123", DIGEST_A, INTERNAL_TAG))):
+            with self.subTest(script=script):
+                result = self.run_script(script, *args)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertLess(len(result.stdout.encode()), 65536)
+                self.assertIn("4000", result.stdout)
+                self.assertIn("Presentation is abbreviated", result.stdout)
+                self.assertIn("candidate-decision/trivy-full-report", result.stdout)
+        self.assertEqual((self.tmp / "candidate-decision.json").read_bytes(), before)
 
     def test_provenance_body_fails_without_a_candidate_decision(self) -> None:
         result = self.run_script(
