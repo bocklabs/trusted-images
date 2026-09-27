@@ -72,32 +72,36 @@ def read_bundle(path, content_key):
     }, digest(raw)
 
 
-def statement_from_verified(data):
-    rows = downloaded_rows(data)
-    payload = rows[0].get("payload")
-    if not isinstance(payload, str) or not payload:
-        raise ValueError("verified attestation has no payload")
-    statement = json.loads(base64.b64decode(payload, validate=True))
-    if not isinstance(statement, dict):
-        raise ValueError("verified attestation payload is not a statement")
-    return statement
+def statement_from_verified(data, expected):
+    for row, _ in downloaded_rows(data):
+        payload = row.get("payload")
+        if not isinstance(payload, str) or not payload:
+            raise ValueError("verified attestation has no payload")
+        statement = json.loads(base64.b64decode(payload, validate=True))
+        if not isinstance(statement, dict):
+            raise ValueError("verified attestation payload is not a statement")
+        if statement == expected:
+            return statement
+    raise ValueError("verified attestation differs from local bundle")
 
 
 def downloaded_rows(data):
-    rows = [json.loads(line) for line in data.splitlines() if line.strip()]
-    if not rows or not all(isinstance(row, dict) for row in rows):
+    rows = [(json.loads(line), line) for line in data.splitlines(keepends=True) if line.strip()]
+    if not rows or not all(isinstance(row, dict) for row, _ in rows):
         raise ValueError("downloaded attachment is not JSON evidence")
     return rows
 
 
 def verify_attestation_attachment(attachment, bundle):
-    matched_attestation = False
-    for row in downloaded_rows(attachment):
+    selected = None
+    for row, raw in downloaded_rows(attachment):
         if not isinstance(field(row, "dsseEnvelope", "payloadType"), str) or not isinstance(field(row, "dsseEnvelope", "payload"), str) or not field(row, "dsseEnvelope", "signatures"):
             raise ValueError("downloaded attestation is not a DSSE envelope")
-        matched_attestation |= row["dsseEnvelope"] == bundle["dsseEnvelope"]
-    if not matched_attestation:
+        if row["dsseEnvelope"] == bundle["dsseEnvelope"]:
+            selected = raw
+    if selected is None:
         raise ValueError("downloaded attestation differs from local bundle")
+    return selected
 
 
 def build_evidence(args):
@@ -131,7 +135,8 @@ def build_evidence(args):
         raise ValueError("verified signature subject digest differs")
     verified_attestation = run_cosign("verify-attestation", "--type", "cyclonedx", *flags,
                                       args.image, output="verify-attestation.json")
-    statement = statement_from_verified(verified_attestation)
+    local_statement = json.loads(base64.b64decode(sbom["dsseEnvelope"]["payload"], validate=True))
+    statement = statement_from_verified(verified_attestation, local_statement)
     subjects = statement.get("subject") or []
     if statement.get("predicateType") != PREDICATE_TYPE or statement.get("predicate") != predicate:
         raise ValueError("verified CycloneDX predicate differs")
@@ -140,15 +145,13 @@ def build_evidence(args):
         == (args.image.split("@")[0], image_digest[7:]) for subject in subjects
     ):
         raise ValueError("verified attestation subject digest differs")
-    local_statement = json.loads(base64.b64decode(sbom["dsseEnvelope"]["payload"], validate=True))
-    if local_statement != statement:
-        raise ValueError("local attestation bundle differs from verified attachment")
-    signature_attachment = run_cosign("download", "attestation", "--predicate-type", SIGNATURE_TYPE, args.image,
-                                      output="signature-attachment.json")
+    signature_attachment = run_cosign("download", "attestation", "--predicate-type", SIGNATURE_TYPE, args.image)
     attestation_attachment = run_cosign("download", "attestation", "--predicate-type", PREDICATE_TYPE,
-                                        args.image, output="sbom-attestation-attachment.json")
-    verify_attestation_attachment(signature_attachment, sign)
-    verify_attestation_attachment(attestation_attachment, sbom)
+                                        args.image)
+    signature_attachment = verify_attestation_attachment(signature_attachment, sign)
+    attestation_attachment = verify_attestation_attachment(attestation_attachment, sbom)
+    Path("signature-attachment.json").write_bytes(signature_attachment)
+    Path("sbom-attestation-attachment.json").write_bytes(attestation_attachment)
     version = re.search(r"(?m)^GitVersion:\s*(v\d+\.\d+\.\d+)\s*$", run_cosign("version").decode())
     if not version:
         raise ValueError("Cosign version is not a release semver")

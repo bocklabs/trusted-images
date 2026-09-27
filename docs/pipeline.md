@@ -55,9 +55,10 @@ Each gate fails the run before downstream work.
 6. **Publish only the final candidate manifest** digest-preservingly from the
    checksum-bound artifact. Assert the pushed digest, byte-identical non-index
    manifest, and anonymous read. The publisher is the only write-capable job.
-7. **Generate, merge, and re-read provenance**, then publish the final decision
+7. **Generate, merge, and re-read new provenance**, then publish the final decision
    only after the public record on `main` matches the run, tag, digest, policy,
-   scan, validation, and artifact identities.
+   scan, validation, and artifact identities. Reuse retains and reverifies the
+   existing record instead of replacing it.
 
 ## Identity and reuse
 
@@ -69,7 +70,11 @@ child.
 
 If the upstream index digest changes while the selected child remains unchanged,
 normal dispatch reuses the existing revision, refreshes evidence, and does not
-copy the child again. A newer upstream release outranks an older local patched
+copy or sign the child again. An eligible signed revision is strictly reverified
+against its existing public record, which retains its original successful run and
+SBOM; refreshed current reports remain run artifacts. Unsigned or quarantined
+revisions require `force_repromote=true` to allocate a new revision.
+A newer upstream release outranks an older local patched
 revision; the controlled seven-day fallback below is the explicit backup when
 real Renovate detection has not appeared.
 
