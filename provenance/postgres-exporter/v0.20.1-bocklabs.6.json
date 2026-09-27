@@ -19,14 +19,14 @@
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/36307188149",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/36307364661",
     "workflow": "promote",
     "dispatched_by": "nitish-raj"
   },
   "tools": {
     "trivy": "0.74.0",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
-    "copa": null,
+    "copa": "0.15.0",
     "skopeo": "v1.22.2",
     "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
   },
@@ -35,13 +35,13 @@
       "check_bundle_digest": "sha256:6136611814ef050a048607c922811212dc2b3611638a8ff4b08a07818cd7a48e",
       "updated_at": "2026-09-26 12:58:40.511581833 +0000 UTC"
     },
-    "full_report_sha256": "540cf149412da62e3b220774fc09d5d993298645246d54ca6aa3de6dce73a7d1",
-    "copa_report_sha256": "77e2f01f8a8de1d88d722c695c08e67663a8467a8975b1888a02d2c68de0eb92",
-    "decision_sha256": "0cf411fdfe84fdc965eae043f579d9ab597c71728744f51aaabff1bd5e64ea3c",
+    "full_report_sha256": "8afd459cbb6db7e239f857d5c1e1c5e1850918536b1f415c69f04fa7825598b0",
+    "copa_report_sha256": "771f7aaa3988eae2fdf5ff44dd96f34b121331a059636d764d50f7d25ce54792",
+    "decision_sha256": "4e8b4139605ff82c34e81467c88e8469c80fb0e388058ecc6016210e30bad47a",
     "reports": {
-      "before_sha256": "540cf149412da62e3b220774fc09d5d993298645246d54ca6aa3de6dce73a7d1",
-      "final_sha256": "540cf149412da62e3b220774fc09d5d993298645246d54ca6aa3de6dce73a7d1",
-      "fixable_sha256": "77e2f01f8a8de1d88d722c695c08e67663a8467a8975b1888a02d2c68de0eb92"
+      "before_sha256": "124fc26f55d7eb7b5fd4ae10974fa7e55c6772745e94846d9218f5d834cc8c99",
+      "final_sha256": "8afd459cbb6db7e239f857d5c1e1c5e1850918536b1f415c69f04fa7825598b0",
+      "fixable_sha256": "771f7aaa3988eae2fdf5ff44dd96f34b121331a059636d764d50f7d25ce54792"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -54,7 +54,7 @@
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
         "sha256": "8a41e76a385f304a9f436f33640ed6bec1ca94d9dee699a4e9ecb908c9d51395",
-        "fetched_at": "2026-09-27T08:46:41Z",
+        "fetched_at": "2026-09-27T08:50:02Z",
         "catalogVersion": "2026.09.25",
         "dateReleased": "2026-09-25T18:58:16.5029Z"
       }
@@ -65,14 +65,14 @@
     },
     "copa": {
       "classification": "not-required",
-      "original_child_input": false
+      "original_child_input": true
     },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-56854:HIGH:,CVE-2026-56855:MEDIUM:,CVE-2026-78662:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-46600:HIGH:,CVE-2026-56852:HIGH:,CVE-2026-33818:HIGH:,CVE-2026-39821:HIGH:,CVE-2026-39822:HIGH:,CVE-2026-42505:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-56853:HIGH:,CVE-2026-56858:HIGH:,CVE-2026-56859:HIGH:,CVE-2026-56860:HIGH:,CVE-2026-56862:HIGH:",
-    "eligible": true,
+    "outcome": "signing verification failed",
+    "eligible": false,
     "warnings": [
       {
         "kind": "no-fix",
@@ -767,15 +767,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-09-27T08:46:10Z",
-      "finished_at": "2026-09-27T08:46:40Z",
+      "started_at": "2026-09-27T08:49:32Z",
+      "finished_at": "2026-09-27T08:50:02Z",
       "duration_seconds": 30.1
     },
     "health": {
       "defined": false,
       "final_status": "none-defined"
     },
-    "runner": "GitHub Actions 1000010616",
+    "runner": "GitHub Actions 1000010621",
     "baseline": {
       "entrypoint": [
         "/bin/postgres_exporter"
@@ -786,39 +786,10 @@
       ]
     }
   },
-  "promoted_at": "2026-09-27T08:47:50Z",
+  "promoted_at": "2026-09-27T08:50:56Z",
   "notes": "",
   "signing": {
-    "result": "pass",
-    "image_signature": {
-      "bundle_sha256": "a5bf5b39f3922600592f24dedd47dbb833e81b4104f2c6b3e80490e3aa4503e5",
-      "attachment_sha256": "54b555a58320891bf443dcc13e7f1a6178d36d22bb3ac2e537a88938aec1dc39",
-      "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
-      "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
-    },
-    "sbom_attestation": {
-      "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "8db98c49c8cd6e9f26b611f131e28ab6ca0c6226074caa26fed8cd70ad4be7ec",
-      "bundle_sha256": "d07f20ae297c9f2fb22c90f895d4a24cc1840e12482a22bafbedfd23e91b9a5d",
-      "attachment_sha256": "eec26bd33b4cdb3f305279bbf47e84eddc9900ffaa40c0ff7b8fa794453390cd"
-    },
-    "rekor": {
-      "signature": {
-        "inclusion_root_hash": "ONxHnYIcTsA5XdVfQwPBcR0sy7LHNFGbJm/OwRvQmME=",
-        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 2972086932,
-        "signed_entry_timestamp": "MEUCIHXrYBTWfyaT6UPI5X/b/EcPF7XkjbTKcaLgLdZZNSqdAiEAmfFfHnco3uEG0XUilI56CpFDQB19iHrnrEMaXaUGZVA="
-      },
-      "sbom_attestation": {
-        "inclusion_root_hash": "vv5MvIOJceFwU3dD8/tqefOzJFfaDkXJ3oI81i9PkgM=",
-        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 2972088857,
-        "signed_entry_timestamp": "MEYCIQDaO0br7agCT0trvWY9fzvAwo5DjMHSGlifXA1V30MDCAIhAKtAYz/lAvtYWup9zdBI4eZt16GSTXinxFlJOR0ZVMcw"
-      }
-    },
-    "tools": {
-      "cosign": "v3.1.3",
-      "trivy": "0.74.0"
-    }
+    "result": "fail",
+    "failure": "verified CycloneDX predicate differs"
   }
 }
