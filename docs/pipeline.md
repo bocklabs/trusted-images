@@ -136,8 +136,10 @@ The candidate decision is `candidate-decision-v1` with strict top-level groups:
 identity (`app`, `source_sha`, run, attempt, proposed tag, index, selected child,
 candidate digest), `before.fixable_os`, `copa`, `delta`, `packages`,
 `patching`, `policy`, `validation`, `resume`, `published`, `provenance`, and
-`supersedes`. Delta identities are `platform|package|CVE`; grouped CVE summaries
-name resolved, remaining, introduced, and unresolved-fixable sets. Package
+`supersedes`. Delta identities are `platform|package|CVE`; language findings scope
+the middle field as colon-separated percent-encoded class, ecosystem, target and
+package. OS identities stay unchanged; provenance retains the raw package name.
+Grouped CVE summaries name resolved, remaining, introduced, and unresolved-fixable sets. Package
 changes carry ecosystem, name, direction, and both versions.
 
 Retained artifacts include validation context/evidence and container logs; the

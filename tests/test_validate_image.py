@@ -16,6 +16,9 @@ import os
 import subprocess
 import sys
 import tempfile
+import socket
+import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -32,6 +35,7 @@ FAKE_DOCKER = """#!/usr/bin/env python3
 import json
 import os
 import sys
+import subprocess
 
 SPOOL = os.environ["FAKE_DOCKER_SPOOL"]
 SCENARIO = json.load(open(os.environ["FAKE_DOCKER_SCENARIO"]))
@@ -80,6 +84,10 @@ if ARGS[:1] == ["run"]:
         print("fake-container-id")
         raise SystemExit(SCENARIO.get("run_detached_exit", 0))
     if any(arg.startswith("container:") for arg in rest):
+        if "probe_url" in SCENARIO:
+            probe = ARGS[ARGS.index("-s"):]
+            probe[-1] = SCENARIO["probe_url"]
+            raise SystemExit(subprocess.run(["curl", *probe]).returncode)
         print(next_from("probe_statuses", "000"))
         raise SystemExit(0)
     print(SCENARIO.get("oneshot_stdout", ""))
@@ -395,6 +403,35 @@ class ValidateImageTests(unittest.TestCase):
         self.assert_container_removed()
 
     # --- happy paths ---
+
+    def test_stalled_http_request_fails_within_readiness_deadline(self):
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            listener.listen()
+            release = threading.Event()
+
+            def stall():
+                connection, _ = listener.accept()
+                with connection:
+                    release.wait(4)
+
+            worker = threading.Thread(target=stall, daemon=True)
+            worker.start()
+            self.write_scenario({
+                "image_inspect": image_inspect(),
+                "probe_url": f"http://127.0.0.1:{listener.getsockname()[1]}/",
+            })
+            started = time.monotonic()
+            try:
+                result = self.run_cli("http", ("--port", "9187", "--timeout-seconds", "1"))
+                elapsed = time.monotonic() - started
+            finally:
+                release.set()
+                worker.join(5)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("never returned 200 within 1s", result.stdout + result.stderr)
+        self.assertLess(elapsed, 2.5)
+        self.assertEqual(self.load_evidence()["validation"]["result"], "fail")
 
     def test_happy_http_passes(self) -> None:
         self.write_scenario(

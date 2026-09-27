@@ -324,6 +324,9 @@ def probe_http(args, container_name, logs_path):
     last_status = "none"
     while time.monotonic() < probe_deadline:
         append_logs(logs_path, container_name)
+        remaining = probe_deadline - time.monotonic()
+        if remaining <= 0:
+            break
         ok, out = docker(
             "run",
             "--rm",
@@ -331,6 +334,8 @@ def probe_http(args, container_name, logs_path):
             f"container:{container_name}",
             CURL_IMAGE,
             "-s",
+            "--max-time",
+            str(remaining),
             "-o",
             "/dev/null",
             "-w",

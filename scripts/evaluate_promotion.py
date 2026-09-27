@@ -8,6 +8,7 @@ import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 from univers.versions import AlpineLinuxVersion, DebianVersion, RpmVersion
 
@@ -233,7 +234,7 @@ def validate_report_results(report: dict, label: str, os_only: bool) -> list:
     return results
 
 
-def finding_identity(finding: dict, label: str) -> tuple[str, str, str, str]:
+def finding_identity(result: dict, finding: dict, label: str) -> tuple[str, dict]:
     cve = finding.get("VulnerabilityID")
     package = finding.get("PkgName")
     severity = finding.get("Severity")
@@ -244,7 +245,14 @@ def finding_identity(finding: dict, label: str) -> tuple[str, str, str, str]:
         raise ValueError(f"{label}.SeveritySource must be a string")
     if "|" in package:
         raise ValueError(f"{label} package identity contains the reserved delimiter |")
-    return cve, package, severity, source
+    metadata = finding_metadata(result, finding, severity, source, label)
+    if metadata["class"] == "lang-pkgs":
+        metadata["package"] = package
+        package = ":".join(
+            quote(value, safe="")
+            for value in (metadata["class"], metadata["type"], metadata["target"], package)
+        )
+    return f"{PLATFORM}|{package}|{cve}", metadata
 
 
 def finding_metadata(
@@ -280,9 +288,7 @@ def findings(report: dict, label: str, os_only=False):
         for finding in vulnerabilities:
             if not isinstance(finding, dict):
                 raise ValueError(f"{label} contains a non-object finding")
-            cve, package, severity, source = finding_identity(finding, label)
-            metadata = finding_metadata(result, finding, severity, source, label)
-            key = f"{PLATFORM}|{package}|{cve}"
+            key, metadata = finding_identity(result, finding, label)
             if key in normalized and normalized[key] != metadata:
                 raise ValueError(f"{label} has conflicting duplicate finding: {key}")
             normalized[key] = metadata

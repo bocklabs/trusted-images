@@ -889,19 +889,15 @@ jobs:
           JSON_PACKAGES="$(jq -c '[((.Results // [])[] | .Packages[]?) | {name: .Name, purl: .Identifier.PURL}] | sort_by(.name, .purl)' trivy-full.json)"
           CDX_PACKAGES="$(jq -c '[.components[] | select(.type == "library") | {name, purl}] | sort_by(.name, .purl)' trivy-full.cdx.json)"
           [ "${JSON_PACKAGES}" = "${CDX_PACKAGES}" ] || { echo "FATAL: CycloneDX library components differ from Trivy packages"; exit 1; }
-          JSON_PACKAGE_COUNT="$(jq 'length' <<< "${JSON_PACKAGES}")"
-          CDX_PACKAGE_COUNT="$(jq '[.components[] | select(.type != "operating-system")] | length' trivy-full.cdx.json)"
-          [ "${JSON_PACKAGE_COUNT}" -eq "${CDX_PACKAGE_COUNT}" ] || { echo "FATAL: CycloneDX component count differs from Trivy package count"; exit 1; }
-          JSON_COUNT="$(jq '[((.Results // [])[] | .Vulnerabilities[]?) | {purl: (.PkgIdentifier.PURL // .PkgID), id: .VulnerabilityID}] | unique_by([.purl, .id]) | length' trivy-full.json)"
-          CDX_COUNT="$(jq '[.vulnerabilities[] as $v | $v.affects[]? | {purl: .ref, id: $v.id}] | unique_by([.purl, .id]) | length' trivy-full.cdx.json)"
+          JSON_FINDINGS="$(jq -c '[((.Results // [])[] | .Vulnerabilities[]?) | {purl: (.PkgIdentifier.PURL // .PkgID), id: .VulnerabilityID}] | unique_by([.purl, .id])' trivy-full.json)"
+          CDX_FINDINGS="$(jq -c '(.components | map(select(.type == "library") | {key: ."bom-ref", value: .purl}) | from_entries) as $packages | [.vulnerabilities[]? as $v | $v.affects[]? | {purl: ($packages[.ref] // error("unknown SBOM package reference")), id: $v.id}] | unique_by([.purl, .id])' trivy-full.cdx.json)"
+          [ "${JSON_FINDINGS}" = "${CDX_FINDINGS}" ] || { echo "FATAL: CycloneDX finding identities differ from Trivy findings"; exit 1; }
+          JSON_COUNT="$(jq 'length' <<< "${JSON_FINDINGS}")"
+          CDX_COUNT="$(jq 'length' <<< "${CDX_FINDINGS}")"
           {
             echo "cyclonedx findings in JSON report: ${JSON_COUNT}"
             echo "cyclonedx findings in CDX file:   ${CDX_COUNT}"
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ "${JSON_COUNT}" -ne "${CDX_COUNT}" ]; then
-            echo "FATAL: CycloneDX conversion changed findings count"
-            exit 1
-          fi
 
       - name: Write SecObserve manifest
         shell: bash

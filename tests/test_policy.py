@@ -873,6 +873,26 @@ class PolicyTests(unittest.TestCase):
         )
         self.assertEqual(decision["packages"]["downgrades"], [])
 
+    def test_shared_language_finding_is_scoped_to_each_application(self):
+        value = report()
+        for target in ("bin/app-a", "bin/app|b"):
+            value["Results"].append({
+                "Target": target, "Class": "lang-pkgs", "Type": "gobinary",
+                "Vulnerabilities": [vuln("CVE-2026-0008", pkg_name="stdlib")],
+            })
+        write_json(self.full, value)
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        decision = json.loads(self.out.read_text())
+        identities = decision["delta"]["remaining"]
+        self.assertEqual(len(identities), 2)
+        self.assertEqual({key.split("|", 2)[2] for key in identities}, {"CVE-2026-0008"})
+        value["Results"][-1]["Vulnerabilities"].append(vuln("CVE-2026-0008", "LOW", pkg_name="stdlib"))
+        write_json(self.full, value)
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("conflicting duplicate finding", result.stdout + result.stderr)
+
     def test_low_severity_new_application_cve_blocks(self):
         application = {
             "Target": "app (pip)",
@@ -896,7 +916,7 @@ class PolicyTests(unittest.TestCase):
         self.assertFalse(decision["eligible"])
         self.assertIn("introduced", decision["reason"])
         self.assertEqual(
-            decision["delta"]["introduced"], ["linux/amd64|appdep|CVE-2026-0008"]
+            decision["delta"]["introduced"], ["linux/amd64|lang-pkgs:pip:app%20%28pip%29:appdep|CVE-2026-0008"]
         )
         self.assertEqual(decision["delta"]["cves"]["introduced"], ["CVE-2026-0008"])
 
