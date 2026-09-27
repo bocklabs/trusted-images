@@ -1004,6 +1004,35 @@ class PolicyTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.assertIn(label, result.stdout + result.stderr)
 
+    def test_osless_clean_rescan_remains_eligible(self):
+        self.patched([], [], [], [])
+        receipt = json.loads(self.receipt.read_text())
+        receipt["after"]["manifest_digest"] = CHILD_DIGEST
+        receipt["after"]["image_id"] = CONFIG_DIGEST
+        for os_value in ("omitted", None):
+            with self.subTest(os_metadata=os_value):
+                for name, path in (("before", self.full), ("after", self.after)):
+                    value = json.loads(path.read_text())
+                    value["Metadata"].pop("OS", None)
+                    value["Metadata"]["ImageID"] = CONFIG_DIGEST
+                    if os_value is None:
+                        value["Metadata"]["OS"] = None
+                    value["Results"] = [{
+                        "Target": "bin/app", "Class": "lang-pkgs", "Type": "gobinary",
+                        "Vulnerabilities": [vuln("CVE-2026-0008", pkg_name="stdlib")],
+                    }]
+                    write_json(path, value)
+                    receipt[name]["report_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+                write_json(self.receipt, receipt)
+                result = self.run_policy(**{
+                    "--candidate-digest": CHILD_DIGEST,
+                    "--copa-classification": "not-required",
+                })
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                decision = json.loads(self.out.read_text())
+                self.assertTrue(decision["eligible"])
+                self.assertEqual(decision["copa"]["classification"], "not-required")
+
     def test_report_identity_platform_receipt_and_eosl_are_validated(self):
         self.patched(
             [vuln("CVE-2026-0007", fixed="1.1")],
@@ -1014,6 +1043,9 @@ class PolicyTests(unittest.TestCase):
         original_after = json.loads(self.after.read_text())
         original_receipt = json.loads(self.receipt.read_text())
         mutations = {
+            "OS metadata": lambda after, receipt: after["Metadata"].pop("OS"),
+            "OS metadata is invalid": lambda after, receipt: after["Metadata"].update(OS=[]),
+            "OS EOSL": lambda after, receipt: after["Metadata"]["OS"].update(EOSL="unknown"),
             "platform": lambda after, receipt: after["Metadata"]["ImageConfig"].update(
                 architecture="arm64"
             ),

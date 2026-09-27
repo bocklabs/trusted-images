@@ -316,13 +316,23 @@ def report_os_family(report: dict, label: str) -> str:
     metadata = report.get("Metadata", {})
     if not isinstance(metadata, dict):
         raise ValueError(f"{label} Metadata must be an object")
-    os_metadata = metadata.get("OS", {})
-    if not isinstance(os_metadata, dict):
-        raise ValueError(f"{label} Metadata.OS must be an object")
-    os_family = os_metadata.get("Family", "")
-    if not isinstance(os_family, str):
-        raise ValueError(f"{label} Metadata.OS.Family must be a string")
-    return os_family
+    os_metadata = metadata.get("OS")
+    if os_metadata is None:
+        if any(result.get("Class") == "os-pkgs"
+               for result in validate_report_results(report, label, False)):
+            raise ValueError(f"{label} report OS metadata is invalid")
+        return ""
+    if (
+        not isinstance(os_metadata, dict)
+        or not isinstance(os_metadata.get("Family"), str)
+        or not os_metadata["Family"]
+    ):
+        raise ValueError(f"{label} report OS metadata is invalid")
+    if os_metadata.get("EOSL") not in (True, False, None):
+        raise ValueError(f"{label} report OS EOSL is invalid")
+    if os_metadata.get("EOSL") is True:
+        raise ValueError(f"{label} report OS EOSL is true")
+    return os_metadata["Family"]
 
 
 def package_ecosystem(result: dict, os_family: str, label: str) -> str:
@@ -450,18 +460,10 @@ def validate_scan_report(report: dict, path: Path, label: str, side: dict):
         or config.get("architecture") != "amd64"
     ):
         raise ValueError(f"{label} report platform is not linux/amd64")
+    report_os_family(report, label)
     os_metadata = metadata.get("OS")
-    if (
-        not isinstance(os_metadata, dict)
-        or not isinstance(os_metadata.get("Family"), str)
-        or not os_metadata["Family"]
-        or not isinstance(os_metadata.get("Name"), str)
-    ):
+    if os_metadata is not None and not isinstance(os_metadata.get("Name"), str):
         raise ValueError(f"{label} report OS metadata is invalid")
-    if os_metadata.get("EOSL") not in (True, False, None):
-        raise ValueError(f"{label} report OS EOSL is invalid")
-    if os_metadata.get("EOSL") is True:
-        raise ValueError(f"{label} report OS EOSL is true")
     if report.get("ArtifactName") != side.get("artifact_name") or metadata.get(
         "ImageID"
     ) != side.get("image_id"):
