@@ -353,12 +353,24 @@ jobs:
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          SKIP_COPY: ${{ steps.candidate.outputs.skip_copy }}
           CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
           GH_TOKEN: ${{ github.token }}
           ACTOR: ${{ github.actor }}
         run: |
           set -euo pipefail
           IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
+          RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+          git fetch origin main
+          if [ "${SKIP_COPY}" = true ]; then
+            git show "origin/main:${RECORD}" > "${RECORD}"
+            exit 0
+          fi
+          if git cat-file -e "origin/main:${RECORD}" 2>/dev/null; then
+            echo "FATAL: immutable provenance already exists; a fresh revision is required"
+            exit 1
+          fi
           printf '%s' "${GH_TOKEN}" | cosign login ghcr.io --username "${ACTOR}" --password-stdin
           cosign sign --yes --bundle sign-bundle.json "${IMAGE}"
           cosign attest --yes --bundle sbom-bundle.json --predicate trivy-full.cdx.json --type cyclonedx "${IMAGE}"
@@ -368,10 +380,21 @@ jobs:
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
+          INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
+          SKIP_COPY: ${{ steps.candidate.outputs.skip_copy }}
           CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
         run: |
           set -euo pipefail
           IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
+          if [ "${SKIP_COPY}" = true ]; then
+            RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+            jq -e --arg digest "${CANDIDATE_DIGEST}" '.internal.digest == $digest and .policy.eligible == true and .signing.result == "pass"' "${RECORD}" >/dev/null || {
+              echo "FATAL: reused revision lacks eligible signing evidence; force_repromote=true is required"
+              exit 1
+            }
+            python3 scripts/reverify_signing.py --record "${RECORD}" --out signing-evidence.json
+            exit 0
+          fi
           python3 scripts/promote_signing_gate.py \
             --image "${IMAGE}" \
             --identity-config config/signing-identity.json \
@@ -400,7 +423,7 @@ jobs:
 
       - name: Record quarantined publication after failed verification
         id: quarantine-decision
-        if: ${{ failure() && steps.probe.outputs.result == 'pass' && steps.signing-gate.outcome == 'failure' }}
+        if: ${{ failure() && steps.probe.outputs.result == 'pass' && steps.signing-gate.outcome == 'failure' && steps.candidate.outputs.skip_copy != 'true' }}
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
@@ -615,6 +638,7 @@ jobs:
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
+          SKIP_COPY: ${{ steps.candidate.outputs.skip_copy }}
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
           UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
           UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
@@ -636,6 +660,10 @@ jobs:
           NOW: ${{ steps.publication-decision.outputs.now || steps.quarantine-decision.outputs.now }}
         run: |
           set -euo pipefail
+          if [ "${SKIP_COPY}" = true ]; then
+            echo "Existing signed provenance retained; only current run artifacts were refreshed" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           SKOPEO_VERSION="${SKOPEO_IMAGE#*:}"
           SKOPEO_VERSION="${SKOPEO_VERSION%%@*}"
           FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
@@ -768,6 +796,12 @@ jobs:
           GENERATED="$(mktemp)"
           cp "${RECORD}" "${GENERATED}"
           git fetch origin main
+          if git cat-file -e "origin/main:${RECORD}" 2>/dev/null; then
+            git show "origin/main:${RECORD}" > main-provenance.json
+            cmp "${GENERATED}" main-provenance.json || { echo "FATAL: immutable provenance differs from generated record"; exit 1; }
+            echo "pr_url=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           REMOTE_SHA="$(git ls-remote "${REMOTE}" "refs/heads/${BRANCH}" | awk '{print $1}')"
           if [ -n "${REMOTE_SHA}" ]; then
             git fetch origin "refs/heads/${BRANCH}"

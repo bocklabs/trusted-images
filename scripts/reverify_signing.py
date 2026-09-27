@@ -1,6 +1,7 @@
 """Recheck public signed provenance with the checked-out Cosign pin."""
 
 import argparse
+import base64
 import hashlib
 import json
 import re
@@ -8,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from promote_signing_gate import IMAGE_RE, PREDICATE_TYPE, SIGNATURE_TYPE, field, load_identity, statement_from_verified
+from promote_signing_gate import IMAGE_RE, PREDICATE_TYPE, SIGNATURE_TYPE, downloaded_rows, field, load_identity, statement_from_verified
 
 ROOT = Path(__file__).resolve().parent.parent
 SHA256 = re.compile(r"[a-f0-9]{64}\Z")
@@ -107,28 +108,51 @@ def verify(image, signature_hash, attestation_hash, identity):
         field(row, "critical", "image", "docker-manifest-digest") == digest for row in signature
     ):
         raise ValueError(f"signature digest mismatch: {image}")
-    statement = statement_from_verified(cosign("verify-attestation", "--type", "cyclonedx", *flags, image))
+    verified_attestation = cosign("verify-attestation", "--type", "cyclonedx", *flags, image)
+    attachments = {}
+    for predicate_type, expected in ((SIGNATURE_TYPE, signature_hash), (PREDICATE_TYPE, attestation_hash)):
+        data = cosign("download", "attestation", "--predicate-type", predicate_type, image)
+        selected = next((row for row, raw in downloaded_rows(data)
+                         if hashlib.sha256(raw).hexdigest() == expected), None)
+        if selected is None:
+            raise ValueError(f"public attestation attachment mismatch: {image}")
+        attachments[predicate_type] = selected
+    expected_statement = json.loads(base64.b64decode(
+        attachments[PREDICATE_TYPE]["dsseEnvelope"]["payload"], validate=True
+    ))
+    statement = statement_from_verified(verified_attestation, expected_statement)
     if (statement.get("predicateType") != PREDICATE_TYPE
             or field(statement, "predicate", "bomFormat") != "CycloneDX"
             or not any(field(row, "name") == package and field(row, "digest", "sha256") == digest[7:]
                        for row in statement.get("subject", []))):
         raise ValueError(f"attestation digest or type mismatch: {image}")
-    for args, expected in ((["download", "attestation", "--predicate-type", SIGNATURE_TYPE, image], signature_hash),
-                           (["download", "attestation", "--predicate-type", PREDICATE_TYPE, image], attestation_hash)):
-        if hashlib.sha256(cosign(*args)).hexdigest() != expected:
-            raise ValueError(f"public {args[1]} attachment mismatch: {image}")
     print(f"reverify: pass {image}")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--base")
+    mode.add_argument("--record", type=Path)
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args()
+    if args.out and not args.record:
+        parser.error("--out requires --record")
     try:
         identity = load_identity(ROOT / "config/signing-identity.json")
-        records = signed_records(args.base, identity)
-        for record in records:
-            verify(*record, identity)
+        if args.record:
+            record = json.loads(args.record.read_text())
+            records = [signed_record(record, args.record, identity)]
+        else:
+            records = signed_records(args.base, identity)
+        for entry in records:
+            verify(*entry, identity)
+        if args.out:
+            args.out.write_text(json.dumps({
+                "result": "pass", "reused_provenance": str(args.record),
+                "original_run_url": record["pipeline"]["run_url"],
+                "image": records[0][0], **identity,
+            }) + "\n")
     except (OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError) as error:
         if isinstance(error, subprocess.CalledProcessError):
             reason = f"cosign {error.cmd[1]} failed"
@@ -136,6 +160,8 @@ def main():
             reason = str(error)
         else:
             reason = type(error).__name__
+        if args.out:
+            args.out.write_text(json.dumps({"result": "fail", "reason": reason}) + "\n")
         print(f"FATAL: reverify failed ({reason})", file=sys.stderr)
         return 1
     return 0

@@ -81,6 +81,10 @@ elif args[0] == "verify-attestation" and scenario == "missing-attestation":
     sys.exit(1)
 elif args[0] == "verify-attestation":
     statement = json.loads((root / "statement.json").read_text())
+    if scenario == "multiple":
+        older = json.loads(json.dumps(statement))
+        older["predicate"]["specVersion"] = "1.5"
+        print(json.dumps({"payload": __import__("base64").b64encode(json.dumps(older).encode()).decode()}))
     print(json.dumps({"payload": __import__("base64").b64encode(json.dumps(statement).encode()).decode()}))
 elif args[:2] == ["download", "attestation"]:
     path = "sign-bundle.json" if args[args.index("--predicate-type") + 1] == "https://sigstore.dev/cosign/sign/v1" else "sbom-bundle.json"
@@ -93,6 +97,10 @@ elif args[:2] == ["download", "attestation"]:
         attachment["dsseEnvelope"]["payload"] = __import__("base64").b64encode(json.dumps(payload).encode()).decode()
     elif scenario == "malformed-download":
         attachment = {"dsseEnvelope": {"payload": []}}
+    if scenario == "multiple":
+        older = json.loads(json.dumps(attachment))
+        older["dsseEnvelope"]["signatures"][0]["sig"] = "b2xk"
+        print(json.dumps(older))
     print(json.dumps(attachment))
 else:
     sys.exit(2)
@@ -130,6 +138,18 @@ else:
         self.assertEqual(evidence["signature"]["attachment_sha256"], hashlib.sha256((self.dir / "signature-attachment.json").read_bytes()).hexdigest())
         self.assertEqual(evidence["sbom_attestation"]["attachment_sha256"], hashlib.sha256((self.dir / "sbom-attestation-attachment.json").read_bytes()).hexdigest())
 
+    def test_multiple_attestations_select_current_bundle_and_stable_attachment_bytes(self):
+        result = self.run_gate()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        original = json.loads((self.dir / "signing-evidence.json").read_text())
+        result = self.run_gate("multiple")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        current = json.loads((self.dir / "signing-evidence.json").read_text())
+        for section in ("signature", "sbom_attestation"):
+            self.assertEqual(current[section]["attachment_sha256"], original[section]["attachment_sha256"])
+        self.assertEqual(len((self.dir / "signature-attachment.json").read_bytes().splitlines()), 1)
+        self.assertEqual(len((self.dir / "sbom-attestation-attachment.json").read_bytes().splitlines()), 1)
+
     def test_missing_artifacts_and_command_error_fail(self):
         for scenario in ("missing-signature", "missing-attestation", "command-error", "detached-attachment", "wrong-download-digest", "malformed-download", "bad-version"):
             with self.subTest(scenario=scenario):
@@ -155,6 +175,39 @@ else:
         (self.dir / "sign-bundle.json").write_text("{")
         self.assertNotEqual(self.run_gate().returncode, 0)
         self.assertNotEqual(self.run_gate(image="ghcr.io/bocklabs/example:latest").returncode, 0)
+
+    def test_provenance_writeback_preserves_existing_main_record(self):
+        steps = yaml.safe_load((ROOT / ".github/workflows/promote-publish.yaml").read_text())["jobs"]["promote"]["steps"]
+        writeback = next(step["run"] for step in steps if step["name"] == "Open provenance PR and enable merge")
+        writeback = writeback.replace("${{ steps.app-token.outputs.token }}", "test-token")
+        record = self.dir / "provenance/example/v1.json"
+        record.parent.mkdir(parents=True)
+        history = self.dir / "history.json"
+        history.write_text('{"signing":{"result":"pass"}}\n')
+        spool = self.dir / "git-calls"
+        fake = self.dir / "git"
+        fake.write_text('#!/bin/sh\necho "$1" >> "$SPOOL"\ncase "$1" in\nshow) cat "$HISTORY";;\nconfig|fetch|cat-file) exit 0;;\nls-remote) exit 0;;\n*) exit 9;;\nesac\n')
+        fake.chmod(0o755)
+        env = {**os.environ, "PATH": str(self.dir) + os.pathsep + os.environ["PATH"],
+               "APP": "example", "INTERNAL_TAG": "v1", "REPO": "bocklabs/trusted-images",
+               "HISTORY": str(history), "SPOOL": str(spool),
+               "GITHUB_STEP_SUMMARY": str(self.dir / "summary"), "GITHUB_OUTPUT": str(self.dir / "output")}
+        for data, expected in ((history.read_text(), 0), ('{"signing":{"result":"fail"}}\n', 1)):
+            record.write_text(data)
+            spool.write_text("")
+            result = subprocess.run(["bash", "-c", writeback], cwd=self.dir, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+            self.assertNotIn("push", spool.read_text().splitlines())
+            self.assertNotIn("commit", spool.read_text().splitlines())
+            if expected:
+                self.assertIn("immutable provenance", result.stdout)
+        signing = next(step["run"] for step in steps if step["name"] == "Sign and attest published digest")
+        for reuse, expected in (("true", 0), ("false", 1)):
+            result = subprocess.run(["bash", "-c", signing], cwd=self.dir,
+                                    env={**env, "SKIP_COPY": reuse, "CANDIDATE_DIGEST": DIGEST},
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+            self.assertEqual(record.read_bytes(), history.read_bytes())
 
     def test_workflow_contract(self):
         caller_text = (ROOT / ".github/workflows/promote.yaml").read_text()
@@ -238,7 +291,7 @@ else:
         identity = json.loads(IDENTITY.read_text())
         signature = json.dumps([{"critical": {"image": {"docker-manifest-digest": DIGEST}}}]).encode()
         attestation = json.dumps({"payload": base64.b64encode(json.dumps(self.statement).encode()).decode()}).encode()
-        attachment = b"public attachment\n"
+        attachment = (json.dumps(self.attestation) + "\n").encode()
         expected_hash = hashlib.sha256(attachment).hexdigest()
         flags = ("--certificate-identity", identity["certificate_identity"],
                  "--certificate-oidc-issuer", identity["certificate_oidc_issuer"])
@@ -252,7 +305,9 @@ else:
                 return attestation
             self.assertIn(args, (("download", "attestation", "--predicate-type", "https://sigstore.dev/cosign/sign/v1", IMAGE),
                                  ("download", "attestation", "--predicate-type", "https://cyclonedx.org/bom", IMAGE)))
-            return attachment
+            newer = json.loads(json.dumps(self.attestation))
+            newer["dsseEnvelope"]["signatures"][0]["sig"] = "bmV3"
+            return attachment + (json.dumps(newer) + "\n").encode()
 
         with mock.patch.object(reverify_signing, "cosign", side_effect=fake_cosign):
             reverify_signing.verify(IMAGE, expected_hash, expected_hash, identity)
@@ -265,10 +320,11 @@ else:
         import reverify_signing
 
         identity = json.loads(IDENTITY.read_text())
-        signature_bytes = b"signature attachment\n"
-        attestation_bytes = b"attestation attachment\n"
+        signature_bytes = (json.dumps(self.signature) + "\n").encode()
+        attestation_bytes = (json.dumps(self.attestation) + "\n").encode()
         record = {
             "schema": "trusted-images.bocklabs.dev/provenance-v1", "app": "example",
+            "pipeline": {"run_url": "https://github.com/bocklabs/trusted-images/actions/runs/1"},
             "internal": {"package": "ghcr.io/bocklabs/example", "digest": DIGEST},
             "policy": {"eligible": True},
             "signing": {
@@ -293,10 +349,15 @@ else:
         outputs = [verified_signature, verified_attestation, signature_bytes, attestation_bytes]
         with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
             reverify_signing, "old_signed_paths", return_value={"provenance/example/one.json"}
-        ), mock.patch.object(reverify_signing, "cosign", side_effect=outputs), mock.patch.object(
+        ), mock.patch.object(reverify_signing, "cosign", side_effect=outputs) as verifier, mock.patch.object(
             sys, "argv", ["reverify_signing.py", "--base", "base"]
         ):
             self.assertEqual(reverify_signing.main(), 0)
+            verifier.side_effect = outputs
+            receipt = self.dir / "reuse-evidence.json"
+            with mock.patch.object(sys, "argv", ["reverify_signing.py", "--record", str(path), "--out", str(receipt)]):
+                self.assertEqual(reverify_signing.main(), 0)
+                self.assertEqual(json.loads(receipt.read_text())["original_run_url"], record["pipeline"]["run_url"])
             record["signing"]["image_signature"]["certificate_identity"] = "https://wrong.example/workflow"
             path.write_text(json.dumps(record))
             self.assertEqual(reverify_signing.main(), 1)
