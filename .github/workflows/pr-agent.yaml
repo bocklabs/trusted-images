@@ -28,3 +28,6 @@ jobs:
           OPENAI_KEY: ${{ secrets.PR_AGENT_LLM_AUTH_TOKEN }}
           OPENAI.API_BASE: ${{ secrets.PR_AGENT_LLM_URL }}
           config.fallback_models: '${{ vars.PR_AGENT_FALLBACK_MODEL }}'
+          config.custom_model_max_tokens: '1000000'
+          config.max_output_tokens: '128000'
+          config.propagate_tool_errors: 'true'
