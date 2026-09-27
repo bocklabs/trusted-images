@@ -72,8 +72,11 @@ If the upstream index digest changes while the selected child remains unchanged,
 normal dispatch reuses the existing revision, refreshes evidence, and does not
 copy or sign the child again. An eligible signed revision is strictly reverified
 against its existing public record, which retains its original successful run and
-SBOM; refreshed current reports remain run artifacts. Unsigned or quarantined
-revisions require `force_repromote=true` to allocate a new revision.
+SBOM; refreshed current reports remain run artifacts. After current candidate
+checks pass, normal reuse of an unsigned or quarantined revision warns and skips
+the publisher without changing eligibility or public evidence. Use
+`force_repromote=true` to allocate a new revision. Malformed evidence and actual
+policy, validation or cryptographic failures still fail the run.
 A newer upstream release outranks an older local patched
 revision; the controlled seven-day fallback below is the explicit backup when
 real Renovate detection has not appeared.

@@ -328,9 +328,10 @@ def report_os_family(report: dict, label: str) -> str:
         or not os_metadata["Family"]
     ):
         raise ValueError(f"{label} report OS metadata is invalid")
-    if os_metadata.get("EOSL") not in (True, False, None):
+    eosl = os_metadata.get("EOSL")
+    if eosl is not None and not isinstance(eosl, bool):
         raise ValueError(f"{label} report OS EOSL is invalid")
-    if os_metadata.get("EOSL") is True:
+    if eosl is True:
         raise ValueError(f"{label} report OS EOSL is true")
     return os_metadata["Family"]
 

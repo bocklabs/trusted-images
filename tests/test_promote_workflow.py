@@ -288,6 +288,100 @@ class PromoteWorkflowTests(unittest.TestCase):
             self.workflow.count("((.Results // [])[] | .Vulnerabilities[]?)"), 3
         )
 
+    def test_normal_unpromotable_reuse_warns_and_skips_publication(self):
+        candidate = yaml.safe_load(self.candidate_workflow)
+        call = candidate.get("on", candidate.get(True, {}))["workflow_call"]
+        self.assertIn("publication_required", call["outputs"])
+        job = candidate["jobs"]["validate"]
+        by_name = {step["name"]: step for step in job["steps"]}
+        self.assertEqual(by_name["Export checksum-bound candidate artifact"]["if"],
+                         "always() && steps.policy.outputs.eligible != ''")
+        self.assertEqual(by_name["Upload candidate artifact"]["if"],
+                         "always() && steps.candidate.outcome == 'success'")
+        self.assertEqual(by_name["Upload validation evidence"]["if"],
+                         "always() && steps.runval.outcome != 'skipped'")
+        publication = next(step for step in job["steps"] if step.get("id") == "publication")
+        self.assertEqual(publication["if"], "steps.policy.outputs.eligible == 'true'")
+        run = publication["run"]
+        caller = yaml.safe_load(self.orchestrator)
+        self.assertEqual(caller["jobs"]["publish"]["if"],
+                         "${{ needs.candidate.outputs.publication_required == 'true' }}")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record = root / "provenance/example/v1.json"
+            record.parent.mkdir(parents=True)
+            base = {"schema": "trusted-images.bocklabs.dev/provenance-v1", "app": "example",
+                    "internal": {"package": "ghcr.io/bocklabs/example", "tag": "v1", "digest": DIGEST_A},
+                    "policy": {"eligible": True}}
+            for name, signing, eligible, reuse, expected in (
+                ("unsigned", None, True, "true", "false"),
+                ("quarantined", {"result": "fail", "failure": "verification failed"}, False, "true", "false"),
+                ("signed", {"result": "pass"}, True, "true", "true"),
+                ("fresh", None, True, "false", "true"),
+                ("malformed", [], True, "true", None),
+            ):
+                with self.subTest(name=name):
+                    value = json.loads(json.dumps(base))
+                    value["policy"]["eligible"] = eligible
+                    if signing is not None:
+                        value["signing"] = signing
+                    record.write_text(json.dumps(value))
+                    original_record = record.read_bytes()
+                    output, summary = root / "output", root / "summary"
+                    output.write_text("")
+                    summary.write_text("")
+                    env = {**os.environ, "APP": "example", "SKIP_COPY": reuse,
+                           "FORCE_REPROMOTE": "true" if name == "fresh" else "false",
+                           "RECOVER_TAG": "", "ACCEPTED_CANDIDATE_RUN_ID": "",
+                           "INTERNAL_TAG": "v1", "CANDIDATE_DIGEST": DIGEST_A,
+                           "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(summary)}
+                    result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True)
+                    if expected is None:
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertNotIn("publication_required=false", output.read_text())
+                    else:
+                        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                        self.assertIn("publication_required=" + expected, output.read_text())
+                        if expected == "false":
+                            self.assertIn("::warning::", result.stdout)
+                            self.assertIn("No promotion performed", summary.read_text())
+                    self.assertEqual(record.read_bytes(), original_record)
+
+    def test_dispatch_options_reuses_open_pr_and_keeps_api_failures_red(self):
+        workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/validate.yaml").read_text())
+        run = next(step["run"] for step in workflow["jobs"]["sync-dispatch-options"]["steps"]
+                   if step["name"] == "Push options PR")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "git").write_text("#!/bin/sh\nexit 0\n")
+            (root / "git").chmod(0o755)
+            (root / "gh").write_text("""#!/bin/sh
+echo "$1 $2" >> "$TRACE"
+case "$1 $2" in
+  "pr list")
+    [ "$MODE" != list-error ] || exit 7
+    [ "$MODE" != existing ] || echo https://github.com/example/repo/pull/1
+    ;;
+  "pr create")
+    [ "$MODE" != create-error ] || exit 7
+    echo https://github.com/example/repo/pull/1
+    ;;
+  "pr merge") exit 0 ;;
+  *) exit 9 ;;
+esac
+""")
+            (root / "gh").chmod(0o755)
+            trace = root / "trace"
+            for mode, expected in (("existing", 0), ("missing", 0), ("create-error", 7), ("list-error", 7)):
+                with self.subTest(mode=mode):
+                    trace.write_text("")
+                    env = {**os.environ, "PATH": f"{root}:{os.environ['PATH']}",
+                           "MODE": mode, "TRACE": str(trace)}
+                    result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True)
+                    self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+                    if mode == "existing":
+                        self.assertNotIn("pr create", trace.read_text().splitlines())
+
     def test_dispatch_exposes_force_and_recovery_modes(self) -> None:
         for text in (
             "force_repromote:",

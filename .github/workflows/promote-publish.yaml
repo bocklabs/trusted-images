@@ -182,7 +182,7 @@ jobs:
           cp candidate-artifact/trivy-full.json candidate-artifact/trivy-full.cdx.json \
             candidate-artifact/trivy-before-full.json candidate-artifact/trivy-copa.json \
             candidate-artifact/kev.json candidate-artifact/secobserve-upload.json \
-            candidate-artifact/validation-evidence.json \
+            candidate-artifact/validation-evidence.json candidate-artifact/candidate-decision.json \
             candidate-artifact/trivy-db-meta-1.txt candidate-artifact/trivy-db-meta-2.txt .
           cp candidate-artifact/candidate-manifest.json candidate-manifest.json
 
@@ -895,7 +895,7 @@ jobs:
           echo "candidate-decision.json is complete; publication and provenance are verified" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the final candidate decision
-        if: always()
+        if: always() && steps.candidate.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: candidate-decision

@@ -64,6 +64,7 @@ jobs:
 
   publish:
     needs: candidate
+    if: ${{ needs.candidate.outputs.publication_required == 'true' }}
     uses: ./.github/workflows/promote-publish.yaml
     with:
       app: ${{ inputs.app }}
