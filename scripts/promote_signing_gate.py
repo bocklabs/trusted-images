@@ -124,8 +124,9 @@ def build_evidence(args):
     verified_signature = run_cosign("verify", *flags, args.image, output="verify-signature.json")
     rows = json.loads(verified_signature)
     if not isinstance(rows, list) or not rows or not any(
-        field(row, "critical", "image", "docker-manifest-digest") == image_digest
-        and field(row, "critical", "type") == SIGNATURE_TYPE for row in rows
+        (field(row, "critical", "image", "docker-manifest-digest"),
+         field(row, "critical", "type")) == (image_digest, SIGNATURE_TYPE)
+        for row in rows
     ):
         raise ValueError("verified signature subject digest differs")
     verified_attestation = run_cosign("verify-attestation", "--type", "cyclonedx", *flags,
@@ -134,8 +135,10 @@ def build_evidence(args):
     subjects = statement.get("subject") or []
     if statement.get("predicateType") != PREDICATE_TYPE or statement.get("predicate") != predicate:
         raise ValueError("verified CycloneDX predicate differs")
-    if not isinstance(subjects, list) or not any(field(subject, "name") == args.image.split("@")[0] and
-               field(subject, "digest", "sha256") == image_digest[7:] for subject in subjects):
+    if not isinstance(subjects, list) or not any(
+        (field(subject, "name"), field(subject, "digest", "sha256"))
+        == (args.image.split("@")[0], image_digest[7:]) for subject in subjects
+    ):
         raise ValueError("verified attestation subject digest differs")
     local_statement = json.loads(base64.b64decode(sbom["dsseEnvelope"]["payload"], validate=True))
     if local_statement != statement:

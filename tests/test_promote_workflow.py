@@ -253,11 +253,12 @@ class PromoteWorkflowTests(unittest.TestCase):
             cdx = root / "fixture-cdx.json"
             cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [
                 {"type": "operating-system", "name": "os"},
-                {"type": "library", "name": "deb", "version": "2-1", "purl": "pkg:deb/debian/deb@2-1?arch=amd64"},
-                {"type": "library", "name": "lang", "version": "3", "purl": "pkg:pypi/lang@3"}],
+                {"type": "application", "name": "bin/exporter"},
+                {"type": "library", "name": "deb", "version": "2-1", "purl": "pkg:deb/debian/deb@2-1?arch=amd64", "bom-ref": "deb-ref"},
+                {"type": "library", "name": "lang", "version": "3", "purl": "pkg:pypi/lang@3", "bom-ref": "lang-ref"}],
                 "vulnerabilities": [{"id": "CVE-2026-0001", "affects": [
-                    {"ref": "pkg:deb/debian/deb@2-1?arch=amd64"},
-                    {"ref": "pkg:pypi/lang@3"},
+                    {"ref": "deb-ref"},
+                    {"ref": "lang-ref"},
                 ]}]}))
             fake_trivy = root / "trivy"
             fake_trivy.write_text('#!/bin/sh\ncp "$CDX_FIXTURE" trivy-full.cdx.json\n')
@@ -271,6 +272,12 @@ class PromoteWorkflowTests(unittest.TestCase):
             convert = by_name["Convert full report to CycloneDX with parity check"]["run"]
             result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            changed = json.loads(cdx.read_text())
+            changed["vulnerabilities"][0]["id"] = "CVE-2026-9999"
+            cdx.write_text(json.dumps(changed))
+            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("finding identities differ", result.stdout)
             cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [{"type": "library", "name": "old", "version": "1"}], "vulnerabilities": []}))
             result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
