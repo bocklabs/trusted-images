@@ -1046,6 +1046,7 @@ class PolicyTests(unittest.TestCase):
             "OS metadata": lambda after, receipt: after["Metadata"].pop("OS"),
             "OS metadata is invalid": lambda after, receipt: after["Metadata"].update(OS=[]),
             "OS EOSL": lambda after, receipt: after["Metadata"]["OS"].update(EOSL="unknown"),
+            "OS EOSL is invalid": lambda after, receipt: after["Metadata"]["OS"].update(EOSL=1),
             "platform": lambda after, receipt: after["Metadata"]["ImageConfig"].update(
                 architecture="arm64"
             ),

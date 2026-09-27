@@ -28,6 +28,8 @@ on:
         required: false
         default: ""
     outputs:
+      publication_required:
+        value: ${{ jobs.validate.outputs.publication_required }}
       candidate_manifest_sha256:
         value: ${{ jobs.validate.outputs.candidate_manifest_sha256 }}
       db_digest:
@@ -62,6 +64,7 @@ jobs:
       pull-requests: read
       issues: read
     outputs:
+      publication_required: ${{ steps.publication.outputs.publication_required }}
       candidate_manifest_sha256: ${{ steps.candidate.outputs.manifest_sha256 }}
       db_digest: ${{ steps.dbmeta1.outputs.db_digest }}
       db_updated: ${{ steps.dbmeta1.outputs.db_updated }}
@@ -1039,9 +1042,43 @@ jobs:
           set -euo pipefail
           python3 scripts/promote_candidate_decision.py
 
+      - name: Decide whether publication is required
+        id: publication
+        if: steps.policy.outputs.eligible == 'true'
+        shell: bash
+        env:
+          APP: ${{ steps.entry.outputs.app }}
+          FORCE_REPROMOTE: ${{ inputs.force_repromote }}
+          RECOVER_TAG: ${{ inputs.recover_tag }}
+          ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+          SKIP_COPY: ${{ steps.tag.outputs.skip_copy }}
+          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
+          CANDIDATE_DIGEST: ${{ steps.final.outputs.digest }}
+        run: |
+          set -euo pipefail
+          if [ "${SKIP_COPY}" = true ] && [ "${FORCE_REPROMOTE}" != true ] && [ -z "${RECOVER_TAG}" ] && [ -z "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+            RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+            jq -e --arg app "${APP}" --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '
+              .schema == "trusted-images.bocklabs.dev/provenance-v1" and .app == $app and
+              .internal.package == ("ghcr.io/bocklabs/" + $app) and .internal.tag == $tag and
+              .internal.digest == $digest and (.policy.eligible | type == "boolean") and
+              ((has("signing") | not) or ((.signing | type == "object") and
+                (.signing.result == "pass" or (.signing.result == "fail" and
+                  (.signing.failure | type == "string") and (.signing.failure | length > 0)))))
+            ' "${RECORD}" >/dev/null || { echo "FATAL: malformed or mismatched reuse provenance"; exit 1; }
+            if jq -e '.policy.eligible == false or (has("signing") | not) or .signing.result == "fail"' "${RECORD}" >/dev/null; then
+              NOTICE="No promotion performed; existing revision lacks eligible signing evidence and remains unchanged. Choose force_repromote=true for a new revision."
+              echo "::warning::${NOTICE}"
+              echo "${NOTICE}" >> "$GITHUB_STEP_SUMMARY"
+              echo "publication_required=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "publication_required=true" >> "$GITHUB_OUTPUT"
+
       - name: Export checksum-bound candidate artifact
         id: candidate
-        if: always()
+        if: always() && steps.policy.outputs.eligible != ''
         shell: bash
         env:
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
@@ -1106,7 +1143,7 @@ jobs:
           echo "manifest_sha256=${SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Upload candidate artifact
-        if: always()
+        if: always() && steps.candidate.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: candidate
@@ -1128,7 +1165,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload validation evidence
-        if: always()
+        if: always() && steps.runval.outcome != 'skipped'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: validation-evidence
