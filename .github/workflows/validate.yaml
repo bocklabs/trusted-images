@@ -2,8 +2,6 @@ name: validate
 
 on:
   pull_request:
-    paths-ignore:
-      - 'provenance/**'
   push:
     branches:
       - main
@@ -92,6 +90,14 @@ jobs:
             grep -Eq '^[+-][[:space:]]*([u]ses:[[:space:]]+sigstore/cosign-installer@[a-f0-9]{40}|cosign-release:[[:space:]]+v[0-9]+\.[0-9]+\.[0-9]+)'; then
             echo 'changed=true' >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Check historical provenance
+        shell: bash
+        env:
+          BASE: ${{ steps.cosign-pin.outputs.base }}
+        run: |
+          set -euo pipefail
+          python3 scripts/reverify_signing.py --history-only "${BASE}"
 
       - name: Install candidate Cosign
         if: steps.cosign-pin.outputs.changed == 'true'
