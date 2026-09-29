@@ -439,7 +439,7 @@ class RecoveryTests(PromotionScriptTestCase):
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
         result = self.run_script(
-            "promote_recovery_context.py", str(image), APP, INTERNAL_TAG
+            "promote_inventory.py", "recovery", str(image), APP, INTERNAL_TAG
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
@@ -462,7 +462,7 @@ class RecoveryTests(PromotionScriptTestCase):
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
         result = self.run_script(
-            "promote_recovery_context.py", str(image), APP, "v9.9.9-bocklabs.1"
+            "promote_inventory.py", "recovery", str(image), APP, "v9.9.9-bocklabs.1"
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: recover_tag does not match", result.stderr)
@@ -961,6 +961,7 @@ class DecisionTests(PromotionScriptTestCase):
         path = write_json(self.tmp / "decision.json", decision())
         result = self.run_script(
             "promote_decision_integrity.py",
+            "candidate",
             str(path),
             env={
                 "APP": APP,
@@ -977,6 +978,7 @@ class DecisionTests(PromotionScriptTestCase):
         path = write_json(self.tmp / "decision.json", decision())
         result = self.run_script(
             "promote_decision_integrity.py",
+            "candidate",
             str(path),
             env={
                 "APP": "other",
@@ -995,7 +997,7 @@ class DecisionTests(PromotionScriptTestCase):
         published = decision()
         published["published"] = {"digest": published["candidate"]["digest"]}
         write_json(self.tmp / "candidate-decision.json", published)
-        result = self.run_script("promote_published_decision.py", APP, env={"APP": APP})
+        result = self.run_script("promote_decision_integrity.py", "published", "candidate-decision.json", env={"APP": APP})
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_published_decision_rejects_a_different_app(self) -> None:
@@ -1003,7 +1005,7 @@ class DecisionTests(PromotionScriptTestCase):
         published["published"] = {"digest": published["candidate"]["digest"]}
         write_json(self.tmp / "candidate-decision.json", published)
         result = self.run_script(
-            "promote_published_decision.py", APP, env={"APP": "other"}
+            "promote_decision_integrity.py", "published", "candidate-decision.json", env={"APP": "other"}
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: published decision identity is invalid", result.stderr)
@@ -1014,9 +1016,9 @@ class DecisionTests(PromotionScriptTestCase):
         final["provenance"] = {"merged": True}
         write_json(self.tmp / "candidate-decision.json", final)
         result = self.run_script(
-            "promote_final_decision.py",
-            APP,
-            final["candidate"]["digest"],
+            "promote_decision_integrity.py",
+            "final",
+            "candidate-decision.json",
             env={"APP": APP, "CANDIDATE_DIGEST": final["candidate"]["digest"]},
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -1026,9 +1028,9 @@ class DecisionTests(PromotionScriptTestCase):
         final["published"] = {"digest": final["candidate"]["digest"]}
         write_json(self.tmp / "candidate-decision.json", final)
         result = self.run_script(
-            "promote_final_decision.py",
-            APP,
-            final["candidate"]["digest"],
+            "promote_decision_integrity.py",
+            "final",
+            "candidate-decision.json",
             env={"APP": APP, "CANDIDATE_DIGEST": final["candidate"]["digest"]},
         )
         self.assertEqual(result.returncode, 1)
@@ -1041,7 +1043,7 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
     def test_patch_policy_emits_enabled_and_disabled_forms(self) -> None:
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
-        result = self.run_script("promote_patch_policy.py", str(image))
+        result = self.run_script("promote_inventory.py", "policy", str(image))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(json.loads(result.stdout), {"patchPolicy": "enabled"})
 
@@ -1050,14 +1052,14 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
         value = inventory()
         del value["spec"]["patchPolicy"]
         image.write_text(yaml.safe_dump(value), encoding="utf-8")
-        result = self.run_script("promote_patch_policy.py", str(image))
+        result = self.run_script("promote_inventory.py", "policy", str(image))
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("patchPolicy", result.stderr)
 
     def test_validation_context_preserves_inventory_argument_order(self) -> None:
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
-        result = self.run_script("promote_validation_context.py", str(image), APP)
+        result = self.run_script("promote_inventory.py", "normal", str(image), APP)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn(f"upstream_digest={digest(index())}", result.stdout.splitlines())
         self.assertIn(f"app={APP}", result.stdout.splitlines())
@@ -1065,7 +1067,7 @@ class ContextAndEvidenceTests(PromotionScriptTestCase):
     def test_validation_context_rejects_a_different_app(self) -> None:
         image = self.tmp / "image.yaml"
         image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
-        result = self.run_script("promote_validation_context.py", str(image), "other")
+        result = self.run_script("promote_inventory.py", "normal", str(image), "other")
         self.assertEqual(result.returncode, 1)
         self.assertIn(
             "FATAL: validation context destination does not match app", result.stderr
