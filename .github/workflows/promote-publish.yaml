@@ -99,7 +99,7 @@ jobs:
             exit 1
           fi
           test -s validation-context/image.yaml || { echo "FATAL: validation context is empty"; exit 1; }
-          OUT="$(python3 scripts/promote_validation_context.py validation-context/image.yaml "${APP}")"
+          OUT="$(python3 scripts/promote_inventory.py normal validation-context/image.yaml "${APP}")"
           echo "${OUT}"
           echo "${OUT}" >> "$GITHUB_OUTPUT"
 
@@ -159,7 +159,7 @@ jobs:
             exit 1
           }
 
-          python3 scripts/promote_decision_integrity.py candidate-artifact/candidate-decision.json
+          python3 scripts/promote_decision_integrity.py candidate candidate-artifact/candidate-decision.json
 
           INTERNAL_TAG="$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)"
           SELECTED_CHILD="$(jq -er .selected_child_digest candidate-artifact/candidate-decision.json)"
@@ -418,7 +418,7 @@ jobs:
           jq --arg digest "${CANDIDATE_DIGEST}" '.published.digest = $digest' \
             candidate-decision.json > candidate-decision.next.json
           mv candidate-decision.next.json candidate-decision.json
-          python3 scripts/promote_published_decision.py "${APP}"
+          python3 scripts/promote_decision_integrity.py published candidate-decision.json
           echo "decision_sha256=$(sha256sum candidate-decision.json | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Record quarantined publication after failed verification
@@ -437,7 +437,7 @@ jobs:
           jq --arg digest "${CANDIDATE_DIGEST}" '.eligible = false | .reason = "signing verification failed" | .published.digest = $digest | .provenance.merged = false' \
             candidate-decision.json > candidate-decision.next.json
           mv candidate-decision.next.json candidate-decision.json
-          python3 scripts/promote_published_decision.py "${APP}"
+          python3 scripts/promote_decision_integrity.py published candidate-decision.json
           echo "decision_sha256=$(sha256sum candidate-decision.json | awk '{print $1}')" >> "$GITHUB_OUTPUT"
           echo "failure=${REASON}" >> "$GITHUB_OUTPUT"
 
@@ -891,7 +891,7 @@ jobs:
           }
           jq '.provenance.merged = true' candidate-decision.json > candidate-decision.next.json
           mv candidate-decision.next.json candidate-decision.json
-          python3 scripts/promote_final_decision.py "${APP}" "${CANDIDATE_DIGEST}"
+          python3 scripts/promote_decision_integrity.py final candidate-decision.json
           echo "candidate-decision.json is complete; publication and provenance are verified" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the final candidate decision

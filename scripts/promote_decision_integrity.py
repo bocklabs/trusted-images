@@ -1,20 +1,33 @@
 """Validate candidate decision binding and acceptance evidence."""
 
 import datetime
-import importlib.util
 import json
 import os
 import sys
 from types import SimpleNamespace
 
-path = sys.argv[1]
+import evaluate_promotion as module
+
+stage, path = sys.argv[1:3]
 decision = json.load(open(path))
-spec = importlib.util.spec_from_file_location(
-    "evaluate_promotion", "scripts/evaluate_promotion.py"
-)
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
 module.validate_decision(decision)
+if stage == "published":
+    if (
+        decision["app"] != os.environ["APP"]
+        or decision["published"]["digest"] != decision["candidate"]["digest"]
+    ):
+        raise SystemExit("FATAL: published decision identity is invalid")
+    sys.exit(0)
+if stage == "final":
+    if (
+        decision["app"] != os.environ["APP"]
+        or decision["published"]["digest"] != os.environ["CANDIDATE_DIGEST"]
+        or decision["provenance"]["merged"] is not True
+    ):
+        raise SystemExit("FATAL: final candidate decision merge state is invalid")
+    sys.exit(0)
+if stage != "candidate":
+    raise SystemExit("FATAL: unknown decision stage: " + stage)
 expected = {
     "app": os.environ["APP"],
     "source_sha": os.environ["SOURCE_SHA"],

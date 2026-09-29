@@ -215,8 +215,8 @@ jobs:
             jq -n '{mode:"normal"}' > validation-context/context.json
           fi
 
-          OUT="$(python3 scripts/promote_recovery_context.py validation-context/image.yaml "${APP}" "${RECOVER_TAG}")"
-          python3 scripts/promote_patch_policy.py validation-context/image.yaml > validation-context/patch-policy.json
+          OUT="$(python3 scripts/promote_inventory.py recovery validation-context/image.yaml "${APP}" "${RECOVER_TAG}")"
+          python3 scripts/promote_inventory.py policy validation-context/image.yaml > validation-context/patch-policy.json
           echo "${OUT}"
           echo "${OUT}" >> "$GITHUB_OUTPUT"
 
