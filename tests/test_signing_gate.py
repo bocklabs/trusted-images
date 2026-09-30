@@ -261,12 +261,16 @@ else:
     def test_validation_reverifies_only_cosign_pin_changes(self):
         workflow = yaml.safe_load((ROOT / ".github/workflows/validate.yaml").read_text())
         self.assertNotIn("schedule", workflow.get("on", workflow.get(True, {})))
+        self.assertNotIn("paths-ignore", (workflow.get("on", workflow.get(True))["pull_request"] or {}))
         self.assertIn("inventory", workflow["jobs"])
         steps = workflow["jobs"]["inventory"]["steps"]
         names = [step["name"] for step in steps]
         self.assertEqual(steps[names.index("Checkout")]["with"]["fetch-depth"], 0)
         self.assertIn("Detect Cosign verifier pin change", names)
         self.assertIn("Reverify signed provenance", names)
+        history = steps[names.index("Check historical provenance")]
+        self.assertNotIn("if", history)
+        self.assertIn("--history-only", history["run"])
         detect = steps[names.index("Detect Cosign verifier pin change")]["run"]
         verify = steps[names.index("Reverify signed provenance")]
         self.assertIn("sigstore/cosign-installer", detect)
@@ -348,7 +352,7 @@ else:
         verified_attestation = json.dumps({"payload": base64.b64encode(json.dumps(self.statement).encode()).decode()}).encode()
         outputs = [verified_signature, verified_attestation, signature_bytes, attestation_bytes]
         with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
-            reverify_signing, "old_signed_paths", return_value={"provenance/example/one.json"}
+            reverify_signing, "check_history", return_value={"provenance/example/one.json"}
         ), mock.patch.object(reverify_signing, "cosign", side_effect=outputs) as verifier, mock.patch.object(
             sys, "argv", ["reverify_signing.py", "--base", "base"]
         ):
@@ -362,28 +366,45 @@ else:
             path.write_text(json.dumps(record))
             self.assertEqual(reverify_signing.main(), 1)
 
-    def test_historical_verifier_empty_window_and_record_loss(self):
+    def test_historical_provenance_rewrite_is_rejected(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
+        import reverify_signing
+
+        name = "provenance/example/one.json"
+        original = b'{"signing":{"result":"pass"},"note":"original"}\n'
+        path = self.dir / name
+        path.parent.mkdir(parents=True)
+        path.write_bytes(original)
+
+        def git_output(args, **_kwargs):
+            return name + "\n" if args[1] == "ls-tree" else original
+
+        with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
+            reverify_signing.subprocess, "check_output", side_effect=git_output
+        ), mock.patch.object(reverify_signing, "signed_record", return_value=("image", "sig", "sbom")):
+            self.assertEqual(reverify_signing.signed_records("base", {}), [("image", "sig", "sbom")])
+            path.write_bytes(original.replace(b"original", b"changed "))
+            with self.assertRaisesRegex(ValueError, "historical provenance changed"):
+                reverify_signing.signed_records("base", {})
+            path.unlink()
+            with self.assertRaisesRegex(ValueError, "historical provenance changed"):
+                reverify_signing.signed_records("base", {})
+
+    def test_historical_verifier_empty_window(self):
         sys.path.insert(0, str(ROOT / "scripts"))
         self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
         import reverify_signing
 
         with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
-            reverify_signing, "old_signed_paths", return_value=set()
+            reverify_signing, "check_history", return_value=set()
         ):
             self.assertEqual(reverify_signing.signed_records("base", json.loads(IDENTITY.read_text())), [])
             quarantined = self.dir / "provenance/example/one.json"
             quarantined.parent.mkdir(parents=True)
             quarantined.write_text(json.dumps({"signing": {"result": "fail", "failure": "verification failed"}, "policy": {"eligible": False}}))
             self.assertEqual(reverify_signing.signed_records("base", json.loads(IDENTITY.read_text())), [])
-        with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
-            reverify_signing, "old_signed_paths", return_value={"provenance/example/one.json"}
-        ):
-            identity = json.loads(IDENTITY.read_text())
-            with self.assertRaisesRegex(ValueError, "lost its evidence"):
-                reverify_signing.signed_records("base", identity)
-            quarantined.unlink()
-            with self.assertRaisesRegex(ValueError, "missing signed record"):
-                reverify_signing.signed_records("base", identity)
+
 
 
 if __name__ == "__main__":

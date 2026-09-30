@@ -16,15 +16,19 @@ SHA256 = re.compile(r"[a-f0-9]{64}\Z")
 VERSION = re.compile(r"v?\d+\.\d+\.\d+\Z")
 
 
-def old_signed_paths(base):
+def check_history(base):
     paths = subprocess.check_output(
         ["git", "ls-tree", "-r", "--name-only", base, "--", "provenance"], cwd=ROOT, text=True
     ).splitlines()
-    return {
-        path for path in paths if path.endswith(".json") and
-        json.loads(subprocess.check_output(["git", "show", f"{base}:{path}"], cwd=ROOT))
-        .get("signing", {}).get("result") == "pass"
-    }
+    signed = set()
+    for name in paths:
+        previous = subprocess.check_output(["git", "show", f"{base}:{name}"], cwd=ROOT)
+        current = ROOT / name
+        if not current.is_file() or current.read_bytes() != previous:
+            raise ValueError(f"historical provenance changed: {name}")
+        if name.endswith(".json") and json.loads(previous).get("signing", {}).get("result") == "pass":
+            signed.add(name)
+    return signed
 
 
 def signed_record(record, path, identity):
@@ -59,17 +63,8 @@ def signed_record(record, path, identity):
     return image, signature["attachment_sha256"], sbom["attachment_sha256"]
 
 
-def check_signed_history(previous):
-    for name in previous:
-        if not (ROOT / name).is_file():
-            raise ValueError(f"missing signed record: {name}")
-        if json.loads((ROOT / name).read_text()).get("signing", {}).get("result") != "pass":
-            raise ValueError(f"successful signed record lost its evidence: {name}")
-
-
 def signed_records(base, identity):
-    previous = old_signed_paths(base)
-    check_signed_history(previous)
+    previous = check_history(base)
     records = sorted((ROOT / "provenance").glob("*/*.json"))
     signed = []
     for path in records:
@@ -134,11 +129,15 @@ def main():
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--base")
     mode.add_argument("--record", type=Path)
+    mode.add_argument("--history-only")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
     if args.out and not args.record:
         parser.error("--out requires --record")
     try:
+        if args.history_only:
+            check_history(args.history_only)
+            return 0
         identity = load_identity(ROOT / "config/signing-identity.json")
         if args.record:
             record = json.loads(args.record.read_text())
