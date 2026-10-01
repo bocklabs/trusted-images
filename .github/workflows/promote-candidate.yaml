@@ -514,7 +514,7 @@ jobs:
           TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
           TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
         with:
-          version: v0.74.0
+          version: v0.75.0
           image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
           format: json
@@ -567,7 +567,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true' # no action input exists — env pass-through; reuse scan 1's DB
         with:
-          version: v0.74.0
+          version: v0.75.0
           image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
           format: json
@@ -795,7 +795,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true'
         with:
-          version: v0.74.0
+          version: v0.75.0
           input: candidate-final.tar
           scanners: vuln
           format: json
@@ -816,7 +816,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true'
         with:
-          version: v0.74.0
+          version: v0.75.0
           input: resume-final.tar
           scanners: vuln
           format: json
