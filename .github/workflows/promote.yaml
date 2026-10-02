@@ -71,7 +71,7 @@ concurrency:
 
 jobs:
   admission:
-    runs-on: [self-hosted, bocklabs-gh-runner]
+    runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
       contents: read

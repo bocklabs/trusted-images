@@ -1128,7 +1128,7 @@ class CleanChildTracerTests(unittest.TestCase):
         env["FAKE_SPOOL"] = str(self.spool)
         return subprocess.run(argv, capture_output=True, text=True, env=env)
 
-    def blocked_candidate_artifact(self):
+    def candidate_artifact(self, kev_cves=("CVE-2026-0001",)):
         from tests.test_policy import kev_feed, report, vuln, write_json
 
         artifact = self.tmp / "preserved-candidate"
@@ -1144,10 +1144,10 @@ class CleanChildTracerTests(unittest.TestCase):
         write_json(
             artifact / "validation-evidence.json", {"validation": {"result": "pass"}}
         )
-        write_json(artifact / "kev.json", kev_feed(("CVE-2026-0001",)))
+        write_json(artifact / "kev.json", kev_feed(kev_cves))
         (artifact / "kev-fetched-at.txt").write_text("2026-09-14T00:00:00Z\n")
-        (artifact / "trivy-db-meta-1.txt").write_text("DB\n")
-        (artifact / "trivy-db-meta-2.txt").write_text("DB\n")
+        (artifact / "trivy-db-meta-1.txt").write_text("Version: 0.74.0\nDB\n")
+        (artifact / "trivy-db-meta-2.txt").write_text("Version: 0.74.0\nDB\n")
         (artifact / "source.sha").write_text("a" * 40 + "\n")
         (artifact / "inventory-image.yaml").write_text(
             "spec:\n  upstream:\n    ref: registry.example/app\n    tag: v1\n    digest: "
@@ -1216,10 +1216,9 @@ class CleanChildTracerTests(unittest.TestCase):
                 str(decision),
             ]
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertEqual(
-            json.loads(decision.read_text())["reason"], "missing_kev_acceptance"
-        )
+        self.assertEqual(result.returncode, int(bool(kev_cves)), result.stdout + result.stderr)
+        if kev_cves:
+            self.assertEqual(json.loads(decision.read_text())["reason"], "missing_kev_acceptance")
         subprocess.run(
             [
                 "bash",
@@ -1262,7 +1261,7 @@ elif args[:2] == ['run', 'download']:
             for step in steps
             if step["name"] == "Restore the exact accepted candidate"
         )
-        fixture = self.blocked_candidate_artifact()
+        fixture = self.candidate_artifact()
         (self.tmp / "scripts").symlink_to(
             REPO_ROOT / "scripts", target_is_directory=True
         )
@@ -1324,7 +1323,7 @@ elif args[:2] == ['run', 'download']:
         self.assertIn("undeclared files", result.stdout + result.stderr)
         self.assertFalse((self.tmp / "tampered-output").exists())
 
-        exact_fixture = self.blocked_candidate_artifact()
+        exact_fixture = self.candidate_artifact()
         self.fake_gh(exact_fixture, run_id=999)
         env["GITHUB_OUTPUT"] = str(self.tmp / "wrong-run-output")
         result = subprocess.run(
@@ -1337,6 +1336,33 @@ elif args[:2] == ['run', 'download']:
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("wrong run", result.stdout + result.stderr)
         self.assertFalse((self.tmp / "wrong-run-output").exists())
+
+    def test_publisher_uses_checksum_bound_candidate_scanner_version(self):
+        steps = yaml.safe_load(PUBLISHER_WORKFLOW.read_text())["jobs"]["promote"]["steps"]
+        verify = next(step for step in steps if step["name"] == "Verify candidate artifact")
+        fixture = self.candidate_artifact(())
+        artifact = self.tmp / "candidate-artifact"
+        shutil.copytree(fixture, artifact)
+        (self.tmp / "scripts").symlink_to(REPO_ROOT / "scripts", target_is_directory=True)
+        (self.tmp / "inventory/app").mkdir(parents=True)
+        shutil.copyfile(artifact / "inventory-image.yaml", self.tmp / "inventory/app/image.yaml")
+        env = {**os.environ, **{key: "" for key in verify["env"]},
+               "APP": "app", "SOURCE_SHA": "a" * 40, "RUN_ID": "123", "RUN_ATTEMPT": "1",
+               "UPSTREAM_INDEX_DIGEST": self.index_digest, "GITHUB_OUTPUT": str(self.tmp / "version-output")}
+        env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
+        for version in ("0.74.0", "0.75.0"):
+            with self.subTest(version=version):
+                (artifact / "trivy-db-meta-1.txt").write_text("Version: " + version + "\nDB\n")
+                subprocess.run(["bash", "-c", "find candidate-artifact -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > candidate-artifact/SHA256SUMS"],
+                               cwd=self.tmp, check=True, capture_output=True)
+                env["EXPECTED_MANIFEST_SHA256"] = hashlib.sha256((artifact / "SHA256SUMS").read_bytes()).hexdigest()
+                result = subprocess.run(["bash", "-c", verify["run"]], cwd=self.tmp, env=env,
+                                        capture_output=True, text=True, timeout=10)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn("trivy_version=" + version + "\n", Path(env["GITHUB_OUTPUT"]).read_text())
+        for name in ("Verify signing evidence", "Generate provenance record"):
+            step = next(step for step in steps if step["name"] == name)
+            self.assertEqual(step["env"]["TRIVY_VERSION"], "${{ steps.candidate.outputs.trivy_version }}")
 
     def test_failed_patched_runtime_validation_never_executes_publication(self):
         from tests.test_validate_image import FAKE_DOCKER

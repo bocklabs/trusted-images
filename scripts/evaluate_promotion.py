@@ -1463,11 +1463,22 @@ def validate_candidate_inputs(args):
     child_digest = select_child(
         index, Path(args.child_manifest), Path(args.child_config)
     )
-    return index, child_digest, index_digest
+    candidate_digest = args.candidate_digest or child_digest
+    if not DIGEST_RE.fullmatch(candidate_digest):
+        raise ValueError("--candidate-digest must be a sha256 digest")
+    return child_digest, index_digest, candidate_digest
+
+
+def validate_patch_coverage(before_packages, after_packages):
+    if not before_packages or not after_packages or before_packages.keys() - after_packages.keys():
+        raise ValueError(
+            "patch coverage requires nonempty before/after OS inventories "
+            "with every original package identity preserved"
+        )
 
 
 def evaluate_candidate(args):
-    _, child_digest, index_digest = validate_candidate_inputs(args)
+    child_digest, index_digest, candidate_digest = validate_candidate_inputs(args)
     full_path = Path(args.full_report)
     after_path = Path(args.after_full_report) if args.after_full_report else None
     receipt_path = Path(args.scan_receipt) if args.scan_receipt else None
@@ -1475,9 +1486,6 @@ def evaluate_candidate(args):
         raise ValueError(
             "--after-full-report and --scan-receipt must be supplied together"
         )
-    candidate_digest = args.candidate_digest or child_digest
-    if not DIGEST_RE.fullmatch(candidate_digest):
-        raise ValueError("--candidate-digest must be a sha256 digest")
     patch_reason(args)
     full_report = load_json(full_path, "full Trivy report")
     os_metadata = full_report.get("Metadata", {}).get("OS")
@@ -1518,16 +1526,9 @@ def evaluate_candidate(args):
     )
     if after_report is not None and (
         candidate_digest != child_digest or args.copa_classification == "succeeded"
-    ) and (
-        not before_packages or not after_packages
-        or not before_packages.keys() <= after_packages.keys()
     ):
-        raise ValueError(
-            "patch coverage requires nonempty before/after OS inventories "
-            "with every original package identity preserved"
-        )
+        validate_patch_coverage(before_packages, after_packages)
     kev = kev_evidence(Path(args.kev), args.kev_fetched_at, args.now)
-    candidate_digest = args.candidate_digest or child_digest
     final_ids = set(after if after is not None else full)
     kev_cves = {
         item["cveID"]

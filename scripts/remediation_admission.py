@@ -11,7 +11,8 @@ import subprocess
 import sys
 import time
 
-REF = re.compile(r"ghcr\.io/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._/-]*:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}@sha256:[a-f0-9]{64}")
+REF = re.compile(r"ghcr\.io/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._/-]*:\w[\w.-]{0,127}@sha256:[a-f0-9]{64}", re.ASCII)
+SHA256_HEX = r"[a-f0-9]{64}"
 FIELDS = {"request_id", "app", "ref", "need_sha256", "producer_sha", "run_id",
           "run_attempt", "nonce", "issued_at", "repository", "workflow_ref"}
 FINDING_FIELDS = {"id", "package", "installed", "class", "type", "target"}
@@ -56,7 +57,7 @@ def request_inputs():
     owner = os.environ["GITHUB_REPOSITORY"].split("/")[0].lower()
     require(values["ref"].startswith(f"ghcr.io/{owner}/{os.environ['INPUT_APP']}:"),
             "automatic reference must match the selected application")
-    require(re.fullmatch(r"[a-f0-9]{64}", values["need_sha256"]), "invalid need hash")
+    require(re.fullmatch(SHA256_HEX, values["need_sha256"]), "invalid need hash")
     require(os.getenv("INPUT_FORCE_REPROMOTE", "false").lower() != "true" and
             not any(os.getenv(k) for k in ("INPUT_RECOVER_TAG", "INPUT_RECOVERY_RUN_ID", "INPUT_ACCEPTED_CANDIDATE_RUN_ID")),
             "automatic remediation cannot combine manual overrides")
@@ -65,8 +66,8 @@ def request_inputs():
 
 def validate_readiness(receipt):
     require(isinstance(receipt, dict) and set(receipt) == FIELDS, "invalid readiness schema")
-    for key, pattern in (("request_id", r"[a-f0-9]{32}"), ("need_sha256", r"[a-f0-9]{64}"),
-                         ("producer_sha", r"[a-f0-9]{40}"), ("nonce", r"[a-f0-9]{64}"),
+    for key, pattern in (("request_id", r"[a-f0-9]{32}"), ("need_sha256", SHA256_HEX),
+                         ("producer_sha", r"[a-f0-9]{40}"), ("nonce", SHA256_HEX),
                          ("app", r"[a-z0-9][a-z0-9-]{0,79}"),
                          ("repository", r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")):
         require(isinstance(receipt[key], str) and re.fullmatch(pattern, receipt[key]), "invalid readiness " + key)
