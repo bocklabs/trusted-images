@@ -200,6 +200,40 @@ class TagAllocationTests(unittest.TestCase):
 
 
 class PromoteWorkflowTests(unittest.TestCase):
+    def test_provenance_handoff_never_merges_or_waits_for_review(self):
+        self.assertNotIn("gh pr merge", self.publisher_workflow)
+        self.assertNotIn("sleep 10", self.publisher_workflow)
+        self.assertIn("provenance review pending", self.publisher_workflow)
+        steps = yaml.safe_load(self.publisher_workflow)["jobs"]["promote"]["steps"]
+        run = next(step["run"] for step in steps if step["name"] == "Verify merged provenance and publish the final decision")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            decision = root / "candidate-decision.json"
+            decision.write_text('{"provenance":{"merged":false}}')
+            original = decision.read_bytes()
+            summary = root / "summary"
+            env = {**os.environ, "PR_URL": "https://example.invalid/pull/1", "APP": "example",
+                   "INTERNAL_TAG": "v1-bocklabs.1", "CANDIDATE_DIGEST": DIGEST_A,
+                   "GITHUB_SERVER_URL": "https://example.invalid", "GITHUB_REPOSITORY": "owner/repo",
+                   "GITHUB_RUN_ID": "123", "GITHUB_STEP_SUMMARY": str(summary)}
+            result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(decision.read_bytes(), original)
+            self.assertIn("Ineligible for consumption", summary.read_text())
+
+    def test_authenticated_need_has_no_dispatch_input_and_reaches_final_evaluator(self):
+        root = yaml.safe_load(self.orchestrator)
+        dispatch = root.get("on", root.get(True))["workflow_dispatch"]["inputs"]
+        self.assertNotIn("requested_remediation", dispatch)
+        need = next(step for step in root["jobs"]["admission"]["steps"] if step.get("id") == "need")
+        self.assertEqual(need["if"], "steps.verdict.outputs.proceed == 'true'")
+        self.assertIn("readiness-artifact/verdict.json", need["run"])
+        self.assertEqual(root["jobs"]["candidate"]["with"]["requested_remediation"],
+                         "${{ needs.admission.outputs.requested_remediation }}")
+        candidate = yaml.safe_load(self.candidate_workflow)["jobs"]["validate"]["steps"]
+        policy = next(step for step in candidate if step.get("id") == "policy")
+        self.assertEqual(policy["env"]["REQUESTED_REMEDIATION"], "${{ inputs.requested_remediation }}")
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.orchestrator = ORCHESTRATOR_WORKFLOW.read_text(encoding="utf-8")
@@ -538,15 +572,17 @@ esac
         self.assertNotIn("python3 - <<", self.workflow)
 
     def test_validation_still_gates_promotion(self) -> None:
-        self.assertIn(
-            "candidate:\n    uses: ./.github/workflows/promote-candidate.yaml",
-            self.orchestrator,
-        )
+        workflow = yaml.safe_load(self.orchestrator)
+        candidate = workflow["jobs"]["candidate"]
+        self.assertEqual(candidate["uses"], "./.github/workflows/promote-candidate.yaml")
+        self.assertEqual(candidate["needs"], "admission")
+        self.assertEqual(candidate["if"], "needs.admission.outputs.proceed == 'true'")
         self.assertIn("publish:\n    needs: candidate", self.orchestrator)
         self.assertIn(
             "uses: ./.github/workflows/promote-publish.yaml", self.orchestrator
         )
-        self.assertIn("cancel-in-progress: true", self.orchestrator)
+        self.assertEqual(workflow["concurrency"], {"group": "promote-${{ inputs.app }}",
+                                                  "cancel-in-progress": False, "queue": "max"})
 
     def test_registry_reads_and_copy_fail_closed(self) -> None:
         for text in (
@@ -700,16 +736,11 @@ esac
         by_name = {step["name"]: step for step in steps}
         copa = by_name["Run pinned Copa from the original child"]
         self.assertEqual(
-            copa["uses"],
-            "project-copacetic/copa-action@7de81b0830c8a4d1edb4a63a77e65a6d7ef8dc95",
-        )
-        self.assertEqual(str(copa["with"]["copa-version"]), "0.15.0")
-        self.assertEqual(copa["with"]["patched-tag"], "copa:candidate")
-        self.assertEqual(copa["with"]["image-report"], "trivy-copa.json")
-        self.assertEqual(
-            copa["with"]["image"],
+            copa.get("env", {}).get("ORIGINAL_CHILD"),
             "${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}",
         )
+        self.assertNotIn("--report", copa["run"])
+        self.assertNotIn("COPA_EXPERIMENTAL", copa["run"])
         self.assertNotIn("severity", copa["if"])
         patched = by_name["Add only provenance labels and export final bytes"]
         self.assertEqual(patched["if"], copa["if"])
@@ -820,6 +851,53 @@ elif args[0] == 'run':
             self.assertTrue(any(call[:1] == ["create"] for call in calls))
             self.assertTrue(any(call[:1] == ["rm"] for call in calls))
 
+    def test_comprehensive_cli_checks_version_and_never_retries_patch_failure(self):
+        step = next(step for step in self.loaded_workflow()["jobs"]["validate"]["steps"]
+                    if step["name"] == "Run pinned Copa from the original child")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            docker = root / "docker"
+            docker.write_text(
+                "#!/usr/bin/env python3\nimport json, os, subprocess, sys\n"
+                "args = sys.argv[1:]\n"
+                "with open('docker-calls', 'a') as out: out.write(json.dumps(args) + '\\n')\n"
+                "if args[0] == 'run':\n"
+                "    index = args.index('-ec')\n"
+                "    sys.exit(subprocess.call(['sh', '-ec', args[index + 1].replace('/data/', './'), *args[index + 2:]]))\n"
+            )
+            copa = root / "copa"
+            copa.write_text(
+                "#!/usr/bin/env python3\nimport json, os, sys\n"
+                "with open('copa-calls', 'a') as out: out.write(json.dumps(sys.argv[1:]) + '\\n')\n"
+                "if sys.argv[1] == '--version': print('copa version ' + os.environ['VERSION'])\n"
+                "else: sys.exit(int(os.environ['PATCH_STATUS']))\n"
+            )
+            docker.chmod(0o755)
+            copa.chmod(0o755)
+            original = 'example/app@' + DIGEST_A
+            for version, status in (('0.15.0', 0), ('0.15.0', 7), ('0.14.0', 0)):
+                with self.subTest(version=version, patch_status=status):
+                    (root / 'copa-calls').write_text('')
+                    (root / 'docker-calls').write_text('')
+                    result = subprocess.run(
+                        ['bash', '-c', step['run']], cwd=root, capture_output=True, text=True,
+                        env=dict(os.environ, PATH=f'{root}:{os.environ["PATH"]}',
+                                 ORIGINAL_CHILD=original, VERSION=version, PATCH_STATUS=str(status)),
+                    )
+                    self.assertEqual(result.returncode, status if version == '0.15.0' else 1,
+                                     result.stdout + result.stderr)
+                    calls = [json.loads(line) for line in (root / 'copa-calls').read_text().splitlines()]
+                    patches = [call for call in calls if call[0] == 'patch']
+                    if version != '0.15.0':
+                        self.assertEqual(patches, [])
+                        continue
+                    self.assertEqual(patches, [['patch', '--image', original, '--tag', 'copa:candidate',
+                                               '--addr', 'buildx://copa-action', '--loader', 'docker', '--timeout', '30m']])
+                    self.assertEqual(calls[0], ['--version'])
+                    self.assertEqual(calls[-1], ['--version'])
+                    runtime = json.loads((root / 'docker-calls').read_text().splitlines()[0])
+                    self.assertIn('ghcr.io/project-copacetic/copa-action:v0.15.0@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b', runtime)
+
     def test_copa_diagnostics_classify_failures_and_redact_credentials(self):
         steps = self.loaded_workflow()["jobs"]["validate"]["steps"]
         step = next(
@@ -892,7 +970,7 @@ elif args[0] == 'run':
         self.assertIn("--signing-evidence", provenance["run"])
         self.assertIn("--signing-result", provenance["run"])
         self.assertIn("signing-gate.outcome == 'success'", by_name["Verify merged provenance and publish the final decision"].get("if", ""))
-        for name in ("Mint bocklabs-release app token", "Open provenance PR and enable merge"):
+        for name in ("Mint bocklabs-release app token", "Open provenance PR for operator review"):
             self.assertIn("quarantine-decision.outcome == 'success'", by_name[name].get("if", ""))
         self.assertEqual(by_name["Job summary evidence panel"]["run"].count("promotion unsuccessful"), 2)
         self.assertNotIn("cosign attest", self.publisher_workflow[self.publisher_workflow.index("Generate provenance record"):])

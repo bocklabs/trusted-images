@@ -4,6 +4,8 @@
 import importlib.util
 import hashlib
 import json
+import os
+from unittest.mock import patch
 import subprocess
 import sys
 import tempfile
@@ -12,6 +14,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EVALUATOR = REPO_ROOT / "scripts" / "evaluate_promotion.py"
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 
 def fixture_digest(value):
@@ -198,6 +201,29 @@ def github_evidence(
 
 
 class PolicyTests(unittest.TestCase):
+    def run_requested_policy(self, binding):
+        with patch.dict(os.environ, REQUESTED_REMEDIATION=json.dumps(binding)):
+            return self.run_policy()
+
+    def test_requested_need_blocks_relocated_language_cve_and_allows_clean_upstream(self):
+        requested = [{"id": "CVE-2026-9001", "package": "example", "installed": "1.0",
+                      "class": "lang-pkgs", "type": "python-pkg", "target": "/old"}]
+        binding = {"app": "app", "ref": "ghcr.io/bocklabs/app:v1-bocklabs.1@sha256:" + "a" * 64,
+                   "need_sha256": hashlib.sha256(json.dumps(requested, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+                   "findings": requested}
+        scan = report()
+        scan["Results"].append({"Class": "lang-pkgs", "Type": "python-pkg", "Target": "/new",
+                                "Packages": [], "Vulnerabilities": [vuln("CVE-2026-9001", fixed="3.0", pkg_name="renamed")]})
+        write_json(self.full, scan)
+        result = self.run_requested_policy(binding)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertFalse(json.loads(self.out.read_text())["eligible"])
+        write_json(self.full, report())
+        result = self.run_requested_policy(binding)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        binding["need_sha256"] = "0" * 64
+        self.assertEqual(self.run_requested_policy(binding).returncode, 2)
+
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
@@ -944,6 +970,9 @@ class PolicyTests(unittest.TestCase):
             ("debian", "1:2.0-1", "2.0-1"),
             ("redhat", "1:1.0-2.el9", "1:1.0-1.el9"),
             ("alpine", "1.2.3-r2", "1.2.3-r1"),
+            ("cbl-mariner", "1:2.0.0-25.cm2", "2.0.0-25.cm2"),
+            ("azurelinux", "1:3.0.0-16.azl3", "1:3.0.0-15.azl3"),
+            ("sles", "84.87+git20260610.3b5a868c-160000.1.1", "84.87+git20260610.3b5a868c-160000.1.0"),
         )
         for ecosystem, before_version, after_version in cases:
             with self.subTest(ecosystem=ecosystem):
@@ -976,6 +1005,7 @@ class PolicyTests(unittest.TestCase):
         before = [package("libexample", "1.0")]
         cases = {
             "unsupported ecosystem": {"result_type": "fedora"},
+            "unsupported ecosystem: 'archlinux'": {"result_type": "archlinux"},
             "missing package inventory": {"remove_packages": True},
             "malformed version": {"packages": [package("libexample", "not-a-version")]},
             "ambiguous package identity": {
@@ -1003,6 +1033,56 @@ class PolicyTests(unittest.TestCase):
                 result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.assertIn(label, result.stdout + result.stderr)
+
+    def test_patch_success_requires_preserved_nonempty_inventory(self):
+        for side, change in (
+            ("before", "empty"), ("after", "missing"), ("after", "null"),
+            ("after", "empty"), ("after", "packages"), ("after", "removed"),
+        ):
+            with self.subTest(side=side, coverage=change):
+                self.patched(
+                    [vuln("CVE-2026-0007", fixed="1.1")], [],
+                    [package("libexample", "1.0"), package("other", "1.0")],
+                    [package("libexample", "1.1"), package("other", "1.0")],
+                )
+                path = self.full if side == "before" else self.after
+                value = json.loads(path.read_text())
+                if change == "missing":
+                    value.pop("Results")
+                elif change == "null":
+                    value["Results"] = None
+                elif change == "empty":
+                    value["Results"] = []
+                elif change == "packages":
+                    value["Results"][0]["Packages"] = []
+                else:
+                    value["Results"][0]["Packages"].pop()
+                write_json(path, value)
+                receipt = json.loads(self.receipt.read_text())
+                receipt[side]["report_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+                write_json(self.receipt, receipt)
+                result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("patch coverage", result.stderr)
+
+    def test_equal_admitted_ecosystem_versions_are_not_downgrades(self):
+        for ecosystem, version in (
+            ("debian", "1:2.0-1"), ("redhat", "1:1.0-2.el9"),
+            ("alpine", "1.2.3-r2"),
+            ("cbl-mariner", "1:2.0.0-25.cm2"),
+            ("azurelinux", "1:3.0.0-16.azl3"),
+            ("sles", "84.87+git20260610.3b5a868c-160000.1.1"),
+        ):
+            with self.subTest(ecosystem=ecosystem):
+                self.patched(
+                    [vuln("CVE-2026-0007", fixed="1.1")], [],
+                    [package("libexample", version)], [package("libexample", version)],
+                    result_type=ecosystem,
+                )
+                result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                decision = json.loads(self.out.read_text())
+                self.assertEqual(decision["packages"], {"changes": [], "downgrades": []})
 
     def test_osless_clean_rescan_remains_eligible(self):
         self.patched([], [], [], [])

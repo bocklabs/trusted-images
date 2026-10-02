@@ -126,6 +126,28 @@ def github_evidence(path: str, issue: int = 77) -> dict:
 
 
 class ProvenanceTests(unittest.TestCase):
+    def test_new_records_require_mode_and_targeted_exact_limitation(self):
+        flags = self.flags()
+        result = self.run_generator(flags)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        record = json.loads(self.out.read_text())
+        self.assertEqual(record["policy"]["copa"].get("mode"), "not-required")
+        evidence = {"mode": "targeted", "release": "0.15.0",
+                    "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
+                    "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
+                    "limitation": None}
+        self.decision["copa"] = {"classification": "succeeded", "original_child_input": True,
+                                 "evidence": evidence}
+        self.decision_path.write_text(json.dumps(self.decision))
+        self.out.unlink()
+        result = self.run_generator(self.mutated(copa_version="0.15.0"))
+        self.assert_fails_closed(result, "targeted Copa mode requires exact-release limitation")
+        evidence["limitation"] = "Copa v0.15.0 fixture route supports only the reviewed report input"
+        self.decision_path.write_text(json.dumps(self.decision))
+        result = self.run_generator(self.mutated(copa_version="0.15.0"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(self.out.read_text())["policy"]["copa"]["limitation"], evidence["limitation"])
+
     def setUp(self) -> None:
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
@@ -270,7 +292,7 @@ class ProvenanceTests(unittest.TestCase):
         )
         self.assertEqual(record["policy"]["outcome"], self.decision["reason"])
         self.assertEqual(record["policy"]["patching"], self.decision["patching"])
-        self.assertEqual(record["policy"]["copa"], self.decision["copa"])
+        self.assertEqual({key: record["policy"]["copa"][key] for key in self.decision["copa"]}, self.decision["copa"])
         self.assertEqual(record["policy"]["supersedes"], self.decision["supersedes"])
         self.assertEqual(record["policy"]["warnings"], [])
         self.assertEqual(record["cves"]["before"], [])

@@ -31,6 +31,14 @@ never relabel an old run or mutate an existing tag.
 
 Each gate fails the run before downstream work.
 
+Authenticated automatic admission carries the canonical requested finding set
+and hash into the final full-report evaluator and forces a fresh immutable
+revision from the reviewed original upstream child. Every supplied finding must
+be absent in its ecosystem scope; package/version changes or moving a result
+cannot conceal an unresolved CVE. This gate also covers supplied language
+findings, while Copa stays within stable OS scope. Existing residual/no-fix and
+KEV policy still applies; remediation promises no zero-CVE result.
+
 1. **Validate inventory and candidate** in a read-only validation job. The job
    has no network egress for the container and only read GitHub/registry scope.
    Static checks select the upstream index's exact `linux/amd64` child and record
@@ -44,8 +52,9 @@ Each gate fails the run before downstream work.
    receipts must match the same scanner, database, artifact, image ID, manifest
    digest, and report bytes.
 4. **Patch when policy is enabled and the fixable-OS report is nonempty**, from
-   the original child only. Pinned Copa receives every supplied finding without a
-   severity cutoff. Add only `base.digest`, `base.name`, `source`, and `version`
+   the original child only. Digest-pinned Copa v0.15.0 performs stable comprehensive
+   OS updates without a report argument; the fixable report remains trigger and
+   evidence, with no severity cutoff. Add only `base.digest`, `base.name`, `source`, and `version`
    labels; all pre-existing runtime configuration and labels must be preserved.
    Rescan the exact patched bytes with the frozen database.
 5. **Evaluate one strict candidate decision.** Validation, Copa classification,
@@ -59,6 +68,66 @@ Each gate fails the run before downstream work.
    only after the public record on `main` matches the run, tag, digest, policy,
    scan, validation, and artifact identities. Reuse retains and reverifies the
    existing record instead of replacing it.
+
+## Stable Copa v0.15.0 capability and coverage
+
+The reviewed release is [v0.15.0](https://github.com/project-copacetic/copacetic/releases/tag/v0.15.0),
+commit `bce7b4305e378558f20420aa2ca48686cec850d0` (2026-09-04).
+Its [dispatcher](https://github.com/project-copacetic/copacetic/blob/v0.15.0/pkg/pkgmgr/pkgmgr.go)
+recognizes exactly `alpine`, `debian`, `ubuntu`, `cbl-mariner`, `azurelinux`,
+`centos`, `oracle`, `redhat`, `rocky`, `amazon`, `alma`, `almalinux`, `sles`,
+`opensuse-leap`, `opensuse-tumbleweed`, and `archlinux`.
+
+| Distribution / package layout | Stable comprehensive route | Limits and evidence |
+|---|---|---|
+| Alpine native apk | Native manager | Missing target tools unsupported. |
+| Debian / Ubuntu native apt and dpkg | Native manager | Full independent inventory and current repositories required. |
+| Debian external status directory | External archives and encoded status entries | Preserve scanner-visible status representation. |
+| Ubuntu apt-less full dpkg status | External archives, scripts/triggers disabled | Residual administrative state and lifecycle-dependent updates rejected. |
+| Ubuntu native Chisel manifest | Re-cut slices, preserve unmanaged paths | **BLOCKED:** Trivy cannot independently inventory native packages. Empty scans cannot qualify this route. Only public archives; Pro/ESM/FIPS/private archives unsupported. |
+| CBL-Mariner / Azure Linux / CentOS / Oracle / Red Hat / Rocky / Amazon / AlmaLinux native RPM | tdnf/dnf/yum/microdnf | Each distinct tooling route needs real full-gate evidence. |
+| RPM DB present, manager absent | dnf chroot with target repositories | Compatible tooling and complete independent scan inventory required. |
+| RPM external manifests | External archive merge and metadata | Independently verify actual package identity and versions. |
+| SLES / openSUSE Leap / Tumbleweed | zypper chroot | SQLite, NDB, Berkeley DB and SLES 16 layouts require distinct real receipts. |
+| Oracle report input | Comprehensive exists; targeted rejected | Do not enable ignore-errors to bypass report-driven rejection. |
+| Arch Linux native pacman | Native manager | Exact scanner ecosystem and epoch/release comparison need retained real receipts before admission. |
+| Scratch / missing supported package metadata | No package-manager route | Unresolved application/binary findings remain in the full report and policy. |
+
+Source contracts: [dpkg](https://github.com/project-copacetic/copacetic/blob/v0.15.0/pkg/pkgmgr/dpkg.go),
+[RPM](https://github.com/project-copacetic/copacetic/blob/v0.15.0/pkg/pkgmgr/rpm.go),
+[apk](https://github.com/project-copacetic/copacetic/blob/v0.15.0/pkg/pkgmgr/apk.go),
+[pacman](https://github.com/project-copacetic/copacetic/blob/v0.15.0/pkg/pkgmgr/pacman.go),
+and [Chisel layouts](https://github.com/project-copacetic/copacetic/blob/v0.15.0/website/docs/chiseled-images.md).
+Source support is not qualification. No generic targeted fallback is enabled:
+all recognized managers have a comprehensive route, and unsafe failures block.
+A future targeted-only route needs an observed exact-release limitation and a
+retained reason before enabling report input. Experimental application/library,
+Go rebuild and Helm flags remain disabled; stable OS scope is the default.
+
+The shared candidate seam uses the existing digest-pinned action runtime with its
+reviewed `/usr/local/bin/copa`, Docker socket and isolated `buildx://copa-action`
+connection, an explicit Docker loader, `copa:candidate`, and a 30-minute timeout.
+The report-only entrypoint is overridden; CLI version and runtime identity are
+checked before/after. No retry switches modes. Full reports, frozen DB receipts,
+package/CVE/config/functional validation, KEV, SBOM and signing gates remain mandatory.
+Claimed patch success requires nonempty independent before/after OS inventories
+and every original package identity retained. Clean, unchanged package-free
+images retain their existing acceptance handling.
+
+Real immutable-child Trivy 0.74.0 scans establish RPM package components for
+`cbl-mariner` (69 packages), `azurelinux` (79) and `sles` 16.0 (105); these exact
+identifiers use the existing RPM comparator. The observed SLES 15.6 scan is EOL
+and remains blocked. The SLES 16 report contains conflicting `gpg-pubkey`
+identities and is rejected by the unchanged ambiguity gate. Epoch/release
+components, unchanged versions and downgrades
+are checked independently. These inventory scans establish comparator inputs,
+not successful patch qualification. No guessed openSUSE aliases are admitted.
+The observed Arch scan has no OS metadata or OS-package inventory, only language
+findings: Arch remains a scanner-coverage gap, with no admitted Arch alias.
+Unknown evidence and incomplete patch coverage fail closed; upstream recognition
+or synthetic fixtures do not count as family qualification.
+The pinned runtime/BuildKit execution and each live layout still require isolated
+hosted qualification; local command-contract checks do not establish that proof.
 
 ## Identity and reuse
 
@@ -155,8 +224,14 @@ full report, fixable-OS report, before/final report identities, converted report
 KEV report, upload manifest, Copa diagnostics when applicable; the checksum-bound
 OCI candidate and decision; publication digest; and the final candidate decision.
 
-Provenance is one machine-generated JSON record per internal tag, merged to
-public `main` before the final run decision is marked complete. It binds upstream
+Provenance is one machine-generated JSON record per internal tag. Verified
+publication opens or reuses a scoped provenance PR for operator review and then
+releases the application workflow lock. The retained decision stays
+`provenance.merged=false`; a green publication handoff is pending review and
+ineligible for consumption. Only exact generated bytes already on public `main`
+permit the final merged-decision assertion. Deployment is a separate operator
+action. Signing failures stay red and retain immutable quarantine evidence.
+It binds upstream
 index and selected child, internal package/tag/digest/platform, run and dispatch
 identity, tools and scanner database, report/decision hashes, generic findings
 service upload identity, complete policy and KEV catalog, exact acceptance fields,
@@ -165,6 +240,13 @@ applicable, and final publication state. Acceptance evidence in provenance carri
 candidate digest, exact KEV set, record path/commit, merged PR and approver,
 tracking issue, and `expires_at`. After expiry, the image and history remain, but
 new promotion and generic consumer eligibility require a fresh valid acceptance.
+
+New records also retain Copa mode (`not-required`, `comprehensive`, or `targeted`)
+and the exact release, CLI source commit and runtime digest from candidate evidence.
+Targeted mode requires its exact-release limitation; no targeted fallback is
+enabled. Automatic records bind the canonical need hash. Historical record bytes
+remain immutable; a resumed patched candidate lacking actual mode evidence cannot
+create a new record by inventing execution evidence.
 
 Publication-integrity assertions require exact manifest bytes and anonymous
 readability. If the registry creates a package private by default, the anonymous

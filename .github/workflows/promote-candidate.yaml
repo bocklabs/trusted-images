@@ -3,6 +3,11 @@ name: promote-candidate
 on:
   workflow_call:
     inputs:
+      requested_remediation:
+        description: Authenticated admission payload; unavailable to root dispatch
+        type: string
+        required: false
+        default: ""
       app:
         description: Inventory app to promote
         type: string
@@ -99,6 +104,7 @@ jobs:
         shell: bash
         env:
           APP: ${{ inputs.app }}
+          REQUESTED_REMEDIATION: ${{ inputs.requested_remediation }}
           FORCE_REPROMOTE: ${{ inputs.force_repromote }}
           RECOVER_TAG: ${{ inputs.recover_tag }}
           RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
@@ -107,6 +113,10 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          if [ -n "${REQUESTED_REMEDIATION}" ]; then
+            [ "${FORCE_REPROMOTE}" = true ] && [ -z "${RECOVER_TAG}${RECOVERY_RUN_ID}${ACCEPTED_CANDIDATE_RUN_ID}" ] || { echo "FATAL: admitted remediation requires fresh allocation"; exit 1; }
+            PYTHONPATH=scripts python3 -c 'import json, os; from evaluate_promotion import requested_remediation; requested_remediation(json.loads(os.environ["REQUESTED_REMEDIATION"]), os.environ["APP"])'
+          fi
           if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
             echo "FATAL: app not in inventory: ${APP}"
             exit 1
@@ -690,15 +700,30 @@ jobs:
         id: copa
         if: inputs.recover_tag == '' && inputs.accepted_candidate_run_id == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
         continue-on-error: true
-        uses: project-copacetic/copa-action@7de81b0830c8a4d1edb4a63a77e65a6d7ef8dc95
-        with:
-          image: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
-          image-report: trivy-copa.json
-          patched-tag: copa:candidate
-          timeout: 30m
-          copa-version: 0.15.0
-          format: openvex
-          output: copa-output.json
+        shell: bash
+        env:
+          ORIGINAL_CHILD: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
+        run: |
+          set -euo pipefail
+          docker run --net=host \
+            --mount="type=bind,source=${PWD},target=/data" \
+            --mount=type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
+            --name=copa-action --entrypoint=/bin/sh \
+            ghcr.io/project-copacetic/copa-action:v0.15.0@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b \
+            -ec '
+              copa --version > /data/copa-version-before.txt
+              grep -Eq "^copa version v?0\\.15\\.0$" /data/copa-version-before.txt
+              docker buildx create --name=copa-action
+              docker buildx use --default copa-action
+              set +e
+              copa patch --image "$1" --tag copa:candidate \
+                --addr buildx://copa-action --loader docker --timeout 30m
+              status=$?
+              set -e
+              copa --version > /data/copa-version-after.txt
+              cmp /data/copa-version-before.txt /data/copa-version-after.txt
+              exit "$status"
+            ' copa "$ORIGINAL_CHILD"
 
       - name: Capture Copa diagnostics and fail closed
         if: always() && steps.copa.outcome != 'skipped' && steps.copapin.outcome == 'success'
@@ -749,6 +774,8 @@ jobs:
             copa-entrypoint.sh
             copa-action-image-id.txt
             copa-action-image-id-after.txt
+            copa-version-before.txt
+            copa-version-after.txt
           retention-days: 8
           if-no-files-found: warn
 
@@ -1025,7 +1052,9 @@ jobs:
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
+          REQUESTED_REMEDIATION: ${{ inputs.requested_remediation }}
           SOURCE_SHA: ${{ github.sha }}
+          COPA_EXECUTED: ${{ steps.copa.outcome == 'success' }}
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
           INTERNAL_TAG: ${{ steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
@@ -1040,6 +1069,12 @@ jobs:
           ORIGINAL_CHILD_SELECTED: ${{ steps.tag.outputs.original_child_selected }}
         run: |
           set -euo pipefail
+          if [ "${COPA_EXECUTED}" = true ]; then
+            export COPA_EVIDENCE='{"mode":"comprehensive","release":"0.15.0","source_sha":"bce7b4305e378558f20420aa2ca48686cec850d0","runtime_digest":"sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b","limitation":null}'
+          elif [ -f original-candidate-decision.json ]; then
+            COPA_EVIDENCE="$(jq -c '.copa.evidence // empty' original-candidate-decision.json)"
+            export COPA_EVIDENCE
+          fi
           python3 scripts/promote_candidate_decision.py
 
       - name: Decide whether publication is required

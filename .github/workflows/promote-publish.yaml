@@ -772,7 +772,7 @@ jobs:
           client-id: ${{ secrets.RELEASE_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_KEY }}
 
-      - name: Open provenance PR and enable merge
+      - name: Open provenance PR for operator review
         id: pr
         if: ${{ !cancelled() && steps.app-token.outcome == 'success' && (steps.signing-gate.outcome == 'success' || steps.quarantine-decision.outcome == 'success') }}
         shell: bash
@@ -855,7 +855,6 @@ jobs:
             -f conclusion=success \
             -f output.title="inventory valid (provenance)" \
             -f output.summary="validate_inventory.py passed on the provenance branch"
-          gh pr merge --merge "${PR_URL}"
           echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Verify merged provenance and publish the final decision
@@ -872,16 +871,9 @@ jobs:
           set -euo pipefail
           RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
           if [ -n "${PR_URL}" ]; then
-            for _ in $(seq 1 60); do
-              if [ "$(gh pr view "${PR_URL}" --json state --jq .state)" = MERGED ]; then
-                break
-              fi
-              sleep 10
-            done
-            [ "$(gh pr view "${PR_URL}" --json state --jq .state)" = MERGED ] || {
-              echo "FATAL: provenance PR did not merge in time: ${PR_URL}"
-              exit 1
-            }
+            jq -e '.provenance.merged == false' candidate-decision.json > /dev/null
+            echo "Publication and signature verified; provenance review pending: ${PR_URL}; app=${APP}; tag=${INTERNAL_TAG}; digest=${CANDIDATE_DIGEST}; run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Ineligible for consumption until exact provenance merges; deployment remains operator-controlled." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
           git fetch origin main
           git show "origin/main:${RECORD}" > main-provenance.json

@@ -1,4 +1,5 @@
 name: promote
+run-name: ${{ inputs.app }} ${{ inputs.remediation_request_id }}
 
 on:
   workflow_dispatch:
@@ -9,6 +10,7 @@ on:
         required: true
         options:
           # apps-begin
+          - copa-qualification
           - distroless-static
           - hindsight
           - nginx-qualification
@@ -36,6 +38,21 @@ on:
         type: string
         required: false
         default: ""
+      remediation_request_id:
+        description: Opaque automatic remediation request ID
+        type: string
+        required: false
+        default: ""
+      remediation_ref:
+        description: Immutable public artifact requiring remediation
+        type: string
+        required: false
+        default: ""
+      remediation_need_sha256:
+        description: Canonical requested finding identity hash
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -48,15 +65,79 @@ permissions:
 
 concurrency:
   group: promote-${{ inputs.app }}
-  cancel-in-progress: true
+  cancel-in-progress: false
+  queue: max
 
 
 jobs:
+  admission:
+    runs-on: [self-hosted, bocklabs-gh-runner]
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+    outputs:
+      proceed: ${{ steps.verdict.outputs.proceed || steps.prepare.outputs.proceed }}
+      force_repromote: ${{ steps.verdict.outputs.force_repromote }}
+      requested_remediation: ${{ steps.need.outputs.requested_remediation }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      INPUT_APP: ${{ inputs.app }}
+      INPUT_REQUEST_ID: ${{ inputs.remediation_request_id }}
+      INPUT_REF: ${{ inputs.remediation_ref }}
+      INPUT_NEED_SHA256: ${{ inputs.remediation_need_sha256 }}
+      INPUT_FORCE_REPROMOTE: ${{ inputs.force_repromote }}
+      INPUT_RECOVER_TAG: ${{ inputs.recover_tag }}
+      INPUT_RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
+      INPUT_ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+      REMEDIATION_APP_ID: ${{ vars.REMEDIATION_APP_ID }}
+    steps:
+      - name: Checkout admission source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Prepare automatic admission
+        id: prepare
+        run: python3 scripts/remediation_admission.py prepare
+      - name: Upload post-lock readiness
+        id: readiness
+        if: inputs.remediation_request_id != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: remediation-readiness-${{ inputs.remediation_request_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: readiness-artifact
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 30
+      - name: Await authenticated admission
+        id: verdict
+        if: inputs.remediation_request_id != ''
+        run: python3 scripts/remediation_admission.py await --artifact-id '${{ steps.readiness.outputs.artifact-id }}'
+      - name: Export authenticated requested findings
+        id: need
+        if: steps.verdict.outputs.proceed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -ce '{app, ref, need_sha256, findings}' readiness-artifact/verdict.json \
+            | sed 's/^/requested_remediation=/' >> "$GITHUB_OUTPUT"
+      - name: Retain admission receipt
+        if: always() && inputs.remediation_request_id != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: remediation-admission-${{ inputs.remediation_request_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: readiness-artifact
+          if-no-files-found: warn
+          overwrite: false
+          retention-days: 30
+
   candidate:
+    needs: admission
+    if: needs.admission.outputs.proceed == 'true'
     uses: ./.github/workflows/promote-candidate.yaml
     with:
       app: ${{ inputs.app }}
-      force_repromote: ${{ inputs.force_repromote }}
+      force_repromote: ${{ inputs.force_repromote || needs.admission.outputs.force_repromote == 'true' }}
+      requested_remediation: ${{ needs.admission.outputs.requested_remediation }}
       recover_tag: ${{ inputs.recover_tag }}
       recovery_run_id: ${{ inputs.recovery_run_id }}
       accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}
