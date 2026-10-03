@@ -9,7 +9,7 @@ infrastructure details.
 
 The `promote` workflow is dispatch-only. Choose exactly one mode; normal, force,
 recovery, and accepted-resume use the same validation, scanning, policy, artifact,
-publication, and provenance gates. A run is initiated only by an authorized
+publication, and provenance gates. A manual run is initiated by an authorized
 operator; these commands describe the interface, not a claim of authorization.
 
 ```sh
@@ -27,11 +27,45 @@ to resume one exact KEV-blocked candidate after its risk record merges.
 exclusive. Recovery and accepted resume revalidate identity and evidence; they
 never relabel an old run or mutate an existing tag.
 
+## Daily published-image monitoring
+
+`daily-rescan.yaml` queues each current inventory app once daily, or on manual
+dispatch, using the existing release App with **actions write on this repository
+only**. No external verdict or receipt is required. The App installation must
+grant that permission; enabling it is an operator action.
+
+Each `promote.yaml` run with `automatic_rescan=true` selects the latest eligible,
+signed published record from merged `main` **after acquiring the existing app
+concurrency lock**. Its checkout must still equal current `main`; a stale queued
+run fails closed and needs a fresh dispatch. Apps without a merged published
+record skip monitoring; daily runs never perform first publication.
+
+The exact public tag and digest receive a full Trivy report with all severities,
+unfixed vulnerabilities, and package inventory. Immutable run/attempt artifacts
+retain selection, full report, decision counts and SHA256SUMS for 30 days.
+No-action monitoring also exports `trivy-full-report` with the existing generic
+CycloneDX and import-manifest layout. Its legacy `upstream_ref`/`upstream_tag`
+fields identify the actual scanned public package/tag/digest. Remediation runs
+leave that artifact name to the existing publisher, avoiding an artifact collision.
+Missing scanner/package coverage is unsupported, never evidence of a clean image.
+No-fix and unsupported findings stay visible without attempting publication.
+
+Monitoring always runs; automatic remediation requires repository variable
+`REMEDIATION_ENABLED=true` and defaults to disabled. Enabled patch policy permits
+fixable OS findings at any severity. Language findings require a reviewed upstream
+inventory change; Copa remains in stable OS scope. An actionable scan emits its
+canonical finding hash internally and forces the next append-only revision through
+the existing complete candidate and publication gates. Requested CVEs must disappear
+in their ecosystem scope from the final full report. Historical acceptance may be
+monitored, but monitoring never renews it or changes eligibility; the new candidate
+still needs valid current KEV evidence and acceptance. Historical provenance is never
+rewritten, and each new record remains subject to operator review.
+
 ## Fixed run order
 
 Each gate fails the run before downstream work.
 
-Authenticated automatic admission carries the canonical requested finding set
+Producer-owned automatic remediation carries the canonical requested finding set
 and hash into the final full-report evaluator and forces a fresh immutable
 revision from the reviewed original upstream child. Every supplied finding must
 be absent in its ecosystem scope; package/version changes or moving a result
@@ -239,7 +273,7 @@ CVE/package delta, validation evidence and baseline, recovery linkage when
 applicable, and final publication state. Acceptance evidence in provenance carries
 candidate digest, exact KEV set, record path/commit, merged PR and approver,
 tracking issue, and `expires_at`. After expiry, the image and history remain, but
-new promotion and generic consumer eligibility require a fresh valid acceptance.
+new promotion and current eligibility require a fresh valid acceptance.
 
 New records also retain Copa mode (`not-required`, `comprehensive`, or `targeted`)
 and the exact release, CLI source commit and runtime digest from candidate evidence.

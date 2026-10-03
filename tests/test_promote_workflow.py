@@ -221,15 +221,15 @@ class PromoteWorkflowTests(unittest.TestCase):
             self.assertEqual(decision.read_bytes(), original)
             self.assertIn("Ineligible for consumption", summary.read_text())
 
-    def test_authenticated_need_has_no_dispatch_input_and_reaches_final_evaluator(self):
+    def test_scanned_need_has_no_dispatch_input_and_reaches_final_evaluator(self):
         root = yaml.safe_load(self.orchestrator)
         dispatch = root.get("on", root.get(True))["workflow_dispatch"]["inputs"]
         self.assertNotIn("requested_remediation", dispatch)
-        need = next(step for step in root["jobs"]["admission"]["steps"] if step.get("id") == "need")
-        self.assertEqual(need["if"], "steps.verdict.outputs.proceed == 'true'")
-        self.assertIn("readiness-artifact/verdict.json", need["run"])
+        need = next(step for step in root["jobs"]["rescan"]["steps"] if step.get("id") == "decision")
+        self.assertEqual(need["if"], "steps.convert.outcome == 'success'")
+        self.assertIn("scripts/rescan_published.py decide", need["run"])
         self.assertEqual(root["jobs"]["candidate"]["with"]["requested_remediation"],
-                         "${{ needs.admission.outputs.requested_remediation }}")
+                         "${{ needs.rescan.outputs.requested_remediation }}")
         candidate = yaml.safe_load(self.candidate_workflow)["jobs"]["validate"]["steps"]
         policy = next(step for step in candidate if step.get("id") == "policy")
         self.assertEqual(policy["env"]["REQUESTED_REMEDIATION"], "${{ inputs.requested_remediation }}")
@@ -575,8 +575,8 @@ esac
         workflow = yaml.safe_load(self.orchestrator)
         candidate = workflow["jobs"]["candidate"]
         self.assertEqual(candidate["uses"], "./.github/workflows/promote-candidate.yaml")
-        self.assertEqual(candidate["needs"], "admission")
-        self.assertEqual(candidate["if"], "needs.admission.outputs.proceed == 'true'")
+        self.assertEqual(candidate["needs"], "rescan")
+        self.assertEqual(candidate["if"], "needs.rescan.outputs.proceed == 'true'")
         self.assertIn("publish:\n    needs: candidate", self.orchestrator)
         self.assertIn(
             "uses: ./.github/workflows/promote-publish.yaml", self.orchestrator
