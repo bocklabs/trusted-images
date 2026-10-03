@@ -1,0 +1,18 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: copa-qualification
+spec:
+  upstream:
+    ref: mcr.microsoft.com/cbl-mariner/base/core
+    tag: "2.0.20260311"
+    digest: sha256:c833841d2dcfd3081d2ee807050d19368854f70d9b6faef027463e2c6f45ee41
+  destination:
+    package: ghcr.io/bocklabs/copa-qualification
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command: ["/usr/bin/tdnf", "--version"]
+    expectedExit: 0
+    expectedPlatforms: ["linux/amd64"]
+  version: 2

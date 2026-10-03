@@ -164,6 +164,8 @@ jobs:
           INTERNAL_TAG="$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)"
           SELECTED_CHILD="$(jq -er .selected_child_digest candidate-artifact/candidate-decision.json)"
           CANDIDATE_DIGEST="$(jq -er .candidate.digest candidate-artifact/candidate-decision.json)"
+          TRIVY_VERSION="$(sed -n '1s/^Version: //p' candidate-artifact/trivy-db-meta-1.txt)"
+          [[ "${TRIVY_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'FATAL: candidate scanner version is invalid'; exit 1; }
           [ "$(sha256sum candidate-artifact/child-manifest.json | awk '{print $1}')" = "${SELECTED_CHILD#sha256:}" ] || { echo "FATAL: child manifest digest mismatch"; exit 1; }
           [ "$(sha256sum candidate-artifact/candidate-manifest.json | awk '{print $1}')" = "${CANDIDATE_DIGEST#sha256:}" ] || { echo "FATAL: candidate manifest digest mismatch"; exit 1; }
           CANDIDATE_BLOB="candidate-artifact/candidate-oci/blobs/sha256/${CANDIDATE_DIGEST#sha256:}"
@@ -177,6 +179,7 @@ jobs:
             echo "skip_copy=${TAG_SKIP}"
             echo "selected_child_digest=${SELECTED_CHILD}"
             echo "candidate_digest=${CANDIDATE_DIGEST}"
+            echo "trivy_version=${TRIVY_VERSION}"
             echo "decision_sha256=$(sha256sum candidate-artifact/candidate-decision.json | awk '{print $1}')"
           } >> "$GITHUB_OUTPUT"
           cp candidate-artifact/trivy-full.json candidate-artifact/trivy-full.cdx.json \
@@ -383,6 +386,7 @@ jobs:
           INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
           SKIP_COPY: ${{ steps.candidate.outputs.skip_copy }}
           CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
+          TRIVY_VERSION: ${{ steps.candidate.outputs.trivy_version }}
         run: |
           set -euo pipefail
           IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
@@ -402,7 +406,7 @@ jobs:
             --sbom-bundle sbom-bundle.json \
             --predicate trivy-full.cdx.json \
             --out signing-evidence.json
-          jq --arg trivy 0.74.0 '. + {trivy_version: $trivy}' signing-evidence.json > signing-evidence.next.json
+          jq --arg trivy "${TRIVY_VERSION}" '. + {trivy_version: $trivy}' signing-evidence.json > signing-evidence.next.json
           mv signing-evidence.next.json signing-evidence.json
 
       - name: Write the verified publication digest into the decision
@@ -638,6 +642,7 @@ jobs:
         shell: bash
         env:
           APP: ${{ steps.entry.outputs.app }}
+          TRIVY_VERSION: ${{ steps.candidate.outputs.trivy_version }}
           SKIP_COPY: ${{ steps.candidate.outputs.skip_copy }}
           UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
           UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
@@ -725,7 +730,7 @@ jobs:
             --run-url "${RUN_URL}" \
             --workflow promote \
             --dispatched-by "${DISPATCHED_BY}" \
-            --trivy-version 0.74.0 \
+            --trivy-version "${TRIVY_VERSION}" \
             --trivy-action-sha ed142fd0673e97e23eac54620cfb913e5ce36c25 \
             --skopeo-version "${SKOPEO_VERSION}" \
             --skopeo-image-digest "${SKOPEO_IMAGE##*@}" \
@@ -772,7 +777,7 @@ jobs:
           client-id: ${{ secrets.RELEASE_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_KEY }}
 
-      - name: Open provenance PR and enable merge
+      - name: Open provenance PR for operator review
         id: pr
         if: ${{ !cancelled() && steps.app-token.outcome == 'success' && (steps.signing-gate.outcome == 'success' || steps.quarantine-decision.outcome == 'success') }}
         shell: bash
@@ -855,7 +860,6 @@ jobs:
             -f conclusion=success \
             -f output.title="inventory valid (provenance)" \
             -f output.summary="validate_inventory.py passed on the provenance branch"
-          gh pr merge --merge "${PR_URL}"
           echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Verify merged provenance and publish the final decision
@@ -872,16 +876,9 @@ jobs:
           set -euo pipefail
           RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
           if [ -n "${PR_URL}" ]; then
-            for _ in $(seq 1 60); do
-              if [ "$(gh pr view "${PR_URL}" --json state --jq .state)" = MERGED ]; then
-                break
-              fi
-              sleep 10
-            done
-            [ "$(gh pr view "${PR_URL}" --json state --jq .state)" = MERGED ] || {
-              echo "FATAL: provenance PR did not merge in time: ${PR_URL}"
-              exit 1
-            }
+            jq -e '.provenance.merged == false' candidate-decision.json > /dev/null
+            echo "Publication and signature verified; provenance review pending: ${PR_URL}; app=${APP}; tag=${INTERNAL_TAG}; digest=${CANDIDATE_DIGEST}; run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Ineligible for consumption until exact provenance merges; deployment remains operator-controlled." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
           git fetch origin main
           git show "origin/main:${RECORD}" > main-provenance.json

@@ -165,6 +165,20 @@ def warning_rows(final: dict, fixable: dict, decision: dict) -> list[dict]:
     return warnings
 
 
+def copa_evidence(args: argparse.Namespace, decision: dict) -> dict:
+    copa = decision["copa"].copy()
+    evidence = copa.pop("evidence", None)
+    if evidence is None:
+        if copa["original_child_input"]:
+            raise ValueError("new patched provenance requires candidate Copa mode evidence")
+        evidence = {"mode": "not-required", "release": None, "source_sha": None,
+                    "runtime_digest": None, "limitation": None}
+    promotion.validate_copa_evidence(evidence, copa["original_child_input"])
+    if value_of(args, "--copa-version") != (evidence["release"] or ""):
+        raise ValueError("--copa-version differs from candidate Copa release evidence")
+    return copa | evidence
+
+
 def policy_evidence(
     args: argparse.Namespace, decision: dict
 ) -> tuple[dict, list[dict], dict]:
@@ -174,6 +188,8 @@ def policy_evidence(
     final = promotion.findings(
         load_json(value_of(args, "--final-report"), FINAL_REPORT), FINAL_REPORT
     )
+    if "remediation" in decision and promotion.unresolved_requested(decision["remediation"], final):
+        raise ValueError("requested remediation remains in the final full report")
     fixable = promotion.findings(
         load_json(value_of(args, "--fixable-report"), FIXABLE_REPORT),
         FIXABLE_REPORT,
@@ -255,12 +271,15 @@ def policy_evidence(
         "catalogVersion": receipt["catalog"]["catalog_version"],
         "dateReleased": receipt["catalog"]["date_released"],
     }
+    copa = copa_evidence(args, decision)
     return (
         {
             "kev": {"matches": matched, "catalog": catalog},
             "acceptance": provenance_acceptance(args, acceptance),
             "patching": decision["patching"],
-            "copa": decision["copa"],
+            "copa": copa,
+            **({"remediation": {"need_sha256": decision["remediation"]["need_sha256"]}}
+               if "remediation" in decision else {}),
             "supersedes": decision["supersedes"],
         },
         warning_rows(final, fixable, decision),

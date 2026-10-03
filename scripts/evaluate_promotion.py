@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
@@ -11,6 +12,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from univers.versions import AlpineLinuxVersion, DebianVersion, RpmVersion
+from remediation_admission import findings_hash, REF
 
 SCHEMA = "trusted-images.bocklabs.dev/candidate-decision-v1"
 ACCEPTANCE_SCHEMA = "trusted-images.bocklabs.dev/risk-acceptance-v1"
@@ -59,6 +61,9 @@ VERSION_CLASSES = {
     "almalinux": RpmVersion,
     "amazon": RpmVersion,
     "oracle": RpmVersion,
+    "cbl-mariner": RpmVersion,
+    "azurelinux": RpmVersion,
+    "sles": RpmVersion,
 }
 
 
@@ -66,6 +71,8 @@ def parse_args():
     resolve_only = "--resolve-only" in sys.argv
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", required=not resolve_only)
+    parser.add_argument("--requested-remediation", default=os.getenv("REQUESTED_REMEDIATION", ""))
+    parser.add_argument("--copa-evidence", default=os.getenv("COPA_EVIDENCE", ""))
     parser.add_argument("--source-sha", required=not resolve_only)
     parser.add_argument("--run-id", required=not resolve_only)
     parser.add_argument("--run-attempt", required=not resolve_only, type=int)
@@ -293,6 +300,42 @@ def findings(report: dict, label: str, os_only=False):
                 raise ValueError(f"{label} has conflicting duplicate finding: {key}")
             normalized[key] = metadata
     return normalized
+
+
+def requested_remediation(value, app):
+    if not isinstance(value, dict) or set(value) != {"app", "ref", "need_sha256", "findings"}:
+        raise ValueError("invalid requested remediation schema")
+    if value["app"] != app or not isinstance(value["ref"], str) or not REF.fullmatch(value["ref"]) or not value["ref"].startswith(f"ghcr.io/bocklabs/{app}:"):
+        raise ValueError("requested remediation application/reference mismatch")
+    if findings_hash(value["findings"]) != value["need_sha256"]:
+        raise ValueError("requested remediation need hash mismatch")
+    return value
+
+
+def unresolved_requested(request, final):
+    scopes = {(item["class"], item["type"], item["id"]) for item in request["findings"]}
+    return sorted(key for key, metadata in final.items()
+                  if (metadata["class"], metadata["type"], key.rsplit("|", 1)[1]) in scopes)
+
+
+def validate_copa_evidence(value, ran):
+    if not isinstance(value, dict) or set(value) != {"mode", "release", "source_sha", "runtime_digest", "limitation"}:
+        raise ValueError("invalid Copa mode evidence schema")
+    mode = value["mode"]
+    if mode not in ("not-required", "comprehensive", "targeted") or (mode != "not-required") != ran:
+        raise ValueError("Copa mode does not match original-child execution")
+    if not ran:
+        if any(value[key] is not None for key in ("release", "source_sha", "runtime_digest", "limitation")):
+            raise ValueError("not-required Copa mode cannot claim execution evidence")
+    elif (value["release"] != "0.15.0" or value["source_sha"] != "bce7b4305e378558f20420aa2ca48686cec850d0"
+          or value["runtime_digest"] != "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b"):
+        raise ValueError("Copa release/source/runtime differs from reviewed pin")
+    limitation = value["limitation"]
+    if mode == "targeted" and (not isinstance(limitation, str) or not 0 < len(limitation) <= 512 or any(ord(c) < 32 for c in limitation)):
+        raise ValueError("targeted Copa mode requires exact-release limitation")
+    if mode != "targeted" and limitation is not None:
+        raise ValueError("Copa limitation applies only to targeted mode")
+    return value
 
 
 def package_version(package: dict) -> str:
@@ -1036,7 +1079,13 @@ def build_decision(
         no_fix,
         final,
     )
-    return {
+    remediation = getattr(args, "requested_remediation", "")
+    request = requested_remediation(json.loads(remediation), args.app) if remediation else None
+    unresolved = unresolved_requested(request, final) if request else []
+    if unresolved:
+        eligible = False
+        reason = "requested remediation unresolved: " + ",".join(unresolved)
+    decision = {
         "schema": SCHEMA,
         "eligible": eligible,
         "reason": reason,
@@ -1065,6 +1114,12 @@ def build_decision(
         "provenance": {"merged": False},
         "supersedes": {"higher_upstream": False, "original_child_selected": False},
     }
+    if request:
+        decision["remediation"] = request
+    evidence = getattr(args, "copa_evidence", "")
+    if evidence:
+        decision["copa"]["evidence"] = validate_copa_evidence(json.loads(evidence), copa_ran)
+    return decision
 
 
 def validate_string_list(value, field):
@@ -1138,7 +1193,7 @@ def validate_decision_candidate(decision):
         raise ValueError("decision.before is invalid")
     validate_string_list(decision["before"]["fixable_os"], "before.fixable_os")
     if (
-        set(decision["copa"]) != {"classification", "original_child_input"}
+        set(decision["copa"]) - {"evidence"} != {"classification", "original_child_input"}
         or decision["copa"]["classification"] not in COPA_CLASSIFICATIONS
         or not isinstance(decision["copa"]["original_child_input"], bool)
     ):
@@ -1361,7 +1416,7 @@ def validate_decision_publication(decision):
 def validate_decision(decision):
     if not isinstance(decision, dict):
         raise ValueError("decision must be an object")
-    if set(decision) != DECISION_FIELDS:
+    if set(decision) - {"remediation"} != DECISION_FIELDS:
         raise ValueError("decision has unknown or missing top-level fields")
     validate_decision_identity(decision)
     validate_decision_candidate(decision)
@@ -1370,6 +1425,10 @@ def validate_decision(decision):
     validate_decision_patching(decision)
     validate_decision_policy(decision)
     validate_decision_publication(decision)
+    if "evidence" in decision["copa"]:
+        validate_copa_evidence(decision["copa"]["evidence"], decision["copa"]["original_child_input"])
+    if "remediation" in decision:
+        requested_remediation(decision["remediation"], decision["app"])
 
 
 def run_resolve_only(args) -> int:
@@ -1404,11 +1463,22 @@ def validate_candidate_inputs(args):
     child_digest = select_child(
         index, Path(args.child_manifest), Path(args.child_config)
     )
-    return index, child_digest, index_digest
+    candidate_digest = args.candidate_digest or child_digest
+    if not DIGEST_RE.fullmatch(candidate_digest):
+        raise ValueError("--candidate-digest must be a sha256 digest")
+    return child_digest, index_digest, candidate_digest
+
+
+def validate_patch_coverage(before_packages, after_packages):
+    if not before_packages or not after_packages or before_packages.keys() - after_packages.keys():
+        raise ValueError(
+            "patch coverage requires nonempty before/after OS inventories "
+            "with every original package identity preserved"
+        )
 
 
 def evaluate_candidate(args):
-    _, child_digest, index_digest = validate_candidate_inputs(args)
+    child_digest, index_digest, candidate_digest = validate_candidate_inputs(args)
     full_path = Path(args.full_report)
     after_path = Path(args.after_full_report) if args.after_full_report else None
     receipt_path = Path(args.scan_receipt) if args.scan_receipt else None
@@ -1416,9 +1486,6 @@ def evaluate_candidate(args):
         raise ValueError(
             "--after-full-report and --scan-receipt must be supplied together"
         )
-    candidate_digest = args.candidate_digest or child_digest
-    if not DIGEST_RE.fullmatch(candidate_digest):
-        raise ValueError("--candidate-digest must be a sha256 digest")
     patch_reason(args)
     full_report = load_json(full_path, "full Trivy report")
     os_metadata = full_report.get("Metadata", {}).get("OS")
@@ -1457,8 +1524,11 @@ def evaluate_candidate(args):
         if after_report is not None
         else before_packages
     )
+    if after_report is not None and (
+        candidate_digest != child_digest or args.copa_classification == "succeeded"
+    ):
+        validate_patch_coverage(before_packages, after_packages)
     kev = kev_evidence(Path(args.kev), args.kev_fetched_at, args.now)
-    candidate_digest = args.candidate_digest or child_digest
     final_ids = set(after if after is not None else full)
     kev_cves = {
         item["cveID"]

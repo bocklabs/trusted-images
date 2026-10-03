@@ -178,7 +178,7 @@ else:
 
     def test_provenance_writeback_preserves_existing_main_record(self):
         steps = yaml.safe_load((ROOT / ".github/workflows/promote-publish.yaml").read_text())["jobs"]["promote"]["steps"]
-        writeback = next(step["run"] for step in steps if step["name"] == "Open provenance PR and enable merge")
+        writeback = next(step["run"] for step in steps if step["name"] == "Open provenance PR for operator review")
         writeback = writeback.replace("${{ steps.app-token.outputs.token }}", "test-token")
         record = self.dir / "provenance/example/v1.json"
         record.parent.mkdir(parents=True)
