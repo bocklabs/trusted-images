@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       requested_remediation:
-        description: Authenticated admission payload; unavailable to root dispatch
+        description: Producer scan finding payload; unavailable to root dispatch
         type: string
         required: false
         default: ""
@@ -114,7 +114,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "${REQUESTED_REMEDIATION}" ]; then
-            [ "${FORCE_REPROMOTE}" = true ] && [ -z "${RECOVER_TAG}${RECOVERY_RUN_ID}${ACCEPTED_CANDIDATE_RUN_ID}" ] || { echo "FATAL: admitted remediation requires fresh allocation"; exit 1; }
+            [ "${FORCE_REPROMOTE}" = true ] && [ -z "${RECOVER_TAG}${RECOVERY_RUN_ID}${ACCEPTED_CANDIDATE_RUN_ID}" ] || { echo "FATAL: requested remediation requires fresh allocation"; exit 1; }
             PYTHONPATH=scripts python3 -c 'import json, os; from evaluate_promotion import requested_remediation; requested_remediation(json.loads(os.environ["REQUESTED_REMEDIATION"]), os.environ["APP"])'
           fi
           if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then

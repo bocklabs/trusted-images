@@ -1,5 +1,5 @@
 name: promote
-run-name: ${{ inputs.app }} ${{ inputs.remediation_request_id }}
+run-name: ${{ inputs.app }} ${{ inputs.automatic_rescan && 'daily rescan' || 'promotion' }}
 
 on:
   workflow_dispatch:
@@ -38,21 +38,11 @@ on:
         type: string
         required: false
         default: ""
-      remediation_request_id:
-        description: Opaque automatic remediation request ID
-        type: string
+      automatic_rescan:
+        description: Rescan the latest merged published image before automatic remediation
+        type: boolean
         required: false
-        default: ""
-      remediation_ref:
-        description: Immutable public artifact requiring remediation
-        type: string
-        required: false
-        default: ""
-      remediation_need_sha256:
-        description: Canonical requested finding identity hash
-        type: string
-        required: false
-        default: ""
+        default: false
 
 permissions:
   contents: write
@@ -70,74 +60,128 @@ concurrency:
 
 
 jobs:
-  admission:
+  rescan:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 40
     permissions:
       contents: read
-      actions: read
-      checks: read
     outputs:
-      proceed: ${{ steps.verdict.outputs.proceed || steps.prepare.outputs.proceed }}
-      force_repromote: ${{ steps.verdict.outputs.force_repromote }}
-      requested_remediation: ${{ steps.need.outputs.requested_remediation }}
-    env:
-      GH_TOKEN: ${{ github.token }}
-      INPUT_APP: ${{ inputs.app }}
-      INPUT_REQUEST_ID: ${{ inputs.remediation_request_id }}
-      INPUT_REF: ${{ inputs.remediation_ref }}
-      INPUT_NEED_SHA256: ${{ inputs.remediation_need_sha256 }}
-      INPUT_FORCE_REPROMOTE: ${{ inputs.force_repromote }}
-      INPUT_RECOVER_TAG: ${{ inputs.recover_tag }}
-      INPUT_RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
-      INPUT_ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
-      REMEDIATION_APP_ID: ${{ vars.REMEDIATION_APP_ID }}
+      proceed: ${{ steps.decision.outputs.proceed || steps.entry.outputs.proceed }}
+      force_repromote: ${{ steps.decision.outputs.force_repromote }}
+      requested_remediation: ${{ steps.decision.outputs.requested_remediation }}
     steps:
-      - name: Checkout admission source
+      - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Prepare automatic admission
-        id: prepare
-        run: python3 scripts/remediation_admission.py prepare
-      - name: Upload post-lock readiness
-        id: readiness
-        if: inputs.remediation_request_id != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: remediation-readiness-${{ inputs.remediation_request_id }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: readiness-artifact
-          if-no-files-found: error
-          overwrite: false
-          retention-days: 30
-      - name: Await authenticated admission
-        id: verdict
-        if: inputs.remediation_request_id != ''
-        run: python3 scripts/remediation_admission.py await --artifact-id '${{ steps.readiness.outputs.artifact-id }}'
-      - name: Export authenticated requested findings
-        id: need
-        if: steps.verdict.outputs.proceed == 'true'
+          fetch-depth: 0
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+      - name: Set up uv
+        if: inputs.automatic_rescan
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
+      - name: Set up Python
+        if: inputs.automatic_rescan
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version-file: .python-version
+      - name: Install requirements
+        if: inputs.automatic_rescan
+        run: uv pip install --system -r requirements.txt
+      - name: Select latest merged published image under app lock
+        id: entry
+        env:
+          AUTOMATIC_RESCAN: ${{ inputs.automatic_rescan }}
+          INPUT_APP: ${{ inputs.app }}
+          INPUT_FORCE_REPROMOTE: ${{ inputs.force_repromote }}
+          INPUT_RECOVER_TAG: ${{ inputs.recover_tag }}
+          INPUT_RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
+          INPUT_ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+        run: |
+          set -euo pipefail
+          if [ "$AUTOMATIC_RESCAN" = true ]; then
+            git fetch origin main
+            python3 scripts/rescan_published.py select
+          else
+            echo 'proceed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Scan full published image
+        id: scan
+        if: steps.entry.outputs.ref != ''
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        env:
+          TRIVY_IMAGE_SRC: remote
+          TRIVY_EXIT_ON_EOL: '1'
+        with:
+          version: v0.75.0
+          image-ref: ${{ steps.entry.outputs.ref }}
+          scanners: vuln
+          format: json
+          output: published-rescan/trivy-full.json
+          ignore-unfixed: 'false'
+          list-all-pkgs: 'true'
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          timeout: 30m0s
+      - name: Convert published full report to CycloneDX with parity check
+        id: convert
+        if: steps.scan.outcome == 'success'
+        working-directory: published-rescan
         shell: bash
         run: |
           set -euo pipefail
-          jq -ce '{app, ref, need_sha256, findings}' readiness-artifact/verdict.json \
-            | sed 's/^/requested_remediation=/' >> "$GITHUB_OUTPUT"
-      - name: Retain admission receipt
-        if: always() && inputs.remediation_request_id != ''
+          trivy convert --format cyclonedx --scanners vuln --output trivy-full.cdx.json trivy-full.json
+          test -s trivy-full.json
+          test -s trivy-full.cdx.json
+          jq -e '.bomFormat == "CycloneDX" and (.components | type == "array") and ([.components[] | select(.type == "operating-system")] | length <= 1)' trivy-full.cdx.json > /dev/null
+          JSON_PACKAGES="$(jq -c '[((.Results // [])[] | .Packages[]?) | {name: .Name, purl: .Identifier.PURL}] | sort_by(.name, .purl)' trivy-full.json)"
+          CDX_PACKAGES="$(jq -c '[.components[] | select(.type == "library") | {name, purl}] | sort_by(.name, .purl)' trivy-full.cdx.json)"
+          [ "${JSON_PACKAGES}" = "${CDX_PACKAGES}" ] || { echo "FATAL: CycloneDX library components differ from Trivy packages"; exit 1; }
+          JSON_FINDINGS="$(jq -c '[((.Results // [])[] | .Vulnerabilities[]?) | {purl: (.PkgIdentifier.PURL // .PkgID), id: .VulnerabilityID}] | unique_by([.purl, .id])' trivy-full.json)"
+          CDX_FINDINGS="$(jq -c '(.components | map(select(.type == "library") | {key: ."bom-ref", value: .purl}) | from_entries) as $packages | [.vulnerabilities[]? as $v | $v.affects[]? | {purl: ($packages[.ref] // error("unknown SBOM package reference")), id: $v.id}] | unique_by([.purl, .id])' trivy-full.cdx.json)"
+          [ "${JSON_FINDINGS}" = "${CDX_FINDINGS}" ] || { echo "FATAL: CycloneDX finding identities differ from Trivy findings"; exit 1; }
+          JSON_COUNT="$(jq 'length' <<< "${JSON_FINDINGS}")"
+          CDX_COUNT="$(jq 'length' <<< "${CDX_FINDINGS}")"
+          {
+            echo "cyclonedx findings in JSON report: ${JSON_COUNT}"
+            echo "cyclonedx findings in CDX file:   ${CDX_COUNT}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+      - name: Decide producer remediation need
+        id: decision
+        if: steps.convert.outcome == 'success'
+        env:
+          REMEDIATION_ENABLED: ${{ vars.REMEDIATION_ENABLED }}
+        run: python3 scripts/rescan_published.py decide
+      - name: Retain monitoring report for generic findings import
+        if: steps.convert.outcome == 'success' && steps.decision.outputs.proceed != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: remediation-admission-${{ inputs.remediation_request_id }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: readiness-artifact
-          if-no-files-found: warn
+          name: trivy-full-report
+          path: |
+            published-rescan/trivy-full.json
+            published-rescan/trivy-full.cdx.json
+            published-rescan/secobserve-upload.json
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 30
+      - name: Retain immutable published-image scan
+        if: always() && inputs.automatic_rescan
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: published-rescan-${{ inputs.app }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: published-rescan
+          if-no-files-found: error
           overwrite: false
           retention-days: 30
 
   candidate:
-    needs: admission
-    if: needs.admission.outputs.proceed == 'true'
+    needs: rescan
+    if: needs.rescan.outputs.proceed == 'true'
     uses: ./.github/workflows/promote-candidate.yaml
     with:
       app: ${{ inputs.app }}
-      force_repromote: ${{ inputs.force_repromote || needs.admission.outputs.force_repromote == 'true' }}
-      requested_remediation: ${{ needs.admission.outputs.requested_remediation }}
+      force_repromote: ${{ inputs.force_repromote || needs.rescan.outputs.force_repromote == 'true' }}
+      requested_remediation: ${{ needs.rescan.outputs.requested_remediation }}
       recover_tag: ${{ inputs.recover_tag }}
       recovery_run_id: ${{ inputs.recovery_run_id }}
       accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}

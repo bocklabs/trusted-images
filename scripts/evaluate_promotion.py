@@ -12,7 +12,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from univers.versions import AlpineLinuxVersion, DebianVersion, RpmVersion
-from remediation_admission import findings_hash, REF
+from finding_identity import findings_hash, REF
 
 SCHEMA = "trusted-images.bocklabs.dev/candidate-decision-v1"
 ACCEPTANCE_SCHEMA = "trusted-images.bocklabs.dev/risk-acceptance-v1"

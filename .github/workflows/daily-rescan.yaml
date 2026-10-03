@@ -1,0 +1,45 @@
+name: daily-rescan
+
+on:
+  schedule:
+    - cron: '43 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-rescan
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout merged inventory
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+      - name: Mint own-repository dispatch token
+        id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ secrets.RELEASE_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-actions: write
+      - name: Queue each inventory app under its promotion lock
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for entry in inventory/*/image.yaml; do
+            app="${entry#inventory/}"
+            app="${app%/image.yaml}"
+            [[ "$app" =~ ^[a-z0-9][a-z0-9-]{0,79}$ ]] || exit 1
+            gh workflow run promote.yaml --repo "$REPO" --ref main -f app="$app" -F automatic_rescan=true
+          done
