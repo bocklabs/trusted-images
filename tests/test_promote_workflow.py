@@ -913,6 +913,12 @@ elif args[0] == 'run':
             "nothing to patch": "no-fix",
             "end of life distro": "eol",
             "unsupported OS; GPG signature verification failed": "gpg",
+            "GPG error: signatures could not be verified: NO_PUBKEY ABC123": "gpg",
+            "KEYEXPIRED 1234567890": "gpg",
+            "REVKEYSIG ABC123": "gpg",
+            "The following signatures were invalid": "gpg",
+            "dpkg: warning: files list for libgpg-error0 and gpgv missing\n"
+            "tzdata post-installation script failed: No config file found": "unknown",
             "unexpected panic": "unknown",
         }
         with tempfile.TemporaryDirectory() as tmp:

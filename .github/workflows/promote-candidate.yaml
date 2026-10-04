@@ -745,7 +745,7 @@ jobs:
           classification=succeeded
           if [ "${COPA_OUTCOME}" != success ]; then
             classification=unknown
-            if grep -Eqi 'gpg|signature verification' copa-diagnostics.txt; then
+            if grep -Eqi 'GPG error:|NO_PUBKEY|EXPKEYSIG|REVKEYSIG|KEYEXPIRED|BADSIG|signatures? were invalid|signature verification (failed|error)' copa-diagnostics.txt; then
               classification=gpg
             elif grep -Eqi 'end.of.life|eol' copa-diagnostics.txt; then
               classification=eol
