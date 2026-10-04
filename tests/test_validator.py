@@ -126,7 +126,7 @@ class ValidatorTests(unittest.TestCase):
             "detail": "No OS package manager",
         }
         self.assert_valid(entry)
-        cases = (
+        cases: tuple[tuple[dict[str, str], str], ...] = (
             ({}, "missing"),
             ({"class": "unsupported"}, "missing"),
             ({"detail": "No OS package manager"}, "missing"),

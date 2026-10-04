@@ -8,9 +8,13 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from typing import ClassVar
 
 import yaml
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from resolve_internal_tag import select_internal_tag
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ORCHESTRATOR_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "promote.yaml"
@@ -26,12 +30,7 @@ DIGEST_D = "sha256:" + "d" * 64
 
 
 class TagAllocationTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        sys.path.insert(0, str(REPO_ROOT))
-        from scripts.resolve_internal_tag import select_internal_tag
-
-        cls.select = staticmethod(select_internal_tag)
+    select = staticmethod(select_internal_tag)
 
     def observation(
         self,
@@ -153,7 +152,7 @@ class TagAllocationTests(unittest.TestCase):
             self.select("v1.2.3", DIGEST_C, DIGEST_A, [], True, "v1.2.3-bocklabs.2")
 
     def test_malformed_or_incomplete_observations_fail_closed(self) -> None:
-        invalid = (
+        invalid: tuple[object, ...] = (
             None,
             {},
             [{"tag": "v1.2.3-bocklabs.1"}],
@@ -200,6 +199,11 @@ class TagAllocationTests(unittest.TestCase):
 
 
 class PromoteWorkflowTests(unittest.TestCase):
+    orchestrator: ClassVar[str]
+    candidate_workflow: ClassVar[str]
+    publisher_workflow: ClassVar[str]
+    workflow: ClassVar[str]
+
     def test_provenance_handoff_never_merges_or_waits_for_review(self):
         self.assertNotIn("gh pr merge", self.publisher_workflow)
         self.assertNotIn("sleep 10", self.publisher_workflow)
@@ -347,25 +351,24 @@ class PromoteWorkflowTests(unittest.TestCase):
             base = {"schema": "trusted-images.bocklabs.dev/provenance-v1", "app": "example",
                     "internal": {"package": "ghcr.io/bocklabs/example", "tag": "v1", "digest": DIGEST_A},
                     "policy": {"eligible": True}}
-            for name, signing, eligible, reuse, expected in (
-                ("unsigned", None, True, "true", "false"),
-                ("quarantined", {"result": "fail", "failure": "verification failed"}, False, "true", "false"),
-                ("signed", {"result": "pass"}, True, "true", "true"),
-                ("fresh", None, True, "false", "true"),
-                ("malformed", [], True, "true", None),
+            for name, fields, eligible, reuse, force, expected in (
+                ("unsigned", {}, True, "true", "false", "false"),
+                ("quarantined", {"signing": {"result": "fail", "failure": "verification failed"}}, False, "true", "false", "false"),
+                ("signed", {"signing": {"result": "pass"}}, True, "true", "false", "true"),
+                ("fresh", {}, True, "false", "true", "true"),
+                ("malformed", {"signing": []}, True, "true", "false", None),
             ):
                 with self.subTest(name=name):
                     value = json.loads(json.dumps(base))
                     value["policy"]["eligible"] = eligible
-                    if signing is not None:
-                        value["signing"] = signing
+                    value.update(fields)
                     record.write_text(json.dumps(value))
                     original_record = record.read_bytes()
                     output, summary = root / "output", root / "summary"
                     output.write_text("")
                     summary.write_text("")
                     env = {**os.environ, "APP": "example", "SKIP_COPY": reuse,
-                           "FORCE_REPROMOTE": "true" if name == "fresh" else "false",
+                           "FORCE_REPROMOTE": force,
                            "RECOVER_TAG": "", "ACCEPTED_CANDIDATE_RUN_ID": "",
                            "INTERNAL_TAG": "v1", "CANDIDATE_DIGEST": DIGEST_A,
                            "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(summary)}

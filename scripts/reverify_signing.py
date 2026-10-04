@@ -124,6 +124,26 @@ def verify(image, signature_hash, attestation_hash, identity):
     print(f"reverify: pass {image}")
 
 
+def reverify(args):
+    if args.history_only:
+        check_history(args.history_only)
+        return
+    identity = load_identity(ROOT / "config/signing-identity.json")
+    if args.record:
+        record = json.loads(args.record.read_text())
+        records = [signed_record(record, args.record, identity)]
+    else:
+        records = signed_records(args.base, identity)
+    for entry in records:
+        verify(*entry, identity)
+    if args.out:
+        args.out.write_text(json.dumps({
+            "result": "pass", "reused_provenance": str(args.record),
+            "original_run_url": record["pipeline"]["run_url"],
+            "image": records[0][0], **identity,
+        }) + "\n")
+
+
 def main():
     parser = argparse.ArgumentParser()
     mode = parser.add_mutually_exclusive_group(required=True)
@@ -135,23 +155,7 @@ def main():
     if args.out and not args.record:
         parser.error("--out requires --record")
     try:
-        if args.history_only:
-            check_history(args.history_only)
-            return 0
-        identity = load_identity(ROOT / "config/signing-identity.json")
-        if args.record:
-            record = json.loads(args.record.read_text())
-            records = [signed_record(record, args.record, identity)]
-        else:
-            records = signed_records(args.base, identity)
-        for entry in records:
-            verify(*entry, identity)
-        if args.out:
-            args.out.write_text(json.dumps({
-                "result": "pass", "reused_provenance": str(args.record),
-                "original_run_url": record["pipeline"]["run_url"],
-                "image": records[0][0], **identity,
-            }) + "\n")
+        reverify(args)
     except (OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError) as error:
         if isinstance(error, subprocess.CalledProcessError):
             reason = f"cosign {error.cmd[1]} failed"

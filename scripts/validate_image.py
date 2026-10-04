@@ -512,7 +512,7 @@ def local_candidate_error(
     return None
 
 
-def initial_evidence(args, command: str, env_map: dict) -> dict:
+def initial_evidence(args, command: list[str], env_map: dict) -> dict:
     return {
         "app": args.app,
         "validation": {
@@ -668,8 +668,8 @@ def main() -> int:
     index_path = Path(args.index_file)
     try:
         index = load_manifest(index_path)
-    except ValueError as reason:
-        return fail(str(reason))
+    except ValueError as exc:
+        return fail(str(exc))
     ev["validation"]["manifest_annotations"] = index.get("annotations") or {}
 
     baseline_ref_digest = (

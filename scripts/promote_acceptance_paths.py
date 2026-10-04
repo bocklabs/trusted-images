@@ -8,6 +8,8 @@ from pathlib import Path
 spec = importlib.util.spec_from_file_location(
     "evaluate_promotion", "scripts/evaluate_promotion.py"
 )
+if spec is None or spec.loader is None:
+    raise ImportError("cannot load scripts/evaluate_promotion.py")
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 report = module.findings(

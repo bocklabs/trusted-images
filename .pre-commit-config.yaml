@@ -5,6 +5,17 @@ ci:
 repos:
   # File hygiene + parse checks. Matches the tracked file surface:
   # Python scripts/tests, GitHub Actions + inventory YAML, renovate.json, Markdown.
+
+  - repo: https://github.com/rohaquinlop/complexipy-pre-commit
+    rev: v5.1.0
+    hooks:
+        - id: complexipy
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.4.0
+    hooks:
+    -   id: mypy
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
