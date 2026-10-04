@@ -203,7 +203,7 @@ def policy_evidence(
         raise ValueError("decision fixable findings do not match the fixable report")
 
     before_ids, final_ids = set(before), set(final)
-    expected_delta = {
+    expected_delta: dict[str, list[str] | dict[str, list[str]]] = {
         "resolved": sorted(before_ids - final_ids),
         "remaining": sorted(before_ids & final_ids),
         "introduced": sorted(final_ids - before_ids),

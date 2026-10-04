@@ -78,6 +78,11 @@
   ],
   "packageRules": [
     {
+      "description": "Automerge safe non-major updates through required validation.",
+      "matchUpdateTypes": ["pin", "pinDigest", "digest", "minor", "patch"],
+      "automerge": true
+    },
+    {
       "description": "Inventory images receive stable major and minor releases only.",
       "matchFileNames": ["inventory/**/image.yaml"],
       "matchUpdateTypes": ["patch", "digest", "pin", "pinDigest"],

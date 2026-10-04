@@ -300,12 +300,15 @@ def candidate_tree(root: Path, decision_value: dict | None = None) -> None:
     checksums(root)
 
 
-def github_api_fixtures(path: str) -> tuple[dict, dict, dict, dict, dict]:
+def github_api_fixtures(path: str) -> tuple[
+    dict[str, str], list[dict[str, str]], dict[str, object],
+    list[dict[str, object]], dict[str, object], dict[str, object],
+]:
     content_sha = "b" * 40
     commit_sha = "c" * 40
     content = {"path": path, "sha": content_sha, "encoding": "base64", "content": ""}
     commits = [{"sha": commit_sha}]
-    commit = {"sha": commit_sha, "files": [{"filename": path, "sha": content_sha}]}
+    commit: dict[str, object] = {"sha": commit_sha, "files": [{"filename": path, "sha": content_sha}]}
     pull = {
         "number": 42,
         "html_url": "https://github.com/bocklabs/trusted-images/pull/42",

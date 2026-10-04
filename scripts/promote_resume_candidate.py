@@ -106,6 +106,8 @@ decision = json.loads(decision_path.read_text(encoding="utf-8"))
 module_spec = importlib.util.spec_from_file_location(
     "evaluate_promotion", "scripts/evaluate_promotion.py"
 )
+if module_spec is None or module_spec.loader is None:
+    raise ImportError("cannot load scripts/evaluate_promotion.py")
 module = importlib.util.module_from_spec(module_spec)
 module_spec.loader.exec_module(module)
 module.validate_decision(decision)

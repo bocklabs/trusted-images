@@ -11,6 +11,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 
+import yaml
+
 from univers.versions import AlpineLinuxVersion, DebianVersion, RpmVersion
 from finding_identity import findings_hash, REF
 
@@ -18,7 +20,13 @@ SCHEMA = "trusted-images.bocklabs.dev/candidate-decision-v1"
 ACCEPTANCE_SCHEMA = "trusted-images.bocklabs.dev/risk-acceptance-v1"
 PLATFORM = "linux/amd64"
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
-TRIVY_VERSION = "0.74.0"
+TRIVY_VERSION = next(
+    step["with"]["version"].removeprefix("v")
+    for step in yaml.safe_load(
+        (Path(__file__).resolve().parents[1] / ".github/workflows/promote-candidate.yaml").read_text()
+    )["jobs"]["validate"]["steps"]
+    if step.get("id") == "scanbefore"
+)
 TRIVY_ACTION_SHA = "ed142fd0673e97e23eac54620cfb913e5ce36c25"
 COPA_CLASSIFICATIONS = (
     "not-required",
@@ -246,7 +254,8 @@ def finding_identity(result: dict, finding: dict, label: str) -> tuple[str, dict
     package = finding.get("PkgName")
     severity = finding.get("Severity")
     source = finding.get("SeveritySource", "")
-    if not all(isinstance(value, str) and value for value in (cve, package, severity)):
+    if (not isinstance(cve, str) or not isinstance(package, str)
+            or not isinstance(severity, str) or not all((cve, package, severity))):
         raise ValueError(f"{label} finding lacks VulnerabilityID, PkgName, or Severity")
     if not isinstance(source, str):
         raise ValueError(f"{label}.SeveritySource must be a string")
@@ -264,7 +273,7 @@ def finding_identity(result: dict, finding: dict, label: str) -> tuple[str, dict
 
 def finding_metadata(
     result: dict, finding: dict, severity: str, source: str, label: str
-) -> dict:
+) -> dict[str, str]:
     metadata = {
         "class": result.get("Class", ""),
         "type": result.get("Type", ""),
@@ -285,7 +294,7 @@ def finding_metadata(
 
 def findings(report: dict, label: str, os_only=False):
     results = validate_report_results(report, label, os_only)
-    normalized = {}
+    normalized: dict[str, dict[str, str]] = {}
     for result_number, result in enumerate(results):
         vulnerabilities = result.get("Vulnerabilities") or []
         if not isinstance(vulnerabilities, list):
@@ -421,7 +430,7 @@ def add_packages(inventory: dict, packages: list, ecosystem: str, label: str) ->
 
 
 def package_inventory(report: dict, label: str):
-    inventory = {}
+    inventory: dict[tuple[str, str], dict[str, str]] = {}
     os_family = report_os_family(report, label)
     for result in validate_report_results(report, label, False):
         if result.get("Class") != "os-pkgs":
@@ -900,7 +909,7 @@ def patch_reason(args):
 
 
 def finding_delta(full_ids: set, final_ids: set, fixable_identities: set) -> dict:
-    delta = {
+    delta: dict[str, list[str] | dict[str, list[str]]] = {
         "resolved": sorted(full_ids - final_ids),
         "remaining": sorted(full_ids & final_ids),
         "introduced": sorted(final_ids - full_ids),
@@ -995,8 +1004,9 @@ def decision_reason(
         return f"blocked: validation result is {args.validation_result}"
     if failed_classification:
         return f"blocked: Copa classification is {classification}"
-    if patched and (delta["introduced"] or delta["unresolved_fixable"] or downgrades):
-        return patched_integrity_reason(delta, downgrades)
+    integrity_reason = patched_integrity_reason(delta, downgrades) if patched else None
+    if integrity_reason is not None:
+        return integrity_reason
     if fixable_ids and not patched and args.patch_policy != "disabled":
         return "blocked: fixable OS findings require the Copa patch path"
     if matched and acceptance is None:
@@ -1056,15 +1066,15 @@ def build_decision(
     copa_ran = patched or (
         bool(fixable_ids) and args.patch_policy == "enabled" and failed_classification
     )
-    eligible = (
-        args.validation_result == "pass"
-        and not failed_classification
-        and (args.patch_policy == "disabled" or not fixable_ids or patched)
-        and not delta["introduced"]
-        and (not patched or not delta["unresolved_fixable"])
-        and not downgrades
-        and (not matched or acceptance is not None)
-    )
+    eligible = all((
+        args.validation_result == "pass",
+        not failed_classification,
+        any((args.patch_policy == "disabled", not fixable_ids, patched)),
+        not delta["introduced"],
+        not (patched and delta["unresolved_fixable"]),
+        not downgrades,
+        not matched or acceptance is not None,
+    ))
     reason = decision_reason(
         args,
         delta,

@@ -320,13 +320,13 @@ class ProvenanceTests(unittest.TestCase):
                 self.signing_evidence.write_text(json.dumps(evidence))
                 self.assert_fails_closed(self.run_generator(self.flags()), path)
 
-        for group, path, value in (("signature", "attachment_sha256", "bad"),
+        for group, path, field_value in (("signature", "attachment_sha256", "bad"),
                                    ("sbom_attestation", "predicate_sha256", ""),
                                    ("signature", "rekor", {}),
                                    ("sbom_attestation", "rekor", {})):
             with self.subTest(group=group, path=path):
                 evidence = json.loads(json.dumps(original))
-                evidence[group][path] = value
+                evidence[group][path] = field_value
                 self.signing_evidence.write_text(json.dumps(evidence))
                 self.assert_fails_closed(self.run_generator(self.flags()), path)
 

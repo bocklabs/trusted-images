@@ -12,9 +12,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EVALUATOR = REPO_ROOT / "scripts" / "evaluate_promotion.py"
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+
+TRIVY_SCAN = next(step for step in yaml.safe_load(
+    (REPO_ROOT / ".github/workflows/promote-candidate.yaml").read_text()
+)["jobs"]["validate"]["steps"] if step.get("id") == "scanbefore")
+TRIVY_VERSION = TRIVY_SCAN["with"]["version"].removeprefix("v")
 
 
 def fixture_digest(value):
@@ -77,7 +84,7 @@ def report(
     family = result_type if os_family is None else os_family
     return {
         "SchemaVersion": 2,
-        "Trivy": {"Version": "0.74.0"},
+        "Trivy": {"Version": TRIVY_VERSION},
         "ArtifactName": artifact_name,
         "ArtifactType": "container_image",
         "Metadata": {
@@ -644,42 +651,26 @@ class PolicyTests(unittest.TestCase):
     def test_acceptance_expiry_digest_kevs_and_issue_fail_closed(self):
         write_json(self.full, report([vuln("CVE-2026-0001"), vuln("CVE-2026-0002")]))
         write_json(self.kev, kev_feed(("CVE-2026-0001", "CVE-2026-0002")))
-        cases = {
-            "expired": {"expires_at": "2026-09-14T00:30:00Z"},
-            "candidate digest": {"candidate_digest": PATCHED_DIGEST},
-            "KEV set": {"kevs": ["CVE-2026-0001"]},
-            "closed issue": {"issue_state": "closed"},
-            "issue is a PR": {"issue_is_pull_request": True},
-        }
-        for label, change in cases.items():
+        cases = (
+            ("expired", {"expiresAt": "2026-09-14T00:30:00Z"}, {}, "expired"),
+            ("candidate digest", {"candidateDigest": PATCHED_DIGEST}, {}, "candidate digest"),
+            ("KEV set", {"kevs": ["CVE-2026-0001"]}, {}, "KEV set"),
+            ("closed issue", {}, {"state": "closed"}, "tracking issue"),
+            ("issue is a PR", {}, {"is_pull_request": True}, "tracking issue"),
+        )
+        for label, record_changes, issue_changes, expected in cases:
             with self.subTest(case=label):
                 record = acceptance_record(kevs=("CVE-2026-0001", "CVE-2026-0002"))
                 evidence = github_evidence(record)
-                if "expires_at" in change:
-                    record["expiresAt"] = change["expires_at"]
-                if "candidate_digest" in change:
-                    record["candidateDigest"] = change["candidate_digest"]
-                if "kevs" in change:
-                    record["kevs"] = change["kevs"]
+                record.update(record_changes)
                 self.acceptance = write_json(self.acceptance, record)
                 evidence["record_sha256"] = hashlib.sha256(
                     self.acceptance.read_bytes()
                 ).hexdigest()
-                for key, value in change.items():
-                    if key in ("issue_state", "issue_is_pull_request"):
-                        evidence["issue"][
-                            "state" if key == "issue_state" else "is_pull_request"
-                        ] = value
+                evidence["issue"].update(issue_changes)
                 self.github = write_json(self.github, evidence)
                 result = self.run_policy()
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-                expected = {
-                    "expired": "expired",
-                    "candidate digest": "candidate digest",
-                    "KEV set": "KEV set",
-                    "closed issue": "tracking issue",
-                    "issue is a PR": "tracking issue",
-                }[label]
                 self.assertIn(expected, result.stdout + result.stderr)
                 if label == "expired":
                     self.assertFalse(self.out.exists())
