@@ -9,12 +9,12 @@ repos:
   - repo: https://github.com/rohaquinlop/complexipy-pre-commit
     rev: v5.1.0
     hooks:
-        - id: complexipy
+      - id: complexipy
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v2.4.0
     hooks:
-    -   id: mypy
+      - id: mypy
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
