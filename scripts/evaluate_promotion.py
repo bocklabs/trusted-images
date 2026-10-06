@@ -443,7 +443,7 @@ def add_packages(inventory: dict, packages: list, ecosystem: str, label: str) ->
             key = (ecosystem, name, version, metadata["arch"])
         if key in inventory:
             raise ValueError(
-                f"{label} has conflicting duplicate package identity (ambiguous package identity): {ecosystem}/{name}"
+                f"{label} has conflicting duplicate package identity (ambiguous package identity): {'/'.join(key)}"
             )
         try:
             VERSION_CLASSES[ecosystem](version)

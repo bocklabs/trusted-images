@@ -16,6 +16,7 @@ from urllib.parse import quote, unquote
 
 KEYRING = "/usr/share/keyrings/ubuntu-archive-keyring.gpg"
 WALL = "var/lib/chisel/manifest.wall"
+TRIVY_VERSION = "0.75.0"
 TRIVY_SHA256 = "93f9da8e4ba5e0c1c76d8234ed2494cf9afb0a96fd21953e424bb795f3299b8e"
 
 
@@ -177,6 +178,7 @@ def deb_paragraphs(stream):
                 fields = {}
             continue
         if line.startswith(" "):
+            require(fields and last, "invalid signed Debian package continuation")
             fields[last] += "\n" + line.rstrip()
         else:
             last, separator, value = line.rstrip().partition(":")
@@ -192,11 +194,16 @@ def signed_indexes(directory, suite, codename, architecture):
     text = release.read_text()
     require(f"\nCodename: {codename}\n" in text and "\nOrigin: Ubuntu\n" in text
             and f"\nSuite: {suite}\n" in text, "signed release distro mismatch")
-    hashes = text.split("\nSHA256:\n", 1)[1].split("\n-----BEGIN PGP SIGNATURE-----", 1)[0]
+    section = text.split("\nSHA256:\n", 1)
+    require(len(section) == 2, "signed release has no SHA256 section")
+    signature = section[1].split("\n-----BEGIN PGP SIGNATURE-----", 1)
+    require(len(signature) == 2, "signed release has no signature section")
+    hashes = signature[0]
     for component in ("main", "universe"):
         relative = f"{component}/binary-{architecture}/Packages.xz"
-        entries = [line.split() for line in hashes.splitlines() if line.strip().endswith(" " + relative)]
-        require(len(entries) == 1 and len(entries[0]) == 3, "missing signed index hash")
+        rows = (line.split() for line in hashes.splitlines())
+        entries = [row for row in rows if len(row) == 3 and row[2] == relative]
+        require(len(entries) == 1, "missing signed index hash")
         expected, size, _ = entries[0]
         index = Path(directory) / f"{suite}-{component}-Packages.xz"
         require(file_digest(index) == expected and index.stat().st_size == int(size),
@@ -307,7 +314,7 @@ def enrich(inputs, sbom, scan, sbom_path):
     require(scan.get("Trivy") == raw.get("Trivy"), "native scanner version mismatch")
     require(scan.get("Metadata", {}).get("OS") == raw["Metadata"]["OS"], "native scan OS mismatch")
     supplied = scan_packages(sbom, scan)
-    require(scan.get("Trivy", {}).get("Version") == "0.75.0"
+    require(scan.get("Trivy", {}).get("Version") == TRIVY_VERSION
             and file_digest(inputs["trivy"]) == TRIVY_SHA256, "untrusted native scanner binary")
     scanner = Path(inputs["trivy"])
     scanner.chmod(scanner.stat().st_mode | 0o100)
@@ -412,6 +419,12 @@ def main():
     parser.add_argument("--output", type=Path)
     parser.add_argument("--capsule", type=Path)
     args = parser.parse_args()
+    required = {"probe": ("inputs",), "prepare": ("inputs", "output"),
+                "enrich": ("inputs", "sbom", "scan", "output", "capsule"),
+                "verify": ("capsule",)}[args.operation]
+    missing = [name for name in required if getattr(args, name) is None]
+    if missing:
+        parser.error(f"--{missing[0]} is required for {args.operation}")
     if args.operation == "verify":
         verify_capsule(args.capsule)
         return

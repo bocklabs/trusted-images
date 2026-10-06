@@ -26,7 +26,7 @@ def image_inputs(oci, reference, report, cache, trivy):
 def fetch_archive(root, stamp, codename, architecture):
     native.require(re.fullmatch(r"[a-z0-9]+", codename) and architecture == "amd64", "unsupported native archive")
     directory = root / "archives" / stamp
-    directory.mkdir(parents=True)
+    directory.mkdir(parents=True, exist_ok=True)
     for suite in (codename, codename + "-updates", codename + "-security"):
         paths = {suite + "-InRelease": "InRelease"}
         paths.update({f"{suite}-{part}-Packages.xz": f"{part}/binary-{architecture}/Packages.xz"
@@ -56,6 +56,10 @@ def main():
     inputs = image_inputs(args.oci, args.reference, args.report, args.cache, trivy)
     info = native.probe(inputs)
     native.require(info["native"], "Ubuntu image has no supported package inventory or native Chisel manifest")
+    if args.fixable:
+        native.require(args.fixable.is_file(), "missing mandatory fixable scan report; rebuild candidate")
+    if args.previous:
+        native.require((args.previous / "archives").is_dir(), "missing native before archive evidence; rebuild candidate")
     root = args.evidence.resolve()
     native.require(root.name in ("native-before", "native-after", "native-published"), "invalid native evidence directory")
     if root.exists():
@@ -87,8 +91,9 @@ def main():
         fixed = native.read_json(args.fixable)
         native.require(fixed["Metadata"] == raw["Metadata"] and fixed["ArtifactName"] == raw["ArtifactName"], "fixable scan image mismatch")
         shutil.copyfile(args.fixable, root / "raw-fixable.json")
-        result = next(row for row in native.read_json(root / "report.json")["Results"] if row.get("Class") == "os-pkgs")
-        target = next(row for row in fixed["Results"] if row.get("Class") == "os-pkgs")
+        result = next((row for row in native.read_json(root / "report.json")["Results"] if row.get("Class") == "os-pkgs"), None)
+        target = next((row for row in fixed.get("Results", []) if row.get("Class") == "os-pkgs"), None)
+        native.require(result is not None and target is not None, "fixable scan has no Ubuntu OS result")
         target["Packages"] = result["Packages"]
         target["Vulnerabilities"] = [item for item in result["Vulnerabilities"] if item.get("FixedVersion")]
         args.fixable.write_text(json.dumps(fixed, indent=2) + "\n")

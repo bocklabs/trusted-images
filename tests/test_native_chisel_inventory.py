@@ -7,6 +7,7 @@ import json
 import lzma
 from pathlib import Path
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -77,12 +78,43 @@ def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False):
             (root / f"{suite}-{component}-Packages.xz").write_bytes(index_bytes)
             hashes.append(f" {native.digest(index_bytes)} {len(index_bytes)} {component}/binary-amd64/Packages.xz")
         (root / (suite + "-InRelease")).write_text(
-            f"Signed fixture\nOrigin: Ubuntu\nSuite: {suite}\nCodename: noble\nSHA256:\n" + "\n".join(hashes))
+            f"Signed fixture\nOrigin: Ubuntu\nSuite: {suite}\nCodename: noble\nSHA256:\n" + "\n".join(hashes)
+            + "\n-----BEGIN PGP SIGNATURE-----\nfixture\n-----END PGP SIGNATURE-----\n")
     return {"reference": reference, "manifest": str(manifest_path), "config": str(config_path),
             "layers": [str(layer_path)], "raw_report": str(raw_path), "archives": [str(root)]}
 
 
 class NativeChiselInventoryTests(unittest.TestCase):
+    def test_debian_continuations_require_an_existing_field(self):
+        for text in (" continuation\n", "Package: example\n\n continuation\n"):
+            with self.subTest(text=text), self.assertRaisesRegex(ValueError, "continuation"):
+                list(native.deb_paragraphs(io.StringIO(text)))
+        self.assertEqual(list(native.deb_paragraphs(io.StringIO("Description: first\n second\n"))),
+                         [{"Description": "first\n second"}])
+
+    def test_signed_release_requires_hash_signature_and_exact_index_path(self):
+        for old, new, message in (("SHA256:", "SHA512:", "no SHA256"),
+                                  ("-----BEGIN PGP SIGNATURE-----", "missing signature", "no signature"),
+                                  ("main/binary-amd64/Packages.xz", "foo-main/binary-amd64/Packages.xz", "missing signed index")):
+            with tempfile.TemporaryDirectory() as directory:
+                fixture(Path(directory))
+                release = Path(directory) / "noble-InRelease"
+                release.write_text(release.read_text().replace(old, new))
+                with self.subTest(message=message), patch.object(native.subprocess, "run"), \
+                        self.assertRaisesRegex(ValueError, message):
+                    list(native.signed_indexes(directory, "noble", "noble", "amd64"))
+
+    def test_cli_reports_missing_operation_arguments_before_reading_inputs(self):
+        for arguments, flag in ((["probe"], "inputs"),
+                                (["prepare", "--inputs", "unused"], "output"),
+                                (["enrich", "--inputs", "unused", "--sbom", "unused", "--scan", "unused", "--output", "unused"], "capsule"),
+                                (["verify"], "capsule")):
+            with self.subTest(operation=arguments[0]):
+                result = subprocess.run([sys.executable, str(SPEC.origin), *arguments], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn(f"--{flag} is required", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
     def test_prepare_checks_image_inventory_and_signed_source_identity(self):
         with tempfile.TemporaryDirectory() as directory:
             inputs = fixture(Path(directory))
