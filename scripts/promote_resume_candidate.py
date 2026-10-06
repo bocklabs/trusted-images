@@ -10,6 +10,8 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
+from evaluate_promotion import validate_native_inventory
+
 DECISION_FILENAME = "candidate-decision.json"
 MANIFEST_FILENAME = "candidate-manifest.json"
 CHILD_FILENAME = "child-manifest.json"
@@ -48,7 +50,7 @@ optional = {
     "before-labels.json",
     "after-labels.json",
 }
-allowed_prefixes = ("candidate-oci/", "validation-logs/")
+allowed_prefixes = ("candidate-oci/", "validation-logs/", "native-before/", "native-after/")
 files = [path for path in root.rglob("*") if path.is_file() or path.is_symlink()]
 relatives = []
 for path in files:
@@ -178,6 +180,13 @@ for name in mandatory | optional:
     if source.is_file():
         shutil.copyfile(source, name)
 shutil.copytree(root / "candidate-oci", "candidate-oci", dirs_exist_ok=True)
+for directory in ("native-before", "native-after"):
+    if (root / directory).is_dir():
+        shutil.copytree(root / directory, directory, dirs_exist_ok=True)
+for name in ("trivy-before-full.json", "trivy-after-full.json", "trivy-full.json"):
+    path = root / name
+    if path.is_file():
+        validate_native_inventory(json.loads(path.read_text()), path)
 shutil.copyfile(root / DECISION_FILENAME, "original-candidate-decision.json")
 with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open(
     "a", encoding="utf-8"

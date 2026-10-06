@@ -118,7 +118,7 @@ recognizes exactly `alpine`, `debian`, `ubuntu`, `cbl-mariner`, `azurelinux`,
 | Debian / Ubuntu native apt and dpkg | Native manager | Full independent inventory and current repositories required. |
 | Debian external status directory | External archives and encoded status entries | Preserve scanner-visible status representation. |
 | Ubuntu apt-less full dpkg status | External archives, scripts/triggers disabled | Residual administrative state and lifecycle-dependent updates rejected. |
-| Ubuntu native Chisel manifest | Re-cut slices, preserve unmanaged paths | **BLOCKED:** Trivy cannot independently inventory native packages. Empty scans cannot qualify this route. Only public archives; Pro/ESM/FIPS/private archives unsupported. |
+| Ubuntu native Chisel manifest | Re-cut slices, preserve unmanaged paths | Native inventory capsules bind real OCI files and manifest rows to signed Ubuntu package indexes and a frozen-DB Trivy SBOM scan. Empty image scans alone cannot qualify this route. Only public archives; Pro/ESM/FIPS/private archives unsupported. |
 | CBL-Mariner / Azure Linux / CentOS / Oracle / Red Hat / Rocky / Amazon / AlmaLinux native RPM | tdnf/dnf/yum/microdnf | Each distinct tooling route needs real full-gate evidence. |
 | RPM DB present, manager absent | dnf chroot with target repositories | Compatible tooling and complete independent scan inventory required. |
 | RPM external manifests | External archive merge and metadata | Independently verify actual package identity and versions. |
@@ -151,17 +151,32 @@ images retain their existing acceptance handling.
 Real immutable-child Trivy 0.74.0 scans establish RPM package components for
 `cbl-mariner` (69 packages), `azurelinux` (79) and `sles` 16.0 (105); these exact
 identifiers use the existing RPM comparator. The observed SLES 15.6 scan is EOL
-and remains blocked. The SLES 16 report contains conflicting `gpg-pubkey`
-identities and is rejected by the unchanged ambiguity gate. Epoch/release
-components, unchanged versions and downgrades
-are checked independently. These inventory scans establish comparator inputs,
+and remains blocked. SLES 16 signing keys retain their actual version, architecture
+and PURL under immutable RPM key identities. Every key remains in the inventory;
+key removal, duplicate corruption and ordinary package ambiguity still block.
+Epoch/release components, unchanged versions and downgrades are checked independently. These inventory scans establish comparator inputs,
 not successful patch qualification. No guessed openSUSE aliases are admitted.
-The observed Arch scan has no OS metadata or OS-package inventory, only language
-findings: Arch remains a scanner-coverage gap, with no admitted Arch alias.
+Trivy still lacks Arch OS inventory. Independent Syft/Grype evidence establishes
+137 real pacman packages and six unfixed advisories, but Arch report integration
+and before/after qualification remain unfinished; no guessed Arch alias is admitted.
 Unknown evidence and incomplete patch coverage fail closed; upstream recognition
 or synthetic fixtures do not count as family qualification.
 The pinned runtime/BuildKit execution and each live layout still require isolated
 hosted qualification; local command-contract checks do not establish that proof.
+
+Native Chisel capsules preserve the genuine container-image metadata and language
+results. The adapter verifies ordered OCI layers and native file hashes, matches
+package archive digests against signed Ubuntu snapshots, and preserves exact
+source package names/versions when constructing CycloneDX. The reviewed Trivy
+0.75.0 binary and frozen database replay the scan before OS inventory admission.
+Candidate and published-image scans retain portable capsules and raw evidence;
+missing, tampered or incomplete evidence blocks. An independently inventoried
+before-image is not proof of patched-image qualification.
+
+The distroless-static baseline uses the supported Debian 13 upstream with
+`tzdata 2026c`, retaining enabled Copa policy. This upstream refresh does not fix
+Copa 0.15.0's external-status-directory Debconf installer defect; that path needs
+a stable release containing the upstream repair and fresh qualification.
 
 ## Identity and reuse
 

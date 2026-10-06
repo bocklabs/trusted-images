@@ -11,7 +11,7 @@ import subprocess
 
 import yaml
 
-from evaluate_promotion import findings, validate_report_results
+from evaluate_promotion import findings, validate_native_inventory, validate_report_results
 from finding_identity import canonical, findings_hash, REF, require
 from promote_signing_gate import load_identity
 from reverify_signing import signed_record
@@ -115,6 +115,7 @@ def package_coverage(results):
 
 def decide(selection, report, enabled):
     require(report.get("ArtifactName") == selection["ref"], "scan reference differs from selected published image")
+    validate_native_inventory(report, ARTIFACT / "trivy-full.json")
     results = validate_report_results(report, "published full report", False)
     normalized = findings(report, "published full report")
     require(report.get("Metadata", {}).get("OS", {}).get("EOSL") is not True, "published image is end-of-life")

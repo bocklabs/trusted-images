@@ -1,0 +1,199 @@
+from compression import zstd
+import copy
+import gzip
+import importlib.util
+import io
+import json
+import lzma
+from pathlib import Path
+import subprocess
+import tarfile
+import tempfile
+import unittest
+from unittest.mock import patch
+
+SPEC = importlib.util.spec_from_file_location(
+    "native_chisel_inventory", Path(__file__).resolve().parents[1] / "scripts/native_chisel_inventory.py"
+)
+if SPEC is None or SPEC.loader is None:
+    raise ImportError("Cannot load native Chisel inventory validator")
+native = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(native)
+
+
+def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False):
+    release = b'ID=ubuntu\nVERSION_ID="24.04"\nVERSION_CODENAME=noble\n'
+    library = b"real fixture content"
+    packages = [
+        {"kind": "package", "name": "base-files", "version": "13ubuntu10.2", "arch": "amd64", "sha256": "a" * 64},
+        {"kind": "package", "name": "libc6", "version": "2.39-0ubuntu8.4", "arch": "amd64", "sha256": "b" * 64},
+    ]
+    paths = [("/etc/os-release", "base-files_release", release),
+             ("/usr/lib/libc.so", "libc6_libs", library), ("/" + native.WALL, "base-files_release", None)]
+    rows = packages[:1] if missing else packages.copy()
+    rows.extend({"kind": "slice", "name": name} for name in ("base-files_release", "libc6_libs"))
+    for name, owner, content in paths:
+        rows.append({"kind": "content", "path": name, "slice": owner})
+        row = {"kind": "path", "path": name, "mode": "0644", "slices": [owner]}
+        if content is not None:
+            row.update(sha256=native.digest(content), size=len(content))
+        rows.append(row)
+    header = {"jsonwall": "1.0", "schema": "1.0", "count": len(rows) + 1}
+    wall = zstd.compress("\n".join(json.dumps(row) for row in [header, *rows]).encode())
+    layer = io.BytesIO()
+    with tarfile.open(fileobj=layer, mode="w") as archive:
+        for name, _, content in paths:
+            data = wall if content is None else content
+            entry = tarfile.TarInfo(name.lstrip("/"))
+            entry.size = len(data)
+            entry.mode = 0o644
+            archive.addfile(entry, io.BytesIO(data))
+    compressed = gzip.compress(layer.getvalue())
+    config = {"architecture": "amd64", "created": "2025-05-27T12:00:00Z",
+              "rootfs": {"diff_ids": ["sha256:" + native.digest(layer.getvalue())]}}
+    config_path = root / "config.json"
+    config_path.write_text(json.dumps(config))
+    manifest = {"config": {"digest": "sha256:" + native.file_digest(config_path)},
+                "layers": [{"digest": "sha256:" + native.digest(compressed), "size": len(compressed)}]}
+    manifest_path = root / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest))
+    reference = "example.test/native@sha256:" + native.file_digest(manifest_path)
+    raw = {"ArtifactType": "container_image", "ArtifactName": reference,
+           "Trivy": {"Version": "0.75.0"},
+           "Metadata": {"ImageConfig": config, "ImageID": manifest["config"]["digest"],
+                        "DiffIDs": config["rootfs"]["diff_ids"], "OS": {"Family": "ubuntu", "Name": "24.04"}},
+           "Results": [{"Class": "os-pkgs", "Type": "ubuntu", "Target": "native (ubuntu 24.04)"},
+                       {"Class": "lang-pkgs", "Type": "dotnet-core", "Packages": [{"Name": "runtime"}]}]}
+    raw_path = root / "raw.json"
+    raw_path.write_text(json.dumps(raw))
+    layer_path = root / "layer.tar.gz"
+    layer_path.write_bytes(compressed)
+    index_text = (f"Package: base-files\nVersion: 13ubuntu10.2\nArchitecture: amd64\nSHA256: {'a' * 64}\n\n"
+                  f"Package: libc6\nVersion: 2.39-0ubuntu8.4\nArchitecture: amd64\nSHA256: {'b' * 64}\nSource: {source}\n\n")
+    index_bytes = lzma.compress(index_text.encode())
+    for suite in ("noble", "noble-updates", "noble-security"):
+        hashes = []
+        for component in ("main", "universe"):
+            (root / f"{suite}-{component}-Packages.xz").write_bytes(index_bytes)
+            hashes.append(f" {native.digest(index_bytes)} {len(index_bytes)} {component}/binary-amd64/Packages.xz")
+        (root / (suite + "-InRelease")).write_text(
+            f"Signed fixture\nOrigin: Ubuntu\nSuite: {suite}\nCodename: noble\nSHA256:\n" + "\n".join(hashes))
+    return {"reference": reference, "manifest": str(manifest_path), "config": str(config_path),
+            "layers": [str(layer_path)], "raw_report": str(raw_path), "archives": [str(root)]}
+
+
+class NativeChiselInventoryTests(unittest.TestCase):
+    def test_prepare_checks_image_inventory_and_signed_source_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            inputs = fixture(Path(directory))
+            with patch.object(native.subprocess, "run") as gpgv:
+                sbom = native.prepare(inputs)
+            gpgv.assert_any_call(["gpgv", "--keyring", native.KEYRING,
+                                 str(Path(directory) / "noble-InRelease")], check=True, capture_output=True)
+            self.assertEqual(gpgv.call_count, 3)
+            components = sbom["components"]
+            self.assertEqual([(row["name"], row["version"]) for row in components],
+                             [("ubuntu", "24.04"), ("base-files", "13ubuntu10.2"), ("libc6", "2.39-0ubuntu8.4")])
+            self.assertEqual(components[2]["properties"], [
+                {"name": "aquasecurity:trivy:SrcName", "value": "glibc"},
+                {"name": "aquasecurity:trivy:SrcVersion", "value": "2.39-0ubuntu8"},
+            ])
+            self.assertEqual(components[1]["properties"][0]["value"], "base-files")
+            self.assertEqual(components[2]["purl"],
+                             "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.4?arch=amd64&distro=ubuntu-24.04")
+            self.assertEqual(native.probe(inputs)["codename"], "noble")
+
+    def test_tampered_or_incomplete_inventory_fails_closed(self):
+        cases = (("OCI", "OCI manifest digest mismatch"), ("index", "signed package index digest mismatch"),
+                 ("source", "invalid signed source identity"), ("missing", "native package/slice inventory mismatch"))
+        for case, reason in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                inputs = fixture(root, source="not a source" if case == "source" else "glibc", missing=case == "missing")
+                if case == "OCI":
+                    Path(inputs["manifest"]).write_text("{}")
+                if case == "index":
+                    (root / "noble-main-Packages.xz").write_bytes(b"tampered")
+                with patch.object(native.subprocess, "run"), self.assertRaisesRegex(ValueError, reason):
+                    native.prepare(inputs)
+
+    def test_signature_provider_failure_propagates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            inputs = fixture(Path(directory))
+            failure = subprocess.CalledProcessError(1, ["gpgv"], stderr=b"invalid signature")
+            with patch.object(native.subprocess, "run", side_effect=failure), \
+                    self.assertRaises(subprocess.CalledProcessError):
+                native.prepare(inputs)
+
+    def test_enrichment_preserves_container_metadata_and_language_results(self):
+        with tempfile.TemporaryDirectory() as directory:
+            inputs = fixture(Path(directory))
+            raw = native.read_json(inputs["raw_report"])
+            original = copy.deepcopy(raw)
+            supplied = {"Packages": [{"Name": "libc6", "SrcName": "glibc"}],
+                        "Vulnerabilities": [{"VulnerabilityID": "CVE-2025-0395", "PkgName": "libc6"}]}
+            result = native.fill_os_result(raw, supplied)
+        self.assertEqual(raw, original)
+        self.assertEqual(result["ArtifactType"], "container_image")
+        self.assertEqual(result["Metadata"], original["Metadata"])
+        self.assertEqual(result["Results"][1], original["Results"][1])
+        self.assertEqual(result["Results"][0]["Target"], "native (ubuntu 24.04)")
+        self.assertEqual(result["Results"][0]["Packages"], [{"Name": "libc6", "SrcName": "glibc"}])
+        with self.assertRaisesRegex(ValueError, "empty Ubuntu"):
+            native.fill_os_result(result, supplied)
+
+    def test_scan_inventory_and_untrusted_binary_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = fixture(root)
+            with patch.object(native.subprocess, "run"):
+                sbom = native.prepare(inputs)
+            packages = [
+                {"Name": "base-files", "Version": "13ubuntu10.2", "SrcName": "base-files",
+                 "SrcVersion": "13ubuntu10.2", "Digest": "sha256:" + "a" * 64,
+                 "Identifier": {"PURL": "pkg:deb/ubuntu/base-files@13ubuntu10.2?arch=amd64&distro=ubuntu-24.04"}},
+                {"Name": "libc6", "Version": "2.39-0ubuntu8.4", "SrcName": "glibc",
+                 "SrcVersion": "2.39-0ubuntu8", "Digest": "sha256:" + "b" * 64,
+                 "Identifier": {"PURL": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.4?arch=amd64&distro=ubuntu-24.04"}},
+            ]
+            scan = {"ArtifactType": "cyclonedx", "Trivy": {"Version": "0.75.0"},
+                    "Metadata": {"OS": {"Family": "ubuntu", "Name": "24.04"}},
+                    "Results": [{"Class": "os-pkgs", "Type": "ubuntu", "Packages": packages}]}
+            self.assertEqual(len(native.scan_packages(sbom, scan)["Packages"]), 2)
+            for field in ("SrcName", "Digest", "missing"):
+                invalid = copy.deepcopy(scan)
+                rows = invalid["Results"][0]["Packages"]
+                if field == "missing":
+                    rows.pop()
+                else:
+                    rows[1][field] = "tampered"
+                with self.subTest(field=field), self.assertRaises(ValueError):
+                    native.scan_packages(sbom, invalid)
+            scanner = root / "untrusted-trivy"
+            scanner.write_bytes(b"untrusted executable")
+            inputs["trivy"] = str(scanner)
+            with patch.object(native.subprocess, "run") as gpgv, \
+                    self.assertRaisesRegex(ValueError, "untrusted native scanner binary"):
+                native.enrich(inputs, sbom, scan, root / "sbom.json")
+            self.assertTrue(all(call.args[0][0] == "gpgv" for call in gpgv.call_args_list))
+
+    def test_capsule_rejects_parent_paths_before_opening_inputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            capsule = Path(directory) / "capsule.json"
+            capsule.write_text(json.dumps({"schema": "native-chisel-capsule-v1",
+                                           "inputs": {"manifest": "../outside.json"}}))
+            with self.assertRaisesRegex(ValueError, "unsafe native capsule paths"):
+                native.verify_capsule(capsule)
+
+    def test_opaque_upper_layer_removes_lower_files(self):
+        files = {"obsolete": (tarfile.TarInfo("obsolete"), b"lower layer")}
+        with tempfile.TemporaryDirectory() as directory:
+            upper = Path(directory) / "upper.tar"
+            with tarfile.open(upper, "w") as archive:
+                archive.addfile(tarfile.TarInfo(".wh..wh..opq"), io.BytesIO())
+                entry = tarfile.TarInfo("replacement")
+                entry.size = 5
+                archive.addfile(entry, io.BytesIO(b"upper"))
+            native.overlay_layer(files, upper)
+        self.assertEqual(set(files), {"replacement"})
+        self.assertEqual(files["replacement"][1], b"upper")

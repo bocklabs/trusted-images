@@ -497,6 +497,10 @@ class ResumeTests(PromotionScriptTestCase):
         root = self.tmp / "resume-download"
         blocker = decision(eligible=False, reason="missing_kev_acceptance")
         candidate_tree(root, blocker)
+        for directory in ("native-before", "native-after"):
+            (root / directory).mkdir()
+            (root / directory / "raw-image.json").write_text("retained native source bytes\n")
+        checksums(root)
         run = {"head_sha": SOURCE_SHA, "run_attempt": 1}
         write_json(self.tmp / "resume-run.json", run)
         (self.tmp / "inventory" / APP).mkdir(parents=True)
@@ -511,6 +515,9 @@ class ResumeTests(PromotionScriptTestCase):
             env={"APP": APP, "GITHUB_OUTPUT": str(output)},
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for directory in ("native-before", "native-after"):
+            self.assertEqual((self.tmp / directory / "raw-image.json").read_bytes(),
+                             (root / directory / "raw-image.json").read_bytes())
         self.assertEqual(
             output.read_text().splitlines(),
             [
@@ -916,7 +923,12 @@ class DecisionTests(PromotionScriptTestCase):
         )
 
     def test_candidate_artifact_accepts_a_complete_checksum_bound_tree(self) -> None:
-        candidate_tree(self.tmp / "candidate-artifact")
+        root = self.tmp / "candidate-artifact"
+        candidate_tree(root)
+        for directory in ("native-before", "native-after"):
+            (root / directory).mkdir()
+            (root / directory / "raw-image.json").write_text("retained native source bytes\n")
+        checksums(root)
         result = self.run_script("promote_candidate_artifact.py")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

@@ -117,10 +117,25 @@ jobs:
           scanners: vuln
           format: json
           output: published-rescan/trivy-full.json
+          cache-dir: ${{ github.workspace }}/.cache/trivy
           ignore-unfixed: 'false'
           list-all-pkgs: 'true'
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           timeout: 30m0s
+      - name: Inventory native Chisel published packages
+        if: steps.scan.outcome == 'success'
+        env:
+          IMAGE_REF: ${{ steps.entry.outputs.ref }}
+        run: |
+          set -euo pipefail
+          if jq -e '.Metadata.OS.Family == "ubuntu" and ([.Results[]? | select(.Class == "os-pkgs") | .Packages[]?] | length == 0)' published-rescan/trivy-full.json > /dev/null; then
+            SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+            docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
+              copy --preserve-digests "docker://${IMAGE_REF}" "oci:/workspace/native-published-oci:published"
+            python3 scripts/scan_native_chisel.py --report published-rescan/trivy-full.json --oci native-published-oci \
+              --reference "$IMAGE_REF" --evidence published-rescan/native-published --cache .cache/trivy
+          fi
+
       - name: Convert published full report to CycloneDX with parity check
         id: convert
         if: steps.scan.outcome == 'success'

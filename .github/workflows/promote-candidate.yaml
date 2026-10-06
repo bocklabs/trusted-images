@@ -601,6 +601,14 @@ jobs:
             exit 1
           fi
 
+      - name: Inventory native Chisel packages from signed Ubuntu metadata
+        env:
+          IMAGE_REF: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
+        run: |
+          set -euo pipefail
+          python3 scripts/scan_native_chisel.py --report trivy-full.json --oci upstream-oci \
+            --reference "$IMAGE_REF" --evidence native-before --cache .cache/trivy --fixable trivy-copa.json
+
       - name: Preserve and gate the pre-patch reports
         id: fixable
         shell: bash
@@ -852,6 +860,15 @@ jobs:
           cache: 'false'
           list-all-pkgs: 'true'
           timeout: 30m0s
+
+      - name: Inventory final native Chisel packages with the frozen DB
+        if: steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest
+        env:
+          CANDIDATE_DIGEST: ${{ steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest }}
+        run: |
+          set -euo pipefail
+          python3 scripts/scan_native_chisel.py --report trivy-after-full.json --oci candidate-oci \
+            --reference "candidate@${CANDIDATE_DIGEST}" --evidence native-after --cache .cache/trivy --previous native-before
 
       - name: Build the paired patched scan receipt
         if: steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest
@@ -1158,6 +1175,9 @@ jobs:
             resume-candidate-image-id.txt; do
             [ ! -f "${evidence}" ] || cp "${evidence}" candidate-artifact/
           done
+          for evidence in native-before native-after; do
+            [ ! -d "$evidence" ] || cp -r "$evidence" candidate-artifact/
+          done
           cp validation-context/image.yaml candidate-artifact/inventory-image.yaml
           cp -r validation-logs candidate-artifact/ 2> /dev/null || true
           printf '%s\n' "${SOURCE_SHA}" > candidate-artifact/source.sha
@@ -1196,6 +1216,8 @@ jobs:
             trivy-full.json
             trivy-copa.json
             trivy-after-full.json
+            native-before/
+            native-after/
           retention-days: 8
           if-no-files-found: warn
 
