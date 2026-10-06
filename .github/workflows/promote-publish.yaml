@@ -75,11 +75,12 @@ jobs:
         with:
           python-version-file: .python-version
 
-      - name: Install pinned PyYAML
+      - name: Sync Python dependencies
         shell: bash
         run: |
           set -euo pipefail
-          uv pip install --system -r requirements.txt
+          uv sync --locked
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Download validation context
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -795,8 +796,6 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          # GITHUB_TOKEN-authored PRs trigger no workflows, so this step re-validates
-          # the branch itself and self-posts the required `inventory` check.
           BRANCH="provenance/${APP}/${INTERNAL_TAG}"
           RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
           git config user.name "bocklabs-release[bot]"
@@ -858,14 +857,16 @@ jobs:
           python3 scripts/validate_inventory.py
           HEAD_SHA="$(git rev-parse HEAD)"
 
-          GH_TOKEN="${{ github.token }}" gh api "repos/${REPO}/check-runs" \
-            -f name=inventory \
-            -f head_sha="${HEAD_SHA}" \
-            -f status=completed \
-            -f conclusion=success \
-            -f output.title="inventory valid (provenance)" \
-            -f output.summary="validate_inventory.py passed on the provenance branch"
           echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Auto-merge signed provenance PR
+        if: ${{ success() && steps.signing-gate.outcome == 'success' && steps.pr.outputs.pr_url != '' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: gh pr merge --auto --merge --match-head-commit "${HEAD_SHA}" "${PR_URL}"
 
       - name: Verify merged provenance and publish the final decision
         if: ${{ success() && steps.signing-gate.outcome == 'success' }}
@@ -882,7 +883,7 @@ jobs:
           RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
           if [ -n "${PR_URL}" ]; then
             jq -e '.provenance.merged == false' candidate-decision.json > /dev/null
-            echo "Publication and signature verified; provenance review pending: ${PR_URL}; app=${APP}; tag=${INTERNAL_TAG}; digest=${CANDIDATE_DIGEST}; run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Ineligible for consumption until exact provenance merges; deployment remains operator-controlled." >> "$GITHUB_STEP_SUMMARY"
+            echo "Publication and signature verified; provenance merge pending: ${PR_URL}; app=${APP}; tag=${INTERNAL_TAG}; digest=${CANDIDATE_DIGEST}; run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Ineligible for consumption until exact provenance merges; deployment remains operator-controlled." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           git fetch origin main

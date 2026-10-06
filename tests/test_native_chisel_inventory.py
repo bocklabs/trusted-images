@@ -211,6 +211,33 @@ class NativeChiselInventoryTests(unittest.TestCase):
                     module.main()
                 self.assertEqual(saved.read_text(), "retained evidence")
 
+    def test_staging_preserves_existing_directories_and_symlink_targets(self):
+        module = orchestrator()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            evidence = root / "native-before"
+            evidence.mkdir()
+            saved = evidence / "saved.json"
+            saved.write_text("retained evidence")
+            alias = root / "native-after"
+            alias.symlink_to(evidence, target_is_directory=True)
+            for path in (evidence, alias):
+                args = type("Arguments", (), {"evidence": path})()
+                with self.subTest(path=path), self.assertRaisesRegex(ValueError, "already exists or is a symlink"):
+                    module.stage_evidence(args, {}, "unused")
+                self.assertEqual(saved.read_text(), "retained evidence")
+
+    def test_manifest_rejects_missing_or_invalid_path_fields(self):
+        files = {"file": (tarfile.TarInfo("file"), b"content")}
+        for field, value in (("mode", None), ("mode", "invalid"), ("slices", None), ("slices", [1])):
+            row: dict[str, object] = {"path": "/file", "mode": "0644", "slices": ["base_files"]}
+            if value is None:
+                del row[field]
+            else:
+                row[field] = value
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, "invalid native path"):
+                native.verify_manifest_path(files, row)
+
     def test_signature_provider_failure_propagates(self):
         with tempfile.TemporaryDirectory() as directory:
             inputs = fixture(Path(directory))

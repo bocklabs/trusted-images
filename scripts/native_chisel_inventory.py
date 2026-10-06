@@ -134,21 +134,25 @@ def native_packages(files):
     require(all(row.get("kind") in {"content", "package", "path", "slice"} for row in rows[1:]),
             "unknown native manifest record")
     paths = [row for row in rows if row.get("kind") == "path"]
-    require(paths and len({row["path"] for row in paths}) == len(paths), "duplicate native paths")
     for row in paths:
         verify_manifest_path(files, row)
+    require(paths and len({row["path"] for row in paths}) == len(paths), "duplicate native paths")
     packages = [row for row in rows if row.get("kind") == "package"]
-    require(packages and len({row["name"] for row in packages}) == len(packages),
-            "empty or duplicate native packages")
     for row in packages:
         require(all(isinstance(row.get(key), str) and row[key] for key in ("name", "version", "arch"))
                 and re.fullmatch("[0-9a-f]{64}", row.get("sha256", "")), "invalid native package")
+    require(packages and len({row["name"] for row in packages}) == len(packages),
+            "empty or duplicate native packages")
     verify_manifest_links(rows, paths, packages)
     return packages
 
 
 def verify_manifest_path(files, row):
-    name = normalized(row["path"])
+    name = normalized(row.get("path"))
+    require(isinstance(row.get("mode"), str) and re.fullmatch(r"[0-7]{3,4}", row["mode"]),
+            "invalid native path mode")
+    require(isinstance(row.get("slices"), list) and all(isinstance(name, str) for name in row["slices"]),
+            "invalid native path slices")
     require(name in files, "missing native manifest path")
     member, data = files[name]
     require(member.mode & 0o7777 == int(row["mode"], 8), "native path mode mismatch")
@@ -165,12 +169,18 @@ def verify_manifest_path(files, row):
 
 
 def verify_manifest_links(rows, paths, packages):
-    slices = [row["name"] for row in rows if row.get("kind") == "slice"]
+    slice_rows = [row for row in rows if row.get("kind") == "slice"]
+    content_rows = [row for row in rows if row.get("kind") == "content"]
+    require(all(isinstance(row.get("name"), str) and row["name"] for row in slice_rows),
+            "invalid native slice record")
+    require(all(isinstance(row.get("path"), str) and isinstance(row.get("slice"), str) for row in content_rows),
+            "invalid native content record")
+    slices = [row["name"] for row in slice_rows]
     names = {row["name"] for row in packages}
     require(slices and len(slices) == len(set(slices))
             and {name.split("_", 1)[0] for name in slices} == names,
             "native package/slice inventory mismatch")
-    content = {(row["path"], row["slice"]) for row in rows if row.get("kind") == "content"}
+    content = {(row["path"], row["slice"]) for row in content_rows}
     edges = {(row["path"], name) for row in paths for name in row["slices"]}
     require(content == edges and all(name in slices for _, name in edges),
             "native path/slice inventory mismatch")

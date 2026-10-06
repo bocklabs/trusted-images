@@ -93,11 +93,12 @@ jobs:
         with:
           python-version-file: .python-version
 
-      - name: Install requirements
+      - name: Sync Python dependencies
         shell: bash
         run: |
           set -euo pipefail
-          uv pip install --system -r requirements.txt
+          uv sync --locked
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Resolve inventory entry and validation params
         id: entry

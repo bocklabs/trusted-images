@@ -11,14 +11,6 @@ repos:
     hooks:
       - id: complexipy
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.4.0
-    hooks:
-      - id: mypy
-        language: python
-        args: [--check-untyped-defs, --follow-untyped-imports, --python-version, '3.14']
-        additional_dependencies: [types-PyYAML==6.0.12.20260906, univers==32.0.1]
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -53,6 +45,13 @@ repos:
   # The repo's own fast gates — the same checks CI runs, kept green per commit.
   - repo: local
     hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run --locked mypy
+        language: system
+        types: [python]
+        args: [--check-untyped-defs, --follow-untyped-imports, --python-version, '3.14']
+
       - id: inventory-valid
         name: validate inventory schema v1
         entry: ./.venv/bin/python scripts/validate_inventory.py

@@ -1,0 +1,13 @@
+[project]
+name = "trusted-images"
+version = "0.0.0"
+requires-python = ">=3.14"
+dependencies = ["PyYAML==6.0.3", "univers==32.0.1"]
+
+[dependency-groups]
+dev = [
+  "coverage==7.16.2",
+  "mypy==2.4.0",
+  "pre-commit==4.6.0",
+  "types-PyYAML==6.0.12.20260906",
+]

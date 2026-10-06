@@ -32,17 +32,21 @@ jobs:
         with:
           python-version-file: .python-version
 
-      - name: Install pinned PyYAML
+      - name: Sync Python dependencies
         shell: bash
         run: |
           set -euo pipefail
-          uv pip install --system -r requirements.txt
+          uv sync --locked
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Run test suite
         shell: bash
         run: |
           set -euo pipefail
           python -m unittest discover -s tests -v
+
+      - name: Check Python types
+        run: uv run --locked pre-commit run mypy --all-files
 
       - name: Validate inventory
         shell: bash

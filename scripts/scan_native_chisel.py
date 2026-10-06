@@ -46,8 +46,7 @@ def fetch_archive(root, stamp, codename, architecture):
 def stage_evidence(args, info, trivy):
     root = args.evidence.resolve()
     native.require(root.name in ("native-before", "native-after", "native-published"), "invalid native evidence directory")
-    if root.exists():
-        shutil.rmtree(root)
+    native.require(not args.evidence.is_symlink() and not root.exists(), "native evidence directory already exists or is a symlink")
     root.mkdir()
     shutil.copytree(args.oci, root / "oci")
     shutil.copyfile(args.report, root / "raw-image.json")

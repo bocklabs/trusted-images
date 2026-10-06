@@ -204,11 +204,27 @@ class PromoteWorkflowTests(unittest.TestCase):
     publisher_workflow: ClassVar[str]
     workflow: ClassVar[str]
 
-    def test_provenance_handoff_never_merges_or_waits_for_review(self):
-        self.assertNotIn("gh pr merge", self.publisher_workflow)
+    def test_provenance_handoff_enables_guarded_auto_merge_without_waiting(self):
         self.assertNotIn("sleep 10", self.publisher_workflow)
-        self.assertIn("provenance review pending", self.publisher_workflow)
+        self.assertNotIn("/check-runs", self.publisher_workflow)
+        self.assertIn("provenance merge pending", self.publisher_workflow)
         steps = yaml.safe_load(self.publisher_workflow)["jobs"]["promote"]["steps"]
+        auto_merge = next(step for step in steps if step["name"] == "Auto-merge signed provenance PR")
+        self.assertEqual(auto_merge["if"], "${{ success() && steps.signing-gate.outcome == 'success' && steps.pr.outputs.pr_url != '' }}")
+        self.assertEqual(auto_merge["env"]["GH_TOKEN"], "${{ steps.app-token.outputs.token }}")
+        self.assertEqual(auto_merge["env"]["HEAD_SHA"], "${{ steps.pr.outputs.head_sha }}")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            command = root / "gh"
+            command.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$ARGUMENTS"\n')
+            command.chmod(0o755)
+            arguments = root / "arguments"
+            env = {**os.environ, "PATH": str(root) + os.pathsep + os.environ["PATH"],
+                   "ARGUMENTS": str(arguments), "HEAD_SHA": "abc123", "PR_URL": "https://example.invalid/pull/1"}
+            result = subprocess.run(["bash", "-c", auto_merge["run"]], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(arguments.read_text().splitlines(),
+                             ["pr", "merge", "--auto", "--merge", "--match-head-commit", "abc123", env["PR_URL"]])
         run = next(step["run"] for step in steps if step["name"] == "Verify merged provenance and publish the final decision")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
