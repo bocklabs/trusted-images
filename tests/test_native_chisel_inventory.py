@@ -13,9 +13,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-SPEC = importlib.util.spec_from_file_location(
-    "native_chisel_inventory", Path(__file__).resolve().parents[1] / "scripts/native_chisel_inventory.py"
-)
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts/native_chisel_inventory.py"
+SPEC = importlib.util.spec_from_file_location("native_chisel_inventory", SCRIPT)
 if SPEC is None or SPEC.loader is None:
     raise ImportError("Cannot load native Chisel inventory validator")
 native = importlib.util.module_from_spec(SPEC)
@@ -50,19 +49,21 @@ def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False):
             entry.mode = 0o644
             archive.addfile(entry, io.BytesIO(data))
     compressed = gzip.compress(layer.getvalue())
+    diff_ids = ["sha256:" + native.digest(layer.getvalue())]
     config = {"architecture": "amd64", "created": "2025-05-27T12:00:00Z",
-              "rootfs": {"diff_ids": ["sha256:" + native.digest(layer.getvalue())]}}
+              "rootfs": {"diff_ids": diff_ids}}
     config_path = root / "config.json"
     config_path.write_text(json.dumps(config))
-    manifest = {"config": {"digest": "sha256:" + native.file_digest(config_path)},
+    config_digest = "sha256:" + native.file_digest(config_path)
+    manifest = {"config": {"digest": config_digest},
                 "layers": [{"digest": "sha256:" + native.digest(compressed), "size": len(compressed)}]}
     manifest_path = root / "manifest.json"
     manifest_path.write_text(json.dumps(manifest))
     reference = "example.test/native@sha256:" + native.file_digest(manifest_path)
     raw = {"ArtifactType": "container_image", "ArtifactName": reference,
            "Trivy": {"Version": "0.75.0"},
-           "Metadata": {"ImageConfig": config, "ImageID": manifest["config"]["digest"],
-                        "DiffIDs": config["rootfs"]["diff_ids"], "OS": {"Family": "ubuntu", "Name": "24.04"}},
+           "Metadata": {"ImageConfig": config, "ImageID": config_digest,
+                        "DiffIDs": diff_ids, "OS": {"Family": "ubuntu", "Name": "24.04"}},
            "Results": [{"Class": "os-pkgs", "Type": "ubuntu", "Target": "native (ubuntu 24.04)"},
                        {"Class": "lang-pkgs", "Type": "dotnet-core", "Packages": [{"Name": "runtime"}]}]}
     raw_path = root / "raw.json"
@@ -84,11 +85,22 @@ def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False):
             "layers": [str(layer_path)], "raw_report": str(raw_path), "archives": [str(root)]}
 
 
+def orchestrator():
+    spec = importlib.util.spec_from_file_location("native_orchestrator", SCRIPT.with_name("scan_native_chisel.py"))
+    if spec is None or spec.loader is None:
+        raise ImportError("Cannot load native Chisel orchestrator")
+    module = importlib.util.module_from_spec(spec)
+    with patch.dict(sys.modules, {"native_chisel_inventory": native}):
+        spec.loader.exec_module(module)
+    return module
+
+
 class NativeChiselInventoryTests(unittest.TestCase):
     def test_debian_continuations_require_an_existing_field(self):
         for text in (" continuation\n", "Package: example\n\n continuation\n"):
+            paragraphs = native.deb_paragraphs(io.StringIO(text))
             with self.subTest(text=text), self.assertRaisesRegex(ValueError, "continuation"):
-                list(native.deb_paragraphs(io.StringIO(text)))
+                list(paragraphs)
         self.assertEqual(list(native.deb_paragraphs(io.StringIO("Description: first\n second\n"))),
                          [{"Description": "first\n second"}])
 
@@ -110,7 +122,7 @@ class NativeChiselInventoryTests(unittest.TestCase):
                                 (["enrich", "--inputs", "unused", "--sbom", "unused", "--scan", "unused", "--output", "unused"], "capsule"),
                                 (["verify"], "capsule")):
             with self.subTest(operation=arguments[0]):
-                result = subprocess.run([sys.executable, str(SPEC.origin), *arguments], capture_output=True, text=True)
+                result = subprocess.run([sys.executable, str(SCRIPT), *arguments], capture_output=True, text=True)
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertIn(f"--{flag} is required", result.stderr)
                 self.assertNotIn("Traceback", result.stderr)
@@ -149,12 +161,62 @@ class NativeChiselInventoryTests(unittest.TestCase):
                 with patch.object(native.subprocess, "run"), self.assertRaisesRegex(ValueError, reason):
                     native.prepare(inputs)
 
+    def test_os_release_requires_codename_and_version(self):
+        for content in (b"ID=ubuntu\nVERSION_ID=24.04\n", b"ID=ubuntu\nVERSION_CODENAME=noble\n"):
+            files = {"etc/os-release": (tarfile.TarInfo("etc/os-release"), content)}
+            with self.subTest(content=content), self.assertRaisesRegex(ValueError, "missing codename or version"):
+                native.os_release(files)
+
+    def test_orchestrator_rejects_bad_reference_before_reading_blobs(self):
+        module = orchestrator()
+        for reference in ("example.test/image:tag", "example.test/image@sha256:../../outside"):
+            with self.subTest(reference=reference), self.assertRaisesRegex(ValueError, "not digest-bound"):
+                module.image_inputs(Path("missing-oci"), reference, Path("missing-report"), Path("missing-cache"), "unused")
+
+    def test_orchestrator_skips_existing_inventory_without_staging(self):
+        module = orchestrator()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "raw.json"
+            raw = {"Metadata": {"OS": {"Family": "ubuntu"}}, "Results": [
+                {"Class": "os-pkgs", "Type": "ubuntu", "Packages": []},
+                {"Class": "os-pkgs", "Type": "ubuntu", "Packages": [{"Name": "libc6"}]},
+            ]}
+            report.write_text(json.dumps(raw))
+            evidence = root / "native-before"
+            arguments = ["scan_native_chisel.py", "--report", str(report), "--oci", "missing", "--cache", "missing",
+                         "--evidence", str(evidence), "--reference", "unused"]
+            with patch.object(sys, "argv", arguments), patch("sys.stderr", new_callable=io.StringIO) as diagnostics:
+                module.main()
+            self.assertFalse(evidence.exists())
+            self.assertEqual(json.loads(report.read_text()), raw)
+            self.assertIn("existing OS inventory", diagnostics.getvalue())
+
+    def test_orchestrator_missing_required_inputs_preserves_previous_evidence(self):
+        module = orchestrator()
+        for flag, message in (("fixable", "mandatory fixable"), ("previous", "before archive evidence")):
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                inputs = fixture(root)
+                evidence = root / "native-before"
+                evidence.mkdir()
+                saved = evidence / "saved.json"
+                saved.write_text("retained evidence")
+                arguments = ["scan_native_chisel.py", "--report", inputs["raw_report"], "--oci", "unused",
+                             "--cache", "unused", "--evidence", str(evidence), "--reference", inputs["reference"],
+                             "--" + flag, str(root / "missing")]
+                with self.subTest(flag=flag), patch.object(sys, "argv", arguments), \
+                        patch.object(module.shutil, "which", return_value="unused"), \
+                        patch.object(module, "image_inputs", return_value=inputs), self.assertRaisesRegex(ValueError, message):
+                    module.main()
+                self.assertEqual(saved.read_text(), "retained evidence")
+
     def test_signature_provider_failure_propagates(self):
         with tempfile.TemporaryDirectory() as directory:
             inputs = fixture(Path(directory))
             failure = subprocess.CalledProcessError(1, ["gpgv"], stderr=b"invalid signature")
             with patch.object(native.subprocess, "run", side_effect=failure), \
-                    self.assertRaises(subprocess.CalledProcessError):
+                    self.assertRaisesRegex(ValueError, "Ubuntu signature verification failed: invalid signature"):
                 native.prepare(inputs)
 
     def test_enrichment_preserves_container_metadata_and_language_results(self):
@@ -193,12 +255,12 @@ class NativeChiselInventoryTests(unittest.TestCase):
                     "Results": [{"Class": "os-pkgs", "Type": "ubuntu", "Packages": packages}]}
             self.assertEqual(len(native.scan_packages(sbom, scan)["Packages"]), 2)
             for field in ("SrcName", "Digest", "missing"):
-                invalid = copy.deepcopy(scan)
-                rows = invalid["Results"][0]["Packages"]
+                rows = copy.deepcopy(packages)
                 if field == "missing":
                     rows.pop()
                 else:
                     rows[1][field] = "tampered"
+                invalid = {**scan, "Results": [{"Class": "os-pkgs", "Type": "ubuntu", "Packages": rows}]}
                 with self.subTest(field=field), self.assertRaises(ValueError):
                     native.scan_packages(sbom, invalid)
             scanner = root / "untrusted-trivy"

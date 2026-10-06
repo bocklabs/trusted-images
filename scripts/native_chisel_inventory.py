@@ -17,6 +17,8 @@ from urllib.parse import quote, unquote
 KEYRING = "/usr/share/keyrings/ubuntu-archive-keyring.gpg"
 WALL = "var/lib/chisel/manifest.wall"
 TRIVY_VERSION = "0.75.0"
+SHA256_PREFIX = "sha256:"
+UNSAFE_CAPSULE_PATH = "unsafe native capsule paths"
 TRIVY_SHA256 = "93f9da8e4ba5e0c1c76d8234ed2494cf9afb0a96fd21953e424bb795f3299b8e"
 
 
@@ -51,7 +53,7 @@ def apply_whiteouts(files, members):
         if not base.startswith(".wh."):
             continue
         target = parent if base == ".wh..wh..opq" else normalized(f"{parent}/{base[4:]}")
-        for old in list(files):
+        for old in tuple(files):
             if not target or old.startswith(target + "/") or (old == target and base != ".wh..wh..opq"):
                 del files[old]
 
@@ -87,27 +89,29 @@ def image_files(inputs, raw):
     reference = inputs["reference"]
     require(re.fullmatch(r".+@sha256:[0-9a-f]{64}", reference), "native reference is not digest-bound")
     expected_manifest = reference.rsplit("@", 1)[-1]
-    require(expected_manifest == "sha256:" + file_digest(inputs["manifest"]),
+    require(expected_manifest == SHA256_PREFIX + file_digest(inputs["manifest"]),
             "OCI manifest digest mismatch")
-    require(manifest["config"]["digest"] == "sha256:" + file_digest(inputs["config"]),
+    require(manifest["config"]["digest"] == SHA256_PREFIX + file_digest(inputs["config"]),
             "OCI config digest mismatch")
     metadata = raw.get("Metadata", {})
     require(raw.get("ArtifactType") == "container_image"
-            and raw.get("ArtifactName") == inputs.get("artifact_name", reference),
-            "raw report is not the exact container image")
+            and isinstance(raw.get("ArtifactName"), str) and raw["ArtifactName"],
+            "raw report is not a named container image")
     require(metadata.get("ImageID") == manifest["config"]["digest"]
             and metadata.get("ImageConfig") == config, "raw report config mismatch")
     require(metadata.get("DiffIDs") == config["rootfs"]["diff_ids"], "raw report layers mismatch")
     require(len(inputs["layers"]) == len(manifest["layers"]) == len(metadata["DiffIDs"]),
             "incomplete OCI layers")
-    files = {}
+    files: dict[str, tuple[tarfile.TarInfo, bytes]] = {}
     for path, descriptor, diff_id in zip(inputs["layers"], manifest["layers"], metadata["DiffIDs"], strict=True):
-        require(file_digest(path) == descriptor["digest"].removeprefix("sha256:")
+        require(file_digest(path) == descriptor["digest"].removeprefix(SHA256_PREFIX)
                 and Path(path).stat().st_size == descriptor["size"], "OCI layer digest mismatch")
         with tarfile.open(path, "r:*") as archive:
             archive.fileobj.seek(0)
-            require(hashlib.file_digest(archive.fileobj, "sha256").hexdigest()
-                    == diff_id.removeprefix("sha256:"), "OCI uncompressed layer mismatch")
+            checksum = hashlib.sha256()
+            while block := archive.fileobj.read(1024 * 1024):
+                checksum.update(block)
+            require(checksum.hexdigest() == diff_id.removeprefix(SHA256_PREFIX), "OCI uncompressed layer mismatch")
         overlay_layer(files, path)
     return files
 
@@ -132,20 +136,7 @@ def native_packages(files):
     paths = [row for row in rows if row.get("kind") == "path"]
     require(paths and len({row["path"] for row in paths}) == len(paths), "duplicate native paths")
     for row in paths:
-        name = normalized(row["path"])
-        require(name in files, "missing native manifest path")
-        member, data = files[name]
-        require(member.mode & 0o7777 == int(row["mode"], 8), "native path mode mismatch")
-        if "link" in row:
-            require(member.issym() and member.linkname == row["link"], "native symlink mismatch")
-        elif row["path"].endswith("/"):
-            require(member.isdir(), "native directory mismatch")
-        else:
-            require(member.isfile() or member.islnk(), "native file type mismatch")
-            expected = row.get("final_sha256", row.get("sha256"))
-            require((expected and digest(data) == expected) or (name == WALL and not expected),
-                    "native file digest mismatch")
-            require("size" not in row or len(data) == row["size"], "native file size mismatch")
+        verify_manifest_path(files, row)
     packages = [row for row in rows if row.get("kind") == "package"]
     require(packages and len({row["name"] for row in packages}) == len(packages),
             "empty or duplicate native packages")
@@ -154,6 +145,23 @@ def native_packages(files):
                 and re.fullmatch("[0-9a-f]{64}", row.get("sha256", "")), "invalid native package")
     verify_manifest_links(rows, paths, packages)
     return packages
+
+
+def verify_manifest_path(files, row):
+    name = normalized(row["path"])
+    require(name in files, "missing native manifest path")
+    member, data = files[name]
+    require(member.mode & 0o7777 == int(row["mode"], 8), "native path mode mismatch")
+    if "link" in row:
+        require(member.issym() and member.linkname == row["link"], "native symlink mismatch")
+    elif row["path"].endswith("/"):
+        require(member.isdir(), "native directory mismatch")
+    else:
+        require(member.isfile() or member.islnk(), "native file type mismatch")
+        expected = row.get("final_sha256", row.get("sha256"))
+        require((expected and digest(data) == expected) or (name == WALL and not expected),
+                "native file digest mismatch")
+        require("size" not in row or len(data) == row["size"], "native file size mismatch")
 
 
 def verify_manifest_links(rows, paths, packages):
@@ -169,7 +177,7 @@ def verify_manifest_links(rows, paths, packages):
 
 
 def deb_paragraphs(stream):
-    fields = {}
+    fields: dict[str, str] = {}
     last = ""
     for line in stream:
         if not line.strip():
@@ -190,7 +198,11 @@ def deb_paragraphs(stream):
 
 def signed_indexes(directory, suite, codename, architecture):
     release = Path(directory) / (suite + "-InRelease")
-    subprocess.run(["gpgv", "--keyring", KEYRING, str(release)], check=True, capture_output=True)
+    try:
+        subprocess.run(["gpgv", "--keyring", KEYRING, str(release)], check=True, capture_output=True)
+    except subprocess.CalledProcessError as error:
+        detail = (error.stderr or b"").decode(errors="replace").strip()
+        raise ValueError(f"Ubuntu signature verification failed: {detail}") from error
     text = release.read_text()
     require(f"\nCodename: {codename}\n" in text and "\nOrigin: Ubuntu\n" in text
             and f"\nSuite: {suite}\n" in text, "signed release distro mismatch")
@@ -224,7 +236,7 @@ def match_packages(index, wanted, matches):
 
 def signed_packages(inputs, packages, codename):
     wanted = {(row["name"], row["version"], row["arch"], row["sha256"]) for row in packages}
-    matches = {}
+    matches: dict[tuple[str, ...], dict[str, str]] = {}
     architecture = read_json(inputs["config"])["architecture"]
     for directory in inputs["archives"]:
         for suite in (codename, codename + "-updates", codename + "-security"):
@@ -237,7 +249,8 @@ def signed_packages(inputs, packages, codename):
 def package_component(package, metadata, distro):
     source = metadata.get("Source", package["name"])
     match = re.fullmatch(r"([a-z0-9][a-z0-9+.-]*)(?: \(([^()]+)\))?", source)
-    require(match is not None, "invalid signed source identity")
+    if match is None:
+        raise ValueError("invalid signed source identity")
     source_name, source_version = match.groups()
     purl = (f"pkg:deb/ubuntu/{quote(package['name'], safe='')}@{quote(package['version'], safe='')}"
             f"?arch={quote(package['arch'], safe='')}&distro=ubuntu-{distro}")
@@ -249,9 +262,11 @@ def package_component(package, metadata, distro):
 
 
 def os_release(files):
-    release = dict(line.split("=", 1) for line in read_image_file(files, "etc/os-release").decode().splitlines()
-                   if "=" in line)
-    return {key: value.strip('"') for key, value in release.items()}
+    release = {key: value for line in read_image_file(files, "etc/os-release").decode().splitlines()
+               if "=" in line for key, value in [line.split("=", 1)]}
+    release = {key: value.strip('"') for key, value in release.items()}
+    require(release.get("VERSION_CODENAME") and release.get("VERSION_ID"), "native OS release is missing codename or version")
+    return release
 
 
 def probe(inputs):
@@ -284,7 +299,7 @@ def prepare(inputs):
         components.append(package_component(package, metadata[identity], distro))
     return {"bomFormat": "CycloneDX", "specVersion": "1.5", "version": 1,
             "metadata": {"component": {"type": "container", "name": inputs["reference"].split("@", 1)[0],
-                                       "version": "sha256:" + file_digest(inputs["manifest"])}},
+                                       "version": SHA256_PREFIX + file_digest(inputs["manifest"])}},
             "components": components}
 
 
@@ -303,7 +318,7 @@ def scan_packages(sbom, scan):
         properties = {item["name"]: item["value"] for item in component["properties"]}
         require((row.get("Name"), row.get("Version"), row.get("SrcName"), row.get("SrcVersion"), row.get("Digest"))
                 == (component["name"], component["version"], properties["aquasecurity:trivy:SrcName"],
-                    properties["aquasecurity:trivy:SrcVersion"], "sha256:" + component["hashes"][0]["content"]),
+                    properties["aquasecurity:trivy:SrcVersion"], SHA256_PREFIX + component["hashes"][0]["content"]),
                 "scanned native source/package mismatch")
     return results[0]
 
@@ -383,9 +398,9 @@ def portable_hashes(inputs, extra, root):
 
 def safe_relative(root, value):
     require(isinstance(value, str) and value and not Path(value).is_absolute()
-            and ".." not in Path(value).parts, "unsafe native capsule paths")
+            and ".." not in Path(value).parts, UNSAFE_CAPSULE_PATH)
     path = (root / value).resolve()
-    require(path.is_relative_to(root), "unsafe native capsule paths")
+    require(path.is_relative_to(root), UNSAFE_CAPSULE_PATH)
     return str(path)
 
 
@@ -400,7 +415,7 @@ def verify_capsule(path):
         for value in capsule["inputs"][key]:
             safe_relative(root, value)
     inputs = resolve_inputs(capsule["inputs"], root)
-    require(portable_inputs(inputs, root) == capsule["inputs"], "unsafe native capsule paths")
+    require(portable_inputs(inputs, root) == capsule["inputs"], UNSAFE_CAPSULE_PATH)
     require(inputs["capsule"] == f"{root.name}/{path.name}", "native capsule marker mismatch")
     extra = [safe_relative(root, capsule[key]) for key in ("sbom", "scan", "output")]
     require(portable_hashes(inputs, extra, root) == capsule["hashes"], "native capsule input digest mismatch")

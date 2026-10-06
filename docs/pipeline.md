@@ -170,7 +170,10 @@ package archive digests against signed Ubuntu snapshots, and preserves exact
 source package names/versions when constructing CycloneDX. The reviewed Trivy
 0.75.0 binary and frozen database replay the scan before OS inventory admission.
 Candidate and published-image scans retain portable capsules and raw evidence;
-missing, tampered or incomplete evidence blocks. An independently inventoried
+missing, tampered or incomplete evidence blocks. Native candidates retain separate before/after
+OCI layouts, frozen DB files and the pinned scanner for independent replay.
+These capsules increase artifact storage and use the existing eight-day retention;
+ordinary image candidates do not create them. An independently inventoried
 before-image is not proof of patched-image qualification.
 
 The distroless-static baseline uses the supported Debian 13 upstream with

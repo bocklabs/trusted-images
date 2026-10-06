@@ -379,6 +379,8 @@ class PolicyTests(unittest.TestCase):
         self.assertIsNone(decision["published"]["digest"])
         self.assertFalse(decision["provenance"]["merged"])
         spec = importlib.util.spec_from_file_location("evaluate_promotion", EVALUATOR)
+        if spec is None or spec.loader is None:
+            raise ImportError("Cannot load promotion evaluator")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         module.validate_decision(decision)
@@ -523,6 +525,8 @@ class PolicyTests(unittest.TestCase):
             decision["before"]["fixable_os"], ["linux/amd64|libexample|CVE-2026-0007"]
         )
         spec = importlib.util.spec_from_file_location("evaluate_promotion", EVALUATOR)
+        if spec is None or spec.loader is None:
+            raise ImportError("Cannot load promotion evaluator")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         module.validate_decision(decision)
@@ -660,7 +664,7 @@ class PolicyTests(unittest.TestCase):
     def test_acceptance_expiry_digest_kevs_and_issue_fail_closed(self):
         write_json(self.full, report([vuln("CVE-2026-0001"), vuln("CVE-2026-0002")]))
         write_json(self.kev, kev_feed(("CVE-2026-0001", "CVE-2026-0002")))
-        cases = (
+        cases: tuple[tuple[str, dict[str, object], dict[str, object], str], ...] = (
             ("expired", {"expiresAt": "2026-09-14T00:30:00Z"}, {}, "expired"),
             ("candidate digest", {"candidateDigest": PATCHED_DIGEST}, {}, "candidate digest"),
             ("KEV set", {"kevs": ["CVE-2026-0001"]}, {}, "KEV set"),
@@ -1062,7 +1066,7 @@ class PolicyTests(unittest.TestCase):
 
     def test_invalid_package_inventory_fails_closed(self):
         before = [package("libexample", "1.0")]
-        cases = {
+        cases: dict[str, dict[str, object]] = {
             "unsupported ecosystem": {"result_type": "fedora"},
             "unsupported ecosystem: 'archlinux'": {"result_type": "archlinux"},
             "missing package inventory": {"remove_packages": True},

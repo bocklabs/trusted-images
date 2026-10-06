@@ -1563,7 +1563,7 @@ def evaluate_candidate(args):
     after_report = (
         load_json(after_path, "after full Trivy report") if after_path else None
     )
-    if after_report is not None:
+    if after_report is not None and after_path is not None and receipt_path is not None:
         validate_scan_receipt(
             load_json(receipt_path, "scan receipt"),
             full_path,

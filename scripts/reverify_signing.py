@@ -31,7 +31,7 @@ def check_history(base):
     return signed
 
 
-def signed_record(record, path, identity):
+def signed_record(record, path, identity) -> tuple[str, str, str]:
     signing = record["signing"]
     app = record.get("app")
     internal = record.get("internal", {})
@@ -63,7 +63,7 @@ def signed_record(record, path, identity):
     return image, signature["attachment_sha256"], sbom["attachment_sha256"]
 
 
-def signed_records(base, identity):
+def signed_records(base, identity) -> list[tuple[str, str, str]]:
     previous = check_history(base)
     records = sorted((ROOT / "provenance").glob("*/*.json"))
     signed = []

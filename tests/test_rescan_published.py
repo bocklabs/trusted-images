@@ -73,7 +73,8 @@ class PublishedRescanTests(unittest.TestCase):
         self.assertTrue(rescan.decide(self.selection, self.report, True)["proceed"])
 
     def test_incomplete_coverage_wrong_reference_and_eol_fail_closed(self):
-        for packages in (None, []):
+        incomplete: tuple[None | list[dict[str, str]], ...] = (None, [])
+        for packages in incomplete:
             self.report["Results"][0]["Packages"] = packages
             self.assertFalse(rescan.decide(self.selection, self.report, True)["proceed"])
         self.report["Results"] = []

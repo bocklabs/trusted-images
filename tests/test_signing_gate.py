@@ -42,9 +42,10 @@ class SigningGateTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.dir = Path(self.tmp.name)
+        self.subject_digest = {"sha256": DIGEST[7:]}
         self.statement = {
             "_type": "https://in-toto.io/Statement/v1",
-            "subject": [{"name": "ghcr.io/bocklabs/example", "digest": {"sha256": DIGEST[7:]}}],
+            "subject": [{"name": "ghcr.io/bocklabs/example", "digest": self.subject_digest}],
             "predicateType": "https://cyclonedx.org/bom",
             "predicate": {"bomFormat": "CycloneDX", "specVersion": "1.6"},
         }
@@ -166,7 +167,7 @@ else:
                     self.assertIn("differs from local bundle", evidence["reason"])
 
     def test_bad_digest_or_bundle_fails(self):
-        self.statement["subject"][0]["digest"]["sha256"] = "b" * 64
+        self.subject_digest["sha256"] = "b" * 64
         (self.dir / "statement.json").write_text(json.dumps(self.statement))
         self.assertNotEqual(self.run_gate().returncode, 0)
         self.signature["verificationMaterial"]["tlogEntries"] = []
@@ -326,15 +327,17 @@ else:
         identity = json.loads(IDENTITY.read_text())
         signature_bytes = (json.dumps(self.signature) + "\n").encode()
         attestation_bytes = (json.dumps(self.attestation) + "\n").encode()
+        run_url = "https://github.com/bocklabs/trusted-images/actions/runs/1"
+        image_signature = {**identity, "bundle_sha256": "a" * 64,
+                           "attachment_sha256": hashlib.sha256(signature_bytes).hexdigest()}
         record = {
             "schema": "trusted-images.bocklabs.dev/provenance-v1", "app": "example",
-            "pipeline": {"run_url": "https://github.com/bocklabs/trusted-images/actions/runs/1"},
+            "pipeline": {"run_url": run_url},
             "internal": {"package": "ghcr.io/bocklabs/example", "digest": DIGEST},
             "policy": {"eligible": True},
             "signing": {
                 "result": "pass",
-                "image_signature": {**identity, "bundle_sha256": "a" * 64,
-                                    "attachment_sha256": hashlib.sha256(signature_bytes).hexdigest()},
+                "image_signature": image_signature,
                 "sbom_attestation": {"predicate_type": "https://cyclonedx.org/bom",
                                      "bundle_sha256": "b" * 64, "predicate_sha256": "c" * 64,
                                      "attachment_sha256": hashlib.sha256(attestation_bytes).hexdigest()},
@@ -361,8 +364,8 @@ else:
             receipt = self.dir / "reuse-evidence.json"
             with mock.patch.object(sys, "argv", ["reverify_signing.py", "--record", str(path), "--out", str(receipt)]):
                 self.assertEqual(reverify_signing.main(), 0)
-                self.assertEqual(json.loads(receipt.read_text())["original_run_url"], record["pipeline"]["run_url"])
-            record["signing"]["image_signature"]["certificate_identity"] = "https://wrong.example/workflow"
+                self.assertEqual(json.loads(receipt.read_text())["original_run_url"], run_url)
+            image_signature["certificate_identity"] = "https://wrong.example/workflow"
             path.write_text(json.dumps(record))
             self.assertEqual(reverify_signing.main(), 1)
 

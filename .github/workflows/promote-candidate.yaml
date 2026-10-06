@@ -863,7 +863,7 @@ jobs:
           timeout: 30m0s
 
       - name: Inventory final native Chisel packages with the frozen DB
-        if: steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest
+        if: steps.scanafter.outcome == 'success' || steps.scanresumed.outcome == 'success'
         env:
           CANDIDATE_DIGEST: ${{ steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest }}
         run: |
