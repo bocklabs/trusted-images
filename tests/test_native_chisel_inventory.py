@@ -21,7 +21,7 @@ native = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(native)
 
 
-def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False):
+def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False, created="2025-05-27T12:00:00Z"):
     release = b'ID=ubuntu\nVERSION_ID="24.04"\nVERSION_CODENAME=noble\n'
     library = b"real fixture content"
     packages = [
@@ -50,7 +50,7 @@ def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False):
             archive.addfile(entry, io.BytesIO(data))
     compressed = gzip.compress(layer.getvalue())
     diff_ids = ["sha256:" + native.digest(layer.getvalue())]
-    config = {"architecture": "amd64", "created": "2025-05-27T12:00:00Z",
+    config = {"architecture": "amd64", "created": created,
               "rootfs": {"diff_ids": diff_ids}}
     config_path = root / "config.json"
     config_path.write_text(json.dumps(config))
@@ -160,6 +160,12 @@ class NativeChiselInventoryTests(unittest.TestCase):
                     (root / "noble-main-Packages.xz").write_bytes(b"tampered")
                 with patch.object(native.subprocess, "run"), self.assertRaisesRegex(ValueError, reason):
                     native.prepare(inputs)
+
+    def test_probe_rejects_absent_creation_timestamp(self):
+        with tempfile.TemporaryDirectory() as directory:
+            inputs = fixture(Path(directory), created=None)
+            with self.assertRaisesRegex(ValueError, "no creation timestamp"):
+                native.probe(inputs)
 
     def test_os_release_requires_codename_and_version(self):
         for content in (b"ID=ubuntu\nVERSION_ID=24.04\n", b"ID=ubuntu\nVERSION_CODENAME=noble\n"):

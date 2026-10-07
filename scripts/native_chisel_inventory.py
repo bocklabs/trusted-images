@@ -288,6 +288,7 @@ def probe(inputs):
     release = os_release(files)
     require(release.get("ID") == "ubuntu", "native OS is not Ubuntu")
     config = raw["Metadata"]["ImageConfig"]
+    require(isinstance(config.get("created"), str) and config["created"], "native image has no creation timestamp")
     return {"native": True, "codename": release["VERSION_CODENAME"], "version": release["VERSION_ID"],
             "created": config["created"], "architecture": config["architecture"]}
 

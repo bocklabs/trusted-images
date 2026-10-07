@@ -91,6 +91,7 @@ def main():
         native.require(args.fixable.is_file(), "missing mandatory fixable scan report; rebuild candidate")
     if args.previous:
         native.require((args.previous / "archives").is_dir(), "missing native before archive evidence; rebuild candidate")
+    native.require(native.file_digest(trivy) == native.TRIVY_SHA256, "untrusted native scanner binary")
     root, inputs = stage_evidence(args, info, trivy)
     (root / INPUT_FILENAME).write_text(json.dumps(native.portable_inputs(inputs, root), indent=2) + "\n")
     helper = str(Path(__file__).with_name("native_chisel_inventory.py"))

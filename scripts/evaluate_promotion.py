@@ -546,6 +546,7 @@ def validate_native_inventory(report: dict, path: Path) -> None:
     if not capsule.is_file():
         raise ValueError("missing native inventory evidence capsule")
     from native_chisel_inventory import verify_capsule
+
     if verify_capsule(capsule) != report:
         raise ValueError("native inventory evidence does not match report")
 
@@ -1554,16 +1555,16 @@ def evaluate_candidate(args):
         )
     patch_reason(args)
     full_report = load_json(full_path, "full Trivy report")
-    validate_native_inventory(full_report, full_path)
+    if receipt_path is None:
+        validate_native_inventory(full_report, full_path)
     os_metadata = full_report.get("Metadata", {}).get("OS")
     if os_metadata is not None and (
         not isinstance(os_metadata, dict) or os_metadata.get("EOSL") is True
     ):
         raise ValueError("full report OS EOSL is true")
-    after_report = (
-        load_json(after_path, "after full Trivy report") if after_path else None
-    )
-    if after_report is not None and after_path is not None and receipt_path is not None:
+    after_report = None
+    if after_path is not None and receipt_path is not None:
+        after_report = load_json(after_path, "after full Trivy report")
         validate_scan_receipt(
             load_json(receipt_path, "scan receipt"),
             full_path,

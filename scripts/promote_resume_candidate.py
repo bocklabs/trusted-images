@@ -186,7 +186,7 @@ for directory in ("native-before", "native-after"):
 for name in ("trivy-before-full.json", "trivy-after-full.json", "trivy-full.json"):
     path = root / name
     if path.is_file():
-        validate_native_inventory(json.loads(path.read_text()), path)
+        validate_native_inventory(json.loads(path.read_text(encoding="utf-8")), path)
 shutil.copyfile(root / DECISION_FILENAME, "original-candidate-decision.json")
 with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open(
     "a", encoding="utf-8"

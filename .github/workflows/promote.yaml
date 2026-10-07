@@ -86,6 +86,7 @@ jobs:
           python-version-file: .python-version
       - name: Sync Python dependencies
         if: inputs.automatic_rescan
+        shell: bash
         run: |
           uv sync --locked
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"

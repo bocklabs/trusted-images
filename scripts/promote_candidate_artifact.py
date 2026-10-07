@@ -3,8 +3,9 @@
 import hashlib
 import json
 
-from evaluate_promotion import validate_native_inventory
 from pathlib import Path
+
+from evaluate_promotion import validate_native_inventory
 
 ARTIFACT_PREFIX = "candidate-artifact/"
 root = Path("candidate-artifact")
@@ -88,4 +89,4 @@ for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
 for name in ("trivy-before-full.json", "trivy-after-full.json", "trivy-full.json"):
     path = root / name
     if path.is_file():
-        validate_native_inventory(json.loads(path.read_text()), path)
+        validate_native_inventory(json.loads(path.read_text(encoding="utf-8")), path)
