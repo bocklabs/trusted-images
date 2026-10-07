@@ -126,6 +126,7 @@ jobs:
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           timeout: 30m0s
       - name: Inventory native Chisel published packages
+        shell: bash
         if: steps.scan.outcome == 'success'
         env:
           IMAGE_REF: ${{ steps.entry.outputs.ref }}

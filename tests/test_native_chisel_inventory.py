@@ -312,6 +312,17 @@ class NativeChiselInventoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unsafe native capsule paths"):
                 native.verify_capsule(capsule)
 
+    def test_capsule_rejects_missing_members_before_opening_inputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            capsule = root / "capsule.json"
+            inputs: dict[str, object] = {key: key + ".json" for key in ("manifest", "config", "raw_report", "db", "trivy")}
+            inputs.update(layers=[], archives=[], capsule=f"{root.name}/capsule.json")
+            capsule.write_text(json.dumps({"schema": "native-chisel-capsule-v1", "inputs": inputs,
+                                           "scan": "scan.json", "output": "report.json"}))
+            with self.assertRaisesRegex(ValueError, "unsafe native capsule paths"):
+                native.verify_capsule(capsule)
+
     def test_opaque_upper_layer_removes_lower_files(self):
         files = {"obsolete": (tarfile.TarInfo("obsolete"), b"lower layer")}
         with tempfile.TemporaryDirectory() as directory:

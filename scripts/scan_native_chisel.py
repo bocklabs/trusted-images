@@ -1,4 +1,4 @@
-"""Bind native Chisel package scans to real OCI bytes and signed Ubuntu metadata."""
+"""Enrich native Chisel reports in place, retaining raw scans in evidence."""
 
 import argparse
 from datetime import datetime, timezone

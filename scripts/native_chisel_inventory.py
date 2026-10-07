@@ -342,8 +342,6 @@ def enrich(inputs, sbom, scan, sbom_path):
     supplied = scan_packages(sbom, scan)
     require(scan.get("Trivy", {}).get("Version") == TRIVY_VERSION
             and file_digest(inputs["trivy"]) == TRIVY_SHA256, "untrusted native scanner binary")
-    scanner = Path(inputs["trivy"])
-    scanner.chmod(scanner.stat().st_mode | 0o100)
     db_before = file_digest(inputs["db"])
     scanned = subprocess.run([inputs["trivy"], "sbom", "--offline-scan", "--skip-db-update",
                               "--cache-dir", str(Path(inputs["db"]).parent.parent), "--format", "json",
@@ -419,17 +417,20 @@ def verify_capsule(path):
     path = Path(path).resolve()
     root = path.parent
     capsule = read_json(path)
-    require(capsule.get("schema") == "native-chisel-capsule-v1", "unknown native capsule schema")
+    require(isinstance(capsule, dict) and capsule.get("schema") == "native-chisel-capsule-v1", "unknown native capsule schema")
+    require(isinstance(capsule.get("inputs"), dict), UNSAFE_CAPSULE_PATH)
     for key in ("manifest", "config", "raw_report", "db", "trivy"):
-        safe_relative(root, capsule["inputs"][key])
+        safe_relative(root, capsule["inputs"].get(key))
     for key in ("layers", "archives"):
-        for value in capsule["inputs"][key]:
+        values = capsule["inputs"].get(key)
+        require(isinstance(values, list), UNSAFE_CAPSULE_PATH)
+        for value in values:
             safe_relative(root, value)
     inputs = resolve_inputs(capsule["inputs"], root)
     require(portable_inputs(inputs, root) == capsule["inputs"], UNSAFE_CAPSULE_PATH)
-    require(inputs["capsule"] == f"{root.name}/{path.name}", "native capsule marker mismatch")
-    extra = [safe_relative(root, capsule[key]) for key in ("sbom", "scan", "output")]
-    require(portable_hashes(inputs, extra, root) == capsule["hashes"], "native capsule input digest mismatch")
+    require(inputs.get("capsule") == f"{root.name}/{path.name}", "native capsule marker mismatch")
+    extra = [safe_relative(root, capsule.get(key)) for key in ("sbom", "scan", "output")]
+    require(portable_hashes(inputs, extra, root) == capsule.get("hashes"), "native capsule input digest mismatch")
     sbom, scan, output = extra
     expected = enrich(inputs, read_json(sbom), read_json(scan), sbom)
     require(read_json(output) == expected, "native capsule report mismatch")

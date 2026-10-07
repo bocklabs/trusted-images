@@ -603,6 +603,7 @@ jobs:
           fi
 
       - name: Inventory native Chisel packages from signed Ubuntu metadata
+        shell: bash
         if: steps.scanbefore.outcome == 'success' && steps.scanfixable.outcome == 'success'
         env:
           IMAGE_REF: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
@@ -864,6 +865,7 @@ jobs:
           timeout: 30m0s
 
       - name: Inventory final native Chisel packages with the frozen DB
+        shell: bash
         if: steps.scanafter.outcome == 'success' || steps.scanresumed.outcome == 'success'
         env:
           CANDIDATE_DIGEST: ${{ steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest }}
