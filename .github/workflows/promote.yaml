@@ -138,6 +138,7 @@ jobs:
               copy --preserve-digests "docker://${IMAGE_REF}" "oci:/workspace/native-published-oci:published"
             python3 scripts/scan_native_chisel.py --report published-rescan/trivy-full.json --oci native-published-oci \
               --reference "$IMAGE_REF" --evidence published-rescan/native-published --cache .cache/trivy
+            rm -rf native-published-oci
           fi
 
       - name: Convert published full report to CycloneDX with parity check

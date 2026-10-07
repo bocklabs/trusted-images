@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+from urllib.error import URLError
 from urllib.request import urlopen
 
 import native_chisel_inventory as native
@@ -38,8 +39,11 @@ def fetch_archive(root, stamp, codename, architecture):
                       for part in ("main", "universe")})
         for filename, relative in paths.items():
             url = f"https://snapshot.ubuntu.com/ubuntu/{stamp}/dists/{suite}/{relative}"
-            with urlopen(url, timeout=60) as response, (directory / filename).open("wb") as output:
-                shutil.copyfileobj(response, output)
+            try:
+                with urlopen(url, timeout=60) as response, (directory / filename).open("wb") as output:
+                    shutil.copyfileobj(response, output)
+            except URLError as error:
+                raise ValueError(f"native archive fetch failed: {url}") from error
     return str(directory)
 
 

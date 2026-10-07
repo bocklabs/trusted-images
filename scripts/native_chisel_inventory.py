@@ -139,8 +139,8 @@ def native_packages(files):
     require(paths and len({row["path"] for row in paths}) == len(paths), "duplicate native paths")
     packages = [row for row in rows if row.get("kind") == "package"]
     for row in packages:
-        require(all(isinstance(row.get(key), str) and row[key] for key in ("name", "version", "arch"))
-                and re.fullmatch("[0-9a-f]{64}", row.get("sha256", "")), "invalid native package")
+        require(all(isinstance(row.get(key), str) and row[key] for key in ("name", "version", "arch", "sha256"))
+                and re.fullmatch("[0-9a-f]{64}", row["sha256"]), "invalid native package")
     require(packages and len({row["name"] for row in packages}) == len(packages),
             "empty or duplicate native packages")
     verify_manifest_links(rows, paths, packages)

@@ -12,6 +12,7 @@ import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
+from urllib.error import URLError
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/native_chisel_inventory.py"
 SPEC = importlib.util.spec_from_file_location("native_chisel_inventory", SCRIPT)
@@ -21,12 +22,12 @@ native = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(native)
 
 
-def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False, created="2025-05-27T12:00:00Z"):
+def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False, created="2025-05-27T12:00:00Z", package_sha="b" * 64):
     release = b'ID=ubuntu\nVERSION_ID="24.04"\nVERSION_CODENAME=noble\n'
     library = b"real fixture content"
     packages = [
         {"kind": "package", "name": "base-files", "version": "13ubuntu10.2", "arch": "amd64", "sha256": "a" * 64},
-        {"kind": "package", "name": "libc6", "version": "2.39-0ubuntu8.4", "arch": "amd64", "sha256": "b" * 64},
+        {"kind": "package", "name": "libc6", "version": "2.39-0ubuntu8.4", "arch": "amd64", "sha256": package_sha},
     ]
     paths = [("/etc/os-release", "base-files_release", release),
              ("/usr/lib/libc.so", "libc6_libs", library), ("/" + native.WALL, "base-files_release", None)]
@@ -166,6 +167,23 @@ class NativeChiselInventoryTests(unittest.TestCase):
             inputs = fixture(Path(directory), created=None)
             with self.assertRaisesRegex(ValueError, "no creation timestamp"):
                 native.probe(inputs)
+
+    def test_native_package_requires_a_string_sha256(self):
+        for sha256 in (None, 123):
+            with self.subTest(sha256=sha256), tempfile.TemporaryDirectory() as directory:
+                inputs = fixture(Path(directory), package_sha=sha256)
+                with self.assertRaisesRegex(ValueError, "invalid native package"):
+                    native.probe(inputs)
+
+    def test_archive_fetch_reports_the_failed_snapshot_url(self):
+        module = orchestrator()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            failure = URLError("unavailable")
+            with patch.object(module, "urlopen", side_effect=failure), \
+                    self.assertRaisesRegex(ValueError, "20250527T120000Z/dists/noble/InRelease") as raised:
+                module.fetch_archive(root, "20250527T120000Z", "noble", "amd64")
+            self.assertIs(raised.exception.__cause__, failure)
 
     def test_os_release_requires_codename_and_version(self):
         for content in (b"ID=ubuntu\nVERSION_ID=24.04\n", b"ID=ubuntu\nVERSION_CODENAME=noble\n"):
