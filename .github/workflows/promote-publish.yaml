@@ -447,7 +447,7 @@ jobs:
 
       - name: Upload trivy-full-report artifact
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: trivy-full-report
           path: |
@@ -459,7 +459,7 @@ jobs:
 
       - name: Upload trivy-copa-report artifact
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: trivy-copa-report
           path: trivy-copa.json
@@ -468,7 +468,7 @@ jobs:
 
       - name: Upload signing evidence artifact
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: signing-evidence
           path: |
@@ -893,7 +893,7 @@ jobs:
 
       - name: Upload the final candidate decision
         if: always() && steps.candidate.outcome == 'success'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: candidate-decision
           path: candidate-decision.json
