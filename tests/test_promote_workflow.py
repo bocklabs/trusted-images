@@ -296,6 +296,7 @@ class PromoteWorkflowTests(unittest.TestCase):
         by_name = {step["name"]: step for step in steps}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            (root / "scripts").symlink_to(SCRIPTS, target_is_directory=True)
             (root / "trivy-full.json").write_text(json.dumps({"Results": [{"Packages": [{"Name": "old", "Identifier": {"PURL": "pkg:generic/old@1"}}]}]}))
             (root / "trivy-after-full.json").write_text(json.dumps({"Results": [{"Packages": [
                 {"Name": "deb", "Version": "2", "Identifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
@@ -317,7 +318,7 @@ class PromoteWorkflowTests(unittest.TestCase):
             fake_trivy = root / "trivy"
             fake_trivy.write_text('#!/bin/sh\ncp "$CDX_FIXTURE" trivy-full.cdx.json\n')
             fake_trivy.chmod(0o755)
-            env = dict(os.environ, PATH=f"{root}:{os.environ['PATH']}", CDX_FIXTURE=str(cdx),
+            env = dict(os.environ, PATH=f"{root}:{Path(sys.executable).parent}:{os.environ['PATH']}", CDX_FIXTURE=str(cdx),
                        PATCHED_DIGEST=DIGEST_B, RESUME_DIGEST="", RECOVERED_DIGEST="",
                        SELECTED_DIGEST=DIGEST_A, UPSTREAM_REF="registry.example/app",
                        GITHUB_OUTPUT=str(root / "output"), GITHUB_STEP_SUMMARY=str(root / "summary"))
@@ -1287,6 +1288,10 @@ elif args[:2] == ['run', 'download']:
             if step["name"] == "Restore the exact accepted candidate"
         )
         fixture = self.candidate_artifact()
+        (fixture / "arch-before").mkdir()
+        (fixture / "arch-before/retained.json").write_text('{"retained":"scanner input"}\n')
+        subprocess.run(["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
+                       cwd=fixture, check=True, capture_output=True)
         (self.tmp / "scripts").symlink_to(
             REPO_ROOT / "scripts", target_is_directory=True
         )
@@ -1323,6 +1328,49 @@ elif args[:2] == ['run', 'download']:
         ):
             self.assertIn(text, output)
         self.assertTrue((self.tmp / "candidate-oci").is_dir())
+        self.assertEqual((self.tmp / "arch-before/retained.json").read_bytes(),
+                         (fixture / "arch-before/retained.json").read_bytes())
+        before = next(s for s in steps if s["name"] == "Inventory native Chisel packages from signed Ubuntu metadata")
+        scanner = self.bin / "python3"
+        scanner.write_text(f"#!{sys.executable}\n" +
+            "import pathlib, subprocess, sys\n"
+            "if sys.argv[1] == 'scripts/scan_arch.py':\n"
+            "    root = pathlib.Path(sys.argv[sys.argv.index('--evidence') + 1])\n"
+            "    assert not root.exists(), 'fresh scan destination still contains restored evidence'\n"
+            "    assert pathlib.Path('arch-before-retained/retained.json').is_file()\n"
+            "    root.mkdir()\n"
+            "elif sys.argv[1] != 'scripts/scan_native_chisel.py':\n"
+            "    sys.exit(subprocess.call([sys.executable, *sys.argv[1:]]))\n")
+        scanner.chmod(0o755)
+        result = subprocess.run(["bash", "-c", before["run"]], cwd=self.tmp,
+                                env={**env, "IMAGE_REF": "example@" + self._child_digest()}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual((self.tmp / "arch-before-retained/retained.json").read_bytes(),
+                         (fixture / "arch-before/retained.json").read_bytes())
+        (self.tmp / "arch-before").rmdir()
+        (self.tmp / "arch-before-retained").rename(self.tmp / "arch-before")
+        scanner.unlink()
+        stale = self.tmp / "arch-before/stale.json"
+        stale.write_text("stale scanner input")
+        env["GITHUB_OUTPUT"] = str(self.tmp / "stale-capsule-output")
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("restored evidence file set differs", result.stderr)
+        self.assertFalse((self.tmp / "stale-capsule-output").exists())
+        stale.unlink()
+        original = (fixture / "trivy-full.json").read_bytes()
+        report = json.loads(original)
+        report["Results"][0]["Type"] = "archlinux"
+        report["ArchScanner"] = {"schema": "arch-scanner-v1", "capsule": "arch-before/capsule.json"}
+        (fixture / "trivy-full.json").write_text(json.dumps(report))
+        subprocess.run(["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
+                       cwd=fixture, check=True, capture_output=True)
+        env["GITHUB_OUTPUT"] = str(self.tmp / "omitted-capsule-output")
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing Arch capsule file", result.stderr)
+        self.assertFalse((self.tmp / "omitted-capsule-output").exists())
+        (fixture / "trivy-full.json").write_bytes(original)
 
         (fixture / "undeclared.txt").write_text("tampered\n")
         subprocess.run(

@@ -1068,7 +1068,7 @@ class PolicyTests(unittest.TestCase):
         before = [package("libexample", "1.0")]
         cases: dict[str, dict[str, object]] = {
             "unsupported ecosystem": {"result_type": "fedora"},
-            "unsupported ecosystem: 'archlinux'": {"result_type": "archlinux"},
+            "Arch OS rows require dedicated independent evidence": {"result_type": "archlinux"},
             "missing package inventory": {"remove_packages": True},
             "malformed version": {"packages": [package("libexample", "not-a-version")]},
             "ambiguous package identity": {

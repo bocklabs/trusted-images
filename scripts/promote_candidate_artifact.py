@@ -62,7 +62,7 @@ allowed = (
     | {
         name
         for name in actual
-        if name.startswith(("candidate-oci/", "validation-logs/", "native-before/", "native-after/"))
+        if name.startswith(("candidate-oci/", "validation-logs/", "native-before/", "native-after/", "arch-before/", "arch-after/"))
     }
 )
 undeclared = set(actual) - allowed

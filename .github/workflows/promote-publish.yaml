@@ -189,7 +189,7 @@ jobs:
             candidate-artifact/validation-evidence.json candidate-artifact/candidate-decision.json \
             candidate-artifact/trivy-db-meta-1.txt candidate-artifact/trivy-db-meta-2.txt .
           cp candidate-artifact/candidate-manifest.json candidate-manifest.json
-          for evidence in native-before native-after; do
+          for evidence in native-before native-after arch-before arch-after; do
             if [ -d "candidate-artifact/${evidence}" ]; then
               cp -a "candidate-artifact/${evidence}" .
             fi
@@ -460,6 +460,9 @@ jobs:
             trivy-full.json
             trivy-full.cdx.json
             secobserve-upload.json
+            arch-before/
+            arch-after/
+            candidate-artifact/SHA256SUMS
           retention-days: 30
           if-no-files-found: error
 

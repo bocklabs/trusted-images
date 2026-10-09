@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, quote, urlsplit
 
 import yaml
 
-from univers.versions import AlpineLinuxVersion, DebianVersion, RpmVersion
+from univers.versions import AlpineLinuxVersion, ArchLinuxVersion, DebianVersion, RpmVersion
 from finding_identity import findings_hash, REF
 
 SCHEMA = "trusted-images.bocklabs.dev/candidate-decision-v1"
@@ -59,6 +59,7 @@ CONFIG_TYPES = {
     "application/vnd.docker.container.image.v1+json",
 }
 VERSION_CLASSES = {
+    "archlinux": ArchLinuxVersion,
     "alpine": AlpineLinuxVersion,
     "debian": DebianVersion,
     "ubuntu": DebianVersion,
@@ -520,7 +521,27 @@ def cve_groups(groups: dict) -> dict:
     }
 
 
+def validate_arch_inventory(report: dict, path: Path) -> bool:
+    arch_rows = [row for row in validate_report_results(report, "native report", False)
+                 if row.get("Class") == "os-pkgs" and row.get("Type") == "archlinux"]
+    arch_marker = report.get("ArchScanner")
+    if arch_rows or arch_marker is not None:
+        if (len(arch_rows) != 1 or report.get("NativeChisel") is not None
+                or not isinstance(arch_marker, dict) or set(arch_marker) != {"schema", "capsule"}
+                or arch_marker.get("schema") != "arch-scanner-v1"):
+            raise ValueError("Arch OS rows require dedicated independent evidence")
+        from scan_arch import local_path, verify_capsule as verify_arch
+
+        capsule_path = local_path(path.parent.resolve(), arch_marker.get("capsule"))
+        if verify_arch(capsule_path) != report:
+            raise ValueError("Arch inventory evidence does not match report")
+        return True
+    return False
+
+
 def validate_native_inventory(report: dict, path: Path) -> None:
+    if validate_arch_inventory(report, path):
+        return
     marker = report.get("NativeChisel")
     sbom_packages = any(
         isinstance(package, dict) and isinstance(package.get("Identifier"), dict)
@@ -647,6 +668,13 @@ def validate_scan_receipt(
         sides[name] = validate_receipt_side(receipt[name], name, expected_digests[name])
     validate_scan_report(before, before_path, "before report", sides["before"])
     validate_scan_report(after, after_path, "after report", sides["after"])
+    if before.get("ArchScanner") or after.get("ArchScanner"):
+        if not before.get("ArchScanner") or not after.get("ArchScanner"):
+            raise ValueError("paired Arch scans require independent evidence on both sides")
+        capsules = [load_json(path.parent / report["ArchScanner"]["capsule"], "Arch capsule")
+                    for path, report in ((before_path, before), (after_path, after))]
+        if capsules[0]["grype_db_sha256"] != capsules[1]["grype_db_sha256"]:
+            raise ValueError("paired Arch scans changed frozen Grype database")
 
 
 def kev_evidence(path: Path, fetched_at: str, now: str):
@@ -1544,6 +1572,16 @@ def validate_patch_coverage(before_packages, after_packages):
         )
 
 
+def validate_arch_fixable(full_report: dict, fixable_report: dict) -> None:
+    if not full_report.get("ArchScanner"):
+        return
+    expected_os = next(row for row in full_report["Results"] if row.get("Type") == "archlinux").copy()
+    expected_os["Vulnerabilities"] = [row for row in expected_os["Vulnerabilities"] if row["FixedVersion"]]
+    actual_os = [row for row in fixable_report.get("Results", []) if row.get("Class") == "os-pkgs"]
+    if fixable_report.get("ArchScanner") != full_report["ArchScanner"] or actual_os != [expected_os]:
+        raise ValueError("Arch fixable report differs from verified inventory/fixes")
+
+
 def evaluate_candidate(args):
     child_digest, index_digest, candidate_digest = validate_candidate_inputs(args)
     full_path = Path(args.full_report)
@@ -1576,8 +1614,10 @@ def evaluate_candidate(args):
             candidate_digest,
         )
     full = findings(full_report, "full report")
+    fixable_report = load_json(Path(args.fixable_report), "fixable Trivy report")
+    validate_arch_fixable(full_report, fixable_report)
     fixable = findings(
-        load_json(Path(args.fixable_report), "fixable Trivy report"),
+        fixable_report,
         "fixable report",
         True,
     )

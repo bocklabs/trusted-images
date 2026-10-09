@@ -28,9 +28,13 @@ def git(*args):
 def retain(name, value):
     ARTIFACT.mkdir(exist_ok=True)
     (ARTIFACT / name).write_text(canonical(value) + "\n")
-    paths = sorted(p for p in ARTIFACT.iterdir() if p.name != "SHA256SUMS")
+    paths = []
+    for path in sorted(ARTIFACT.rglob("*")):
+        require(not path.is_symlink() and (path.is_dir() or path.is_file()), "unsafe rescan artifact entry")
+        if path.is_file() and path != ARTIFACT / "SHA256SUMS":
+            paths.append(path)
     (ARTIFACT / "SHA256SUMS").write_text("".join(
-        f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n" for p in paths))
+        f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(ARTIFACT).as_posix()}\n" for p in paths))
 
 
 def output(values):

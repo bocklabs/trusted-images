@@ -19,6 +19,19 @@ rescan = importlib.import_module("rescan_published")
 
 
 class PublishedRescanTests(unittest.TestCase):
+    def test_retention_hashes_nested_files_and_rejects_symlinks(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(rescan, "ARTIFACT", Path(directory)):
+            nested = Path(directory) / "arch-published" / "db"
+            nested.mkdir(parents=True)
+            (nested / "evidence").write_text("frozen")
+            rescan.retain("decision.json", {"proceed": False})
+            checksums = (Path(directory) / "SHA256SUMS").read_text()
+            self.assertIn("  arch-published/db/evidence\n", checksums)
+            self.assertIn("  decision.json\n", checksums)
+            (nested / "unsafe").symlink_to("/etc/hosts")
+            with self.assertRaisesRegex(ValueError, "unsafe rescan"):
+                rescan.retain("decision.json", {"proceed": False})
+
     def setUp(self):
         self.record = json.loads((ROOT / "provenance/postgres-exporter/v0.20.1-bocklabs.7.json").read_text())
         self.spec = yaml.safe_load((ROOT / "inventory/postgres-exporter/image.yaml").read_text())["spec"]

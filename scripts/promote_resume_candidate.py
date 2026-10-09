@@ -50,7 +50,7 @@ optional = {
     "before-labels.json",
     "after-labels.json",
 }
-allowed_prefixes = ("candidate-oci/", "validation-logs/", "native-before/", "native-after/")
+allowed_prefixes = ("candidate-oci/", "validation-logs/", "native-before/", "native-after/", "arch-before/", "arch-after/")
 files = [path for path in root.rglob("*") if path.is_file() or path.is_symlink()]
 relatives = []
 for path in files:
@@ -175,16 +175,32 @@ if (
 ):
     raise SystemExit("FATAL: original candidate validation did not pass")
 
+for name in ("trivy-before-full.json", "trivy-after-full.json", "trivy-full.json"):
+    source = root / name
+    if source.is_file():
+        marker = json.loads(source.read_text()).get("ArchScanner")
+        if isinstance(marker, dict):
+            from scan_arch import local_path
+
+            local_path(root.resolve(), marker.get("capsule"))
+
 for name in mandatory | optional:
     source = root / name
     if source.is_file():
         shutil.copyfile(source, name)
 shutil.copytree(root / "candidate-oci", "candidate-oci", dirs_exist_ok=True)
-for directory in ("native-before", "native-after"):
+for directory in ("native-before", "native-after", "arch-before", "arch-after"):
     if (root / directory).is_dir():
+        destination = Path(directory)
+        if destination.is_symlink() or any(p.is_symlink() for p in destination.rglob("*")):
+            raise SystemExit("FATAL: unsafe restored evidence directory")
         shutil.copytree(root / directory, directory, dirs_exist_ok=True)
+        source_files = {p.relative_to(root / directory).as_posix() for p in (root / directory).rglob("*") if p.is_file()}
+        restored_files = {p.relative_to(destination).as_posix() for p in destination.rglob("*") if p.is_file()}
+        if source_files != restored_files:
+            raise SystemExit("FATAL: restored evidence file set differs from downloaded artifact")
 for name in ("trivy-before-full.json", "trivy-after-full.json", "trivy-full.json"):
-    path = root / name
+    path = Path(name)
     if path.is_file():
         validate_native_inventory(json.loads(path.read_text(encoding="utf-8")), path)
 shutil.copyfile(root / DECISION_FILENAME, "original-candidate-decision.json")

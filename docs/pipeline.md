@@ -157,9 +157,19 @@ and PURL under immutable RPM key identities. Every key remains in the inventory;
 key removal, duplicate corruption and ordinary package ambiguity still block.
 Epoch/release components, unchanged versions and downgrades are checked independently. These inventory scans establish comparator inputs,
 not successful patch qualification. No guessed openSUSE aliases are admitted.
-Trivy still lacks Arch OS inventory. Independent Syft/Grype evidence establishes
-137 real pacman packages and six unfixed advisories, but Arch report integration
-and before/after qualification remain unfinished; no guessed Arch alias is admitted.
+Arch inventory is verified from immutable OCI pacman bytes and Syft 1.54.0,
+with Grype 0.120.0 findings from a frozen native schema-6 database. The report's
+`ArchScanner` marker binds `arch-before/`, `arch-after/`, or `arch-published/`
+to a portable capsule independently replayed before admission. Reviewed archive
+and executable pins, isolated configuration, complete relative file hashes and
+120-hour database freshness are mandatory; after scans reuse the before database.
+All primary AVG advisories and CVE aliases enter policy, KEV and exact CycloneDX
+PURL/finding parity. CycloneDX attributes OS inventory to Syft and findings to Grype.
+Raw Trivy language results and its database identity remain separate and unchanged;
+the existing report filenames and import shape remain compatible. Local source
+checks on 137 packages, six AVG advisories and nine CVE aliases establish before
+evidence only: zero fixable advisories cannot qualify patched-after, functionality,
+signing, publication, automatic new revisions or the operator pilot review.
 Unknown evidence and incomplete patch coverage fail closed; upstream recognition
 or synthetic fixtures do not count as family qualification.
 The pinned runtime/BuildKit execution and each live layout still require isolated
