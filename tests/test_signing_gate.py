@@ -464,6 +464,47 @@ elif a[:2]==['pr','view']: print('true')
             path.write_text(json.dumps(record))
             self.assertEqual(reverify_signing.main(), 1)
 
+    def test_malformed_nested_objects_report_failure_and_allow_healthy_refresh(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
+        import reverify_signing
+        from tests.test_refresh_current_provenance import CurrentRefreshTests, refresh
+
+        identity = json.loads(IDENTITY.read_bytes())
+        record = self.example_record()
+        for field in ("internal", "upstream", "policy", "validation"):
+            malformed = json.loads(json.dumps(record))
+            malformed[field] = []
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, field):
+                reverify_signing.record_identity(malformed, "example")
+        for field in ("signing", "image_signature", "sbom_attestation", "tools", "rekor"):
+            malformed = json.loads(json.dumps(record))
+            target = malformed if field == "signing" else malformed["signing"]
+            target[field] = []
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, field):
+                reverify_signing.signed_record(malformed, self.dir / "record.json", identity)
+        with self.assertRaisesRegex(ValueError, "object"):
+            reverify_signing.signed_record([], self.dir / "record.json", identity)
+        malformed = json.loads(json.dumps(record))
+        malformed["internal"] = []
+        path, output = self.dir / "malformed.json", self.dir / "failed-signing.json"
+        path.write_text(json.dumps(malformed))
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/reverify_signing.py"), "--record", str(path), "--out", str(output)],
+                                cwd=self.dir, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn("internal", json.loads(output.read_bytes())["reason"])
+        self.assertEqual(json.loads(output.read_bytes())["result"], "fail")
+        cohort = CurrentRefreshTests()
+        cohort.setUp()
+        self.addCleanup(cohort.doCleanups)
+        cohort.pulls = [cohort.owned, cohort.healthy]
+        cohort.candidates["postgres-exporter"]["internal"] = []
+        with self.assertRaisesRegex(ValueError, "PR 55.*internal"):
+            refresh.refresh("bocklabs/trusted-images")
+        self.assertEqual([call for call in cohort.calls if "PUT" in call], [("gh", "api", "--method", "PUT",
+            "repos/bocklabs/trusted-images/pulls/56/update-branch", "-f", "expected_head_sha=" + "4" * 40)])
+
     def test_historical_provenance_rewrite_is_rejected(self):
         sys.path.insert(0, str(ROOT / "scripts"))
         self.addCleanup(sys.path.remove, str(ROOT / "scripts"))

@@ -38,6 +38,11 @@ def record_time(record):
 
 
 def record_identity(record, app):
+    if not isinstance(record, dict):
+        raise ValueError("provenance record must be an object")
+    for field_name in ("internal", "upstream", "policy", "validation"):
+        if field_name in record and not isinstance(record[field_name], dict):
+            raise ValueError(f"provenance {field_name} must be an object")
     internal = record.get("internal", {})
     upstream = record.get("upstream", {})
     if (record.get("schema") != SCHEMA or record.get("app") != app
@@ -226,8 +231,15 @@ def check_history(base):
 
 
 def signed_record(record, path, identity) -> tuple[str, str, str]:
+    if not isinstance(record, dict):
+        raise ValueError("signed provenance record must be an object")
     record_identity(record, record.get("app"))
-    signing = record["signing"]
+    signing = record.get("signing")
+    if not isinstance(signing, dict):
+        raise ValueError("provenance signing must be an object")
+    for field_name in ("image_signature", "sbom_attestation", "tools", "rekor"):
+        if field_name in signing and not isinstance(signing[field_name], dict):
+            raise ValueError(f"provenance signing.{field_name} must be an object")
     app = record.get("app")
     internal = record.get("internal", {})
     signature = signing.get("image_signature", {})
