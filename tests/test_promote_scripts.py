@@ -497,6 +497,10 @@ class ResumeTests(PromotionScriptTestCase):
         root = self.tmp / "resume-download"
         blocker = decision(eligible=False, reason="missing_kev_acceptance")
         candidate_tree(root, blocker)
+        for directory in ("native-before", "native-after"):
+            (root / directory).mkdir()
+            (root / directory / "raw-image.json").write_text("retained native source bytes\n")
+        checksums(root)
         run = {"head_sha": SOURCE_SHA, "run_attempt": 1}
         write_json(self.tmp / "resume-run.json", run)
         (self.tmp / "inventory" / APP).mkdir(parents=True)
@@ -511,6 +515,9 @@ class ResumeTests(PromotionScriptTestCase):
             env={"APP": APP, "GITHUB_OUTPUT": str(output)},
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for directory in ("native-before", "native-after"):
+            self.assertEqual((self.tmp / directory / "raw-image.json").read_bytes(),
+                             (root / directory / "raw-image.json").read_bytes())
         self.assertEqual(
             output.read_text().splitlines(),
             [
@@ -544,6 +551,22 @@ class ResumeTests(PromotionScriptTestCase):
 
 
 class RegistryTests(PromotionScriptTestCase):
+    def committed_current(self, record):
+        record.update(app=APP, promoted_at="2026-09-14T01:00:00Z", policy={"eligible": True})
+        record.setdefault("upstream", {}).setdefault("tag", "v1.2.3")
+        record["internal"].setdefault("package", "ghcr.io/bocklabs/app")
+        record["internal"].setdefault("platforms", ["linux/amd64"])
+        current = self.tmp / "provenance/app/current.json"
+        current.parent.mkdir(parents=True, exist_ok=True)
+        write_json(current, record)
+        for args in (("init", "-q"), ("config", "user.name", "fixture"), ("config", "user.email", "fixture@example.test"),
+                     ("add", "provenance"), ("commit", "-qm", "current"), ("update-ref", "refs/remotes/origin/main", "HEAD")):
+            subprocess.run(["git", *args], cwd=self.tmp, check=True, capture_output=True)
+        shim = self.tmp / "git"
+        shim.write_text('#!/bin/sh\nexec /usr/bin/git -C "$FIXTURE_REPO" "$@"\n')
+        shim.chmod(0o755)
+        return {"FIXTURE_REPO": str(self.tmp), "PATH": str(self.tmp) + os.pathsep + os.environ["PATH"]}
+
     def test_registry_next_link_returns_the_exact_pagination_url(self) -> None:
         (self.tmp / "registry-page.headers").write_text(
             'Link: <https://example.invalid/next?after=2>; rel="next"\n',
@@ -590,14 +613,13 @@ class RegistryTests(PromotionScriptTestCase):
                 "platforms": ["linux/amd64"],
             },
         }
-        (self.tmp / "provenance" / APP).mkdir(parents=True)
-        write_json(self.tmp / "provenance" / APP / "v1.2.3-bocklabs.1.json", record)
+        env = self.committed_current(record)
         observations = self.tmp / "registry-observations.tsv"
         observations.write_text(
             "v1.2.3-bocklabs.1\t" + DIGEST_A + "\nunknown\t" + DIGEST_B + "\n",
             encoding="utf-8",
         )
-        result = self.run_script("promote_registry_observations.py", APP)
+        result = self.run_script("promote_registry_observations.py", APP, env=env)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
             json.loads(result.stdout),
@@ -632,11 +654,11 @@ class RegistryTests(PromotionScriptTestCase):
                 "platforms": ["linux/amd64", "linux/arm64"],
             },
         }
-        write_json(provenance / f"{tag}.json", record)
+        env = self.committed_current(record)
         observations = self.tmp / "registry-observations.tsv"
         observations.write_text(f"{tag}\t{DIGEST_B}\n", encoding="utf-8")
 
-        result = self.run_script("promote_registry_observations.py", APP)
+        result = self.run_script("promote_registry_observations.py", APP, env=env)
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
@@ -657,14 +679,14 @@ class RegistryTests(PromotionScriptTestCase):
             "schema": "trusted-images.bocklabs.dev/provenance-v1",
             "internal": {"tag": "other", "digest": DIGEST_A},
         }
-        write_json(provenance / "v1.2.3-bocklabs.1.json", record)
+        env = self.committed_current(record)
         observations = self.tmp / "registry-observations.tsv"
         observations.write_text(
             "v1.2.3-bocklabs.1\t" + DIGEST_A + "\n", encoding="utf-8"
         )
-        result = self.run_script("promote_registry_observations.py", APP)
+        result = self.run_script("promote_registry_observations.py", APP, env=env)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("FATAL: provenance does not bind observed tag", result.stderr)
+        self.assertIn("invalid provenance identity", result.stderr)
 
     def test_reused_candidate_accepts_matching_layout_bytes(self) -> None:
         root = self.tmp / "reused-candidate"
@@ -916,7 +938,12 @@ class DecisionTests(PromotionScriptTestCase):
         )
 
     def test_candidate_artifact_accepts_a_complete_checksum_bound_tree(self) -> None:
-        candidate_tree(self.tmp / "candidate-artifact")
+        root = self.tmp / "candidate-artifact"
+        candidate_tree(root)
+        for directory in ("native-before", "native-after"):
+            (root / directory).mkdir()
+            (root / directory / "raw-image.json").write_text("retained native source bytes\n")
+        checksums(root)
         result = self.run_script("promote_candidate_artifact.py")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

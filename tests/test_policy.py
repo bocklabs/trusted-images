@@ -71,6 +71,15 @@ def package(name, version, epoch=None, release=None):
     return value
 
 
+def rpm_public_key(version="09d9ea69", release="68595a8c"):
+    return {
+        **package("gpg-pubkey", version, release=release),
+        "ID": f"gpg-pubkey@{version}-{release}.",
+        "Arch": "None", "AnalyzedBy": "rpm", "Licenses": ["pubkey"],
+        "Identifier": {"PURL": f"pkg:rpm/suse/gpg-pubkey@{version}-{release}?arch=None&distro=sles-16.0"},
+    }
+
+
 def report(
     vulnerabilities=None,
     packages=None,
@@ -370,6 +379,8 @@ class PolicyTests(unittest.TestCase):
         self.assertIsNone(decision["published"]["digest"])
         self.assertFalse(decision["provenance"]["merged"])
         spec = importlib.util.spec_from_file_location("evaluate_promotion", EVALUATOR)
+        if spec is None or spec.loader is None:
+            raise ImportError("Cannot load promotion evaluator")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         module.validate_decision(decision)
@@ -514,6 +525,8 @@ class PolicyTests(unittest.TestCase):
             decision["before"]["fixable_os"], ["linux/amd64|libexample|CVE-2026-0007"]
         )
         spec = importlib.util.spec_from_file_location("evaluate_promotion", EVALUATOR)
+        if spec is None or spec.loader is None:
+            raise ImportError("Cannot load promotion evaluator")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         module.validate_decision(decision)
@@ -651,7 +664,7 @@ class PolicyTests(unittest.TestCase):
     def test_acceptance_expiry_digest_kevs_and_issue_fail_closed(self):
         write_json(self.full, report([vuln("CVE-2026-0001"), vuln("CVE-2026-0002")]))
         write_json(self.kev, kev_feed(("CVE-2026-0001", "CVE-2026-0002")))
-        cases = (
+        cases: tuple[tuple[str, dict[str, object], dict[str, object], str], ...] = (
             ("expired", {"expiresAt": "2026-09-14T00:30:00Z"}, {}, "expired"),
             ("candidate digest", {"candidateDigest": PATCHED_DIGEST}, {}, "candidate digest"),
             ("KEV set", {"kevs": ["CVE-2026-0001"]}, {}, "KEV set"),
@@ -847,6 +860,65 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("conflicting duplicate package", result.stdout + result.stderr)
 
+    def test_rpm_public_keys_are_retained_and_new_key_is_reported(self):
+        import evaluate_promotion as promotion
+
+        keys = [rpm_public_key(version, release) for version, release in (
+            ("09d9ea69", "68595a8c"), ("39db7c82", "66c5d91a"),
+            ("3fa1d6ce", "67c856ee"), ("50a3dd1c", "50f35137"),
+            ("73f03759", "626bd414"), ("d588dc46", "63c939db"),
+        )]
+        inventory = promotion.package_inventory(report(packages=keys, result_type="sles"), "SLES keys")
+        self.assertEqual(len(inventory), 6)
+        self.assertEqual({(item["name"], item["version"], item["arch"], item["purl"])
+                          for item in inventory.values()},
+                         {(item["Name"], item["Version"] + "-" + item["Release"],
+                           item["Arch"], item["Identifier"]["PURL"]) for item in keys})
+        self.patched([vuln("CVE-2026-0007", fixed="1.1")], [],
+                     keys + [package("libexample", "1.0")],
+                     keys + [package("libexample", "1.1"), rpm_public_key("01234567", "12345678")],
+                     result_type="sles")
+        result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(self.out.read_text())["packages"], {
+            "changes": [{"ecosystem": "sles", "name": "gpg-pubkey", "change": "added",
+                         "before": None, "after": "01234567-12345678"},
+                        {"ecosystem": "sles", "name": "libexample", "change": "upgraded",
+                         "before": "1.0", "after": "1.1"}], "downgrades": [],
+        })
+
+    def test_rpm_public_key_removal_duplicates_and_malformed_metadata_fail_closed(self):
+        original = rpm_public_key()
+        other = rpm_public_key("39db7c82", "66c5d91a")
+        cases = [([original], "patch coverage"), ([original, other, original], "conflicting duplicate")]
+        for field, malformed in (("AnalyzedBy", "dpkg"), ("Licenses", []), ("Arch", None),
+                                 ("ID", "wrong"), ("Identifier", {"PURL": "pkg:pypi/wrong@1"})):
+            cases.append(([original, {**other, field: malformed}], "invalid RPM public key"))
+        for after, message in cases:
+            with self.subTest(message=message, packages=after):
+                self.patched([], [], [original, other], after, result_type="sles")
+                result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn(message, result.stdout + result.stderr)
+
+    def test_native_os_inventory_requires_a_bound_local_capsule(self):
+        native = package("libc6", "2.39-0ubuntu8")
+        native["Identifier"] = {"BOMRef": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8"}
+        for marker, message in (
+            (None, "require native inventory evidence"),
+            ({"schema": "unknown", "capsule": "native-before/capsule.json"}, "invalid native"),
+            ({"schema": "native-chisel-v1", "capsule": "../capsule.json"}, "local relative"),
+            ({"schema": "native-chisel-v1", "capsule": "native-before/capsule.json"}, "missing native"),
+        ):
+            with self.subTest(marker=marker):
+                payload = report(packages=[native], result_type="ubuntu")
+                if marker is not None:
+                    payload["NativeChisel"] = marker
+                self.full = write_json(self.full, payload)
+                result = self.run_policy()
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn(message, result.stdout + result.stderr)
+
     def test_valid_resolved_change_permits_upgrade_and_new_tooling(self):
         supplied = vuln("CVE-2026-0007", fixed="1.1")
         self.patched(
@@ -994,9 +1066,9 @@ class PolicyTests(unittest.TestCase):
 
     def test_invalid_package_inventory_fails_closed(self):
         before = [package("libexample", "1.0")]
-        cases = {
+        cases: dict[str, dict[str, object]] = {
             "unsupported ecosystem": {"result_type": "fedora"},
-            "unsupported ecosystem: 'archlinux'": {"result_type": "archlinux"},
+            "Arch OS rows require dedicated independent evidence": {"result_type": "archlinux"},
             "missing package inventory": {"remove_packages": True},
             "malformed version": {"packages": [package("libexample", "not-a-version")]},
             "ambiguous package identity": {

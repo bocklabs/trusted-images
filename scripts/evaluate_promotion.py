@@ -9,11 +9,11 @@ import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlsplit
 
 import yaml
 
-from univers.versions import AlpineLinuxVersion, DebianVersion, RpmVersion
+from univers.versions import AlpineLinuxVersion, ArchLinuxVersion, DebianVersion, RpmVersion
 from finding_identity import findings_hash, REF
 
 SCHEMA = "trusted-images.bocklabs.dev/candidate-decision-v1"
@@ -59,6 +59,7 @@ CONFIG_TYPES = {
     "application/vnd.docker.container.image.v1+json",
 }
 VERSION_CLASSES = {
+    "archlinux": ArchLinuxVersion,
     "alpine": AlpineLinuxVersion,
     "debian": DebianVersion,
     "ubuntu": DebianVersion,
@@ -407,6 +408,27 @@ def package_ecosystem(result: dict, os_family: str, label: str) -> str:
     return ecosystem
 
 
+def rpm_public_key_metadata(package: dict, version: str, label: str) -> dict[str, str]:
+    identifier = package.get("Identifier")
+    purl = identifier.get("PURL") if isinstance(identifier, dict) else None
+    if not isinstance(purl, str):
+        raise ValueError(f"{label} has invalid RPM public key PURL")
+    parsed = urlsplit(purl)
+    if (
+        package.get("AnalyzedBy") != "rpm"
+        or package.get("Licenses") != ["pubkey"]
+        or package.get("Arch") != "None"
+        or not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{8}", version)
+        or package.get("ID") != f"gpg-pubkey@{version}."
+        or parsed.scheme != "pkg"
+        or not parsed.path.startswith("rpm/")
+        or parsed.path.rsplit("/", 1)[-1] != f"gpg-pubkey@{version}"
+        or parse_qs(parsed.query).get("arch") != ["None"]
+    ):
+        raise ValueError(f"{label} has invalid RPM public key metadata")
+    return {"arch": package["Arch"], "purl": purl}
+
+
 def add_packages(inventory: dict, packages: list, ecosystem: str, label: str) -> None:
     for package in packages:
         if not isinstance(package, dict):
@@ -414,23 +436,27 @@ def add_packages(inventory: dict, packages: list, ecosystem: str, label: str) ->
         name = package.get("Name")
         if not isinstance(name, str) or not name:
             raise ValueError(f"{label}.Packages contains a package without Name")
-        key = (ecosystem, name)
+        version = package_version(package)
+        metadata = {}
+        key: tuple[str, ...] = (ecosystem, name)
+        if name == "gpg-pubkey" and VERSION_CLASSES[ecosystem] is RpmVersion:
+            metadata = rpm_public_key_metadata(package, version, label)
+            key = (ecosystem, name, version, metadata["arch"])
         if key in inventory:
             raise ValueError(
-                f"{label} has conflicting duplicate package identity (ambiguous package identity): {ecosystem}/{name}"
+                f"{label} has conflicting duplicate package identity (ambiguous package identity): {'/'.join(key)}"
             )
-        version = package_version(package)
         try:
             VERSION_CLASSES[ecosystem](version)
         except ValueError as exc:
             raise ValueError(
                 f"malformed version for {ecosystem}/{name}: {version}"
             ) from exc
-        inventory[key] = {"ecosystem": ecosystem, "name": name, "version": version}
+        inventory[key] = {"ecosystem": ecosystem, "name": name, "version": version, **metadata}
 
 
 def package_inventory(report: dict, label: str):
-    inventory: dict[tuple[str, str], dict[str, str]] = {}
+    inventory: dict[tuple[str, ...], dict[str, str]] = {}
     os_family = report_os_family(report, label)
     for result in validate_report_results(report, label, False):
         if result.get("Class") != "os-pkgs":
@@ -495,7 +521,59 @@ def cve_groups(groups: dict) -> dict:
     }
 
 
+def validate_arch_inventory(report: dict, path: Path) -> bool:
+    arch_rows = [row for row in validate_report_results(report, "native report", False)
+                 if row.get("Class") == "os-pkgs" and row.get("Type") == "archlinux"]
+    arch_marker = report.get("ArchScanner")
+    if arch_rows or arch_marker is not None:
+        if (len(arch_rows) != 1 or report.get("NativeChisel") is not None
+                or not isinstance(arch_marker, dict) or set(arch_marker) != {"schema", "capsule"}
+                or arch_marker.get("schema") != "arch-scanner-v1"):
+            raise ValueError("Arch OS rows require dedicated independent evidence")
+        from scan_arch import local_path, verify_capsule as verify_arch
+
+        capsule_path = local_path(path.parent.resolve(), arch_marker.get("capsule"))
+        if verify_arch(capsule_path) != report:
+            raise ValueError("Arch inventory evidence does not match report")
+        return True
+    return False
+
+
+def validate_native_inventory(report: dict, path: Path) -> None:
+    if validate_arch_inventory(report, path):
+        return
+    marker = report.get("NativeChisel")
+    sbom_packages = any(
+        isinstance(package, dict) and isinstance(package.get("Identifier"), dict)
+        and package["Identifier"].get("BOMRef")
+        for result in validate_report_results(report, "native report", False)
+        if result.get("Class") == "os-pkgs" and isinstance(result.get("Packages"), list)
+        for package in result["Packages"]
+    )
+    if marker is None:
+        if sbom_packages:
+            raise ValueError("SBOM OS packages require native inventory evidence")
+        return
+    if (not isinstance(marker, dict) or set(marker) != {"schema", "capsule"}
+            or marker.get("schema") != "native-chisel-v1"
+            or not isinstance(marker.get("capsule"), str)):
+        raise ValueError("invalid native inventory evidence marker")
+    capsule = Path(marker["capsule"])
+    if capsule.is_absolute() or ".." in capsule.parts:
+        raise ValueError("native inventory evidence must use a local relative path")
+    capsule = path.parent / capsule
+    if not capsule.resolve().is_relative_to(path.parent.resolve()):
+        raise ValueError("native inventory evidence must remain inside the report directory")
+    if not capsule.is_file():
+        raise ValueError("missing native inventory evidence capsule")
+    from native_chisel_inventory import verify_capsule
+
+    if verify_capsule(capsule) != report:
+        raise ValueError("native inventory evidence does not match report")
+
+
 def validate_scan_report(report: dict, path: Path, label: str, side: dict):
+    validate_native_inventory(report, path)
     trivy = report.get("Trivy", {})
     if not isinstance(trivy, dict) or trivy.get("Version") != TRIVY_VERSION:
         raise ValueError(
@@ -590,6 +668,13 @@ def validate_scan_receipt(
         sides[name] = validate_receipt_side(receipt[name], name, expected_digests[name])
     validate_scan_report(before, before_path, "before report", sides["before"])
     validate_scan_report(after, after_path, "after report", sides["after"])
+    if before.get("ArchScanner") or after.get("ArchScanner"):
+        if not before.get("ArchScanner") or not after.get("ArchScanner"):
+            raise ValueError("paired Arch scans require independent evidence on both sides")
+        capsules = [load_json(path.parent / report["ArchScanner"]["capsule"], "Arch capsule")
+                    for path, report in ((before_path, before), (after_path, after))]
+        if capsules[0]["grype_db_sha256"] != capsules[1]["grype_db_sha256"]:
+            raise ValueError("paired Arch scans changed frozen Grype database")
 
 
 def kev_evidence(path: Path, fetched_at: str, now: str):
@@ -1487,6 +1572,16 @@ def validate_patch_coverage(before_packages, after_packages):
         )
 
 
+def validate_arch_fixable(full_report: dict, fixable_report: dict) -> None:
+    if not full_report.get("ArchScanner"):
+        return
+    expected_os = next(row for row in full_report["Results"] if row.get("Type") == "archlinux").copy()
+    expected_os["Vulnerabilities"] = [row for row in expected_os["Vulnerabilities"] if row["FixedVersion"]]
+    actual_os = [row for row in fixable_report.get("Results", []) if row.get("Class") == "os-pkgs"]
+    if fixable_report.get("ArchScanner") != full_report["ArchScanner"] or actual_os != [expected_os]:
+        raise ValueError("Arch fixable report differs from verified inventory/fixes")
+
+
 def evaluate_candidate(args):
     child_digest, index_digest, candidate_digest = validate_candidate_inputs(args)
     full_path = Path(args.full_report)
@@ -1498,15 +1593,16 @@ def evaluate_candidate(args):
         )
     patch_reason(args)
     full_report = load_json(full_path, "full Trivy report")
+    if receipt_path is None:
+        validate_native_inventory(full_report, full_path)
     os_metadata = full_report.get("Metadata", {}).get("OS")
     if os_metadata is not None and (
         not isinstance(os_metadata, dict) or os_metadata.get("EOSL") is True
     ):
         raise ValueError("full report OS EOSL is true")
-    after_report = (
-        load_json(after_path, "after full Trivy report") if after_path else None
-    )
-    if after_report is not None:
+    after_report = None
+    if after_path is not None and receipt_path is not None:
+        after_report = load_json(after_path, "after full Trivy report")
         validate_scan_receipt(
             load_json(receipt_path, "scan receipt"),
             full_path,
@@ -1518,8 +1614,10 @@ def evaluate_candidate(args):
             candidate_digest,
         )
     full = findings(full_report, "full report")
+    fixable_report = load_json(Path(args.fixable_report), "fixable Trivy report")
+    validate_arch_fixable(full_report, fixable_report)
     fixable = findings(
-        load_json(Path(args.fixable_report), "fixable Trivy report"),
+        fixable_report,
         "fixable report",
         True,
     )

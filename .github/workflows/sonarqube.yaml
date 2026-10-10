@@ -36,15 +36,17 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Sync Python dependencies
+        run: uv sync --locked
+
       - name: Run test suite with coverage
         shell: bash
         run: |
           set -euo pipefail
-          uv pip install --system -r requirements.txt
-          python -m coverage run --branch -m unittest discover -s tests
-          python -m coverage combine --quiet
-          python -m coverage report --fail-under=80
-          python -m coverage xml
+          uv run --locked coverage run --branch -m unittest discover -s tests
+          uv run --locked coverage combine --quiet
+          uv run --locked coverage report --fail-under=80
+          uv run --locked coverage xml
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0

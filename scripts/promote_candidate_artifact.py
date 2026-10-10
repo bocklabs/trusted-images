@@ -1,7 +1,11 @@
 """Validate the fresh candidate artifact and checksum manifest."""
 
 import hashlib
+import json
+
 from pathlib import Path
+
+from evaluate_promotion import validate_native_inventory
 
 ARTIFACT_PREFIX = "candidate-artifact/"
 root = Path("candidate-artifact")
@@ -58,7 +62,7 @@ allowed = (
     | {
         name
         for name in actual
-        if name.startswith(("candidate-oci/", "validation-logs/"))
+        if name.startswith(("candidate-oci/", "validation-logs/", "native-before/", "native-after/", "arch-before/", "arch-after/"))
     }
 )
 undeclared = set(actual) - allowed
@@ -81,3 +85,8 @@ for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
     name = name.removeprefix(ARTIFACT_PREFIX)
     if hashlib.sha256((root / name).read_bytes()).hexdigest() != expected_digest:
         raise SystemExit(f"FATAL: fresh candidate checksum failed: {name}")
+
+for name in ("trivy-before-full.json", "trivy-after-full.json", "trivy-full.json"):
+    path = root / name
+    if path.is_file():
+        validate_native_inventory(json.loads(path.read_text(encoding="utf-8")), path)

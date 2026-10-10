@@ -204,16 +204,33 @@ class PromoteWorkflowTests(unittest.TestCase):
     publisher_workflow: ClassVar[str]
     workflow: ClassVar[str]
 
-    def test_provenance_handoff_never_merges_or_waits_for_review(self):
-        self.assertNotIn("gh pr merge", self.publisher_workflow)
+    def test_provenance_handoff_enables_guarded_auto_merge_without_waiting(self):
         self.assertNotIn("sleep 10", self.publisher_workflow)
-        self.assertIn("provenance review pending", self.publisher_workflow)
+        self.assertNotIn("/check-runs", self.publisher_workflow)
+        self.assertIn("provenance merge pending", self.publisher_workflow)
         steps = yaml.safe_load(self.publisher_workflow)["jobs"]["promote"]["steps"]
+        auto_merge = next(step for step in steps if step["name"] == "Auto-merge signed provenance PR")
+        self.assertEqual(auto_merge["if"], "${{ success() && steps.signing-gate.outcome == 'success' && steps.pr.outputs.pr_url != '' }}")
+        self.assertEqual(auto_merge["env"]["GH_TOKEN"], "${{ steps.app-token.outputs.token }}")
+        self.assertEqual(auto_merge["env"]["HEAD_SHA"], "${{ steps.pr.outputs.head_sha }}")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            command = root / "gh"
+            command.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$ARGUMENTS"\n')
+            command.chmod(0o755)
+            arguments = root / "arguments"
+            env = {**os.environ, "PATH": str(root) + os.pathsep + os.environ["PATH"],
+                   "ARGUMENTS": str(arguments), "HEAD_SHA": "abc123", "PR_URL": "https://example.invalid/pull/1"}
+            result = subprocess.run(["bash", "-c", auto_merge["run"]], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(arguments.read_text().splitlines(),
+                             ["pr", "merge", "--auto", "--merge", "--match-head-commit", "abc123", env["PR_URL"]])
         run = next(step["run"] for step in steps if step["name"] == "Verify merged provenance and publish the final decision")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             decision = root / "candidate-decision.json"
             decision.write_text('{"provenance":{"merged":false}}')
+            (root / "signing-evidence.json").write_text('{"result":"pass"}')
             original = decision.read_bytes()
             summary = root / "summary"
             env = {**os.environ, "PR_URL": "https://example.invalid/pull/1", "APP": "example",
@@ -280,6 +297,7 @@ class PromoteWorkflowTests(unittest.TestCase):
         by_name = {step["name"]: step for step in steps}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            (root / "scripts").symlink_to(SCRIPTS, target_is_directory=True)
             (root / "trivy-full.json").write_text(json.dumps({"Results": [{"Packages": [{"Name": "old", "Identifier": {"PURL": "pkg:generic/old@1"}}]}]}))
             (root / "trivy-after-full.json").write_text(json.dumps({"Results": [{"Packages": [
                 {"Name": "deb", "Version": "2", "Identifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
@@ -301,7 +319,7 @@ class PromoteWorkflowTests(unittest.TestCase):
             fake_trivy = root / "trivy"
             fake_trivy.write_text('#!/bin/sh\ncp "$CDX_FIXTURE" trivy-full.cdx.json\n')
             fake_trivy.chmod(0o755)
-            env = dict(os.environ, PATH=f"{root}:{os.environ['PATH']}", CDX_FIXTURE=str(cdx),
+            env = dict(os.environ, PATH=f"{root}:{Path(sys.executable).parent}:{os.environ['PATH']}", CDX_FIXTURE=str(cdx),
                        PATCHED_DIGEST=DIGEST_B, RESUME_DIGEST="", RECOVERED_DIGEST="",
                        SELECTED_DIGEST=DIGEST_A, UPSTREAM_REF="registry.example/app",
                        GITHUB_OUTPUT=str(root / "output"), GITHUB_STEP_SUMMARY=str(root / "summary"))
@@ -348,8 +366,13 @@ class PromoteWorkflowTests(unittest.TestCase):
             root = Path(directory)
             record = root / "provenance/example/v1.json"
             record.parent.mkdir(parents=True)
+            (root / "scripts").symlink_to(SCRIPTS, target_is_directory=True)
+            git = root / "git"
+            git.write_text('#!/bin/sh\ncase "$1" in\nfetch|merge-base) exit 0;;\nrev-parse) printf "%040d\\n" 1;;\nls-tree) echo provenance/example/current.json;;\nshow) cat "$RECORD_FIXTURE";;\n*) exit 9;;\nesac\n')
+            git.chmod(0o755)
             base = {"schema": "trusted-images.bocklabs.dev/provenance-v1", "app": "example",
-                    "internal": {"package": "ghcr.io/bocklabs/example", "tag": "v1", "digest": DIGEST_A},
+                    "upstream": {"tag": "v1"}, "promoted_at": "2026-09-14T01:00:00Z",
+                    "internal": {"package": "ghcr.io/bocklabs/example", "tag": "v1-bocklabs.1", "digest": DIGEST_A, "platforms": ["linux/amd64"]},
                     "policy": {"eligible": True}}
             for name, fields, eligible, reuse, force, expected in (
                 ("unsigned", {}, True, "true", "false", "false"),
@@ -370,7 +393,9 @@ class PromoteWorkflowTests(unittest.TestCase):
                     env = {**os.environ, "APP": "example", "SKIP_COPY": reuse,
                            "FORCE_REPROMOTE": force,
                            "RECOVER_TAG": "", "ACCEPTED_CANDIDATE_RUN_ID": "",
-                           "INTERNAL_TAG": "v1", "CANDIDATE_DIGEST": DIGEST_A,
+                           "INTERNAL_TAG": "v1-bocklabs.1", "CANDIDATE_DIGEST": DIGEST_A,
+                           "PATH": str(root) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
+                           "RECORD_FIXTURE": str(record),
                            "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(summary)}
                     result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True)
                     if expected is None:
@@ -957,10 +982,10 @@ elif args[0] == 'run':
         for text in (
             "MEDIA_TYPE: application/vnd.oci.image.index.v1+json",
             '--upstream-child-digest "${SELECTED_CHILD_DIGEST}"',
-            'git add "provenance/${APP}/${INTERNAL_TAG}.json"',
+            'git add "${RECORD}"',
             "git diff --cached --quiet",
             "--force-with-lease=refs/heads/${BRANCH}:",
-            "--state all",
+            "--state open",
         ):
             with self.subTest(text=text):
                 self.assertIn(text, self.workflow)
@@ -980,7 +1005,8 @@ elif args[0] == 'run':
         self.assertIn("--signing-result", provenance["run"])
         self.assertIn("signing-gate.outcome == 'success'", by_name["Verify merged provenance and publish the final decision"].get("if", ""))
         for name in ("Mint bocklabs-release app token", "Open provenance PR for operator review"):
-            self.assertIn("quarantine-decision.outcome == 'success'", by_name[name].get("if", ""))
+            self.assertIn("steps.signing-gate.outcome == 'success'", by_name[name].get("if", ""))
+            self.assertNotIn("quarantine-decision", by_name[name].get("if", ""))
         self.assertEqual(by_name["Job summary evidence panel"]["run"].count("promotion unsuccessful"), 2)
         self.assertNotIn("cosign attest", self.publisher_workflow[self.publisher_workflow.index("Generate provenance record"):])
         self.assertNotIn("gh api -X DELETE", self.publisher_workflow)
@@ -1271,6 +1297,11 @@ elif args[:2] == ['run', 'download']:
             if step["name"] == "Restore the exact accepted candidate"
         )
         fixture = self.candidate_artifact()
+        for directory in ("arch-before", "native-before", "native-after"):
+            (fixture / directory).mkdir()
+            (fixture / directory / "retained.json").write_text('{"retained":"scanner input"}\n')
+        subprocess.run(["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
+                       cwd=fixture, check=True, capture_output=True)
         (self.tmp / "scripts").symlink_to(
             REPO_ROOT / "scripts", target_is_directory=True
         )
@@ -1307,6 +1338,67 @@ elif args[:2] == ['run', 'download']:
         ):
             self.assertIn(text, output)
         self.assertTrue((self.tmp / "candidate-oci").is_dir())
+        self.assertEqual((self.tmp / "arch-before/retained.json").read_bytes(),
+                         (fixture / "arch-before/retained.json").read_bytes())
+        before = next(s for s in steps if s["name"] == "Inventory native Chisel packages from signed Ubuntu metadata")
+        scanner = self.bin / "python3"
+        scanner.write_text(f"#!{sys.executable}\n" +
+            "import pathlib, subprocess, sys\n"
+            "if sys.argv[1] in ('scripts/scan_arch.py', 'scripts/scan_native_chisel.py'):\n"
+            "    root = pathlib.Path(sys.argv[sys.argv.index('--evidence') + 1])\n"
+            "    assert not root.exists(), 'fresh scan destination still contains restored evidence'\n"
+            "    if root.name != 'arch-after':\n"
+            "        assert pathlib.Path(root.name + '-retained/retained.json').is_file()\n"
+            "    if root.name == 'native-after':\n"
+            "        previous = pathlib.Path(sys.argv[sys.argv.index('--previous') + 1])\n"
+            "        assert previous == pathlib.Path('native-before')\n"
+            "        assert (previous / 'fresh-before.json').is_file()\n"
+            "    root.mkdir()\n"
+            "    if root.name == 'native-before':\n"
+            "        (root / 'fresh-before.json').write_text('fresh before scanner boundary')\n"
+            "else:\n"
+            "    sys.exit(subprocess.call([sys.executable, *sys.argv[1:]]))\n")
+        scanner.chmod(0o755)
+        result = subprocess.run(["bash", "-c", before["run"]], cwd=self.tmp,
+                                env={**env, "IMAGE_REF": "example@" + self._child_digest()}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        after = next(s for s in steps if s["name"] == "Inventory final native Chisel packages with the frozen DB")
+        result = subprocess.run(["bash", "-c", after["run"]], cwd=self.tmp,
+                                env={**env, "CANDIDATE_DIGEST": self._child_digest()}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual((self.tmp / "arch-before-retained/retained.json").read_bytes(),
+                         (fixture / "arch-before/retained.json").read_bytes())
+        for directory in ("arch-before", "native-before", "native-after"):
+            self.assertEqual((self.tmp / (directory + "-retained") / "retained.json").read_bytes(),
+                             (fixture / directory / "retained.json").read_bytes())
+            fresh = self.tmp / directory
+            if directory == "native-before":
+                (fresh / "fresh-before.json").unlink()
+            fresh.rmdir()
+            (self.tmp / (directory + "-retained")).rename(fresh)
+        (self.tmp / "arch-after").rmdir()
+        scanner.unlink()
+        stale = self.tmp / "arch-before/stale.json"
+        stale.write_text("stale scanner input")
+        env["GITHUB_OUTPUT"] = str(self.tmp / "stale-capsule-output")
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("restored evidence file set differs", result.stderr)
+        self.assertFalse((self.tmp / "stale-capsule-output").exists())
+        stale.unlink()
+        original = (fixture / "trivy-full.json").read_bytes()
+        report = json.loads(original)
+        report["Results"][0]["Type"] = "archlinux"
+        report["ArchScanner"] = {"schema": "arch-scanner-v1", "capsule": "arch-before/capsule.json"}
+        (fixture / "trivy-full.json").write_text(json.dumps(report))
+        subprocess.run(["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
+                       cwd=fixture, check=True, capture_output=True)
+        env["GITHUB_OUTPUT"] = str(self.tmp / "omitted-capsule-output")
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing Arch capsule file", result.stderr)
+        self.assertFalse((self.tmp / "omitted-capsule-output").exists())
+        (fixture / "trivy-full.json").write_bytes(original)
 
         (fixture / "undeclared.txt").write_text("tampered\n")
         subprocess.run(

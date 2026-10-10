@@ -59,7 +59,8 @@ the existing complete candidate and publication gates. Requested CVEs must disap
 in their ecosystem scope from the final full report. Historical acceptance may be
 monitored, but monitoring never renews it or changes eligibility; the new candidate
 still needs valid current KEV evidence and acceptance. Historical provenance is never
-rewritten, and each new record remains subject to operator review.
+rewritten. Signed publication records use release-App auto-merge after required
+checks; quarantine artifacts remain available for operator review.
 
 ## Fixed run order
 
@@ -118,7 +119,7 @@ recognizes exactly `alpine`, `debian`, `ubuntu`, `cbl-mariner`, `azurelinux`,
 | Debian / Ubuntu native apt and dpkg | Native manager | Full independent inventory and current repositories required. |
 | Debian external status directory | External archives and encoded status entries | Preserve scanner-visible status representation. |
 | Ubuntu apt-less full dpkg status | External archives, scripts/triggers disabled | Residual administrative state and lifecycle-dependent updates rejected. |
-| Ubuntu native Chisel manifest | Re-cut slices, preserve unmanaged paths | **BLOCKED:** Trivy cannot independently inventory native packages. Empty scans cannot qualify this route. Only public archives; Pro/ESM/FIPS/private archives unsupported. |
+| Ubuntu native Chisel manifest | Re-cut slices, preserve unmanaged paths | Native inventory capsules bind real OCI files and manifest rows to signed Ubuntu package indexes and a frozen-DB Trivy SBOM scan. Empty image scans alone cannot qualify this route. Only public archives; Pro/ESM/FIPS/private archives unsupported. |
 | CBL-Mariner / Azure Linux / CentOS / Oracle / Red Hat / Rocky / Amazon / AlmaLinux native RPM | tdnf/dnf/yum/microdnf | Each distinct tooling route needs real full-gate evidence. |
 | RPM DB present, manager absent | dnf chroot with target repositories | Compatible tooling and complete independent scan inventory required. |
 | RPM external manifests | External archive merge and metadata | Independently verify actual package identity and versions. |
@@ -151,17 +152,45 @@ images retain their existing acceptance handling.
 Real immutable-child Trivy 0.74.0 scans establish RPM package components for
 `cbl-mariner` (69 packages), `azurelinux` (79) and `sles` 16.0 (105); these exact
 identifiers use the existing RPM comparator. The observed SLES 15.6 scan is EOL
-and remains blocked. The SLES 16 report contains conflicting `gpg-pubkey`
-identities and is rejected by the unchanged ambiguity gate. Epoch/release
-components, unchanged versions and downgrades
-are checked independently. These inventory scans establish comparator inputs,
+and remains blocked. SLES 16 signing keys retain their actual version, architecture
+and PURL under immutable RPM key identities. Every key remains in the inventory;
+key removal, duplicate corruption and ordinary package ambiguity still block.
+Epoch/release components, unchanged versions and downgrades are checked independently. These inventory scans establish comparator inputs,
 not successful patch qualification. No guessed openSUSE aliases are admitted.
-The observed Arch scan has no OS metadata or OS-package inventory, only language
-findings: Arch remains a scanner-coverage gap, with no admitted Arch alias.
+Arch inventory is verified from immutable OCI pacman bytes and Syft 1.54.0,
+with Grype 0.120.0 findings from a frozen native schema-6 database. The report's
+`ArchScanner` marker binds `arch-before/`, `arch-after/`, or `arch-published/`
+to a portable capsule independently replayed before admission. Reviewed archive
+and executable pins, isolated configuration, complete relative file hashes and
+120-hour database freshness are mandatory; after scans reuse the before database.
+All primary AVG advisories and CVE aliases enter policy, KEV and exact CycloneDX
+PURL/finding parity. CycloneDX attributes OS inventory to Syft and findings to Grype.
+Raw Trivy language results and its database identity remain separate and unchanged;
+the existing report filenames and import shape remain compatible. Local source
+checks on 137 packages, six AVG advisories and nine CVE aliases establish before
+evidence only: zero fixable advisories cannot qualify patched-after, functionality,
+signing, publication, automatic new revisions or the operator pilot review.
 Unknown evidence and incomplete patch coverage fail closed; upstream recognition
 or synthetic fixtures do not count as family qualification.
 The pinned runtime/BuildKit execution and each live layout still require isolated
 hosted qualification; local command-contract checks do not establish that proof.
+
+Native Chisel capsules preserve the genuine container-image metadata and language
+results. The adapter verifies ordered OCI layers and native file hashes, matches
+package archive digests against signed Ubuntu snapshots, and preserves exact
+source package names/versions when constructing CycloneDX. The reviewed Trivy
+0.75.0 binary and frozen database replay the scan before OS inventory admission.
+Candidate and published-image scans retain portable capsules and raw evidence;
+missing, tampered or incomplete evidence blocks. Native candidates retain separate before/after
+OCI layouts, frozen DB files and the pinned scanner for independent replay.
+These capsules increase artifact storage and use the existing eight-day retention;
+ordinary image candidates do not create them. An independently inventoried
+before-image is not proof of patched-image qualification.
+
+The distroless-static baseline uses the supported Debian 13 upstream with
+`tzdata 2026c`, retaining enabled Copa policy. This upstream refresh does not fix
+Copa 0.15.0's external-status-directory Debconf installer defect; that path needs
+a stable release containing the upstream repair and fresh qualification.
 
 ## Identity and reuse
 
@@ -184,8 +213,9 @@ A newer upstream release outranks an older local patched
 revision; the controlled seven-day fallback below is the explicit backup when
 real Renovate detection has not appeared.
 
-Existing tags, manifests, provenance records, and audit history are immutable.
-No retention policy in this repository deletes or overwrites them.
+Existing image tags/manifests and Git audit history remain immutable. Each app
+has one `provenance/<app>/current.json`, replaced only by a valid new signed
+publication. Exact older records remain available through merged Git history.
 
 ## Policy truth table
 
@@ -258,13 +288,22 @@ full report, fixable-OS report, before/final report identities, converted report
 KEV report, upload manifest, Copa diagnostics when applicable; the checksum-bound
 OCI candidate and decision; publication digest; and the final candidate decision.
 
-Provenance is one machine-generated JSON record per internal tag. Verified
-publication opens or reuses a scoped provenance PR for operator review and then
+Provenance is one machine-generated `provenance/<app>/current.json` per app.
+Verified new publication opens or updates the release-App-owned
+`provenance/current/<app>` branch and PR, enables exact-head auto-merge through
+genuine required checks, and then
 releases the application workflow lock. The retained decision stays
-`provenance.merged=false`; a green publication handoff is pending review and
+`provenance.merged=false`; a green publication handoff is pending merge and
 ineligible for consumption. Only exact generated bytes already on public `main`
 permit the final merged-decision assertion. Deployment is a separate operator
-action. Signing failures stay red and retain immutable quarantine evidence.
+action. Same current tag/digest still passes the existing publisher cryptographic
+verification, but changing daily run/database/Copa/no-fix metadata creates no
+record write or PR. Historical `recover_tag` and reuse resolve exact original
+records from an immutable merged-main commit and its ancestors; they cannot
+replace newer current. Failed/quarantined runs retain full generated provenance
+in run artifacts and never replace good current or create auto-merging PRs.
+Legacy unsigned current bytes remain explicitly unverified, without fabricated
+signing eligibility. Signing failures stay red.
 It binds upstream
 index and selected child, internal package/tag/digest/platform, run and dispatch
 identity, tools and scanner database, report/decision hashes, generic findings
@@ -327,3 +366,10 @@ candidate work never receive publisher credentials.
 Optional read-only Docker Hub credentials apply to upstream pulls. Optional
 generic findings-service configuration supplies only a public link in the run
 summary; no findings-service credential is used by this workflow.
+
+## Python tooling
+
+`pyproject.toml` declares runtime and development dependencies; `uv.lock` pins
+resolved versions. Run `uv sync --locked`, then `uv run --locked pre-commit run
+--all-files`. CI uses the same environment. Renovate updates project dependencies
+and their lockfile; no Python package versions are declared in workflow steps.

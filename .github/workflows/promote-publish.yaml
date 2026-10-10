@@ -61,6 +61,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
@@ -75,11 +77,12 @@ jobs:
         with:
           python-version-file: .python-version
 
-      - name: Install pinned PyYAML
+      - name: Sync Python dependencies
         shell: bash
         run: |
           set -euo pipefail
-          uv pip install --system -r requirements.txt
+          uv sync --locked
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Download validation context
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -188,6 +191,11 @@ jobs:
             candidate-artifact/validation-evidence.json candidate-artifact/candidate-decision.json \
             candidate-artifact/trivy-db-meta-1.txt candidate-artifact/trivy-db-meta-2.txt .
           cp candidate-artifact/candidate-manifest.json candidate-manifest.json
+          for evidence in native-before native-after arch-before arch-after; do
+            if [ -d "candidate-artifact/${evidence}" ]; then
+              cp -a "candidate-artifact/${evidence}" .
+            fi
+          done
 
       - name: Assert destination tag is absent or byte-identical
         id: occupancy
@@ -364,15 +372,18 @@ jobs:
         run: |
           set -euo pipefail
           IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
-          RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+          RECORD="resolved-provenance.json"
           git fetch origin main
           if [ "${SKIP_COPY}" = true ]; then
-            git show "origin/main:${RECORD}" > "${RECORD}"
+            python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > "${RECORD}"
+            if git ls-tree --name-only origin/main -- "provenance/${APP}/current.json" | grep -q .; then
+              git show "origin/main:provenance/${APP}/current.json" > current-at-verification.json
+            fi
             exit 0
           fi
-          if git cat-file -e "origin/main:${RECORD}" 2>/dev/null; then
-            echo "FATAL: immutable provenance already exists; a fresh revision is required"
-            exit 1
+          python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > existing-provenance.json
+          if jq -e 'type == "object"' existing-provenance.json > /dev/null; then
+            echo "FATAL: immutable image already has provenance; a fresh revision is required"; exit 1
           fi
           printf '%s' "${GH_TOKEN}" | cosign login ghcr.io --username "${ACTOR}" --password-stdin
           cosign sign --yes --bundle sign-bundle.json "${IMAGE}"
@@ -391,8 +402,8 @@ jobs:
           set -euo pipefail
           IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
           if [ "${SKIP_COPY}" = true ]; then
-            RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
-            jq -e --arg digest "${CANDIDATE_DIGEST}" '.internal.digest == $digest and .policy.eligible == true and .signing.result == "pass"' "${RECORD}" >/dev/null || {
+            RECORD="resolved-provenance.json"
+            jq -e --arg app "${APP}" --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '.app == $app and .internal.tag == $tag and .internal.digest == $digest and .policy.eligible == true and .signing.result == "pass"' "${RECORD}" >/dev/null || {
               echo "FATAL: reused revision lacks eligible signing evidence; force_repromote=true is required"
               exit 1
             }
@@ -454,6 +465,9 @@ jobs:
             trivy-full.json
             trivy-full.cdx.json
             secobserve-upload.json
+            arch-before/
+            arch-after/
+            candidate-artifact/SHA256SUMS
           retention-days: 30
           if-no-files-found: error
 
@@ -465,21 +479,6 @@ jobs:
           path: trivy-copa.json
           retention-days: 30
           if-no-files-found: error
-
-      - name: Upload signing evidence artifact
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: signing-evidence
-          path: |
-            sign-bundle.json
-            sbom-bundle.json
-            signature-attachment.json
-            sbom-attestation-attachment.json
-            verify-signature.json
-            verify-attestation.json
-            signing-evidence.json
-          if-no-files-found: warn
 
       - name: Job summary evidence panel
         id: summary
@@ -761,17 +760,17 @@ jobs:
             "${RECOVERY_ARGS[@]}" \
             "${COPA_ARGS[@]}" \
             "${NOTES_ARGS[@]}" \
-            --out provenance/${APP}/${INTERNAL_TAG}.json
+            --out generated-provenance.json
           {
             echo "### Provenance record"
             echo
-            echo "Full machine-readable record: provenance/${APP}/${INTERNAL_TAG}.json (see provenance PR below)."
+            echo "Full machine-readable run record: generated-provenance.json; valid new publications update provenance/${APP}/current.json."
             echo
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Mint bocklabs-release app token
         id: app-token
-        if: ${{ !cancelled() && steps.prov.outcome == 'success' && (steps.signing-gate.outcome == 'success' || steps.quarantine-decision.outcome == 'success') }}
+        if: ${{ success() && steps.prov.outcome == 'success' && steps.signing-gate.outcome == 'success' }}
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ secrets.RELEASE_CLIENT_ID }}
@@ -779,7 +778,7 @@ jobs:
 
       - name: Open provenance PR for operator review
         id: pr
-        if: ${{ !cancelled() && steps.app-token.outcome == 'success' && (steps.signing-gate.outcome == 'success' || steps.quarantine-decision.outcome == 'success') }}
+        if: ${{ success() && steps.app-token.outcome == 'success' && steps.signing-gate.outcome == 'success' }}
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -788,25 +787,35 @@ jobs:
           CANDIDATE_DIGEST: ${{ steps.candidate.outputs.candidate_digest }}
           INTERNAL_TAG: ${{ steps.candidate.outputs.internal_tag }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SKIP_COPY: ${{ steps.candidate.outputs.skip_copy }}
+          RECOVER_TAG: ${{ inputs.recover_tag }}
         run: |
           set -euo pipefail
-          # GITHUB_TOKEN-authored PRs trigger no workflows, so this step re-validates
-          # the branch itself and self-posts the required `inventory` check.
-          BRANCH="provenance/${APP}/${INTERNAL_TAG}"
-          RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+          BRANCH="provenance/current/${APP}"
+          RECORD="provenance/${APP}/current.json"
+          if [ "${SKIP_COPY}" = true ] || [ -n "${RECOVER_TAG}" ]; then
+            echo "pr_url=" >> "$GITHUB_OUTPUT"; echo "head_sha=" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           git config user.name "bocklabs-release[bot]"
           git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
           APP_TOKEN="${{ steps.app-token.outputs.token }}"
           REMOTE="https://x-access-token:${APP_TOKEN}@github.com/${REPO}.git"
           GENERATED="$(mktemp)"
-          cp "${RECORD}" "${GENERATED}"
+          cp generated-provenance.json "${GENERATED}"
           git fetch origin main
-          if git cat-file -e "origin/main:${RECORD}" 2>/dev/null; then
-            git show "origin/main:${RECORD}" > main-provenance.json
-            cmp "${GENERATED}" main-provenance.json || { echo "FATAL: immutable provenance differs from generated record"; exit 1; }
+          MAIN_SHA="$(git rev-parse origin/main)"
+          python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" --commit "${MAIN_SHA}" > matched-provenance.json
+          if jq -e --arg digest "${CANDIDATE_DIGEST}" '.internal.digest == $digest' matched-provenance.json >/dev/null; then
             echo "pr_url=" >> "$GITHUB_OUTPUT"
+            echo "head_sha=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          if git ls-tree --name-only "${MAIN_SHA}" -- "${RECORD}" | grep -q .; then
+            git show "${MAIN_SHA}:${RECORD}" > main-provenance.json
+          else
+            rm -f main-provenance.json
+          fi
+          python3 scripts/reverify_signing.py --compare "${GENERATED}" --previous main-provenance.json
           REMOTE_SHA="$(git ls-remote "${REMOTE}" "refs/heads/${BRANCH}" | awk '{print $1}')"
           if [ -n "${REMOTE_SHA}" ]; then
             git fetch origin "refs/heads/${BRANCH}"
@@ -815,52 +824,70 @@ jobs:
               echo "FATAL: existing provenance branch is not owned by the release App"
               exit 1
             }
-            OTHER="$(git diff --name-only origin/main...FETCH_HEAD | grep -vxF "${RECORD}" || true)"
+            git diff --name-only origin/main...FETCH_HEAD > pending-files.txt
+            OTHER="$(grep -vxF "${RECORD}" pending-files.txt || true)"
             [ -z "${OTHER}" ] || {
               echo "FATAL: existing provenance branch changes files outside ${RECORD}"
               exit 1
             }
+            git show "FETCH_HEAD:${RECORD}" > pending-provenance.json
+            PENDING_ACTION="$(python3 scripts/reverify_signing.py --compare "${GENERATED}" --previous pending-provenance.json)"
+            if [ "${PENDING_ACTION}" = unchanged ]; then
+              cp pending-provenance.json "${GENERATED}"
+              cp pending-provenance.json generated-provenance.json
+            fi
+          fi
+          PR_URL="$(gh pr list --head "${BRANCH}" --base main --state open --json url,author,headRepositoryOwner \
+            --jq '.[0].url // ""')"
+          if [ -n "${PR_URL}" ]; then
+            gh pr view "${PR_URL}" --json author,headRefName,baseRefName,isCrossRepository,headRepositoryOwner \
+              --jq '.author.login == "bocklabs-release[bot]" and .headRefName == "provenance/current/'"${APP}"'" and .baseRefName == "main" and .isCrossRepository == false and .headRepositoryOwner.login == "bocklabs"' | grep -qx true
           fi
           git checkout -B "${BRANCH}" origin/main
           mkdir -p "$(dirname "${RECORD}")"
           cp "${GENERATED}" "${RECORD}"
-          git add "provenance/${APP}/${INTERNAL_TAG}.json"
+          git add "${RECORD}"
           if git diff --cached --quiet; then
             echo "Provenance record already merged; no write-back needed" >> "$GITHUB_STEP_SUMMARY"
             echo "pr_url=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
+          git fetch origin main
+          [ "$(git rev-parse origin/main)" = "${MAIN_SHA}" ] || { echo 'FATAL: merged main changed before provenance push'; exit 1; }
+          LATEST_REMOTE_SHA="$(git ls-remote "${REMOTE}" "refs/heads/${BRANCH}" | awk '{print $1}')"
+          [ "${LATEST_REMOTE_SHA}" = "${REMOTE_SHA}" ] || { echo 'FATAL: pending provenance head changed'; exit 1; }
           if [ -n "${REMOTE_SHA}" ]; then
             git push --force-with-lease=refs/heads/${BRANCH}:${REMOTE_SHA} "${REMOTE}" "HEAD:${BRANCH}"
           else
             git push "${REMOTE}" "HEAD:${BRANCH}"
           fi
 
-          PR_URL="$(gh pr list --head "${BRANCH}" --state all --json state,url \
-            --jq '[.[] | select(.state == "OPEN")][0].url // ""')"
           python3 scripts/promote_provenance_body.py "${RUN_URL}" "${CANDIDATE_DIGEST}" "${INTERNAL_TAG}" > provenance-body.md
           if [ -z "${PR_URL}" ]; then
             PR_URL="$(gh pr create \
               --head "${BRANCH}" \
+              --base main \
               --title "provenance: ${APP} ${INTERNAL_TAG}" \
               --body-file provenance-body.md)"
           else
-            gh pr edit "${PR_URL}" --body-file provenance-body.md
+            gh pr edit "${PR_URL}" --title "provenance: ${APP} ${INTERNAL_TAG}" --body-file provenance-body.md
           fi
           echo "Provenance PR: ${PR_URL}" >> "$GITHUB_STEP_SUMMARY"
           # The required check's actual payload, re-run against the branch tree.
           python3 scripts/validate_inventory.py
           HEAD_SHA="$(git rev-parse HEAD)"
 
-          GH_TOKEN="${{ github.token }}" gh api "repos/${REPO}/check-runs" \
-            -f name=inventory \
-            -f head_sha="${HEAD_SHA}" \
-            -f status=completed \
-            -f conclusion=success \
-            -f output.title="inventory valid (provenance)" \
-            -f output.summary="validate_inventory.py passed on the provenance branch"
           echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Auto-merge signed provenance PR
+        if: ${{ success() && steps.signing-gate.outcome == 'success' && steps.pr.outputs.pr_url != '' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: gh pr merge --auto --merge --match-head-commit "${HEAD_SHA}" "${PR_URL}"
 
       - name: Verify merged provenance and publish the final decision
         if: ${{ success() && steps.signing-gate.outcome == 'success' }}
@@ -874,15 +901,22 @@ jobs:
           PR_URL: ${{ steps.pr.outputs.pr_url }}
         run: |
           set -euo pipefail
-          RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+          RECORD="provenance/${APP}/current.json"
+          jq -e '.result == "pass"' signing-evidence.json > /dev/null
           if [ -n "${PR_URL}" ]; then
             jq -e '.provenance.merged == false' candidate-decision.json > /dev/null
-            echo "Publication and signature verified; provenance review pending: ${PR_URL}; app=${APP}; tag=${INTERNAL_TAG}; digest=${CANDIDATE_DIGEST}; run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Ineligible for consumption until exact provenance merges; deployment remains operator-controlled." >> "$GITHUB_STEP_SUMMARY"
+            echo "Publication and signature verified; provenance merge pending: ${PR_URL}; app=${APP}; tag=${INTERNAL_TAG}; digest=${CANDIDATE_DIGEST}; run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Ineligible for consumption until exact provenance merges; deployment remains operator-controlled." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           git fetch origin main
-          git show "origin/main:${RECORD}" > main-provenance.json
-          cmp "${RECORD}" main-provenance.json || {
+          if [ -f current-at-verification.json ] && jq -e --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '.internal.tag == $tag and .internal.digest == $digest' current-at-verification.json > /dev/null; then
+            git show "origin/main:${RECORD}" > current-after-verification.json
+            cmp current-at-verification.json current-after-verification.json || { echo 'FATAL: current changed after verification'; exit 1; }
+          fi
+          python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > main-provenance.json
+          EXPECTED=generated-provenance.json
+          if [ -f resolved-provenance.json ]; then EXPECTED=resolved-provenance.json; fi
+          cmp "${EXPECTED}" main-provenance.json || {
             echo "FATAL: producer main does not carry the exact generated provenance bytes"
             exit 1
           }
@@ -899,3 +933,20 @@ jobs:
           path: candidate-decision.json
           retention-days: 30
           if-no-files-found: error
+
+      - name: Upload signing evidence artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: signing-evidence
+          path: |
+            sign-bundle.json
+            sbom-bundle.json
+            signature-attachment.json
+            sbom-attestation-attachment.json
+            verify-signature.json
+            verify-attestation.json
+            signing-evidence.json
+            resolved-provenance.json
+            generated-provenance.json
+          if-no-files-found: warn
