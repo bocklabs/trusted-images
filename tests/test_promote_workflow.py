@@ -230,6 +230,7 @@ class PromoteWorkflowTests(unittest.TestCase):
             root = Path(directory)
             decision = root / "candidate-decision.json"
             decision.write_text('{"provenance":{"merged":false}}')
+            (root / "signing-evidence.json").write_text('{"result":"pass"}')
             original = decision.read_bytes()
             summary = root / "summary"
             env = {**os.environ, "PR_URL": "https://example.invalid/pull/1", "APP": "example",
@@ -365,8 +366,13 @@ class PromoteWorkflowTests(unittest.TestCase):
             root = Path(directory)
             record = root / "provenance/example/v1.json"
             record.parent.mkdir(parents=True)
+            (root / "scripts").symlink_to(SCRIPTS, target_is_directory=True)
+            git = root / "git"
+            git.write_text('#!/bin/sh\ncase "$1" in\nfetch|merge-base) exit 0;;\nrev-parse) printf "%040d\\n" 1;;\nls-tree) echo provenance/example/current.json;;\nshow) cat "$RECORD_FIXTURE";;\n*) exit 9;;\nesac\n')
+            git.chmod(0o755)
             base = {"schema": "trusted-images.bocklabs.dev/provenance-v1", "app": "example",
-                    "internal": {"package": "ghcr.io/bocklabs/example", "tag": "v1", "digest": DIGEST_A},
+                    "upstream": {"tag": "v1"}, "promoted_at": "2026-09-14T01:00:00Z",
+                    "internal": {"package": "ghcr.io/bocklabs/example", "tag": "v1-bocklabs.1", "digest": DIGEST_A, "platforms": ["linux/amd64"]},
                     "policy": {"eligible": True}}
             for name, fields, eligible, reuse, force, expected in (
                 ("unsigned", {}, True, "true", "false", "false"),
@@ -387,7 +393,9 @@ class PromoteWorkflowTests(unittest.TestCase):
                     env = {**os.environ, "APP": "example", "SKIP_COPY": reuse,
                            "FORCE_REPROMOTE": force,
                            "RECOVER_TAG": "", "ACCEPTED_CANDIDATE_RUN_ID": "",
-                           "INTERNAL_TAG": "v1", "CANDIDATE_DIGEST": DIGEST_A,
+                           "INTERNAL_TAG": "v1-bocklabs.1", "CANDIDATE_DIGEST": DIGEST_A,
+                           "PATH": str(root) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
+                           "RECORD_FIXTURE": str(record),
                            "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(summary)}
                     result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True)
                     if expected is None:
@@ -974,10 +982,10 @@ elif args[0] == 'run':
         for text in (
             "MEDIA_TYPE: application/vnd.oci.image.index.v1+json",
             '--upstream-child-digest "${SELECTED_CHILD_DIGEST}"',
-            'git add "provenance/${APP}/${INTERNAL_TAG}.json"',
+            'git add "${RECORD}"',
             "git diff --cached --quiet",
             "--force-with-lease=refs/heads/${BRANCH}:",
-            "--state all",
+            "--state open",
         ):
             with self.subTest(text=text):
                 self.assertIn(text, self.workflow)
@@ -997,7 +1005,8 @@ elif args[0] == 'run':
         self.assertIn("--signing-result", provenance["run"])
         self.assertIn("signing-gate.outcome == 'success'", by_name["Verify merged provenance and publish the final decision"].get("if", ""))
         for name in ("Mint bocklabs-release app token", "Open provenance PR for operator review"):
-            self.assertIn("quarantine-decision.outcome == 'success'", by_name[name].get("if", ""))
+            self.assertIn("steps.signing-gate.outcome == 'success'", by_name[name].get("if", ""))
+            self.assertNotIn("quarantine-decision", by_name[name].get("if", ""))
         self.assertEqual(by_name["Job summary evidence panel"]["run"].count("promotion unsuccessful"), 2)
         self.assertNotIn("cosign attest", self.publisher_workflow[self.publisher_workflow.index("Generate provenance record"):])
         self.assertNotIn("gh api -X DELETE", self.publisher_workflow)

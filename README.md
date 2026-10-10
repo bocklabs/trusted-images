@@ -43,7 +43,9 @@ Promoting an image is a manual dispatch of the repository's `promote`
 workflow with an inventory app name: the run scans the pinned upstream
 image, publishes it digest-preserving to the public registry, verifies
 digest equality and anonymous readability, and opens a provenance
-pull request recording the evidence. See
+pull request updating `provenance/<app>/current.json`. The release App enables
+automatic merge through genuine required checks; unchanged tag/digest evidence
+opens no new record PR. Earlier records remain in Git history. See
 [docs/pipeline.md](docs/pipeline.md).
 
 ## Inventory format

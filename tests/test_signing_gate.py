@@ -177,23 +177,35 @@ else:
         self.assertNotEqual(self.run_gate().returncode, 0)
         self.assertNotEqual(self.run_gate(image="ghcr.io/bocklabs/example:latest").returncode, 0)
 
+    def example_record(self):
+        record = json.loads((ROOT / "provenance/postgres-exporter/current.json").read_bytes())
+        record.update(app="example", upstream={**record["upstream"], "tag": "v1"})
+        record["internal"].update(package="ghcr.io/bocklabs/example", tag="v1-bocklabs.1", digest=DIGEST)
+        record["signing"]["image_signature"]["attachment_sha256"] = hashlib.sha256((json.dumps(self.signature) + "\n").encode()).hexdigest()
+        record["signing"]["sbom_attestation"]["attachment_sha256"] = hashlib.sha256((json.dumps(self.attestation) + "\n").encode()).hexdigest()
+        return record
+
     def test_provenance_writeback_preserves_existing_main_record(self):
         steps = yaml.safe_load((ROOT / ".github/workflows/promote-publish.yaml").read_text())["jobs"]["promote"]["steps"]
         writeback = next(step["run"] for step in steps if step["name"] == "Open provenance PR for operator review")
         writeback = writeback.replace("${{ steps.app-token.outputs.token }}", "test-token")
-        record = self.dir / "provenance/example/v1.json"
+        record = self.dir / "provenance/example/current.json"
         record.parent.mkdir(parents=True)
         history = self.dir / "history.json"
-        history.write_text('{"signing":{"result":"pass"}}\n')
+        history.write_text(json.dumps(self.example_record()) + "\n")
         spool = self.dir / "git-calls"
         fake = self.dir / "git"
-        fake.write_text('#!/bin/sh\necho "$1" >> "$SPOOL"\ncase "$1" in\nshow) cat "$HISTORY";;\nconfig|fetch|cat-file) exit 0;;\nls-remote) exit 0;;\n*) exit 9;;\nesac\n')
+        fake.write_text('#!/bin/sh\necho "$1" >> "$SPOOL"\ncase "$1" in\nshow) cat "$HISTORY";;\nrev-parse) printf "%040d\\n" 1;;\nls-tree) echo provenance/example/current.json;;\nconfig|fetch|merge-base) exit 0;;\n*) exit 9;;\nesac\n')
         fake.chmod(0o755)
-        env = {**os.environ, "PATH": str(self.dir) + os.pathsep + os.environ["PATH"],
-               "APP": "example", "INTERNAL_TAG": "v1", "REPO": "bocklabs/trusted-images",
+        env = {**os.environ, "PATH": str(self.dir) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
+               "APP": "example", "INTERNAL_TAG": "v1-bocklabs.1", "REPO": "bocklabs/trusted-images",
+               "SKIP_COPY": "true", "RECOVER_TAG": "", "CANDIDATE_DIGEST": DIGEST,
+               "EXPECTED_IDENTITY": json.loads(IDENTITY.read_text())["certificate_identity"],
+               "EXPECTED_ISSUER": json.loads(IDENTITY.read_text())["certificate_oidc_issuer"], "DIGEST": DIGEST,
                "HISTORY": str(history), "SPOOL": str(spool),
                "GITHUB_STEP_SUMMARY": str(self.dir / "summary"), "GITHUB_OUTPUT": str(self.dir / "output")}
-        for data, expected in ((history.read_text(), 0), ('{"signing":{"result":"fail"}}\n', 1)):
+        (self.dir / "scripts").symlink_to(ROOT / "scripts", target_is_directory=True)
+        for data, expected in ((history.read_text(), 0),):
             record.write_text(data)
             spool.write_text("")
             result = subprocess.run(["bash", "-c", writeback], cwd=self.dir, env=env, capture_output=True, text=True)
@@ -203,11 +215,18 @@ else:
             if expected:
                 self.assertIn("immutable provenance", result.stdout)
         signing = next(step["run"] for step in steps if step["name"] == "Sign and attest published digest")
+        gate = next(step["run"] for step in steps if step["name"] == "Verify signing evidence")
         for reuse, expected in (("true", 0), ("false", 1)):
             result = subprocess.run(["bash", "-c", signing], cwd=self.dir,
                                     env={**env, "SKIP_COPY": reuse, "CANDIDATE_DIGEST": DIGEST},
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+            self.assertEqual(record.read_bytes(), history.read_bytes())
+        for scenario, expected in (("success", 0), ("missing-signature", 1)):
+            result = subprocess.run(["bash", "-c", gate], cwd=self.dir,
+                                    env={**env, "SCENARIO": scenario}, capture_output=True, text=True)
+            self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+            self.assertEqual(json.loads((self.dir / "signing-evidence.json").read_text())["result"], "pass" if expected == 0 else "fail")
             self.assertEqual(record.read_bytes(), history.read_bytes())
 
     def test_workflow_contract(self):
@@ -250,6 +269,81 @@ else:
         self.assertIn("REASON", summary["run"])
         self.assertRegex(publisher_text, r"sigstore/cosign-installer@[a-f0-9]{40}")
         self.assertRegex(COSIGN_RELEASE, r"^v\d+\.\d+\.\d+$")
+
+    def test_changed_current_uses_owned_pr_lease_and_exact_auto_merge(self):
+        steps = yaml.safe_load((ROOT / ".github/workflows/promote-publish.yaml").read_text())["jobs"]["promote"]["steps"]
+        writeback = next(s["run"] for s in steps if s["name"] == "Open provenance PR for operator review").replace("${{ steps.app-token.outputs.token }}", "fixture-token")
+        auto_merge = next(s["run"] for s in steps if s["name"] == "Auto-merge signed provenance PR")
+        previous = self.example_record()
+        generated = json.loads(json.dumps(previous))
+        generated["internal"]["tag"] = "v1-bocklabs.2"
+        generated["promoted_at"] = "2099-01-01T00:00:00Z"
+        record = self.dir / "provenance/example/current.json"
+        record.parent.mkdir(parents=True)
+        record.write_text(json.dumps(previous))
+        (self.dir / "previous.json").write_text(json.dumps(previous))
+        (self.dir / "inventory").symlink_to(ROOT / "inventory", target_is_directory=True)
+        from tests.test_provenance import valid_decision
+        decision = valid_decision()
+        decision["policy"]["kev"]["catalog"] = {"url": "https://example.test/kev", "sha256": "a" * 64,
+            "catalog_version": "1", "date_released": "2026-01-01T00:00:00Z", "fetched_at": "2026-01-01T00:00:00Z"}
+        (self.dir / "candidate-decision.json").write_text(json.dumps(decision))
+        (self.dir / "scripts").symlink_to(ROOT / "scripts", target_is_directory=True)
+        git = self.dir / "git"
+        git.write_text('''#!/usr/bin/env python3
+import json, os, pathlib, sys
+a=sys.argv[1:]; root=pathlib.Path(os.environ['FIXTURE_ROOT'])
+with (root/'calls').open('a') as f: f.write(json.dumps(['git',*a])+'\\n')
+if a[0]=='rev-parse': print(('3' if a[1]=='HEAD' else '1')*40)
+elif a[0]=='ls-remote': print('2'*40+'\trefs/heads/provenance/current/example')
+elif a[0]=='ls-tree': print('provenance/example/current.json' if a[-1].endswith('/current.json') else '')
+elif a[0]=='show': sys.stdout.write((root/('pending.json' if a[1].startswith('FETCH_HEAD:') else 'previous.json')).read_text())
+elif a[0]=='log' and '--format=%ae' in a: print('bocklabs-release[bot]@invalid.test' if os.environ.get('FOREIGN') else '302587774+bocklabs-release[bot]@users.noreply.github.com')
+elif a[0]=='diff' and '--name-only' in a: print('provenance/example/current.json')
+elif a[0]=='diff' and '--quiet' in a: sys.exit(1)
+''')
+        gh = self.dir / "gh"
+        gh.write_text('''#!/usr/bin/env python3
+import json, os, pathlib, sys
+a=sys.argv[1:]; root=pathlib.Path(os.environ['FIXTURE_ROOT'])
+with (root/'calls').open('a') as f: f.write(json.dumps(['gh',*a])+'\\n')
+if a[:2]==['pr','list']: print('https://example.test/pull/1')
+elif a[:2]==['pr','view']: print('true')
+''')
+        git.chmod(0o755)
+        gh.chmod(0o755)
+        env = {**os.environ, "PATH": f"{self.dir}:{Path(sys.executable).parent}:{os.environ['PATH']}",
+               "FIXTURE_ROOT": str(self.dir), "APP": "example", "INTERNAL_TAG": "v1-bocklabs.2",
+               "CANDIDATE_DIGEST": DIGEST, "SKIP_COPY": "false", "RECOVER_TAG": "", "REPO": "bocklabs/trusted-images",
+               "RUN_URL": "https://example.test/runs/2", "GITHUB_OUTPUT": str(self.dir / "output"),
+               "GITHUB_STEP_SUMMARY": str(self.dir / "summary")}
+        pending = json.loads(json.dumps(generated))
+        pending["pipeline"]["run_url"] = "https://example.test/original-publication"
+        for scenario in ("owned", "foreign", "stale"):
+            (self.dir / "generated-provenance.json").write_text(json.dumps(generated))
+            (self.dir / "pending.json").write_text(json.dumps(pending))
+            (self.dir / "calls").write_text("")
+            before = record.read_bytes()
+            if scenario == "stale":
+                newer = json.loads(json.dumps(pending))
+                newer["internal"]["tag"] = "v1-bocklabs.3"
+                newer["promoted_at"] = "2100-01-01T00:00:00Z"
+                (self.dir / "pending.json").write_text(json.dumps(newer))
+            result = subprocess.run(["bash", "-c", writeback], cwd=self.dir, env={**env, "FOREIGN": "1" if scenario == "foreign" else ""}, capture_output=True, text=True)
+            calls = [json.loads(line) for line in (self.dir / "calls").read_text().splitlines()]
+            if scenario != "owned":
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(any(c[:2] == ["git", "push"] for c in calls))
+                self.assertEqual(record.read_bytes(), before)
+                continue
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(json.loads(record.read_bytes()), pending)
+            self.assertTrue(any(c[:2] == ["git", "push"] and '--force-with-lease=refs/heads/provenance/current/example:' + '2'*40 in c for c in calls))
+            self.assertTrue(any(c[:3] == ["gh", "pr", "edit"] and "--title" in c for c in calls))
+            result = subprocess.run(["bash", "-c", auto_merge], cwd=self.dir, env={**env, "HEAD_SHA": "3" * 40, "PR_URL": "https://example.test/pull/1"}, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(["gh", "pr", "merge", "--auto", "--merge", "--match-head-commit", "3" * 40, "https://example.test/pull/1"], [json.loads(line) for line in (self.dir / "calls").read_text().splitlines()])
+        publisher_text = (ROOT / ".github/workflows/promote-publish.yaml").read_text()
         self.assertIn("config/signing-identity.json", publisher_text)
         self.assertIn("--type cyclonedx", publisher_text)
         self.assertIn("@${CANDIDATE_DIGEST}", publisher_text)
@@ -332,8 +426,9 @@ else:
                            "attachment_sha256": hashlib.sha256(signature_bytes).hexdigest()}
         record = {
             "schema": "trusted-images.bocklabs.dev/provenance-v1", "app": "example",
+            "upstream": {"tag": "v1"}, "promoted_at": "2026-09-14T01:00:00Z", "validation": {"result": "pass"},
             "pipeline": {"run_url": run_url},
-            "internal": {"package": "ghcr.io/bocklabs/example", "digest": DIGEST},
+            "internal": {"package": "ghcr.io/bocklabs/example", "digest": DIGEST, "tag": "v1-bocklabs.1", "platforms": ["linux/amd64"]},
             "policy": {"eligible": True},
             "signing": {
                 "result": "pass",
@@ -348,14 +443,14 @@ else:
         }
         (self.dir / "config").mkdir()
         (self.dir / "config/signing-identity.json").write_text(json.dumps(identity))
-        path = self.dir / "provenance/example/one.json"
+        path = self.dir / "provenance/example/current.json"
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps(record))
         verified_signature = json.dumps([{"critical": {"image": {"docker-manifest-digest": DIGEST}}}]).encode()
         verified_attestation = json.dumps({"payload": base64.b64encode(json.dumps(self.statement).encode()).decode()}).encode()
         outputs = [verified_signature, verified_attestation, signature_bytes, attestation_bytes]
         with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
-            reverify_signing, "check_history", return_value={"provenance/example/one.json"}
+            reverify_signing, "check_history", return_value={"provenance/example/current.json"}
         ), mock.patch.object(reverify_signing, "cosign", side_effect=outputs) as verifier, mock.patch.object(
             sys, "argv", ["reverify_signing.py", "--base", "base"]
         ):
@@ -374,26 +469,67 @@ else:
         self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
         import reverify_signing
 
-        name = "provenance/example/one.json"
-        original = b'{"signing":{"result":"pass"},"note":"original"}\n'
+        name = "provenance/example/current.json"
+        original = (json.dumps(self.example_record()) + "\n").encode()
         path = self.dir / name
         path.parent.mkdir(parents=True)
         path.write_bytes(original)
+        (self.dir / "config").mkdir()
+        (self.dir / "config/signing-identity.json").write_bytes(IDENTITY.read_bytes())
 
         def git_output(args, **_kwargs):
-            return name + "\n" if args[1] == "ls-tree" else original
+            return (name + "\n").encode() if args[1] == "ls-tree" else original
 
         with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(
             reverify_signing.subprocess, "check_output", side_effect=git_output
         ), mock.patch.object(reverify_signing, "signed_record", return_value=("image", "sig", "sbom")):
             self.assertEqual(reverify_signing.signed_records("base", {}), [("image", "sig", "sbom")])
-            path.write_bytes(original.replace(b"original", b"changed "))
-            with self.assertRaisesRegex(ValueError, "historical provenance changed"):
+            changed = json.loads(original)
+            changed["pipeline"]["run_url"] = "https://changed.test/run"
+            path.write_text(json.dumps(changed))
+            with self.assertRaisesRegex(ValueError, "same identity"):
                 reverify_signing.signed_records("base", {})
+            changed["internal"]["tag"] = "v1-bocklabs.2"
+            changed["promoted_at"] = "2099-01-01T00:00:00Z"
+            path.write_text(json.dumps(changed))
+            self.assertEqual(reverify_signing.signed_records("base", {}), [("image", "sig", "sbom")])
             path.unlink()
-            with self.assertRaisesRegex(ValueError, "historical provenance changed"):
+            with self.assertRaisesRegex(ValueError, "current provenance missing"):
                 reverify_signing.signed_records("base", {})
 
+    def test_migration_selects_signed_current_and_preserves_unsigned_legacy_bytes(self):
+        import reverify_signing
+        identity = json.loads(IDENTITY.read_bytes())
+        (self.dir / "config").mkdir()
+        (self.dir / "config/signing-identity.json").write_bytes(IDENTITY.read_bytes())
+        signed = self.example_record()
+        signed["promoted_at"] = "2026-10-01T00:00:00Z"
+        unsigned = json.loads(json.dumps(signed))
+        unsigned.pop("signing")
+        unsigned["internal"]["tag"] = "v1-bocklabs.2"
+        unsigned["promoted_at"] = "2026-10-02T00:00:00Z"
+        legacy = json.loads(json.dumps(unsigned))
+        legacy.update(app="legacy", upstream={**legacy["upstream"], "tag": "nonroot"})
+        legacy["internal"].update(package="ghcr.io/bocklabs/legacy", tag="nonroot-bocklabs.1")
+        inputs = {"provenance/example/v1-bocklabs.1.json": (json.dumps(signed) + "\n").encode(),
+                  "provenance/example/v1-bocklabs.2.json": (json.dumps(unsigned) + "\n").encode(),
+                  "provenance/legacy/nonroot-bocklabs.1.json": (json.dumps(legacy) + "\n").encode()}
+        for name, data in inputs.items():
+            path = self.dir / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        def git_output(*args):
+            return ("\n".join(inputs) + "\n").encode() if args[0] == "ls-tree" else inputs[args[1].split(":", 1)[1]]
+        with mock.patch.object(reverify_signing, "ROOT", self.dir), mock.patch.object(reverify_signing, "git", side_effect=git_output):
+            selected = reverify_signing.migrate_current(identity)
+            self.assertEqual(selected["example"], inputs["provenance/example/v1-bocklabs.1.json"])
+            self.assertEqual(selected["legacy"], inputs["provenance/legacy/nonroot-bocklabs.1.json"])
+            self.assertEqual(reverify_signing.check_history("base"), {"provenance/example/current.json"})
+            self.assertEqual(sorted(str(p.relative_to(self.dir)) for p in (self.dir / "provenance").rglob("*.json")),
+                             ["provenance/example/current.json", "provenance/legacy/current.json"])
+            (self.dir / "provenance/example/v1-bocklabs.2.json").write_bytes(inputs["provenance/example/v1-bocklabs.2.json"])
+            with self.assertRaisesRegex(ValueError, "one regular current"):
+                reverify_signing.check_history("base")
     def test_historical_verifier_empty_window(self):
         sys.path.insert(0, str(ROOT / "scripts"))
         self.addCleanup(sys.path.remove, str(ROOT / "scripts"))

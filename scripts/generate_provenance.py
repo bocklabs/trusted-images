@@ -2,7 +2,7 @@
 """Generate the provenance record for one promoted internal image.
 
 One promotion run renders its full evidence set into a single provenance-v1
-JSON file (one file per internal tag under provenance/<app>/).
+JSON run artifact or validated current snapshot under provenance/<app>/.
 
 Fail-closed: every input is validated BEFORE anything is written. All
 violations are collected and printed — one line per violation, each prefixed
@@ -820,6 +820,17 @@ def main() -> int:
     record = build_record(args, platforms, policy, warnings, cves, decision)
 
     out = Path(value_of(args, "--out"))
+    if out.parent.parent.name == "provenance":
+        from reverify_signing import write_current
+        from promote_signing_gate import load_identity
+
+        try:
+            write_current(out, record, load_identity(Path(__file__).resolve().parents[1] / "config/signing-identity.json"))
+        except (OSError, ValueError) as error:
+            print(f"[provenance] current replacement rejected: {error}")
+            return 1
+        print(out)
+        return 0
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     print(out)

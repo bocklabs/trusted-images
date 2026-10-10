@@ -97,6 +97,25 @@ def orchestrator():
 
 
 class NativeChiselInventoryTests(unittest.TestCase):
+    def test_ordered_hardlink_chain_keeps_regular_bytes_and_rejects_missing_target(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "layer.tar"
+            with tarfile.open(path, "w") as archive:
+                target = tarfile.TarInfo("target")
+                target.size = 4
+                archive.addfile(target, io.BytesIO(b"data"))
+                for name, linked in (("alias", "target"), ("second", "alias")):
+                    member = tarfile.TarInfo(name)
+                    member.type = tarfile.LNKTYPE
+                    member.linkname = linked
+                    archive.addfile(member)
+            files: dict = {}
+            native.overlay_layer(files, path)
+            self.assertEqual([native.read_image_file(files, name) for name in ("target", "alias", "second")], [b"data"] * 3)
+            member.linkname = "missing"
+            with tarfile.open(path) as archive, self.assertRaisesRegex(ValueError, "unresolved OCI hardlink"):
+                native.member_bytes(files, archive, member)
+
     def test_debian_continuations_require_an_existing_field(self):
         for text in (" continuation\n", "Package: example\n\n continuation\n"):
             paragraphs = native.deb_paragraphs(io.StringIO(text))

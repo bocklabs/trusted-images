@@ -10,6 +10,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
 GENERATOR = REPO_ROOT / "scripts" / "generate_provenance.py"
 SCHEMA = "trusted-images.bocklabs.dev/provenance-v1"
 PILOT_UPSTREAM_DIGEST = "sha256:" + "a" * 64
@@ -152,7 +153,7 @@ class ProvenanceTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         root = Path(tmp.name)
-        self.out = root / "provenance" / "postgres-exporter" / "v0.20.1-bocklabs.1.json"
+        self.out = root / "provenance" / "postgres-exporter" / "current.json"
         self.before = root / "before.json"
         self.final = root / "final.json"
         self.fixable = root / "fixable.json"
@@ -259,6 +260,18 @@ class ProvenanceTests(unittest.TestCase):
             argv += [key, value]
         return subprocess.run(argv, capture_output=True, text=True)
 
+    def test_current_identity_preserves_bytes_across_daily_metadata_refresh(self):
+        result = self.run_generator(self.flags())
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        original = self.out.read_bytes()
+        flags = self.mutated(run_url="https://github.com/bocklabs/trusted-images/actions/runs/999")
+        result = self.run_generator(flags)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.out.read_bytes(), original)
+        failed = self.run_generator(self.mutated(validation_result="fail"))
+        self.assertNotEqual(failed.returncode, 0)
+        self.assertEqual(self.out.read_bytes(), original)
+
     def mutated(self, **changes: str | None) -> dict[str, str]:
         flags = self.flags()
         for name, value in changes.items():
@@ -348,6 +361,10 @@ class ProvenanceTests(unittest.TestCase):
         self.assert_fails_closed(self.run_generator(self.flags()), "predicate")
 
     def test_quarantine_is_explicit_and_non_promotable(self) -> None:
+        self.assertEqual(self.run_generator(self.flags()).returncode, 0)
+        current = self.out
+        original = current.read_bytes()
+        self.out = self.out.parents[2] / "quarantine-provenance.json"
         self.decision["eligible"] = False
         self.decision["reason"] = "signing verification failed"
         self.decision_path.write_text(json.dumps(self.decision))
@@ -362,6 +379,7 @@ class ProvenanceTests(unittest.TestCase):
         self.assertFalse(record["policy"]["eligible"])
         self.assertEqual(record["policy"]["outcome"], "signing verification failed")
         self.assertEqual(record["signing"], {"result": "fail", "failure": "verification failed"})
+        self.assertEqual(current.read_bytes(), original)
         self.out.unlink()
         self.decision["eligible"] = True
         self.decision_path.write_text(json.dumps(self.decision))
@@ -452,17 +470,36 @@ class ProvenanceTests(unittest.TestCase):
         self.assert_fails_closed(self.run_generator(flags), "expired")
 
     def test_legacy_multi_platform_records_remain_readable(self) -> None:
-        legacy = (
-            REPO_ROOT / "provenance" / "postgres-exporter" / "v0.20.1-bocklabs.1.json"
-        )
-        record = json.loads(legacy.read_text(encoding="utf-8"))
-        self.assertEqual(record["schema"], SCHEMA)
-        self.assertIn("linux/amd64", record["internal"]["platforms"])
-        self.assertNotIn("selected_child_digest", record["upstream"])
-        signed_era_marker = REPO_ROOT / "provenance" / "postgres-exporter" / "v0.20.1-bocklabs.5.json"
-        self.assertNotIn("signing", json.loads(signed_era_marker.read_text()))
+        import reverify_signing
+        from unittest.mock import patch
+
+        root = self.out.parents[2]
+        current = json.loads((REPO_ROOT / "provenance/postgres-exporter/current.json").read_bytes())
+        record = json.loads(json.dumps(current))
+        record.pop("signing")
+        record["internal"].update(tag="v0.20.1-bocklabs.1", platforms=["linux/amd64", "linux/arm64"])
+        record["upstream"].pop("selected_child_digest")
+        legacy = self.out.with_name("v0.20.1-bocklabs.1.json")
+        legacy.parent.mkdir(parents=True)
+        original = (json.dumps(record) + "\n").encode()
+        legacy.write_bytes(original)
+        for args in (("init", "-q"), ("config", "user.name", "fixture"), ("config", "user.email", "fixture@example.test"),
+                     ("add", "provenance"), ("commit", "-qm", "legacy")):
+            subprocess.run(["git", *args], cwd=root, check=True, capture_output=True)
+        legacy.unlink()
+        self.out.write_text(json.dumps(current))
+        subprocess.run(["git", "add", "provenance"], cwd=root, check=True)
+        subprocess.run(["git", "commit", "-qm", "current"], cwd=root, check=True)
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+        subprocess.run(["git", "update-ref", "refs/remotes/origin/main", commit], cwd=root, check=True)
+        with patch.object(reverify_signing, "ROOT", root):
+            resolved = reverify_signing.resolve_record("postgres-exporter", "v0.20.1-bocklabs.1", commit)
+            self.assertEqual(resolved, original)
+            self.assertFalse(legacy.exists())
+            self.assertIsNone(reverify_signing.resolve_record("postgres-exporter", "v0.20.1-bocklabs.99", commit))
 
     def test_recovery_preserves_original_and_current_run(self) -> None:
+        self.out = self.out.parents[2] / "recovery-provenance.json"
         flags = self.flags()
         flags.update(
             {

@@ -63,7 +63,7 @@ def member_bytes(files, archive, member):
             "unsupported OCI file type")
     if member.islnk():
         target = normalized(member.linkname)
-        require(target in files and files[target][0].isfile(), "unresolved OCI hardlink")
+        require(target in files and (files[target][0].isfile() or files[target][0].islnk()), "unresolved OCI hardlink")
         return files[target][1]
     stream = archive.extractfile(member) if member.isfile() else None
     return stream.read() if stream else b""

@@ -1,7 +1,6 @@
 """Scan the latest merged published image and request producer remediation."""
 
 import argparse
-from datetime import datetime
 import hashlib
 import json
 import os
@@ -12,9 +11,9 @@ import subprocess
 import yaml
 
 from evaluate_promotion import findings, validate_native_inventory, validate_report_results
-from finding_identity import canonical, findings_hash, REF, require
+from finding_identity import canonical, findings_hash, require
 from promote_signing_gate import load_identity
-from reverify_signing import signed_record
+from reverify_signing import load_current, merged_commit, record_time, verified_record
 from validate_inventory import entry_failures
 
 ARTIFACT = Path("published-rescan")
@@ -49,32 +48,12 @@ def output(values):
 
 
 def latest_record(app):
-    records = []
-    paths = git("ls-tree", "-r", "--name-only", "origin/main", "--", f"provenance/{app}").splitlines()
+    record = load_current(app, merged_commit())
     identity = load_identity(Path("config/signing-identity.json"))
-    for name in paths:
-        if not name.endswith(".json"):
-            continue
-        record = json.loads(git("show", f"origin/main:{name}"))
-        require(record.get("schema") == "trusted-images.bocklabs.dev/provenance-v1" and
-                record.get("app") == app, "invalid merged publication identity")
-        if record.get("policy", {}).get("eligible") is not True:
-            continue
-        internal = record["internal"]
-        ref = f"{internal['package']}:{internal['tag']}@{internal['digest']}"
-        require(REF.fullmatch(ref) and internal["package"] == f"ghcr.io/bocklabs/{app}" and
-                Path(name).stem == internal["tag"], "invalid merged publication reference")
-        promoted = datetime.fromisoformat(record["promoted_at"].replace("Z", "+00:00"))
-        require(promoted.tzinfo is not None, "publication time requires timezone")
-        records.append((promoted, ref, record))
-    if not records:
+    if record is None or not verified_record(record, app, identity):
         return None
-    latest = max(records, key=lambda item: item[0])
-    record = latest[2]
-    signed_record(record, Path(f"provenance/{app}/{record['internal']['tag']}.json"), identity)
-    require(record["validation"].get("result") == "pass" and
-            record["internal"]["platforms"] == ["linux/amd64"], "invalid published validation/platform")
-    return latest
+    internal = record["internal"]
+    return record_time(record), f"{internal['package']}:{internal['tag']}@{internal['digest']}", record
 
 
 def select():

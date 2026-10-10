@@ -79,6 +79,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
@@ -149,11 +151,9 @@ jobs:
 
           mkdir -p validation-context
           if [ -n "${RECOVER_TAG}" ]; then
-            PROVENANCE="provenance/${APP}/${RECOVER_TAG}.json"
-            [ -f "${PROVENANCE}" ] || {
-              echo "FATAL: recovery requires an existing Phase 05 provenance record"
-              exit 1
-            }
+            PROVENANCE="validation-context/recovery-provenance.json"
+            git fetch origin main
+            python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${RECOVER_TAG}" > "${PROVENANCE}"
             jq -e --arg app "${APP}" --arg tag "${RECOVER_TAG}" '
               .schema == "trusted-images.bocklabs.dev/provenance-v1" and
               .app == $app and .internal.tag == $tag and
@@ -463,8 +463,9 @@ jobs:
             echo "higher_upstream=$(jq -r .supersedes.higher_upstream <<<"${RESULT}")"
             echo "original_child_selected=$(jq -r .supersedes.original_child_selected <<<"${RESULT}")"
             if [ "${SKIP_COPY}" = true ] && [ -z "${RECOVER_TAG}" ]; then
-              REUSE_RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
-              [ -f "${REUSE_RECORD}" ] || { echo "FATAL: reusable tag has no Phase 05 provenance"; exit 1; }
+              REUSE_RECORD="reuse-provenance.json"
+              git fetch origin main
+              python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > "${REUSE_RECORD}"
               echo "reuse_candidate_digest=$(jq -er .internal.digest "${REUSE_RECORD}")"
               echo "reuse_run_url=$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${REUSE_RECORD}")"
             fi
@@ -1120,7 +1121,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${SKIP_COPY}" = true ] && [ "${FORCE_REPROMOTE}" != true ] && [ -z "${RECOVER_TAG}" ] && [ -z "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
-            RECORD="provenance/${APP}/${INTERNAL_TAG}.json"
+            RECORD="reuse-provenance.json"
+            git fetch origin main
+            python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > "${RECORD}"
             jq -e --arg app "${APP}" --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '
               .schema == "trusted-images.bocklabs.dev/provenance-v1" and .app == $app and
               .internal.package == ("ghcr.io/bocklabs/" + $app) and .internal.tag == $tag and

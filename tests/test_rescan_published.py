@@ -33,7 +33,7 @@ class PublishedRescanTests(unittest.TestCase):
                 rescan.retain("decision.json", {"proceed": False})
 
     def setUp(self):
-        self.record = json.loads((ROOT / "provenance/postgres-exporter/v0.20.1-bocklabs.7.json").read_text())
+        self.record = json.loads((ROOT / "provenance/postgres-exporter/current.json").read_text())
         self.spec = yaml.safe_load((ROOT / "inventory/postgres-exporter/image.yaml").read_text())["spec"]
         self.ref = "ghcr.io/bocklabs/postgres-exporter:v0.20.1-bocklabs.7@" + self.record["internal"]["digest"]
         self.selection = {"app": "postgres-exporter", "ref": self.ref, "spec": self.spec, "published": self.record}
@@ -105,15 +105,12 @@ class PublishedRescanTests(unittest.TestCase):
         older["promoted_at"] = "2026-09-26T00:00:00Z"
         older.pop("signing")
         older["internal"]["tag"] = "v0.20.1-bocklabs.6"
-        paths = "provenance/postgres-exporter/v0.20.1-bocklabs.6.json\nprovenance/postgres-exporter/v0.20.1-bocklabs.7.json"
-        def read_git(*args):
-            if args[0] == "ls-tree":
-                return paths
-            return json.dumps(older if args[1].endswith(".6.json") else self.record)
-        with patch.object(rescan, "git", side_effect=read_git), patch.object(rescan, "load_identity", return_value=json.loads((ROOT / "config/signing-identity.json").read_text())):
+        with patch.object(rescan, "merged_commit", return_value="a" * 40), patch.object(rescan, "load_current", return_value=self.record):
             self.assertEqual(rescan.latest_record("postgres-exporter")[1], self.ref)
+            with patch.object(rescan, "load_current", return_value=older):
+                self.assertIsNone(rescan.latest_record("postgres-exporter"))
             self.record["internal"]["package"] = "ghcr.io/bocklabs/other"
-            with self.assertRaisesRegex(ValueError, "publication reference"):
+            with self.assertRaisesRegex(ValueError, "provenance identity"):
                 rescan.latest_record("postgres-exporter")
 
     def test_selection_without_publication_is_monitor_only_and_stale_queue_is_blocked(self):
