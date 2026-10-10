@@ -86,7 +86,7 @@ jobs:
         uses: ./.github/actions/runner-label-guard
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
 
@@ -232,7 +232,7 @@ jobs:
           echo "${OUT}" >> "$GITHUB_OUTPUT"
 
       - name: Upload validation context
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: validation-context
           path: validation-context/
@@ -779,7 +779,7 @@ jobs:
 
       - name: Upload Copa diagnostics
         if: always() && steps.copapin.outcome == 'success'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: copa-diagnostics
           path: |
@@ -1213,7 +1213,7 @@ jobs:
 
       - name: Upload candidate artifact
         if: always() && steps.candidate.outcome == 'success'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: candidate
           path: candidate-artifact/
@@ -1222,7 +1222,7 @@ jobs:
 
       - name: Upload retained patch scan reports
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: patch-scan-reports
           path: |
@@ -1241,7 +1241,7 @@ jobs:
 
       - name: Upload validation evidence
         if: always() && steps.runval.outcome != 'skipped'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: validation-evidence
           path: validation-evidence.json
@@ -1250,7 +1250,7 @@ jobs:
 
       - name: Upload validation container logs
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: validation-container-logs
           path: validation-logs/
