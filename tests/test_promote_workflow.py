@@ -1297,8 +1297,9 @@ elif args[:2] == ['run', 'download']:
             if step["name"] == "Restore the exact accepted candidate"
         )
         fixture = self.candidate_artifact()
-        (fixture / "arch-before").mkdir()
-        (fixture / "arch-before/retained.json").write_text('{"retained":"scanner input"}\n')
+        for directory in ("arch-before", "native-before", "native-after"):
+            (fixture / directory).mkdir()
+            (fixture / directory / "retained.json").write_text('{"retained":"scanner input"}\n')
         subprocess.run(["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
                        cwd=fixture, check=True, capture_output=True)
         (self.tmp / "scripts").symlink_to(
@@ -1343,21 +1344,39 @@ elif args[:2] == ['run', 'download']:
         scanner = self.bin / "python3"
         scanner.write_text(f"#!{sys.executable}\n" +
             "import pathlib, subprocess, sys\n"
-            "if sys.argv[1] == 'scripts/scan_arch.py':\n"
+            "if sys.argv[1] in ('scripts/scan_arch.py', 'scripts/scan_native_chisel.py'):\n"
             "    root = pathlib.Path(sys.argv[sys.argv.index('--evidence') + 1])\n"
             "    assert not root.exists(), 'fresh scan destination still contains restored evidence'\n"
-            "    assert pathlib.Path('arch-before-retained/retained.json').is_file()\n"
+            "    if root.name != 'arch-after':\n"
+            "        assert pathlib.Path(root.name + '-retained/retained.json').is_file()\n"
+            "    if root.name == 'native-after':\n"
+            "        previous = pathlib.Path(sys.argv[sys.argv.index('--previous') + 1])\n"
+            "        assert previous == pathlib.Path('native-before')\n"
+            "        assert (previous / 'fresh-before.json').is_file()\n"
             "    root.mkdir()\n"
-            "elif sys.argv[1] != 'scripts/scan_native_chisel.py':\n"
+            "    if root.name == 'native-before':\n"
+            "        (root / 'fresh-before.json').write_text('fresh before scanner boundary')\n"
+            "else:\n"
             "    sys.exit(subprocess.call([sys.executable, *sys.argv[1:]]))\n")
         scanner.chmod(0o755)
         result = subprocess.run(["bash", "-c", before["run"]], cwd=self.tmp,
                                 env={**env, "IMAGE_REF": "example@" + self._child_digest()}, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        after = next(s for s in steps if s["name"] == "Inventory final native Chisel packages with the frozen DB")
+        result = subprocess.run(["bash", "-c", after["run"]], cwd=self.tmp,
+                                env={**env, "CANDIDATE_DIGEST": self._child_digest()}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual((self.tmp / "arch-before-retained/retained.json").read_bytes(),
                          (fixture / "arch-before/retained.json").read_bytes())
-        (self.tmp / "arch-before").rmdir()
-        (self.tmp / "arch-before-retained").rename(self.tmp / "arch-before")
+        for directory in ("arch-before", "native-before", "native-after"):
+            self.assertEqual((self.tmp / (directory + "-retained") / "retained.json").read_bytes(),
+                             (fixture / directory / "retained.json").read_bytes())
+            fresh = self.tmp / directory
+            if directory == "native-before":
+                (fresh / "fresh-before.json").unlink()
+            fresh.rmdir()
+            (self.tmp / (directory + "-retained")).rename(fresh)
+        (self.tmp / "arch-after").rmdir()
         scanner.unlink()
         stale = self.tmp / "arch-before/stale.json"
         stale.write_text("stale scanner input")

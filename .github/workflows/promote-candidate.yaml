@@ -610,6 +610,7 @@ jobs:
           IMAGE_REF: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
         run: |
           set -euo pipefail
+          if [ -d native-before ]; then test ! -e native-before-retained; mv native-before native-before-retained; fi
           python3 scripts/scan_native_chisel.py --report trivy-full.json --oci upstream-oci \
             --reference "$IMAGE_REF" --evidence native-before --cache .cache/trivy --fixable trivy-copa.json
           if [ -d arch-before ]; then test ! -e arch-before-retained; mv arch-before arch-before-retained; fi
@@ -875,6 +876,7 @@ jobs:
           CANDIDATE_DIGEST: ${{ steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest }}
         run: |
           set -euo pipefail
+          if [ -d native-after ]; then test ! -e native-after-retained; mv native-after native-after-retained; fi
           python3 scripts/scan_native_chisel.py --report trivy-after-full.json --oci candidate-oci \
             --reference "candidate@${CANDIDATE_DIGEST}" --evidence native-after --cache .cache/trivy --previous native-before
           if [ -d arch-after ]; then mv arch-after arch-after-retained; fi
@@ -1232,6 +1234,8 @@ jobs:
             trivy-after-full.json
             native-before/
             native-after/
+            native-before-retained/
+            native-after-retained/
             arch-before/
             arch-after/
             arch-after-retained/

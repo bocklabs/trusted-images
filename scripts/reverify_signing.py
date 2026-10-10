@@ -67,7 +67,7 @@ def verified_record(record, app, identity):
     if not isinstance(signing, dict):
         raise ValueError("invalid signing block")
     if signing.get("result") == "fail":
-        if record["policy"]["eligible"] is not False or not signing.get("failure"):
+        if record.get("policy", {}).get("eligible") is not False or not signing.get("failure"):
             raise ValueError("invalid quarantine record")
         return False
     signed_record(record, Path("provenance") / app / "current.json", identity)
