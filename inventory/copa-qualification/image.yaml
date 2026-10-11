@@ -5,8 +5,8 @@ metadata:
 spec:
   upstream:
     ref: registry.suse.com/bci/bci-base
-    tag: "16.0"
-    digest: sha256:60c29bd0b778062d1a96ed3edca81361afc11ee962a8b12d578b90204c587f8b
+    tag: 16.1
+    digest: sha256:c3691df257e003547162e0ee4065595e214c253f3c26eee131b7ecb69c60958f
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
