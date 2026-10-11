@@ -4,11 +4,11 @@ import copy
 import importlib
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import yaml
@@ -58,7 +58,7 @@ class PublishedRescanTests(unittest.TestCase):
             env = {**os.environ, "REMEDIATION_ENABLED": "true", "GITHUB_OUTPUT": str(output),
                    "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary")}
             result = subprocess.run([sys.executable, str(ROOT / "scripts/rescan_published.py"), "decide"],
-                                    cwd=directory, env=env, capture_output=True, text=True)
+                                    cwd=directory, env=env, check=False, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("proceed=true", output.read_text())
             self.assertIn("trivy-full.json", (work / "SHA256SUMS").read_text())
@@ -118,12 +118,42 @@ class PublishedRescanTests(unittest.TestCase):
         with patch.dict(os.environ, env, clear=True), patch.object(rescan, "git", return_value="a" * 40), patch.object(rescan, "latest_record", return_value=None), patch.object(rescan, "retain"), patch.object(rescan, "output") as output:
             rescan.select()
             self.assertFalse(output.call_args.args[0]["proceed"])
-        with patch.dict(os.environ, env, clear=True), patch.object(rescan, "git", side_effect=["a" * 40, "b" * 40]):
-            with self.assertRaisesRegex(ValueError, "stale"):
-                rescan.select()
-        with patch.dict(os.environ, {**env, "INPUT_FORCE_REPROMOTE": "true"}, clear=True):
-            with self.assertRaisesRegex(ValueError, "manual overrides"):
-                rescan.select()
+        with patch.dict(os.environ, env, clear=True), patch.object(rescan, "git", side_effect=["a" * 40, "b" * 40]), self.assertRaisesRegex(ValueError, "stale"):
+            rescan.select()
+        with patch.dict(os.environ, {**env, "INPUT_FORCE_REPROMOTE": "true"}, clear=True), self.assertRaisesRegex(ValueError, "manual overrides"):
+            rescan.select()
+
+    def test_published_native_scan_uses_digest_transport_preserving_reference(self):
+        steps = yaml.safe_load((ROOT / ".github/workflows/promote.yaml").read_text())["jobs"]["rescan"]["steps"]
+        run = next(s["run"] for s in steps if s["name"] == "Inventory native Chisel published packages")
+        package = "ghcr.io/bocklabs/postgres-exporter"
+        reference = package + ":v0.20.1-bocklabs.7@" + self.record["internal"]["digest"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "published-rescan").mkdir()
+            (root / "published-rescan/selection.json").write_text(json.dumps(
+                {"published": {"internal": {"package": package, "digest": self.record["internal"]["digest"]}}}))
+            (root / "published-rescan/trivy-full.json").write_text(json.dumps(
+                {"Metadata": {"OS": {"Family": "ubuntu"}}, "Results": []}))
+            (root / "scripts").symlink_to(ROOT / "scripts", target_is_directory=True)
+            docker = root / "docker"
+            docker.write_text(f"#!{sys.executable}\n" +
+                "import os, sys\n"
+                "assert [x for x in sys.argv if x.startswith('docker://')] == [os.environ['OCI_EXPECTED']], 'Skopeo requires digest-only transport'\n")
+            scanner = root / "python3"
+            scanner.write_text(f"#!{sys.executable}\n" +
+                "import pathlib, subprocess, sys\n"
+                "if sys.argv[1] in ('scripts/scan_native_chisel.py', 'scripts/scan_arch.py'):\n"
+                "    reference = sys.argv[sys.argv.index('--reference') + 1]\n"
+                "    with pathlib.Path('scanner-references').open('a') as out: out.write(reference + '\\n')\n"
+                "else: sys.exit(subprocess.call([sys.executable, *sys.argv[1:]]))\n")
+            docker.chmod(0o755)
+            scanner.chmod(0o755)
+            result = subprocess.run(["bash", "-c", run], cwd=root, check=False, capture_output=True, text=True,
+                                    env={**os.environ, "PATH": f"{root}:{os.environ['PATH']}",
+                                         "IMAGE_REF": reference, "OCI_EXPECTED": "docker://" + package + "@" + self.record["internal"]["digest"]})
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual((root / "scanner-references").read_text().splitlines(), [reference, reference])
 
     def test_schedule_dispatch_scope_and_immutable_scan_contract(self):
         daily = yaml.safe_load((ROOT / ".github/workflows/daily-rescan.yaml").read_text())
