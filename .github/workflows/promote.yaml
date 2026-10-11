@@ -135,8 +135,9 @@ jobs:
           OS_FAMILIES="$(python3 -c 'import json,sys; sys.path.insert(0,"scripts"); from evaluate_promotion import VERSION_CLASSES; print(json.dumps(list(VERSION_CLASSES)))')"
           if jq -e --argjson known "$OS_FAMILIES" '.Metadata.OS.Family as $family | (($known | index($family)) == null or $family == "archlinux" or ($family == "ubuntu" and ([.Results[]? | select(.Class == "os-pkgs") | .Packages[]?] | length == 0)))' published-rescan/trivy-full.json > /dev/null; then
             SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+            OCI_REF="$(jq -r '.published.internal | .package + "@" + .digest' published-rescan/selection.json)"
             docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-              copy --preserve-digests "docker://${IMAGE_REF}" "oci:/workspace/native-published-oci:published"
+              copy --preserve-digests "docker://${OCI_REF}" "oci:/workspace/native-published-oci:published"
             if jq -e '.Metadata.OS.Family == "ubuntu" and ([.Results[]? | select(.Class == "os-pkgs") | .Packages[]?] | length == 0)' published-rescan/trivy-full.json > /dev/null; then
               python3 scripts/scan_native_chisel.py --report published-rescan/trivy-full.json --oci native-published-oci \
                 --reference "$IMAGE_REF" --evidence published-rescan/native-published --cache .cache/trivy
