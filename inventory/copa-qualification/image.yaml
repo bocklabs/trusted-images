@@ -4,15 +4,15 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: docker.io/ubuntu/dotnet-runtime
-    tag: "8.0-24.04_stable_145"
-    digest: sha256:20bd739a82b977ad1fc882d0a73be15df8db4ad04c9cee210ba2572fdc273351
+    ref: registry.suse.com/bci/bci-base
+    tag: "16.0"
+    digest: sha256:60c29bd0b778062d1a96ed3edca81361afc11ee962a8b12d578b90204c587f8b
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
-    command: ["--info"]
+    command: ["/usr/bin/zypper", "--version"]
     expectedExit: 0
     expectedPlatforms: ["linux/amd64"]
   version: 2
