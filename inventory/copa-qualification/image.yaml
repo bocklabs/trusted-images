@@ -4,15 +4,19 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: registry.suse.com/bci/bci-base
-    tag: "16.0"
-    digest: sha256:60c29bd0b778062d1a96ed3edca81361afc11ee962a8b12d578b90204c587f8b
+    ref: docker.io/library/alpine
+    tag: 3.22.0
+    digest: sha256:8a1f59ffb675680d47db6337b49d22281a139e9d709335b492be023728e11715
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
-    command: ["/usr/bin/zypper", "--version"]
+    command:
+    - /bin/sh
+    - -ec
+    - /sbin/apk info -e musl busybox && /bin/busybox printf "%s\n" qualification
     expectedExit: 0
-    expectedPlatforms: ["linux/amd64"]
+    expectedPlatforms:
+    - linux/amd64
   version: 2
