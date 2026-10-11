@@ -4,15 +4,15 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: mcr.microsoft.com/cbl-mariner/base/core
-    tag: "2.0.20260311"
-    digest: sha256:c833841d2dcfd3081d2ee807050d19368854f70d9b6faef027463e2c6f45ee41
+    ref: docker.io/ubuntu/dotnet-runtime
+    tag: "8.0-24.04_stable_145"
+    digest: sha256:20bd739a82b977ad1fc882d0a73be15df8db4ad04c9cee210ba2572fdc273351
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
-    command: ["/usr/bin/tdnf", "--version"]
+    command: ["--info"]
     expectedExit: 0
     expectedPlatforms: ["linux/amd64"]
   version: 2
