@@ -2,17 +2,16 @@
 
 import argparse
 import copy
-from compression import zstd
 import hashlib
 import json
 import lzma
-from pathlib import Path, PurePosixPath
 import posixpath
 import re
 import subprocess
 import tarfile
+from compression import zstd
+from pathlib import Path, PurePosixPath
 from urllib.parse import quote, unquote
-
 
 KEYRING = "/usr/share/keyrings/ubuntu-archive-keyring.gpg"
 WALL = "var/lib/chisel/manifest.wall"
@@ -149,7 +148,7 @@ def native_packages(files):
 
 def verify_manifest_path(files, row):
     name = normalized(row.get("path"))
-    require(isinstance(row.get("mode"), str) and re.fullmatch(r"[0-7]{3,4}", row["mode"]),
+    require(isinstance(row.get("mode"), str) and re.fullmatch(r"0?[0-7]{3,4}", row["mode"]),
             "invalid native path mode")
     require(isinstance(row.get("slices"), list) and all(isinstance(name, str) for name in row["slices"]),
             "invalid native path slices")
