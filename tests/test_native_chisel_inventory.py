@@ -1,16 +1,16 @@
-from compression import zstd
 import copy
 import gzip
 import importlib.util
 import io
 import json
 import lzma
-from pathlib import Path
 import subprocess
 import sys
 import tarfile
 import tempfile
 import unittest
+from compression import zstd
+from pathlib import Path
 from unittest.mock import patch
 from urllib.error import URLError
 
@@ -142,7 +142,7 @@ class NativeChiselInventoryTests(unittest.TestCase):
                                 (["enrich", "--inputs", "unused", "--sbom", "unused", "--scan", "unused", "--output", "unused"], "capsule"),
                                 (["verify"], "capsule")):
             with self.subTest(operation=arguments[0]):
-                result = subprocess.run([sys.executable, str(SCRIPT), *arguments], capture_output=True, text=True)
+                result = subprocess.run([sys.executable, str(SCRIPT), *arguments], check=False, capture_output=True, text=True)
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertIn(f"--{flag} is required", result.stderr)
                 self.assertNotIn("Traceback", result.stderr)
@@ -269,6 +269,17 @@ class NativeChiselInventoryTests(unittest.TestCase):
                 with self.subTest(path=path), self.assertRaisesRegex(ValueError, "already exists or is a symlink"):
                     module.stage_evidence(args, {}, "unused")
                 self.assertEqual(saved.read_text(), "retained evidence")
+
+    def test_manifest_sticky_directory_permissions_match_real_image(self):
+        directory = tarfile.TarInfo("tmp")
+        directory.type = tarfile.DIRTYPE
+        directory.mode = 0o1777
+        files = {"tmp": (directory, b"")}
+        row = {"path": "/tmp/", "mode": "01777", "slices": ["base-files_tmp"]}
+        native.verify_manifest_path(files, row)
+        directory.mode = 0o777
+        with self.assertRaisesRegex(ValueError, "native path mode mismatch"):
+            native.verify_manifest_path(files, row)
 
     def test_manifest_rejects_missing_or_invalid_path_fields(self):
         files = {"file": (tarfile.TarInfo("file"), b"content")}
