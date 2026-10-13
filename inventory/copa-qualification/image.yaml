@@ -4,16 +4,18 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: mcr.microsoft.com/dotnet/runtime
-    tag: 8.0.20-azurelinux3.0-distroless
-    digest: sha256:f516a25cab5c5359fa0fe694e024e643a97d8b677a68322571c48916581c393f
+    ref: registry.access.redhat.com/ubi9/ubi-minimal
+    tag: '9.6'
+    digest: sha256:34880b64c07f28f64d95737f82f891516de9a3b43583f39970f7bf8e4cfa48b7
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
     command:
-    - --info
+    - /usr/bin/bash
+    - -ec
+    - /usr/bin/microdnf --help && /usr/bin/rpm -q glibc
     expectedExit: 0
     expectedPlatforms:
     - linux/amd64
