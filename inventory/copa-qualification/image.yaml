@@ -4,19 +4,19 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: registry.access.redhat.com/ubi9/ubi-micro
-    tag: '9.6'
-    digest: sha256:990002083442f6a93cd3249da32ecb7c3f6be778a1bec3a73a9c17fbc40edc15
+    ref: gcr.io/distroless/python3-debian12
+    tag: nonroot
+    digest: sha256:7d1042ce588ab97019fe95c24ffca7bc5a82ccdac572511d5e09bda4435c89c5
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
     command:
-    - /usr/bin/bash
-    - -ec
-    - test "$((2 + 3))" -eq 5; links=$(/usr/bin/ldd /usr/bin/bash); [[ "$links" !=
-      *"not found"* ]]
+    - -c
+    - import ssl,sqlite3,hashlib; assert sqlite3.connect(":memory:").execute("select
+      2 + 3").fetchone()[0] == 5; assert hashlib.sha256(b"qualification").hexdigest();
+      print(ssl.OPENSSL_VERSION)
     expectedExit: 0
     expectedPlatforms:
     - linux/amd64
