@@ -4,9 +4,9 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: registry.access.redhat.com/ubi9/ubi-minimal
+    ref: registry.access.redhat.com/ubi9/ubi-micro
     tag: '9.6'
-    digest: sha256:34880b64c07f28f64d95737f82f891516de9a3b43583f39970f7bf8e4cfa48b7
+    digest: sha256:990002083442f6a93cd3249da32ecb7c3f6be778a1bec3a73a9c17fbc40edc15
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
@@ -15,7 +15,8 @@ spec:
     command:
     - /usr/bin/bash
     - -ec
-    - /usr/bin/microdnf --version && /usr/bin/rpm -q glibc
+    - test "$((2 + 3))" -eq 5; links=$(/usr/bin/ldd /usr/bin/bash); [[ "$links" !=
+      *"not found"* ]]
     expectedExit: 0
     expectedPlatforms:
     - linux/amd64
