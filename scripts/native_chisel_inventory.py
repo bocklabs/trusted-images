@@ -39,6 +39,21 @@ def read_json(path):
     return json.loads(Path(path).read_text())
 
 
+def report_config(config):
+    result = copy.deepcopy(config)
+    result.pop("container_config", None)
+    defaults: dict[str, object] = (dict.fromkeys(["AttachStderr", "AttachStdin", "AttachStdout", "OpenStdin", "StdinOnce", "Tty", "ArgsEscaped", "NetworkDisabled"], False)
+                | dict.fromkeys(["Domainname", "Hostname", "Image", "User", "WorkingDir", "MacAddress", "StopSignal"], "")
+                | {key: [] for key in ("Cmd", "Entrypoint", "Env", "OnBuild", "Shell")}
+                | {key: {} for key in ("Labels", "Volumes", "ExposedPorts")}
+                | {"Healthcheck": None})
+    if "config" in result:
+        result["config"] = {key: value for key, value in result["config"].items()
+                            if key not in defaults or (value is not None
+                            and (type(value) is not type(defaults[key]) or value != defaults[key]))}
+    return result
+
+
 def normalized(path):
     require(isinstance(path, str) and ".." not in PurePosixPath(path).parts,
             "unsafe OCI path")
@@ -97,7 +112,7 @@ def image_files(inputs, raw):
             and isinstance(raw.get("ArtifactName"), str) and raw["ArtifactName"],
             "raw report is not a named container image")
     require(metadata.get("ImageID") == manifest["config"]["digest"]
-            and metadata.get("ImageConfig") == config, "raw report config mismatch")
+            and report_config(metadata.get("ImageConfig")) == report_config(config), "raw report config mismatch")
     require(metadata.get("DiffIDs") == config["rootfs"]["diff_ids"], "raw report layers mismatch")
     require(len(inputs["layers"]) == len(manifest["layers"]) == len(metadata["DiffIDs"]),
             "incomplete OCI layers")
