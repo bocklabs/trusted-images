@@ -5,8 +5,8 @@ metadata:
 spec:
   upstream:
     ref: mcr.microsoft.com/dotnet/runtime
-    tag: 8.0.20-azurelinux3.0-distroless
-    digest: sha256:f516a25cab5c5359fa0fe694e024e643a97d8b677a68322571c48916581c393f
+    tag: 10.0.13-azurelinux3.0-distroless
+    digest: sha256:e21e0262d286b0d23e7ae60ab8da09110b4ded4a72e9faa2712f634d827694ef
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
