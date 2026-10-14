@@ -5,8 +5,8 @@ metadata:
 spec:
   upstream:
     ref: registry.access.redhat.com/ubi9/ubi-minimal
-    tag: '9.6'
-    digest: sha256:34880b64c07f28f64d95737f82f891516de9a3b43583f39970f7bf8e4cfa48b7
+    tag: 9.8-1791898448
+    digest: sha256:c4c285d42941ebb2bd4da878479008e1e4536bb599aad1dbe568f89de9053661
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
