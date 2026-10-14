@@ -1228,6 +1228,7 @@ jobs:
         with:
           name: patch-scan-reports
           path: |
+            candidate-oci/
             trivy-before-full.json
             trivy-full.json
             trivy-copa.json
