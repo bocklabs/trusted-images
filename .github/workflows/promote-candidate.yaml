@@ -526,7 +526,7 @@ jobs:
           TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
           TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
         with:
-          version: v0.76.0
+          version: v0.75.0
           image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
           format: json
@@ -579,7 +579,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true' # no action input exists — env pass-through; reuse scan 1's DB
         with:
-          version: v0.76.0
+          version: v0.75.0
           image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
           format: json
@@ -815,7 +815,6 @@ jobs:
           CONTAINER="$(docker create copa:candidate)"
           trap 'docker rm "${CONTAINER}" > /dev/null' EXIT
           docker commit "${CHANGES[@]}" "${CONTAINER}" copa:final > /dev/null
-          FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
           docker image inspect copa:final --format '{{json .Config.Labels}}' > after-labels.json
           python3 scripts/promote_label_changes.py before-labels.json after-labels.json
           docker save copa:final --output candidate-final.tar
@@ -823,6 +822,13 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
           CANDIDATE_MANIFEST_DIGEST="$(jq -er '.manifests[0].digest' candidate-oci/index.json)"
           cp "candidate-oci/blobs/sha256/${CANDIDATE_MANIFEST_DIGEST#sha256:}" candidate-manifest.json
+          rm candidate-final.tar
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
+            copy --preserve-digests oci:/workspace/candidate-oci:candidate \
+            docker-archive:/workspace/candidate-final.tar:copa:final
+          docker load --input candidate-final.tar
+          FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
+          [ "${FINAL_IMAGE_ID}" = "$(jq -er .config.digest candidate-manifest.json)" ]
           sha256sum candidate-manifest.json | awk -v d="${CANDIDATE_MANIFEST_DIGEST}" '{ if ("sha256:" $1 != d) exit 1; print "digest=sha256:" $1 }' > candidate-digest.txt
           cat candidate-digest.txt >> "$GITHUB_OUTPUT"
           echo "image_id=${FINAL_IMAGE_ID}" >> "$GITHUB_OUTPUT"
@@ -838,7 +844,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true'
         with:
-          version: v0.76.0
+          version: v0.75.0
           input: candidate-final.tar
           scanners: vuln
           format: json
@@ -859,7 +865,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true'
         with:
-          version: v0.76.0
+          version: v0.75.0
           input: resume-final.tar
           scanners: vuln
           format: json
@@ -1228,7 +1234,6 @@ jobs:
         with:
           name: patch-scan-reports
           path: |
-            candidate-oci/
             trivy-before-full.json
             trivy-full.json
             trivy-copa.json

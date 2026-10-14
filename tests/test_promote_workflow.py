@@ -8,10 +8,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from typing import ClassVar
 
 import yaml
-from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from resolve_internal_tag import select_internal_tag
@@ -159,9 +159,8 @@ class TagAllocationTests(unittest.TestCase):
             [{"tag": "v1.2.3-bocklabs.1", "digest": "bad"}],
         )
         for observations in invalid:
-            with self.subTest(observations=observations):
-                with self.assertRaises(ValueError):
-                    self.select("v1.2.3", DIGEST_C, DIGEST_A, observations)
+            with self.subTest(observations=observations), self.assertRaises(ValueError):
+                self.select("v1.2.3", DIGEST_C, DIGEST_A, observations)
 
     def test_cli_emits_validated_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -183,6 +182,7 @@ class TagAllocationTests(unittest.TestCase):
                 ],
                 capture_output=True,
                 text=True,
+                check=False,
             )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
@@ -221,7 +221,7 @@ class PromoteWorkflowTests(unittest.TestCase):
             arguments = root / "arguments"
             env = {**os.environ, "PATH": str(root) + os.pathsep + os.environ["PATH"],
                    "ARGUMENTS": str(arguments), "HEAD_SHA": "abc123", "PR_URL": "https://example.invalid/pull/1"}
-            result = subprocess.run(["bash", "-c", auto_merge["run"]], env=env, capture_output=True, text=True)
+            result = subprocess.run(["bash", "-c", auto_merge["run"]], env=env, capture_output=True, text=True, check=False)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(arguments.read_text().splitlines(),
                              ["pr", "merge", "--auto", "--merge", "--match-head-commit", "abc123", env["PR_URL"]])
@@ -237,7 +237,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                    "INTERNAL_TAG": "v1-bocklabs.1", "CANDIDATE_DIGEST": DIGEST_A,
                    "GITHUB_SERVER_URL": "https://example.invalid", "GITHUB_REPOSITORY": "owner/repo",
                    "GITHUB_RUN_ID": "123", "GITHUB_STEP_SUMMARY": str(summary)}
-            result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True)
+            result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True, check=False)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(decision.read_bytes(), original)
             self.assertIn("Ineligible for consumption", summary.read_text())
@@ -323,19 +323,19 @@ class PromoteWorkflowTests(unittest.TestCase):
                        PATCHED_DIGEST=DIGEST_B, RESUME_DIGEST="", RECOVERED_DIGEST="",
                        SELECTED_DIGEST=DIGEST_A, UPSTREAM_REF="registry.example/app",
                        GITHUB_OUTPUT=str(root / "output"), GITHUB_STEP_SUMMARY=str(root / "summary"))
-            select = subprocess.run(["bash", "-c", by_name["Select the exact final candidate"]["run"]], cwd=root, env=env, capture_output=True, text=True)
+            select = subprocess.run(["bash", "-c", by_name["Select the exact final candidate"]["run"]], cwd=root, env=env, capture_output=True, text=True, check=False)
             self.assertEqual(select.returncode, 0, select.stdout + select.stderr)
             convert = by_name["Convert full report to CycloneDX with parity check"]["run"]
-            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True)
+            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             changed = json.loads(cdx.read_text())
             changed["vulnerabilities"][0]["id"] = "CVE-2026-9999"
             cdx.write_text(json.dumps(changed))
-            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True)
+            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("finding identities differ", result.stdout)
             cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [{"type": "library", "name": "old", "version": "1"}], "vulnerabilities": []}))
-            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True)
+            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("components differ", result.stdout)
 
@@ -397,7 +397,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                            "PATH": str(root) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
                            "RECORD_FIXTURE": str(record),
                            "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(summary)}
-                    result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True)
+                    result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True, check=False)
                     if expected is None:
                         self.assertNotEqual(result.returncode, 0)
                         self.assertNotIn("publication_required=false", output.read_text())
@@ -439,7 +439,7 @@ esac
                     trace.write_text("")
                     env = {**os.environ, "PATH": f"{root}:{os.environ['PATH']}",
                            "MODE": mode, "TRACE": str(trace)}
-                    result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True)
+                    result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True, check=False)
                     self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
                     if mode == "existing":
                         self.assertNotIn("pr create", trace.read_text().splitlines())
@@ -838,7 +838,8 @@ elif args[0] == 'run':
     layout = P(os.environ.get('PWD', '.')) / 'candidate-oci' / 'index.json'
     layout.parent.mkdir(parents=True, exist_ok=True)
     if not layout.exists():
-        manifest_text = '{"schemaVersion":2,"mediaType":"application/vnd.oci.image.manifest.v1+json"}'
+        manifest_text = json.dumps({"schemaVersion": 2, "mediaType": "application/vnd.oci.image.manifest.v1+json",
+                                    "config": {"digest": "sha256:" + "d" * 64}})
         digest = 'sha256:' + hashlib.sha256(manifest_text.encode()).hexdigest()
         blob_dir = layout.parent / 'blobs' / 'sha256'
         blob_dir.mkdir(parents=True, exist_ok=True)
@@ -868,6 +869,7 @@ elif args[0] == 'run':
                 env=env,
                 capture_output=True,
                 text=True,
+                check=False,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             output = (root / "output").read_text()
@@ -911,6 +913,7 @@ elif args[0] == 'run':
                         ['bash', '-c', step['run']], cwd=root, capture_output=True, text=True,
                         env=dict(os.environ, PATH=f'{root}:{os.environ["PATH"]}',
                                  ORIGINAL_CHILD=original, VERSION=version, PATCH_STATUS=str(status)),
+                        check=False,
                     )
                     self.assertEqual(result.returncode, status if version == '0.15.0' else 1,
                                      result.stdout + result.stderr)
@@ -969,6 +972,7 @@ elif args[0] == 'run':
                         env=env,
                         capture_output=True,
                         text=True,
+                        check=False,
                     )
                     self.assertEqual(
                         result.returncode, 1, result.stdout + result.stderr
@@ -1161,7 +1165,7 @@ class CleanChildTracerTests(unittest.TestCase):
         env = os.environ.copy()
         env["PATH"] = f"{self.bin}:{env['PATH']}"
         env["FAKE_SPOOL"] = str(self.spool)
-        return subprocess.run(argv, capture_output=True, text=True, env=env)
+        return subprocess.run(argv, capture_output=True, text=True, env=env, check=False)
 
     def candidate_artifact(self, kev_cves=("CVE-2026-0001",)):
         from tests.test_policy import kev_feed, report, vuln, write_json
@@ -1327,6 +1331,7 @@ elif args[:2] == ['run', 'download']:
             env=env,
             capture_output=True,
             text=True,
+            check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         output = (self.tmp / "github-output").read_text()
@@ -1360,11 +1365,11 @@ elif args[:2] == ['run', 'download']:
             "    sys.exit(subprocess.call([sys.executable, *sys.argv[1:]]))\n")
         scanner.chmod(0o755)
         result = subprocess.run(["bash", "-c", before["run"]], cwd=self.tmp,
-                                env={**env, "IMAGE_REF": "example@" + self._child_digest()}, capture_output=True, text=True)
+                                env={**env, "IMAGE_REF": "example@" + self._child_digest()}, capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         after = next(s for s in steps if s["name"] == "Inventory final native Chisel packages with the frozen DB")
         result = subprocess.run(["bash", "-c", after["run"]], cwd=self.tmp,
-                                env={**env, "CANDIDATE_DIGEST": self._child_digest()}, capture_output=True, text=True)
+                                env={**env, "CANDIDATE_DIGEST": self._child_digest()}, capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual((self.tmp / "arch-before-retained/retained.json").read_bytes(),
                          (fixture / "arch-before/retained.json").read_bytes())
@@ -1381,7 +1386,7 @@ elif args[:2] == ['run', 'download']:
         stale = self.tmp / "arch-before/stale.json"
         stale.write_text("stale scanner input")
         env["GITHUB_OUTPUT"] = str(self.tmp / "stale-capsule-output")
-        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True, check=False)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("restored evidence file set differs", result.stderr)
         self.assertFalse((self.tmp / "stale-capsule-output").exists())
@@ -1394,7 +1399,7 @@ elif args[:2] == ['run', 'download']:
         subprocess.run(["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
                        cwd=fixture, check=True, capture_output=True)
         env["GITHUB_OUTPUT"] = str(self.tmp / "omitted-capsule-output")
-        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True)
+        result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True, check=False)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("missing Arch capsule file", result.stderr)
         self.assertFalse((self.tmp / "omitted-capsule-output").exists())
@@ -1419,6 +1424,7 @@ elif args[:2] == ['run', 'download']:
             env=env,
             capture_output=True,
             text=True,
+            check=False,
         )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("undeclared files", result.stdout + result.stderr)
@@ -1433,6 +1439,7 @@ elif args[:2] == ['run', 'download']:
             env=env,
             capture_output=True,
             text=True,
+            check=False,
         )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("wrong run", result.stdout + result.stderr)
@@ -1458,7 +1465,7 @@ elif args[:2] == ['run', 'download']:
                                cwd=self.tmp, check=True, capture_output=True)
                 env["EXPECTED_MANIFEST_SHA256"] = hashlib.sha256((artifact / "SHA256SUMS").read_bytes()).hexdigest()
                 result = subprocess.run(["bash", "-c", verify["run"]], cwd=self.tmp, env=env,
-                                        capture_output=True, text=True, timeout=10)
+                                        capture_output=True, text=True, timeout=10, check=False)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertIn("trivy_version=" + version + "\n", Path(env["GITHUB_OUTPUT"]).read_text())
         for name in ("Verify signing evidence", "Generate provenance record"):
@@ -1518,6 +1525,7 @@ elif args[:2] == ['run', 'download']:
             env=env,
             capture_output=True,
             text=True,
+            check=False,
         )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         evidence = json.loads((self.tmp / "validation-evidence.json").read_text())

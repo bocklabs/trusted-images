@@ -102,6 +102,12 @@
       "automerge": true
     },
     {
+      "description": "Review Trivy CLI upgrades together with the native scanner version and binary trust pins.",
+      "matchPackageNames": ["aquasecurity/trivy"],
+      "matchFileNames": [".github/workflows/promote-candidate.yaml", ".github/workflows/promote.yaml"],
+      "automerge": false
+    },
+    {
       "description": "Hold the deliberately stale nginx qualification pin until its patch qualification is reviewed.",
       "matchFileNames": [
         "inventory/nginx-qualification/image.yaml",

@@ -115,7 +115,7 @@ jobs:
           TRIVY_IMAGE_SRC: remote
           TRIVY_EXIT_ON_EOL: '1'
         with:
-          version: v0.76.0
+          version: v0.75.0
           image-ref: ${{ steps.entry.outputs.ref }}
           scanners: vuln
           format: json
