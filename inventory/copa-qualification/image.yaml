@@ -4,19 +4,15 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: registry.access.redhat.com/ubi9/ubi-minimal
-    tag: '9.6'
-    digest: sha256:34880b64c07f28f64d95737f82f891516de9a3b43583f39970f7bf8e4cfa48b7
+    ref: docker.io/ubuntu/dotnet-runtime
+    tag: "8.0-24.04_stable_145"
+    digest: sha256:b82dacfba50e41a83f2b1ab7848cff634a112a07437a0bf50a990ef086dd98b1
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
-    command:
-    - /usr/bin/bash
-    - -ec
-    - /usr/bin/microdnf --help && /usr/bin/rpm -q glibc
+    command: ["--info"]
     expectedExit: 0
-    expectedPlatforms:
-    - linux/amd64
+    expectedPlatforms: ["linux/amd64"]
   version: 2
