@@ -4,15 +4,22 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: docker.io/ubuntu/dotnet-runtime
-    tag: "8.0-24.04_stable_145"
-    digest: sha256:b82dacfba50e41a83f2b1ab7848cff634a112a07437a0bf50a990ef086dd98b1
+    ref: registry.suse.com/bci/python
+    tag: 3.13.0-71.1
+    digest: sha256:56a5edc4b2d22232dbfeb06044751e7b61d31a979a661e4e1a930299ce3dc0d0
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
-    command: ["--info"]
+    command:
+    - /usr/bin/python3.13
+    - -c
+    - import hashlib,ssl,sqlite3,subprocess; assert hashlib.sha256(b"qualification").hexdigest()=="1dbf39600b5761d58378447f494a50c8b9c01b559b6ef420720f99f4e45717c9";
+      assert ssl.create_default_context().get_ca_certs(); assert sqlite3.connect(":memory:").execute("select
+      1").fetchone()==(1,); subprocess.run(["/usr/bin/curl","--version"],check=True);
+      subprocess.run(["/usr/bin/zypper","--version"],check=True)
     expectedExit: 0
-    expectedPlatforms: ["linux/amd64"]
+    expectedPlatforms:
+    - linux/amd64
   version: 2
