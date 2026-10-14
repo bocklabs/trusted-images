@@ -824,7 +824,7 @@ jobs:
           cp "candidate-oci/blobs/sha256/${CANDIDATE_MANIFEST_DIGEST#sha256:}" candidate-manifest.json
           rm candidate-final.tar
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-            copy --preserve-digests oci:/workspace/candidate-oci:candidate \
+            copy --format v2s2 oci:/workspace/candidate-oci:candidate \
             docker-archive:/workspace/candidate-final.tar:copa:final
           docker load --input candidate-final.tar
           FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
