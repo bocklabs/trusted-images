@@ -4,19 +4,16 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: docker.io/library/archlinux
-    tag: base-20250105.0.295102
-    digest: sha256:292bb4ec7866af67f8d66fe2114eef840eebc74302db00b891dcb2d278bec80a
+    ref: mcr.microsoft.com/dotnet/runtime
+    tag: 8.0.20-jammy-chiseled
+    digest: sha256:1401caf72ca021c372cc1cf0c89f6bcdd9762421dbe72f0c3a229b889805eedc
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
     command:
-    - /usr/bin/bash
-    - -ec
-    - /usr/bin/pacman -Q glibc curl openssl libxml2 xz; /usr/bin/curl --version; printf
-      qualification | /usr/bin/openssl dgst -sha256 | /usr/bin/grep -F 1dbf39600b5761d58378447f494a50c8b9c01b559b6ef420720f99f4e45717c9
+    - --info
     expectedExit: 0
     expectedPlatforms:
     - linux/amd64
