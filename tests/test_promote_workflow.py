@@ -817,12 +817,14 @@ esac
             root = Path(tmp)
             executable = root / "docker"
             executable.write_text("""#!/usr/bin/env python3
-import json, os, sys
+import hashlib, json, os, sys
 args = sys.argv[1:]
+config_text = json.dumps({"config": {"Labels": {}}})
+config_digest = hashlib.sha256(config_text.encode()).hexdigest()
 with open(os.environ['SPOOL'], 'a') as fh: fh.write(json.dumps(args) + '\\n')
 if args[:2] == ['image', 'inspect']:
     if args[-1] == '{{.Id}}':
-        print('sha256:' + 'd' * 64)
+        print('sha256:' + config_digest)
     else:
         print('{}')
 elif args[0] == 'create': print('metadata-container')
@@ -839,15 +841,19 @@ elif args[0] == 'run':
     layout.parent.mkdir(parents=True, exist_ok=True)
     if not layout.exists():
         manifest_text = json.dumps({"schemaVersion": 2, "mediaType": "application/vnd.oci.image.manifest.v1+json",
-                                    "config": {"digest": "sha256:" + "d" * 64}})
+                                    "config": {"digest": "sha256:" + config_digest, "size": len(config_text),
+                                               "mediaType": "application/vnd.oci.image.config.v1+json"}})
         digest = 'sha256:' + hashlib.sha256(manifest_text.encode()).hexdigest()
         blob_dir = layout.parent / 'blobs' / 'sha256'
         blob_dir.mkdir(parents=True, exist_ok=True)
         P(blob_dir / digest.split(':')[1]).write_text(manifest_text)
-        layout.write_text('{"manifests":[{"digest":"' + digest + '"}]}')
+        P(blob_dir / config_digest).write_text(config_text)
+        layout.write_text(json.dumps({"schemaVersion": 2, "manifests": [{"digest": digest,
+                          "size": len(manifest_text), "mediaType": "application/vnd.oci.image.manifest.v1+json"}]}))
     print(layout.read_text())
 """)
             executable.chmod(0o755)
+            (root / "child-config.json").write_text('{"config":{"Labels":{}}}')
             (root / "scripts").symlink_to(
                 REPO_ROOT / "scripts", target_is_directory=True
             )

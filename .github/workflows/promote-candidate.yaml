@@ -820,6 +820,7 @@ jobs:
           docker save copa:final --output candidate-final.tar
           SKOPEO="${SKOPEO_IMAGE}"
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
+          python3 scripts/finalize_candidate_config.py candidate-oci child-config.json
           CANDIDATE_MANIFEST_DIGEST="$(jq -er '.manifests[0].digest' candidate-oci/index.json)"
           cp "candidate-oci/blobs/sha256/${CANDIDATE_MANIFEST_DIGEST#sha256:}" candidate-manifest.json
           rm candidate-final.tar
