@@ -356,6 +356,7 @@ def enrich(inputs, sbom, scan, sbom_path):
     supplied = scan_packages(sbom, scan)
     require(scan.get("Trivy", {}).get("Version") == TRIVY_VERSION
             and file_digest(inputs["trivy"]) == TRIVY_SHA256, "untrusted native scanner binary")
+    Path(inputs["trivy"]).chmod(0o755)
     db_before = file_digest(inputs["db"])
     scanned = subprocess.run([inputs["trivy"], "sbom", "--offline-scan", "--skip-db-update",
                               "--cache-dir", str(Path(inputs["db"]).parent.parent), "--format", "json",

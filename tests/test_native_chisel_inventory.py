@@ -351,6 +351,18 @@ class NativeChiselInventoryTests(unittest.TestCase):
                     self.assertRaisesRegex(ValueError, "untrusted native scanner binary"):
                 native.enrich(inputs, sbom, scan, root / "sbom.json")
             self.assertTrue(all(call.args[0][0] == "gpgv" for call in gpgv.call_args_list))
+            self.assertEqual(scanner.stat().st_mode & 0o111, 0)
+            scanner.write_text(f"#!{sys.executable}\nprint({json.dumps(scan)!r})\n")
+            scanner.chmod(0o644)
+            scanner_hash = native.file_digest(scanner)
+            database = root / "trivy.db"
+            database.write_bytes(b"frozen fixture database")
+            inputs.update(db=str(database), capsule="native-before/capsule.json")
+            with patch.object(native, "prepare", return_value=sbom), \
+                    patch.object(native, "TRIVY_SHA256", scanner_hash):
+                result = native.enrich(inputs, sbom, scan, root / "sbom.json")
+            self.assertEqual(result["Results"][0]["Packages"], packages)
+            self.assertEqual(native.file_digest(scanner), scanner_hash)
 
     def test_capsule_rejects_parent_paths_before_opening_inputs(self):
         with tempfile.TemporaryDirectory() as directory:
