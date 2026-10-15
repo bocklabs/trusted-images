@@ -10,9 +10,10 @@ import tarfile
 import tempfile
 import unittest
 from compression import zstd
+from email.message import Message
 from pathlib import Path
 from unittest.mock import patch
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/native_chisel_inventory.py"
 SPEC = importlib.util.spec_from_file_location("native_chisel_inventory", SCRIPT)
@@ -199,10 +200,39 @@ class NativeChiselInventoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             failure = URLError("unavailable")
-            with patch.object(module, "urlopen", side_effect=failure), \
+            with patch.object(module, "urlopen", side_effect=failure) as fetch, \
                     self.assertRaisesRegex(ValueError, "20250527T120000Z/dists/noble/InRelease") as raised:
                 module.fetch_archive(root, "20250527T120000Z", "noble", "amd64")
             self.assertIs(raised.exception.__cause__, failure)
+            fetch.assert_called_once()
+
+    def test_archive_metadata_transient_retry_is_bounded_and_replaces_partial_bytes(self):
+        module = orchestrator()
+        url = "https://snapshot.ubuntu.com/ubuntu/20250527T120000Z/dists/noble/InRelease"
+        unavailable = HTTPError(url, 503, "Service Unavailable", Message(), None)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "InRelease"
+            output.write_bytes(b"partial previous response")
+            with patch.object(module, "urlopen", side_effect=[unavailable, io.BytesIO(b"complete signed metadata")]) as fetch, \
+                    patch.object(module, "sleep") as pause:
+                module.fetch_metadata(url, output)
+            self.assertEqual(output.read_bytes(), b"complete signed metadata")
+            self.assertEqual([call.args for call in fetch.call_args_list], [(url,), (url,)])
+            pause.assert_called_once_with(1)
+            with patch.object(module, "urlopen", side_effect=unavailable) as fetch, \
+                    patch.object(module, "sleep") as pause, \
+                    self.assertRaisesRegex(ValueError, "20250527T120000Z/dists/noble/InRelease") as raised:
+                module.fetch_metadata(url, output)
+            self.assertIs(raised.exception.__cause__, unavailable)
+            self.assertEqual(fetch.call_count, 3)
+            self.assertEqual([call.args for call in pause.call_args_list], [(1,), (2,)])
+            self.assertEqual(output.read_bytes(), b"")
+            missing = HTTPError(url, 404, "Not Found", Message(), None)
+            with patch.object(module, "urlopen", side_effect=missing) as fetch, \
+                    patch.object(module, "sleep") as pause, self.assertRaises(ValueError):
+                module.fetch_metadata(url, output)
+            fetch.assert_called_once()
+            pause.assert_not_called()
 
     def test_os_release_requires_codename_and_version(self):
         for content in (b"ID=ubuntu\nVERSION_ID=24.04\n", b"ID=ubuntu\nVERSION_CODENAME=noble\n"):

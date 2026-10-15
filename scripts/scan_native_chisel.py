@@ -1,14 +1,15 @@
 """Enrich native Chisel reports in place, retaining raw scans in evidence."""
 
 import argparse
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
-from urllib.error import URLError
+from datetime import UTC, datetime
+from pathlib import Path
+from time import sleep
+from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 import native_chisel_inventory as native
@@ -29,6 +30,18 @@ def image_inputs(oci, reference, report, cache, trivy):
             "raw_report": str(report), "db": str(cache / "db" / "trivy.db"), "trivy": trivy, "archives": []}
 
 
+def fetch_metadata(url, path):
+    for attempt in range(3):
+        try:
+            with path.open("wb") as output, urlopen(url, timeout=60) as response:
+                shutil.copyfileobj(response, output)
+            return
+        except URLError as error:
+            if not isinstance(error, HTTPError) or error.code not in (500, 502, 503, 504) or attempt == 2:
+                raise ValueError(f"native archive fetch failed: {url}") from error
+            sleep(attempt + 1)
+
+
 def fetch_archive(root, stamp, codename, architecture):
     native.require(re.fullmatch(r"[a-z0-9]+", codename) and architecture == "amd64", "unsupported native archive")
     directory = root / "archives" / stamp
@@ -39,11 +52,7 @@ def fetch_archive(root, stamp, codename, architecture):
                       for part in ("main", "universe")})
         for filename, relative in paths.items():
             url = f"https://snapshot.ubuntu.com/ubuntu/{stamp}/dists/{suite}/{relative}"
-            try:
-                with urlopen(url, timeout=60) as response, (directory / filename).open("wb") as output:
-                    shutil.copyfileobj(response, output)
-            except URLError as error:
-                raise ValueError(f"native archive fetch failed: {url}") from error
+            fetch_metadata(url, directory / filename)
     return str(directory)
 
 
@@ -61,12 +70,25 @@ def stage_evidence(args, info, trivy):
     if args.previous:
         shutil.copytree(args.previous / "archives", root / "archives")
         inputs["archives"] = [str(path) for path in sorted((root / "archives").iterdir())]
-    created = datetime.fromisoformat(info["created"].replace("Z", "+00:00"))
+    created = datetime.fromisoformat(info["created"])
     native.require(created.tzinfo is not None, "native image creation timestamp has no timezone")
-    date = datetime.now(timezone.utc) if args.previous else created
-    stamp = date.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    date = datetime.now(UTC) if args.previous else created
+    stamp = date.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
     inputs["archives"].append(fetch_archive(root, stamp, info["codename"], info["architecture"]))
     return root, inputs
+
+
+def enrich_fixable_report(path, raw, root):
+    fixed = native.read_json(path)
+    native.require(fixed["Metadata"] == raw["Metadata"] and fixed["ArtifactName"] == raw["ArtifactName"], "fixable scan image mismatch")
+    shutil.copyfile(path, root / "raw-fixable.json")
+    result = next((row for row in native.read_json(root / REPORT_FILENAME)["Results"] if row.get("Class") == "os-pkgs"), None)
+    target = next((row for row in fixed.get("Results", []) if row.get("Class") == "os-pkgs"), None)
+    if result is None or target is None:
+        raise ValueError("fixable scan has no Ubuntu OS result")
+    target["Packages"] = result["Packages"]
+    target["Vulnerabilities"] = [item for item in result["Vulnerabilities"] if item.get("FixedVersion")]
+    path.write_text(json.dumps(fixed, indent=2) + "\n")
 
 
 def main():
@@ -106,16 +128,7 @@ def main():
     subprocess.run([sys.executable, helper, "enrich", "--inputs", str(root / INPUT_FILENAME), "--sbom", str(root / SBOM_FILENAME),
                     "--scan", str(root / "scan.json"), "--output", str(root / REPORT_FILENAME), "--capsule", str(root / "capsule.json")], check=True)
     if args.fixable:
-        fixed = native.read_json(args.fixable)
-        native.require(fixed["Metadata"] == raw["Metadata"] and fixed["ArtifactName"] == raw["ArtifactName"], "fixable scan image mismatch")
-        shutil.copyfile(args.fixable, root / "raw-fixable.json")
-        result = next((row for row in native.read_json(root / REPORT_FILENAME)["Results"] if row.get("Class") == "os-pkgs"), None)
-        target = next((row for row in fixed.get("Results", []) if row.get("Class") == "os-pkgs"), None)
-        if result is None or target is None:
-            raise ValueError("fixable scan has no Ubuntu OS result")
-        target["Packages"] = result["Packages"]
-        target["Vulnerabilities"] = [item for item in result["Vulnerabilities"] if item.get("FixedVersion")]
-        args.fixable.write_text(json.dumps(fixed, indent=2) + "\n")
+        enrich_fixable_report(args.fixable, raw, root)
     shutil.copyfile(root / REPORT_FILENAME, args.report)
 
 
