@@ -4,17 +4,15 @@ metadata:
   name: copa-qualification
 spec:
   upstream:
-    ref: mcr.microsoft.com/dotnet/runtime
-    tag: 8.0.20-jammy-chiseled
-    digest: sha256:1401caf72ca021c372cc1cf0c89f6bcdd9762421dbe72f0c3a229b889805eedc
+    ref: docker.io/ubuntu/dotnet-runtime
+    tag: "8.0-24.04_stable_145"
+    digest: sha256:b82dacfba50e41a83f2b1ab7848cff634a112a07437a0bf50a990ef086dd98b1
   destination:
     package: ghcr.io/bocklabs/copa-qualification
   patchPolicy: enabled
   validation:
     type: oneshot
-    command:
-    - --info
+    command: ["--info"]
     expectedExit: 0
-    expectedPlatforms:
-    - linux/amd64
+    expectedPlatforms: ["linux/amd64"]
   version: 2
