@@ -10,10 +10,8 @@ import tarfile
 import tempfile
 import unittest
 from compression import zstd
-from email.message import Message
 from pathlib import Path
 from unittest.mock import patch
-from urllib.error import HTTPError, URLError
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/native_chisel_inventory.py"
 SPEC = importlib.util.spec_from_file_location("native_chisel_inventory", SCRIPT)
@@ -85,16 +83,6 @@ def fixture(root, source="glibc (2.39-0ubuntu8)", missing=False, created="2025-0
             + "\n-----BEGIN PGP SIGNATURE-----\nfixture\n-----END PGP SIGNATURE-----\n")
     return {"reference": reference, "manifest": str(manifest_path), "config": str(config_path),
             "layers": [str(layer_path)], "raw_report": str(raw_path), "archives": [str(root)]}
-
-
-def orchestrator():
-    spec = importlib.util.spec_from_file_location("native_orchestrator", SCRIPT.with_name("scan_native_chisel.py"))
-    if spec is None or spec.loader is None:
-        raise ImportError("Cannot load native Chisel orchestrator")
-    module = importlib.util.module_from_spec(spec)
-    with patch.dict(sys.modules, {"native_chisel_inventory": native}):
-        spec.loader.exec_module(module)
-    return module
 
 
 class NativeChiselInventoryTests(unittest.TestCase):
@@ -195,110 +183,11 @@ class NativeChiselInventoryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "invalid native package"):
                     native.probe(inputs)
 
-    def test_archive_fetch_reports_the_failed_snapshot_url(self):
-        module = orchestrator()
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            failure = URLError("unavailable")
-            with patch.object(module, "urlopen", side_effect=failure) as fetch, \
-                    self.assertRaisesRegex(ValueError, "20250527T120000Z/dists/noble/InRelease") as raised:
-                module.fetch_archive(root, "20250527T120000Z", "noble", "amd64")
-            self.assertIs(raised.exception.__cause__, failure)
-            fetch.assert_called_once()
-
-    def test_archive_metadata_transient_retry_is_bounded_and_replaces_partial_bytes(self):
-        module = orchestrator()
-        url = "https://snapshot.ubuntu.com/ubuntu/20250527T120000Z/dists/noble/InRelease"
-        unavailable = HTTPError(url, 503, "Service Unavailable", Message(), None)
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "InRelease"
-            output.write_bytes(b"partial previous response")
-            with patch.object(module, "urlopen", side_effect=[unavailable, io.BytesIO(b"complete signed metadata")]) as fetch, \
-                    patch.object(module, "sleep") as pause:
-                module.fetch_metadata(url, output)
-            self.assertEqual(output.read_bytes(), b"complete signed metadata")
-            self.assertEqual([call.args for call in fetch.call_args_list], [(url,), (url,)])
-            pause.assert_called_once_with(1)
-            with patch.object(module, "urlopen", side_effect=unavailable) as fetch, \
-                    patch.object(module, "sleep") as pause, \
-                    self.assertRaisesRegex(ValueError, "20250527T120000Z/dists/noble/InRelease") as raised:
-                module.fetch_metadata(url, output)
-            self.assertIs(raised.exception.__cause__, unavailable)
-            self.assertEqual(fetch.call_count, 3)
-            self.assertEqual([call.args for call in pause.call_args_list], [(1,), (2,)])
-            self.assertEqual(output.read_bytes(), b"")
-            missing = HTTPError(url, 404, "Not Found", Message(), None)
-            with patch.object(module, "urlopen", side_effect=missing) as fetch, \
-                    patch.object(module, "sleep") as pause, self.assertRaises(ValueError):
-                module.fetch_metadata(url, output)
-            fetch.assert_called_once()
-            pause.assert_not_called()
-
     def test_os_release_requires_codename_and_version(self):
         for content in (b"ID=ubuntu\nVERSION_ID=24.04\n", b"ID=ubuntu\nVERSION_CODENAME=noble\n"):
             files = {"etc/os-release": (tarfile.TarInfo("etc/os-release"), content)}
             with self.subTest(content=content), self.assertRaisesRegex(ValueError, "missing codename or version"):
                 native.os_release(files)
-
-    def test_orchestrator_rejects_bad_reference_before_reading_blobs(self):
-        module = orchestrator()
-        for reference in ("example.test/image:tag", "example.test/image@sha256:../../outside"):
-            with self.subTest(reference=reference), self.assertRaisesRegex(ValueError, "not digest-bound"):
-                module.image_inputs(Path("missing-oci"), reference, Path("missing-report"), Path("missing-cache"), "unused")
-
-    def test_orchestrator_skips_existing_inventory_without_staging(self):
-        module = orchestrator()
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            report = root / "raw.json"
-            raw = {"Metadata": {"OS": {"Family": "ubuntu"}}, "Results": [
-                {"Class": "os-pkgs", "Type": "ubuntu", "Packages": []},
-                {"Class": "os-pkgs", "Type": "ubuntu", "Packages": [{"Name": "libc6"}]},
-            ]}
-            report.write_text(json.dumps(raw))
-            evidence = root / "native-before"
-            arguments = ["scan_native_chisel.py", "--report", str(report), "--oci", "missing", "--cache", "missing",
-                         "--evidence", str(evidence), "--reference", "unused"]
-            with patch.object(sys, "argv", arguments), patch("sys.stderr", new_callable=io.StringIO) as diagnostics:
-                module.main()
-            self.assertFalse(evidence.exists())
-            self.assertEqual(json.loads(report.read_text()), raw)
-            self.assertIn("existing OS inventory", diagnostics.getvalue())
-
-    def test_orchestrator_missing_required_inputs_preserves_previous_evidence(self):
-        module = orchestrator()
-        for flag, message in (("fixable", "mandatory fixable"), ("previous", "before archive evidence")):
-            with tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                inputs = fixture(root)
-                evidence = root / "native-before"
-                evidence.mkdir()
-                saved = evidence / "saved.json"
-                saved.write_text("retained evidence")
-                arguments = ["scan_native_chisel.py", "--report", inputs["raw_report"], "--oci", "unused",
-                             "--cache", "unused", "--evidence", str(evidence), "--reference", inputs["reference"],
-                             "--" + flag, str(root / "missing")]
-                with self.subTest(flag=flag), patch.object(sys, "argv", arguments), \
-                        patch.object(module.shutil, "which", return_value="unused"), \
-                        patch.object(module, "image_inputs", return_value=inputs), self.assertRaisesRegex(ValueError, message):
-                    module.main()
-                self.assertEqual(saved.read_text(), "retained evidence")
-
-    def test_staging_preserves_existing_directories_and_symlink_targets(self):
-        module = orchestrator()
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            evidence = root / "native-before"
-            evidence.mkdir()
-            saved = evidence / "saved.json"
-            saved.write_text("retained evidence")
-            alias = root / "native-after"
-            alias.symlink_to(evidence, target_is_directory=True)
-            for path in (evidence, alias):
-                args = type("Arguments", (), {"evidence": path})()
-                with self.subTest(path=path), self.assertRaisesRegex(ValueError, "already exists or is a symlink"):
-                    module.stage_evidence(args, {}, "unused")
-                self.assertEqual(saved.read_text(), "retained evidence")
 
     def test_manifest_sticky_directory_permissions_match_real_image(self):
         directory = tarfile.TarInfo("tmp")

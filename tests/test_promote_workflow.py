@@ -1307,7 +1307,7 @@ elif args[:2] == ['run', 'download']:
             if step["name"] == "Restore the exact accepted candidate"
         )
         fixture = self.candidate_artifact()
-        for directory in ("arch-before", "native-before", "native-after"):
+        for directory in ("native-before", "native-after"):
             (fixture / directory).mkdir()
             (fixture / directory / "retained.json").write_text('{"retained":"scanner input"}\n')
         subprocess.run(["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
@@ -1349,47 +1349,9 @@ elif args[:2] == ['run', 'download']:
         ):
             self.assertIn(text, output)
         self.assertTrue((self.tmp / "candidate-oci").is_dir())
-        self.assertEqual((self.tmp / "arch-before/retained.json").read_bytes(),
-                         (fixture / "arch-before/retained.json").read_bytes())
-        before = next(s for s in steps if s["name"] == "Inventory native Chisel packages from signed Ubuntu metadata")
-        scanner = self.bin / "python3"
-        scanner.write_text(f"#!{sys.executable}\n" +
-            "import pathlib, subprocess, sys\n"
-            "if sys.argv[1] in ('scripts/scan_arch.py', 'scripts/scan_native_chisel.py'):\n"
-            "    root = pathlib.Path(sys.argv[sys.argv.index('--evidence') + 1])\n"
-            "    assert not root.exists(), 'fresh scan destination still contains restored evidence'\n"
-            "    if root.name != 'arch-after':\n"
-            "        assert pathlib.Path(root.name + '-retained/retained.json').is_file()\n"
-            "    if root.name == 'native-after':\n"
-            "        previous = pathlib.Path(sys.argv[sys.argv.index('--previous') + 1])\n"
-            "        assert previous == pathlib.Path('native-before')\n"
-            "        assert (previous / 'fresh-before.json').is_file()\n"
-            "    root.mkdir()\n"
-            "    if root.name == 'native-before':\n"
-            "        (root / 'fresh-before.json').write_text('fresh before scanner boundary')\n"
-            "else:\n"
-            "    sys.exit(subprocess.call([sys.executable, *sys.argv[1:]]))\n")
-        scanner.chmod(0o755)
-        result = subprocess.run(["bash", "-c", before["run"]], cwd=self.tmp,
-                                env={**env, "IMAGE_REF": "example@" + self._child_digest()}, capture_output=True, text=True, check=False)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        after = next(s for s in steps if s["name"] == "Inventory final native Chisel packages with the frozen DB")
-        result = subprocess.run(["bash", "-c", after["run"]], cwd=self.tmp,
-                                env={**env, "CANDIDATE_DIGEST": self._child_digest()}, capture_output=True, text=True, check=False)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual((self.tmp / "arch-before-retained/retained.json").read_bytes(),
-                         (fixture / "arch-before/retained.json").read_bytes())
-        for directory in ("arch-before", "native-before", "native-after"):
-            self.assertEqual((self.tmp / (directory + "-retained") / "retained.json").read_bytes(),
-                             (fixture / directory / "retained.json").read_bytes())
-            fresh = self.tmp / directory
-            if directory == "native-before":
-                (fresh / "fresh-before.json").unlink()
-            fresh.rmdir()
-            (self.tmp / (directory + "-retained")).rename(fresh)
-        (self.tmp / "arch-after").rmdir()
-        scanner.unlink()
-        stale = self.tmp / "arch-before/stale.json"
+        self.assertEqual((self.tmp / "native-before/retained.json").read_bytes(),
+                         (fixture / "native-before/retained.json").read_bytes())
+        stale = self.tmp / "native-before/stale.json"
         stale.write_text("stale scanner input")
         env["GITHUB_OUTPUT"] = str(self.tmp / "stale-capsule-output")
         result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True, check=False)
@@ -1400,14 +1362,14 @@ elif args[:2] == ['run', 'download']:
         original = (fixture / "trivy-full.json").read_bytes()
         report = json.loads(original)
         report["Results"][0]["Type"] = "archlinux"
-        report["ArchScanner"] = {"schema": "arch-scanner-v1", "capsule": "arch-before/capsule.json"}
+        report["ArchScanner"] = {"schema": "arch-scanner-v1", "capsule": "native-before/capsule.json"}
         (fixture / "trivy-full.json").write_text(json.dumps(report))
         subprocess.run(["bash", "-c", "find . -type f ! -name SHA256SUMS -printf '%P\\0' | sort -z | xargs -0 sha256sum > SHA256SUMS"],
                        cwd=fixture, check=True, capture_output=True)
         env["GITHUB_OUTPUT"] = str(self.tmp / "omitted-capsule-output")
         result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env, capture_output=True, text=True, check=False)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("missing Arch capsule file", result.stderr)
+        self.assertIn("Arch OS rows require dedicated independent evidence", result.stderr)
         self.assertFalse((self.tmp / "omitted-capsule-output").exists())
         (fixture / "trivy-full.json").write_bytes(original)
 

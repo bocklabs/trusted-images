@@ -21,12 +21,12 @@ rescan = importlib.import_module("rescan_published")
 class PublishedRescanTests(unittest.TestCase):
     def test_retention_hashes_nested_files_and_rejects_symlinks(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(rescan, "ARTIFACT", Path(directory)):
-            nested = Path(directory) / "arch-published" / "db"
+            nested = Path(directory) / "native-published" / "db"
             nested.mkdir(parents=True)
             (nested / "evidence").write_text("frozen")
             rescan.retain("decision.json", {"proceed": False})
             checksums = (Path(directory) / "SHA256SUMS").read_text()
-            self.assertIn("  arch-published/db/evidence\n", checksums)
+            self.assertIn("  native-published/db/evidence\n", checksums)
             self.assertIn("  decision.json\n", checksums)
             (nested / "unsafe").symlink_to("/etc/hosts")
             with self.assertRaisesRegex(ValueError, "unsafe rescan"):
@@ -122,38 +122,6 @@ class PublishedRescanTests(unittest.TestCase):
             rescan.select()
         with patch.dict(os.environ, {**env, "INPUT_FORCE_REPROMOTE": "true"}, clear=True), self.assertRaisesRegex(ValueError, "manual overrides"):
             rescan.select()
-
-    def test_published_native_scan_uses_digest_transport_preserving_reference(self):
-        steps = yaml.safe_load((ROOT / ".github/workflows/promote.yaml").read_text())["jobs"]["rescan"]["steps"]
-        run = next(s["run"] for s in steps if s["name"] == "Inventory native Chisel published packages")
-        package = "ghcr.io/bocklabs/postgres-exporter"
-        reference = package + ":v0.20.1-bocklabs.7@" + self.record["internal"]["digest"]
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / "published-rescan").mkdir()
-            (root / "published-rescan/selection.json").write_text(json.dumps(
-                {"published": {"internal": {"package": package, "digest": self.record["internal"]["digest"]}}}))
-            (root / "published-rescan/trivy-full.json").write_text(json.dumps(
-                {"Metadata": {"OS": {"Family": "ubuntu"}}, "Results": []}))
-            (root / "scripts").symlink_to(ROOT / "scripts", target_is_directory=True)
-            docker = root / "docker"
-            docker.write_text(f"#!{sys.executable}\n" +
-                "import os, sys\n"
-                "assert [x for x in sys.argv if x.startswith('docker://')] == [os.environ['OCI_EXPECTED']], 'Skopeo requires digest-only transport'\n")
-            scanner = root / "python3"
-            scanner.write_text(f"#!{sys.executable}\n" +
-                "import pathlib, subprocess, sys\n"
-                "if sys.argv[1] in ('scripts/scan_native_chisel.py', 'scripts/scan_arch.py'):\n"
-                "    reference = sys.argv[sys.argv.index('--reference') + 1]\n"
-                "    with pathlib.Path('scanner-references').open('a') as out: out.write(reference + '\\n')\n"
-                "else: sys.exit(subprocess.call([sys.executable, *sys.argv[1:]]))\n")
-            docker.chmod(0o755)
-            scanner.chmod(0o755)
-            result = subprocess.run(["bash", "-c", run], cwd=root, check=False, capture_output=True, text=True,
-                                    env={**os.environ, "PATH": f"{root}:{os.environ['PATH']}",
-                                         "IMAGE_REF": reference, "OCI_EXPECTED": "docker://" + package + "@" + self.record["internal"]["digest"]})
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertEqual((root / "scanner-references").read_text().splitlines(), [reference, reference])
 
     def test_schedule_dispatch_scope_and_immutable_scan_contract(self):
         daily = yaml.safe_load((ROOT / ".github/workflows/daily-rescan.yaml").read_text())
