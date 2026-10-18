@@ -10,8 +10,6 @@ on:
         required: true
         options:
           # apps-begin
-          - copa-qualification
-          - distroless-static
           - hindsight
           - nginx-qualification
           - ollama
@@ -125,28 +123,6 @@ jobs:
           list-all-pkgs: 'true'
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           timeout: 30m0s
-      - name: Inventory native Chisel published packages
-        shell: bash
-        if: steps.scan.outcome == 'success'
-        env:
-          IMAGE_REF: ${{ steps.entry.outputs.ref }}
-        run: |
-          set -euo pipefail
-          OS_FAMILIES="$(python3 -c 'import json,sys; sys.path.insert(0,"scripts"); from evaluate_promotion import VERSION_CLASSES; print(json.dumps(list(VERSION_CLASSES)))')"
-          if jq -e --argjson known "$OS_FAMILIES" '.Metadata.OS.Family as $family | (($known | index($family)) == null or $family == "archlinux" or ($family == "ubuntu" and ([.Results[]? | select(.Class == "os-pkgs") | .Packages[]?] | length == 0)))' published-rescan/trivy-full.json > /dev/null; then
-            SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
-            OCI_REF="$(jq -r '.published.internal | .package + "@" + .digest' published-rescan/selection.json)"
-            docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-              copy --preserve-digests "docker://${OCI_REF}" "oci:/workspace/native-published-oci:published"
-            if jq -e '.Metadata.OS.Family == "ubuntu" and ([.Results[]? | select(.Class == "os-pkgs") | .Packages[]?] | length == 0)' published-rescan/trivy-full.json > /dev/null; then
-              python3 scripts/scan_native_chisel.py --report published-rescan/trivy-full.json --oci native-published-oci \
-                --reference "$IMAGE_REF" --evidence published-rescan/native-published --cache .cache/trivy
-            fi
-            python3 scripts/scan_arch.py scan --report published-rescan/trivy-full.json --oci native-published-oci \
-              --reference "$IMAGE_REF" --evidence published-rescan/arch-published --cache .cache/trivy
-            rm -rf native-published-oci
-          fi
-
       - name: Convert published full report to CycloneDX with parity check
         id: convert
         if: steps.scan.outcome == 'success'
@@ -155,7 +131,6 @@ jobs:
         run: |
           set -euo pipefail
           trivy convert --format cyclonedx --scanners vuln --output trivy-full.cdx.json trivy-full.json
-          python3 ../scripts/scan_arch.py annotate --report trivy-full.json --cdx trivy-full.cdx.json
           test -s trivy-full.json
           test -s trivy-full.cdx.json
           jq -e '.bomFormat == "CycloneDX" and (.components | type == "array") and ([.components[] | select(.type == "operating-system")] | length <= 1)' trivy-full.cdx.json > /dev/null

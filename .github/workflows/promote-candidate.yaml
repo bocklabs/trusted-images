@@ -603,20 +603,6 @@ jobs:
             exit 1
           fi
 
-      - name: Inventory native Chisel packages from signed Ubuntu metadata
-        shell: bash
-        if: steps.scanbefore.outcome == 'success' && steps.scanfixable.outcome == 'success'
-        env:
-          IMAGE_REF: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
-        run: |
-          set -euo pipefail
-          if [ -d native-before ]; then test ! -e native-before-retained; mv native-before native-before-retained; fi
-          python3 scripts/scan_native_chisel.py --report trivy-full.json --oci upstream-oci \
-            --reference "$IMAGE_REF" --evidence native-before --cache .cache/trivy --fixable trivy-copa.json
-          if [ -d arch-before ]; then test ! -e arch-before-retained; mv arch-before arch-before-retained; fi
-          python3 scripts/scan_arch.py scan --report trivy-full.json --oci upstream-oci \
-            --reference "$IMAGE_REF" --evidence arch-before --cache .cache/trivy --fixable trivy-copa.json
-
       - name: Preserve and gate the pre-patch reports
         id: fixable
         shell: bash
@@ -876,20 +862,6 @@ jobs:
           list-all-pkgs: 'true'
           timeout: 30m0s
 
-      - name: Inventory final native Chisel packages with the frozen DB
-        shell: bash
-        if: steps.scanafter.outcome == 'success' || steps.scanresumed.outcome == 'success'
-        env:
-          CANDIDATE_DIGEST: ${{ steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest }}
-        run: |
-          set -euo pipefail
-          if [ -d native-after ]; then test ! -e native-after-retained; mv native-after native-after-retained; fi
-          python3 scripts/scan_native_chisel.py --report trivy-after-full.json --oci candidate-oci \
-            --reference "candidate@${CANDIDATE_DIGEST}" --evidence native-after --cache .cache/trivy --previous native-before
-          if [ -d arch-after ]; then mv arch-after arch-after-retained; fi
-          python3 scripts/scan_arch.py scan --report trivy-after-full.json --oci candidate-oci \
-            --reference "candidate@${CANDIDATE_DIGEST}" --evidence arch-after --cache .cache/trivy --previous arch-before
-
       - name: Build the paired patched scan receipt
         if: steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest
         shell: bash
@@ -950,7 +922,6 @@ jobs:
         run: |
           set -euo pipefail
           trivy convert --format cyclonedx --scanners vuln --output trivy-full.cdx.json trivy-full.json
-          python3 scripts/scan_arch.py annotate --report trivy-full.json --cdx trivy-full.cdx.json
           test -s trivy-full.json
           test -s trivy-full.cdx.json
           jq -e '.bomFormat == "CycloneDX" and (.components | type == "array") and ([.components[] | select(.type == "operating-system")] | length <= 1)' trivy-full.cdx.json > /dev/null
@@ -1198,7 +1169,7 @@ jobs:
             resume-candidate-image-id.txt; do
             [ ! -f "${evidence}" ] || cp "${evidence}" candidate-artifact/
           done
-          for evidence in native-before native-after arch-before arch-after; do
+          for evidence in native-before native-after; do
             [ ! -d "$evidence" ] || cp -r "$evidence" candidate-artifact/
           done
           cp validation-context/image.yaml candidate-artifact/inventory-image.yaml
@@ -1243,10 +1214,6 @@ jobs:
             native-after/
             native-before-retained/
             native-after-retained/
-            arch-before/
-            arch-after/
-            arch-after-retained/
-            arch-before-retained/
           retention-days: 8
           if-no-files-found: warn
 

@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-
 from pathlib import Path
 
 from evaluate_promotion import validate_native_inventory
@@ -62,7 +61,7 @@ allowed = (
     | {
         name
         for name in actual
-        if name.startswith(("candidate-oci/", "validation-logs/", "native-before/", "native-after/", "arch-before/", "arch-after/"))
+        if name.startswith(("candidate-oci/", "validation-logs/", "native-before/", "native-after/"))
     }
 )
 undeclared = set(actual) - allowed
@@ -72,7 +71,7 @@ listed = [
     line.split("  ", 1)[1] for line in (root / "SHA256SUMS").read_text().splitlines()
 ]
 listed = [
-    (name[len(ARTIFACT_PREFIX) :] if name.startswith(ARTIFACT_PREFIX) else name)
+    (name.removeprefix(ARTIFACT_PREFIX))
     for name in listed
 ]
 if len(listed) != len(set(listed)) or set(listed) != {

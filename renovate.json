@@ -110,8 +110,7 @@
     {
       "description": "Hold the deliberately stale nginx qualification pin until its patch qualification is reviewed.",
       "matchFileNames": [
-        "inventory/nginx-qualification/image.yaml",
-        "inventory/copa-qualification/image.yaml"
+        "inventory/nginx-qualification/image.yaml"
       ],
       "automerge": false
     },
