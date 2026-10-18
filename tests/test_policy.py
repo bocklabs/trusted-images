@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Candidate-decision policy tests using local scanner and OCI fixtures."""
 
-import importlib.util
 import hashlib
+import importlib.util
 import json
 import os
-from unittest.mock import patch
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -312,7 +312,7 @@ class PolicyTests(unittest.TestCase):
             argv += ["--acceptance", str(self.acceptance)]
         if self.github.exists():
             argv += ["--github-evidence", str(self.github)]
-        return subprocess.run(argv, capture_output=True, text=True)
+        return subprocess.run(argv, check=False, capture_output=True, text=True)
 
     def patched(
         self,
@@ -386,6 +386,18 @@ class PolicyTests(unittest.TestCase):
         module.validate_decision(decision)
         with self.assertRaises(ValueError):
             module.validate_decision({**decision, "unexpected": True})
+
+    def test_unpatched_ubuntu_without_os_inventory_is_rejected(self):
+        for missing_results in (False, True):
+            with self.subTest(missing_results=missing_results):
+                value = report(packages=[], result_type="ubuntu")
+                if missing_results:
+                    value.pop("Results")
+                write_json(self.full, value)
+                write_json(self.fixable, value)
+                result = self.run_policy()
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("Ubuntu report lacks OS package inventory", result.stderr)
 
     def test_no_fix_warnings_at_every_severity_remain_eligible(self):
         findings = [

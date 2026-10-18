@@ -9,7 +9,6 @@ import sys
 from pathlib import Path, PurePosixPath
 
 import yaml
-
 from evaluate_promotion import validate_native_inventory
 
 DECISION_FILENAME = "candidate-decision.json"
@@ -50,7 +49,7 @@ optional = {
     "before-labels.json",
     "after-labels.json",
 }
-allowed_prefixes = ("candidate-oci/", "validation-logs/", "native-before/", "native-after/", "arch-before/", "arch-after/")
+allowed_prefixes = ("candidate-oci/", "validation-logs/", "native-before/", "native-after/")
 files = [path for path in root.rglob("*") if path.is_file() or path.is_symlink()]
 relatives = []
 for path in files:
@@ -175,21 +174,12 @@ if (
 ):
     raise SystemExit("FATAL: original candidate validation did not pass")
 
-for name in ("trivy-before-full.json", "trivy-after-full.json", "trivy-full.json"):
-    source = root / name
-    if source.is_file():
-        marker = json.loads(source.read_text()).get("ArchScanner")
-        if isinstance(marker, dict):
-            from scan_arch import local_path
-
-            local_path(root.resolve(), marker.get("capsule"))
-
 for name in mandatory | optional:
     source = root / name
     if source.is_file():
         shutil.copyfile(source, name)
 shutil.copytree(root / "candidate-oci", "candidate-oci", dirs_exist_ok=True)
-for directory in ("native-before", "native-after", "arch-before", "arch-after"):
+for directory in ("native-before", "native-after"):
     if (root / directory).is_dir():
         destination = Path(directory)
         if destination.is_symlink() or any(p.is_symlink() for p in destination.rglob("*")):

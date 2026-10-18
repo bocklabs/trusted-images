@@ -104,7 +104,7 @@ KEV policy still applies; remediation promises no zero-CVE result.
    scan, validation, and artifact identities. Reuse retains and reverifies the
    existing record instead of replacing it.
 
-## Stable Copa v0.15.0 capability and coverage
+## Stable Copa v0.15.0 capability reference
 
 The reviewed release is [v0.15.0](https://github.com/project-copacetic/copacetic/releases/tag/v0.15.0),
 commit `bce7b4305e378558f20420aa2ca48686cec850d0` (2026-09-04).
@@ -120,10 +120,10 @@ recognizes exactly `alpine`, `debian`, `ubuntu`, `cbl-mariner`, `azurelinux`,
 | Debian external status directory | External archives and encoded status entries | Preserve scanner-visible status representation. |
 | Ubuntu apt-less full dpkg status | External archives, scripts/triggers disabled | Residual administrative state and lifecycle-dependent updates rejected. |
 | Ubuntu native Chisel manifest | Re-cut slices, preserve unmanaged paths | Native inventory capsules bind real OCI files and manifest rows to signed Ubuntu package indexes and a frozen-DB Trivy SBOM scan. Empty image scans alone cannot qualify this route. Only public archives; Pro/ESM/FIPS/private archives unsupported. |
-| CBL-Mariner / Azure Linux / CentOS / Oracle / Red Hat / Rocky / Amazon / AlmaLinux native RPM | tdnf/dnf/yum/microdnf | Each distinct tooling route needs real full-gate evidence. |
+| CBL-Mariner / Azure Linux / CentOS / Oracle / Red Hat / Rocky / Amazon / AlmaLinux native RPM | tdnf/dnf/yum/microdnf | Selected tooling routes require real full-gate evidence. |
 | RPM DB present, manager absent | dnf chroot with target repositories | Compatible tooling and complete independent scan inventory required. |
 | RPM external manifests | External archive merge and metadata | Independently verify actual package identity and versions. |
-| SLES / openSUSE Leap / Tumbleweed | zypper chroot | SQLite, NDB, Berkeley DB and SLES 16 layouts require distinct real receipts. |
+| SLES / openSUSE Leap / Tumbleweed | zypper chroot | Each selected layout requires a compatible real receipt. |
 | Oracle report input | Comprehensive exists; targeted rejected | Do not enable ignore-errors to bypass report-driven rejection. |
 | Arch Linux native pacman | Native manager | Exact scanner ecosystem and epoch/release comparison need retained real receipts before admission. |
 | Scratch / missing supported package metadata | No package-manager route | Unresolved application/binary findings remain in the full report and policy. |
@@ -133,6 +133,7 @@ Source contracts: [dpkg](https://github.com/project-copacetic/copacetic/blob/v0.
 [apk](https://github.com/project-copacetic/copacetic/blob/v0.15.0/pkg/pkgmgr/apk.go),
 [pacman](https://github.com/project-copacetic/copacetic/blob/v0.15.0/pkg/pkgmgr/pacman.go),
 and [Chisel layouts](https://github.com/project-copacetic/copacetic/blob/v0.15.0/website/docs/chiseled-images.md).
+This release matrix is reference material. Qualify only routes required by admitted images.
 Source support is not qualification. No generic targeted fallback is enabled:
 all recognized managers have a comprehensive route, and unsafe failures block.
 A future targeted-only route needs an observed exact-release limitation and a
@@ -157,40 +158,16 @@ and PURL under immutable RPM key identities. Every key remains in the inventory;
 key removal, duplicate corruption and ordinary package ambiguity still block.
 Epoch/release components, unchanged versions and downgrades are checked independently. These inventory scans establish comparator inputs,
 not successful patch qualification. No guessed openSUSE aliases are admitted.
-Arch inventory is verified from immutable OCI pacman bytes and Syft 1.54.0,
-with Grype 0.120.0 findings from a frozen native schema-6 database. The report's
-`ArchScanner` marker binds `arch-before/`, `arch-after/`, or `arch-published/`
-to a portable capsule independently replayed before admission. Reviewed archive
-and executable pins, isolated configuration, complete relative file hashes and
-120-hour database freshness are mandatory; after scans reuse the before database.
-All primary AVG advisories and CVE aliases enter policy, KEV and exact CycloneDX
-PURL/finding parity. CycloneDX attributes OS inventory to Syft and findings to Grype.
-Raw Trivy language results and its database identity remain separate and unchanged;
-the existing report filenames and import shape remain compatible. Local source
-checks on 137 packages, six AVG advisories and nine CVE aliases establish before
-evidence only: zero fixable advisories cannot qualify patched-after, functionality,
-signing, publication, automatic new revisions or the operator pilot review.
+Arch scanner admission is unavailable. Arch OS reports fail closed without dedicated independent evidence.
 Unknown evidence and incomplete patch coverage fail closed; upstream recognition
 or synthetic fixtures do not count as family qualification.
 The pinned runtime/BuildKit execution and each live layout still require isolated
 hosted qualification; local command-contract checks do not establish that proof.
 
-Native Chisel capsules preserve the genuine container-image metadata and language
-results. The adapter verifies ordered OCI layers and native file hashes, matches
-package archive digests against signed Ubuntu snapshots, and preserves exact
-source package names/versions when constructing CycloneDX. The reviewed Trivy
-0.75.0 binary and frozen database replay the scan before OS inventory admission.
-Candidate and published-image scans retain portable capsules and raw evidence;
-missing, tampered or incomplete evidence blocks. Native candidates retain separate before/after
-OCI layouts, frozen DB files and the pinned scanner for independent replay.
-These capsules increase artifact storage and use the existing eight-day retention;
-ordinary image candidates do not create them. An independently inventoried
-before-image is not proof of patched-image qualification.
-
-The distroless-static baseline uses the supported Debian 13 upstream with
-`tzdata 2026c`, retaining enabled Copa policy. This upstream refresh does not fix
-Copa 0.15.0's external-status-directory Debconf installer defect; that path needs
-a stable release containing the upstream repair and fresh qualification.
+Native inventory capsules remain mandatory when a report claims SBOM-derived OS packages.
+The evaluator, publisher and accepted-candidate resume verify their OCI, package,
+scanner and frozen-database bindings. Missing or tampered evidence blocks admission.
+Native Chisel scan orchestration is unavailable. An empty OS scan cannot establish clean inventory.
 
 ## Identity and reuse
 
@@ -337,13 +314,9 @@ receipt before proceeding; these commands do not themselves authorize a run.
      -f app=nginx-qualification
    ```
 
-2. Run `distroless-static` while patching is temporarily enabled to capture its
-   real unsupported/no-fix classification. Review and merge its structured
-   disabled reason, then dispatch it again to prove the successful disabled-policy
-   path. The two runs and their outcomes are distinct evidence.
-3. Run the current `postgres-exporter` through the same producer policy after
+2. Run the current `postgres-exporter` through the same producer policy after
    qualification passes.
-4. Promote a genuinely newer nginx release when Renovate detects one. If no real
+3. Promote a genuinely newer nginx release when Renovate detects one. If no real
    update appears within the locked `seven-day` fallback window—and only after all
    other phase work is ready—use the separately reviewed controlled update to a
    known newer fixed release.

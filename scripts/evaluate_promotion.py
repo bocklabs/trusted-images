@@ -7,14 +7,18 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlsplit
 
 import yaml
-
-from univers.versions import AlpineLinuxVersion, ArchLinuxVersion, DebianVersion, RpmVersion
-from finding_identity import findings_hash, REF
+from finding_identity import REF, findings_hash, require
+from univers.versions import (
+    AlpineLinuxVersion,
+    ArchLinuxVersion,
+    DebianVersion,
+    RpmVersion,
+)
 
 SCHEMA = "trusted-images.bocklabs.dev/candidate-decision-v1"
 ACCEPTANCE_SCHEMA = "trusted-images.bocklabs.dev/risk-acceptance-v1"
@@ -125,8 +129,7 @@ def load_json(path: Path, label: str):
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"{label} is unreadable or invalid JSON: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ValueError(f"{label} must be a JSON object")
+    require(isinstance(value, dict), f"{label} must be a JSON object")
     return value
 
 
@@ -161,12 +164,11 @@ def parse_time(value: str, label: str) -> datetime:
         raise ValueError(f"{label} must be an ISO-8601 UTC timestamp") from exc
     if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
         raise ValueError(f"{label} must be a UTC timestamp")
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def descriptor(value, label: str):
-    if not isinstance(value, dict):
-        raise ValueError(f"{label} is not an object")
+    require(isinstance(value, dict), f"{label} is not an object")
     digest = value.get("digest")
     media_type = value.get("mediaType")
     size = value.get("size")
@@ -243,8 +245,7 @@ def validate_report_results(report: dict, label: str, os_only: bool) -> list:
     elif not isinstance(results, list):
         raise ValueError(f"{label}.Results must be an array")
     for number, result in enumerate(results):
-        if not isinstance(result, dict):
-            raise ValueError(f"{label}.Results[{number}] is not an object")
+        require(isinstance(result, dict), f"{label}.Results[{number}] is not an object")
         if os_only and result.get("Class") != "os-pkgs":
             raise ValueError(f"{label}.Results[{number}] is not an os-pkgs result")
     return results
@@ -258,8 +259,7 @@ def finding_identity(result: dict, finding: dict, label: str) -> tuple[str, dict
     if (not isinstance(cve, str) or not isinstance(package, str)
             or not isinstance(severity, str) or not all((cve, package, severity))):
         raise ValueError(f"{label} finding lacks VulnerabilityID, PkgName, or Severity")
-    if not isinstance(source, str):
-        raise ValueError(f"{label}.SeveritySource must be a string")
+    require(isinstance(source, str), f"{label}.SeveritySource must be a string")
     if "|" in package:
         raise ValueError(f"{label} package identity contains the reserved delimiter |")
     metadata = finding_metadata(result, finding, severity, source, label)
@@ -298,13 +298,9 @@ def findings(report: dict, label: str, os_only=False):
     normalized: dict[str, dict[str, str]] = {}
     for result_number, result in enumerate(results):
         vulnerabilities = result.get("Vulnerabilities") or []
-        if not isinstance(vulnerabilities, list):
-            raise ValueError(
-                f"{label}.Results[{result_number}].Vulnerabilities must be an array"
-            )
+        require(isinstance(vulnerabilities, list), f"{label}.Results[{result_number}].Vulnerabilities must be an array")
         for finding in vulnerabilities:
-            if not isinstance(finding, dict):
-                raise ValueError(f"{label} contains a non-object finding")
+            require(isinstance(finding, dict), f"{label} contains a non-object finding")
             key, metadata = finding_identity(result, finding, label)
             if key in normalized and normalized[key] != metadata:
                 raise ValueError(f"{label} has conflicting duplicate finding: {key}")
@@ -334,10 +330,9 @@ def validate_copa_evidence(value, ran):
     mode = value["mode"]
     if mode not in ("not-required", "comprehensive", "targeted") or (mode != "not-required") != ran:
         raise ValueError("Copa mode does not match original-child execution")
-    if not ran:
-        if any(value[key] is not None for key in ("release", "source_sha", "runtime_digest", "limitation")):
-            raise ValueError("not-required Copa mode cannot claim execution evidence")
-    elif (value["release"] != "0.15.0" or value["source_sha"] != "bce7b4305e378558f20420aa2ca48686cec850d0"
+    if not ran and any(value[key] is not None for key in ("release", "source_sha", "runtime_digest", "limitation")):
+        raise ValueError("not-required Copa mode cannot claim execution evidence")
+    if ran and (value["release"] != "0.15.0" or value["source_sha"] != "bce7b4305e378558f20420aa2ca48686cec850d0"
           or value["runtime_digest"] != "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b"):
         raise ValueError("Copa release/source/runtime differs from reviewed pin")
     limitation = value["limitation"]
@@ -367,8 +362,7 @@ def package_version(package: dict) -> str:
 
 def report_os_family(report: dict, label: str) -> str:
     metadata = report.get("Metadata", {})
-    if not isinstance(metadata, dict):
-        raise ValueError(f"{label} Metadata must be an object")
+    require(isinstance(metadata, dict), f"{label} Metadata must be an object")
     os_metadata = metadata.get("OS")
     if os_metadata is None:
         if any(result.get("Class") == "os-pkgs"
@@ -403,15 +397,14 @@ def package_ecosystem(result: dict, os_family: str, label: str) -> str:
     if "Packages" not in result:
         raise ValueError(f"{label} has a missing package inventory")
     packages = result["Packages"]
-    if not isinstance(packages, list):
-        raise ValueError(f"{label}.Packages must be an array")
+    require(isinstance(packages, list), f"{label}.Packages must be an array")
     return ecosystem
 
 
 def rpm_public_key_metadata(package: dict, version: str, label: str) -> dict[str, str]:
     identifier = package.get("Identifier")
     purl = identifier.get("PURL") if isinstance(identifier, dict) else None
-    if not isinstance(purl, str):
+    if not isinstance(purl, str) or not purl:
         raise ValueError(f"{label} has invalid RPM public key PURL")
     parsed = urlsplit(purl)
     if (
@@ -431,8 +424,7 @@ def rpm_public_key_metadata(package: dict, version: str, label: str) -> dict[str
 
 def add_packages(inventory: dict, packages: list, ecosystem: str, label: str) -> None:
     for package in packages:
-        if not isinstance(package, dict):
-            raise ValueError(f"{label}.Packages contains a non-object package")
+        require(isinstance(package, dict), f"{label}.Packages contains a non-object package")
         name = package.get("Name")
         if not isinstance(name, str) or not name:
             raise ValueError(f"{label}.Packages contains a package without Name")
@@ -521,27 +513,21 @@ def cve_groups(groups: dict) -> dict:
     }
 
 
-def validate_arch_inventory(report: dict, path: Path) -> bool:
-    arch_rows = [row for row in validate_report_results(report, "native report", False)
-                 if row.get("Class") == "os-pkgs" and row.get("Type") == "archlinux"]
-    arch_marker = report.get("ArchScanner")
-    if arch_rows or arch_marker is not None:
-        if (len(arch_rows) != 1 or report.get("NativeChisel") is not None
-                or not isinstance(arch_marker, dict) or set(arch_marker) != {"schema", "capsule"}
-                or arch_marker.get("schema") != "arch-scanner-v1"):
-            raise ValueError("Arch OS rows require dedicated independent evidence")
-        from scan_arch import local_path, verify_capsule as verify_arch
-
-        capsule_path = local_path(path.parent.resolve(), arch_marker.get("capsule"))
-        if verify_arch(capsule_path) != report:
-            raise ValueError("Arch inventory evidence does not match report")
-        return True
-    return False
+def validate_arch_inventory(report: dict) -> None:
+    if report.get("ArchScanner") is not None or any(
+        row.get("Class") == "os-pkgs" and row.get("Type") == "archlinux"
+        for row in validate_report_results(report, "native report", False)
+    ):
+        raise ValueError("Arch OS rows require dedicated independent evidence")
 
 
 def validate_native_inventory(report: dict, path: Path) -> None:
-    if validate_arch_inventory(report, path):
-        return
+    validate_arch_inventory(report)
+    metadata = report.get("Metadata", {})
+    require(isinstance(metadata, dict), "native report Metadata must be an object")
+    os_metadata = metadata.get("OS")
+    if isinstance(os_metadata, dict) and os_metadata.get("Family") == "ubuntu":
+        require(package_inventory(report, "native report"), "Ubuntu report lacks OS package inventory")
     marker = report.get("NativeChisel")
     sbom_packages = any(
         isinstance(package, dict) and isinstance(package.get("Identifier"), dict)
@@ -551,8 +537,7 @@ def validate_native_inventory(report: dict, path: Path) -> None:
         for package in result["Packages"]
     )
     if marker is None:
-        if sbom_packages:
-            raise ValueError("SBOM OS packages require native inventory evidence")
+        require(not sbom_packages, "SBOM OS packages require native inventory evidence")
         return
     if (not isinstance(marker, dict) or set(marker) != {"schema", "capsule"}
             or marker.get("schema") != "native-chisel-v1"
@@ -582,7 +567,7 @@ def validate_scan_report(report: dict, path: Path, label: str, side: dict):
     if report.get("ArtifactType") != "container_image":
         raise ValueError(f"{label} is not a container_image report")
     metadata = report.get("Metadata")
-    if not isinstance(metadata, dict):
+    if not isinstance(metadata, dict) or not metadata:
         raise ValueError(f"{label} Metadata must be an object")
     config = metadata.get("ImageConfig")
     if (
@@ -655,8 +640,7 @@ def validate_scan_receipt(
         receipt["trivy_db_digest"]
     ):
         raise ValueError("scan receipt Trivy DB digest is invalid")
-    if not isinstance(receipt["trivy_db_updated_at"], str):
-        raise ValueError("scan receipt Trivy DB updated_at must be a string")
+    require(isinstance(receipt["trivy_db_updated_at"], str), "scan receipt Trivy DB updated_at must be a string")
     db_updated = parse_time(
         receipt["trivy_db_updated_at"], "scan receipt Trivy DB updated_at"
     )
@@ -668,13 +652,6 @@ def validate_scan_receipt(
         sides[name] = validate_receipt_side(receipt[name], name, expected_digests[name])
     validate_scan_report(before, before_path, "before report", sides["before"])
     validate_scan_report(after, after_path, "after report", sides["after"])
-    if before.get("ArchScanner") or after.get("ArchScanner"):
-        if not before.get("ArchScanner") or not after.get("ArchScanner"):
-            raise ValueError("paired Arch scans require independent evidence on both sides")
-        capsules = [load_json(path.parent / report["ArchScanner"]["capsule"], "Arch capsule")
-                    for path, report in ((before_path, before), (after_path, after))]
-        if capsules[0]["grype_db_sha256"] != capsules[1]["grype_db_sha256"]:
-            raise ValueError("paired Arch scans changed frozen Grype database")
 
 
 def kev_evidence(path: Path, fetched_at: str, now: str):
@@ -687,16 +664,11 @@ def kev_evidence(path: Path, fetched_at: str, now: str):
     parse_time(feed["dateReleased"], "KEV dateReleased")
     count = feed.get("count")
     vulnerabilities = feed.get("vulnerabilities")
-    if (
-        isinstance(count, bool)
-        or not isinstance(count, int)
-        or not isinstance(vulnerabilities, list)
-    ):
-        raise ValueError("KEV count or vulnerabilities has the wrong type")
+    require(not isinstance(count, bool) and isinstance(count, int)
+            and isinstance(vulnerabilities, list), "KEV count or vulnerabilities has the wrong type")
     cves = []
     for item in vulnerabilities:
-        if not isinstance(item, dict) or not isinstance(item.get("cveID"), str):
-            raise ValueError("KEV vulnerability lacks cveID")
+        require(isinstance(item, dict) and isinstance(item.get("cveID"), str), "KEV vulnerability lacks cveID")
         cve = item["cveID"]
         if not CVE_RE.fullmatch(cve):
             raise ValueError(f"KEV cveID is malformed: {cve}")
@@ -1509,8 +1481,7 @@ def validate_decision_publication(decision):
 
 
 def validate_decision(decision):
-    if not isinstance(decision, dict):
-        raise ValueError("decision must be an object")
+    require(isinstance(decision, dict), "decision must be an object")
     if set(decision) - {"remediation"} != DECISION_FIELDS:
         raise ValueError("decision has unknown or missing top-level fields")
     validate_decision_identity(decision)
@@ -1572,25 +1543,12 @@ def validate_patch_coverage(before_packages, after_packages):
         )
 
 
-def validate_arch_fixable(full_report: dict, fixable_report: dict) -> None:
-    if not full_report.get("ArchScanner"):
-        return
-    expected_os = next(row for row in full_report["Results"] if row.get("Type") == "archlinux").copy()
-    expected_os["Vulnerabilities"] = [row for row in expected_os["Vulnerabilities"] if row["FixedVersion"]]
-    actual_os = [row for row in fixable_report.get("Results", []) if row.get("Class") == "os-pkgs"]
-    if fixable_report.get("ArchScanner") != full_report["ArchScanner"] or actual_os != [expected_os]:
-        raise ValueError("Arch fixable report differs from verified inventory/fixes")
-
-
 def evaluate_candidate(args):
     child_digest, index_digest, candidate_digest = validate_candidate_inputs(args)
     full_path = Path(args.full_report)
     after_path = Path(args.after_full_report) if args.after_full_report else None
     receipt_path = Path(args.scan_receipt) if args.scan_receipt else None
-    if bool(after_path) != bool(receipt_path):
-        raise ValueError(
-            "--after-full-report and --scan-receipt must be supplied together"
-        )
+    require(bool(after_path) == bool(receipt_path), "--after-full-report and --scan-receipt must be supplied together")
     patch_reason(args)
     full_report = load_json(full_path, "full Trivy report")
     if receipt_path is None:
@@ -1615,7 +1573,6 @@ def evaluate_candidate(args):
         )
     full = findings(full_report, "full report")
     fixable_report = load_json(Path(args.fixable_report), "fixable Trivy report")
-    validate_arch_fixable(full_report, fixable_report)
     fixable = findings(
         fixable_report,
         "fixable report",
