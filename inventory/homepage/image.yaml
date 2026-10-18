@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: homepage
+spec:
+  version: 2
+  upstream:
+    ref: ghcr.io/gethomepage/homepage
+    tag: v2.6.0
+    digest: sha256:3e38fe788223cb46a3ce1f046ef11667b40f7707fdca0dcbfa3f86c5c42bf1e8
+  destination:
+    package: ghcr.io/bocklabs/homepage
+  patchPolicy: enabled
+  validation:
+    type: http
+    port: 3000
+    path: /api/healthcheck
+    expectStatus: 200
+    durationSeconds: 60
+    command: []
+    expectedPlatforms:
+    - linux/amd64

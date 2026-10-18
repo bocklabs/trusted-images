@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: valkey
+spec:
+  version: 2
+  upstream:
+    ref: docker.io/valkey/valkey
+    tag: 9-alpine
+    digest: sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11
+  destination:
+    package: ghcr.io/bocklabs/valkey
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - valkey-server
+    - --version
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64
