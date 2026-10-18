@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: caddy
+spec:
+  version: 2
+  upstream:
+    ref: caddy
+    tag: 2.11.7-alpine
+    digest: sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+  destination:
+    package: ghcr.io/bocklabs/caddy
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - caddy
+    - version
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64

@@ -10,11 +10,16 @@ on:
         required: true
         options:
           # apps-begin
+          - alpine
+          - caddy
+          - grafana
           - hindsight
+          - homepage
           - nginx-qualification
           - ollama
           - open-webui-qualification
           - postgres-exporter
+          - valkey
           # apps-end
       force_repromote:
         description: Publish the next append-only revision even when content is unchanged
