@@ -49,15 +49,15 @@ stdlib only.
 """
 
 import argparse
+import copy
 import hashlib
 import json
-import copy
 import os
 import re
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 CURL_IMAGE = "curlimages/curl:v8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777"  # v8.22.0
@@ -157,7 +157,7 @@ def parse_args() -> argparse.Namespace:
 
 def docker(*args: str) -> tuple[bool, str]:
     """Run one docker command; return (ok, output). Single subprocess call site."""
-    proc = subprocess.run(["docker", *args], capture_output=True, text=True)
+    proc = subprocess.run(["docker", *args], check=False, capture_output=True, text=True)
     output = proc.stdout if proc.returncode == 0 else (proc.stderr or proc.stdout)
     return proc.returncode == 0, output.strip()
 
@@ -173,6 +173,17 @@ IMAGE_MANIFEST_TYPES = {
     "application/vnd.oci.image.manifest.v1+json",
     "application/vnd.docker.distribution.manifest.v2+json",
 }
+
+
+def normalized_repository(repository: str) -> str:
+    first, separator, _ = repository.partition("/")
+    if not separator:
+        return f"docker.io/library/{repository}"
+    if "." not in first and ":" not in first and first != "localhost":
+        return f"docker.io/{repository}"
+    if first == "docker.io" and repository.count("/") == 1:
+        return repository.replace("docker.io/", "docker.io/library/", 1)
+    return repository
 
 
 def label_drift(
@@ -193,10 +204,10 @@ def label_drift(
             key == "BaseImage"
             and isinstance(value, str)
             and baseline_ref
-            and (
-                value.startswith(f"{baseline_ref}:")
-                or value == f"{baseline_ref}@{baseline_digest}"
-            )
+            and SHA256_DIGEST_RE.fullmatch(baseline_digest)
+            and value.endswith(f"@{baseline_digest}")
+            and normalized_repository(value.rsplit("@", 1)[0])
+            == normalized_repository(baseline_ref)
         )
         if identifies_baseline:
             continue
@@ -421,6 +432,7 @@ def profile_oneshot(
     try:
         proc = subprocess.run(
             ["timeout", f"{args.timeout_seconds}s", "docker", *run_args],
+            check=False,
             capture_output=True,
             text=True,
         )
@@ -464,7 +476,7 @@ def load_manifest(path: Path) -> dict:
         index = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"index file is not valid JSON ({exc})") from exc
-    if not isinstance(index, dict):
+    if not isinstance(index, dict) or not index:
         raise ValueError("candidate manifest is not an object (D-20)")
     if "manifests" in index:
         raise ValueError(
@@ -569,8 +581,10 @@ def candidate_runtime_binding(
         ev["validation"]["candidate_image_id"] = inspected["Id"]
     if inspected.get("Os") != "linux" or inspected.get("Architecture") != "amd64":
         return (
-            "candidate platform mismatch (D-20): expected linux/amd64, "
-            f"got {inspected.get('Os')}/{inspected.get('Architecture')}",
+            (
+                "candidate platform mismatch (D-20): expected linux/amd64, "
+                f"got {inspected.get('Os')}/{inspected.get('Architecture')}"
+            ),
             None,
             None,
         )
@@ -634,7 +648,7 @@ def validation_profile_reason(
 
 def main() -> int:
     args = parse_args()
-    started_wall = datetime.now(timezone.utc)
+    started_wall = datetime.now(UTC)
     started_mono = time.monotonic()
 
     try:
@@ -649,7 +663,7 @@ def main() -> int:
     ev: dict = initial_evidence(args, command, env_map)
 
     def finish() -> None:
-        finished = datetime.now(timezone.utc)
+        finished = datetime.now(UTC)
         ev["validation"]["timings"] = {
             "started_at": started_wall.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "finished_at": finished.strftime("%Y-%m-%dT%H:%M:%SZ"),

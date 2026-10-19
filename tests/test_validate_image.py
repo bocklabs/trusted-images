@@ -10,13 +10,13 @@ touches a real daemon. Every scenario uses short duration/timeout windows
 library.
 """
 
-import json
 import hashlib
+import json
 import os
+import socket
 import subprocess
 import sys
 import tempfile
-import socket
 import threading
 import time
 import unittest
@@ -177,7 +177,7 @@ class ValidateImageTests(unittest.TestCase):
         env["FAKE_DOCKER_SCENARIO"] = str(self.scenario_path)
         env.pop("GITHUB_RUN_ID", None)
         return subprocess.run(
-            argv, capture_output=True, text=True, env=env, timeout=120
+            argv, check=False, capture_output=True, text=True, env=env, timeout=120
         )
 
     def test_local_image_is_bound_to_committed_id_and_manifest_digest_evidence(self):
@@ -518,7 +518,7 @@ class ValidateImageTests(unittest.TestCase):
             "org.opencontainers.image.base.name": "quay.io/example/base:v1",
             "org.opencontainers.image.source": "https://example.invalid/source",
             "org.opencontainers.image.version": "v1-bocklabs.1",
-            "BaseImage": "quay.io/example/base:v1",
+            "BaseImage": "quay.io/example/base@sha256:" + "b1" * 32,
         }
         self.write_scenario(
             {
@@ -560,6 +560,42 @@ class ValidateImageTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.load_evidence()["validation"]["config_drift"], [])
+
+    def test_copa_baseimage_normalized_repository_keeps_selected_child(self) -> None:
+        child = "sha256:" + "b1" * 32
+        for label_child, expected in ((child, 0), ("sha256:" + "c1" * 32, 1)):
+            with self.subTest(child=label_child):
+                self.spool = self.tmp / f"docker-spool-{expected}.jsonl"
+                self.write_scenario(
+                    {
+                        "image_inspects": [
+                            image_inspect(),
+                            image_inspect(
+                                labels={
+                                    "org.example.existing": "keep",
+                                    "BaseImage": f"docker.io/library/alpine@{label_child}",
+                                }
+                            ),
+                        ],
+                        "inspect_states": [running()],
+                    }
+                )
+                result = self.run_cli(
+                    "process",
+                    (
+                        "--baseline-ref", "alpine", "--baseline-digest", child,
+                        "--duration-seconds", "0",
+                    ),
+                )
+                self.assertEqual(
+                    result.returncode, expected, result.stdout + result.stderr
+                )
+                if expected == 0:
+                    self.assertEqual(
+                        self.load_evidence()["validation"]["config_drift"], []
+                    )
+                else:
+                    self.assertIn("permitted additions", result.stdout + result.stderr)
 
     def test_docker_commit_container_fields_are_ignored(self) -> None:
         existing = {"org.example.existing": "keep"}
