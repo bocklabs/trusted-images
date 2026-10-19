@@ -1,0 +1,24 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: pgvector
+spec:
+  version: 2
+  upstream:
+    ref: pgvector/pgvector
+    tag: pg16
+    digest: sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+  destination:
+    package: ghcr.io/bocklabs/pgvector
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - /bin/bash
+    - -ec
+    - postgres --version; test -r /usr/share/postgresql/16/extension/vector.control;
+      test -s /usr/share/postgresql/16/extension/vector--0.8.7.sql; test -s /usr/lib/postgresql/16/lib/vector.so
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64

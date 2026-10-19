@@ -1,0 +1,24 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: pipelines
+spec:
+  version: 2
+  upstream:
+    ref: ghcr.io/open-webui/pipelines
+    tag: git-039f9c5
+    digest: sha256:b48e9bc338ce2be0acfbeff01810db72408a12f07739f9e3879c1f2b00952d6e
+  destination:
+    package: ghcr.io/bocklabs/pipelines
+  patchPolicy: enabled
+  validation:
+    type: http
+    port: 9099
+    path: /
+    expectStatus: 200
+    durationSeconds: 60
+    command:
+    - --mode
+    - run
+    expectedPlatforms:
+    - linux/amd64

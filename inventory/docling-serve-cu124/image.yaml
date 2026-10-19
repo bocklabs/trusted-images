@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: docling-serve-cu124
+spec:
+  version: 2
+  upstream:
+    ref: quay.io/docling-project/docling-serve-cu124
+    tag: v1.1.0
+    digest: sha256:1d540d8aa5cc2194f6af96655e8a79526263dd179639a1c4035b004edac44113
+  destination:
+    package: ghcr.io/bocklabs/docling-serve-cu124
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - /opt/app-root/bin/docling-serve
+    - --version
+    expectedExit: 0
+    timeoutSeconds: 60
+    expectedPlatforms:
+    - linux/amd64

@@ -1,0 +1,19 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: tika
+spec:
+  version: 2
+  upstream:
+    ref: apache/tika
+    tag: 3.3.1.0-full
+    digest: sha256:d8e6ed96260ad89307a93195a1b856102987a818ac648502f8efbaf313d32470
+  destination:
+    package: ghcr.io/bocklabs/tika
+  patchPolicy: enabled
+  validation:
+    type: process
+    durationSeconds: 30
+    command: []
+    expectedPlatforms:
+    - linux/amd64

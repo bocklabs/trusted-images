@@ -1,0 +1,21 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: dcgm-exporter
+spec:
+  version: 2
+  upstream:
+    ref: nvidia/dcgm-exporter
+    tag: 4.5.2-4.8.1-ubuntu22.04
+    digest: sha256:2f74687df0f3116e168061a6d0544cb15d2e0e72a55cffa136ddce3a80b24551
+  destination:
+    package: ghcr.io/bocklabs/dcgm-exporter
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - --version
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64

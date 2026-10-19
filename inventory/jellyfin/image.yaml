@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: jellyfin
+spec:
+  version: 2
+  upstream:
+    ref: jellyfin/jellyfin
+    tag: 10.11.11
+    digest: sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db
+  destination:
+    package: ghcr.io/bocklabs/jellyfin
+  patchPolicy: enabled
+  validation:
+    type: http
+    port: 8096
+    path: /health
+    expectStatus: 200
+    durationSeconds: 90
+    command: []
+    expectedPlatforms:
+    - linux/amd64

@@ -1,0 +1,21 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: cadvisor
+spec:
+  version: 2
+  upstream:
+    ref: gcr.io/cadvisor/cadvisor
+    tag: v0.55.1
+    digest: sha256:3de2bd5203120b866d74a9b283b2ffb8ec382fbf9dc321814700c6ea6f44ec57
+  destination:
+    package: ghcr.io/bocklabs/cadvisor
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - --version
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64

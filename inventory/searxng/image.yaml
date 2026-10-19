@@ -1,0 +1,26 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: searxng
+spec:
+  version: 2
+  upstream:
+    ref: searxng/searxng
+    tag: 2026.6.19-5c38d2fea
+    digest: sha256:0ed5e42ff34a6f783645911ca98643338246450866f367db32d1a4b288554633
+  destination:
+    package: ghcr.io/bocklabs/searxng
+  patchPolicy: disabled
+  validation:
+    type: http
+    port: 8080
+    path: /healthz
+    expectStatus: 200
+    durationSeconds: 60
+    command: []
+    expectedPlatforms:
+    - linux/amd64
+  patchDisabledReason:
+    class: unsupported
+    detail: Exact SearXNG image uses Void Linux with removed XBPS metadata and tooling.
+      This target is not supported by the existing stable Copa OS patch path.

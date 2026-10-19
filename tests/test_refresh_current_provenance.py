@@ -3,9 +3,9 @@
 import copy
 import importlib
 import json
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,14 +22,14 @@ class CurrentRefreshTests(unittest.TestCase):
             "sha": self.head, "repo": {"full_name": "bocklabs/trusted-images"}}}
         self.healthy = copy.deepcopy(self.owned)
         self.healthy["number"] = 56
-        self.healthy["head"].update(ref="provenance/current/nginx-qualification", sha="4" * 40)
+        self.healthy["head"].update(ref="provenance/current/ollama", sha="4" * 40)
         self.pulls = [self.owned]
         self.latest = {55: copy.deepcopy(self.owned), 56: copy.deepcopy(self.healthy)}
-        self.apps = {self.head: "postgres-exporter", "4" * 40: "nginx-qualification"}
+        self.apps = {self.head: "postgres-exporter", "4" * 40: "ollama"}
         self.records = {app: json.loads((ROOT / f"provenance/{app}/current.json").read_bytes()) for app in self.apps.values()}
         self.candidates = copy.deepcopy(self.records)
         self.candidates["postgres-exporter"]["internal"]["tag"] = "v0.20.1-bocklabs.8"
-        self.candidates["nginx-qualification"]["internal"]["tag"] = "1.31.6-bocklabs.2"
+        self.candidates["ollama"]["internal"]["tag"] = "0.40.6-bocklabs.2"
         for record in self.candidates.values():
             record["promoted_at"] = "2099-01-01T00:00:00Z"
         self.calls: list[tuple] = []

@@ -1,0 +1,21 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: mcpo
+spec:
+  version: 2
+  upstream:
+    ref: ghcr.io/open-webui/mcpo
+    tag: git-788ff92
+    digest: sha256:1e82c9555c19e50b80745705f32b47a2647589f35279527b5118ecd3a71bd467
+  destination:
+    package: ghcr.io/bocklabs/mcpo
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - --help
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64

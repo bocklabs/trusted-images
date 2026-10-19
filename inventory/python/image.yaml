@@ -1,0 +1,26 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: python
+spec:
+  version: 2
+  upstream:
+    ref: python
+    tag: 3.15-alpine
+    digest: sha256:2699b90f4d562a22e2dd076c82f964032f64814204bff36d271a54ba4cc2c7e2
+  destination:
+    package: ghcr.io/bocklabs/python
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - python3
+    - -c
+    - import hashlib,json,sqlite3,ssl,sys; assert sys.version_info[:2] == (3,15);
+      assert json.loads(json.dumps({"ok":True}))["ok"]; assert hashlib.sha256(b"abc").hexdigest()
+      == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"; assert
+      sqlite3.connect(":memory:").execute("select 1").fetchone() == (1,); assert ssl.OPENSSL_VERSION
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64
