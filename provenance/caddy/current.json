@@ -1,0 +1,996 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "caddy",
+  "upstream": {
+    "ref": "caddy",
+    "tag": "2.11.7-alpine",
+    "digest": "sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f",
+    "index_digest": "sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f",
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "selected_platform": "linux/amd64",
+    "selected_child_digest": "sha256:173b26306d711395accaeba8b67afcaad2a085ccb1e6bf26010bfe8c095a5229"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/caddy",
+    "tag": "2.11.7-alpine-bocklabs.1",
+    "digest": "sha256:f033f5c66215bb4274be0be4ac9a61d531dbb0e5c8485476f3efbd159972b0da",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39300560647",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.76.0",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "copa": "0.15.0",
+    "skopeo": "v1.22.2",
+    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:1b00055b9b8eb61ac08165f731d89c5c66eb953ac2aefff1dff295bc70eddaad",
+      "updated_at": "2026-10-19 07:19:54.308593453 +0000 UTC"
+    },
+    "full_report_sha256": "c1d7077865380a84bc4e6cf879009f3364b141967a3e99cafebb1fce5b6f9808",
+    "copa_report_sha256": "1d1069a15eb6b1da748f9cd8a0b4f002e697419b02631b058d56e54aa276da92",
+    "decision_sha256": "c3af5ac6e76dd18141e3d9f076691658a193d2b3e7bd22f7fdf6e180902dba50",
+    "reports": {
+      "before_sha256": "b4dbcbc709d2d577847d27ff5800bfb53ea3bc3359a4c67ca0b7ffab5ba27892",
+      "final_sha256": "c1d7077865380a84bc4e6cf879009f3364b141967a3e99cafebb1fce5b6f9808",
+      "fixable_sha256": "1d1069a15eb6b1da748f9cd8a0b4f002e697419b02631b058d56e54aa276da92"
+    },
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "caddy:2.11.7-alpine"
+    }
+  },
+  "policy": {
+    "kev": {
+      "matches": [],
+      "catalog": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "sha256": "b6e27975f6635ecfc546fbd4fd6e444ba63a07ab2abc8876229d77fe083d357d",
+        "fetched_at": "2026-10-19T18:13:48Z",
+        "catalogVersion": "2026.10.16",
+        "dateReleased": "2026-10-16T17:15:48.8752Z"
+      }
+    },
+    "acceptance": null,
+    "patching": {
+      "disabled": false
+    },
+    "copa": {
+      "classification": "succeeded",
+      "original_child_input": true,
+      "mode": "comprehensive",
+      "release": "0.15.0",
+      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
+      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
+      "limitation": null
+    },
+    "supersedes": {
+      "higher_upstream": false,
+      "original_child_selected": false
+    },
+    "outcome": "eligible with no-fix warnings: GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:",
+    "eligible": true,
+    "warnings": [
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fcrypto|GO-2026-5932",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/crypto",
+        "cve": "GO-2026-5932",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.57.0",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78659",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78659",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78660",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78660",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78663",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78663",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78669",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78669",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-97032",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97032",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-56857",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-56857",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-56866",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-56866",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78659",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78659",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78660",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78660",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78663",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78663",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78667",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78667",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78669",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78669",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94439",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94439",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94440",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94440",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94448",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94448",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97030",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97030",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97031",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97031",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97032",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97032",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      }
+    ]
+  },
+  "cves": {
+    "before": [
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fcrypto|GO-2026-5932",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/crypto",
+        "cve": "GO-2026-5932",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.57.0",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78659",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78659",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78660",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78660",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78663",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78663",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78669",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78669",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-97032",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97032",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-56857",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-56857",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-56866",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-56866",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78659",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78659",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78660",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78660",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78663",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78663",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78667",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78667",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78669",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78669",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94439",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94439",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94440",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94440",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94448",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94448",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97030",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97030",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97031",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97031",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97032",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97032",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|zlib|CVE-2026-85091",
+        "platform": "linux/amd64",
+        "package": "zlib",
+        "cve": "CVE-2026-85091",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "caddy@sha256:173b26306d711395accaeba8b67afcaad2a085ccb1e6bf26010bfe8c095a5229 (alpine 3.23.6)",
+        "installed_version": "1.3.2-r0",
+        "fixed_version": "1.3.2-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      }
+    ],
+    "final": [
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fcrypto|GO-2026-5932",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/crypto",
+        "cve": "GO-2026-5932",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.57.0",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78659",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78659",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78660",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78660",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78663",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78663",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-78669",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78669",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:golang.org%2Fx%2Fnet|CVE-2026-97032",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97032",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v0.59.0",
+        "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-56857",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-56857",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-56866",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-56866",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78659",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78659",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78660",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78660",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78663",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78663",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78667",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78667",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-78669",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-78669",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94439",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94439",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94440",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94440",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-94448",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-94448",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97030",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97030",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97031",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97031",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcaddy:stdlib|CVE-2026-97032",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97032",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/caddy",
+        "installed_version": "v1.26.8",
+        "fixed_version": "1.26.9, 1.27.2",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      }
+    ],
+    "summary": {
+      "resolved": [
+        "CVE-2026-85091"
+      ],
+      "remaining": [
+        "CVE-2026-56857",
+        "CVE-2026-56866",
+        "CVE-2026-78659",
+        "CVE-2026-78660",
+        "CVE-2026-78663",
+        "CVE-2026-78667",
+        "CVE-2026-78669",
+        "CVE-2026-94439",
+        "CVE-2026-94440",
+        "CVE-2026-94448",
+        "CVE-2026-97030",
+        "CVE-2026-97031",
+        "CVE-2026-97032",
+        "GO-2026-5932"
+      ],
+      "introduced": [],
+      "unresolved_fixable": []
+    }
+  },
+  "packages": {
+    "changes": [
+      {
+        "ecosystem": "alpine",
+        "name": "libcrypto3",
+        "change": "upgraded",
+        "before": "3.5.8-r0",
+        "after": "3.5.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libssl3",
+        "change": "upgraded",
+        "before": "3.5.8-r0",
+        "after": "3.5.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "zlib",
+        "change": "upgraded",
+        "before": "1.3.2-r0",
+        "after": "1.3.2-r1"
+      }
+    ],
+    "downgrades": [],
+    "downgrade_blocked": false
+  },
+  "validation": {
+    "profile": "oneshot",
+    "result": "pass",
+    "params": {
+      "type": "oneshot",
+      "port": null,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 30,
+      "expectedExit": 0,
+      "command": [
+        "caddy",
+        "version"
+      ],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-10-19T18:13:48Z",
+      "finished_at": "2026-10-19T18:13:48Z",
+      "duration_seconds": 0.4
+    },
+    "health": {
+      "defined": false,
+      "final_status": "not-applicable"
+    },
+    "runner": "GitHub Actions 1000012806",
+    "baseline": {
+      "entrypoint": [],
+      "cmd": [
+        "caddy",
+        "run",
+        "--config",
+        "/etc/caddy/Caddyfile",
+        "--adapter",
+        "caddyfile"
+      ],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "CADDY_VERSION=v2.11.7",
+        "XDG_CONFIG_HOME=/config",
+        "XDG_DATA_HOME=/data"
+      ]
+    }
+  },
+  "promoted_at": "2026-10-19T18:15:24Z",
+  "notes": "",
+  "signing": {
+    "result": "pass",
+    "image_signature": {
+      "bundle_sha256": "bf1c73abd7734827d90213e5d7b9a084e5e1930d3172d51b6fd4940f15251851",
+      "attachment_sha256": "aa609082c864de5e469485ff710575a827d1ee7c777434267a8661f9e708a305",
+      "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+      "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
+    },
+    "sbom_attestation": {
+      "predicate_type": "https://cyclonedx.org/bom",
+      "predicate_sha256": "09de0512e53b11f3e113e58a9b72318df7a81160cf279a5e24aef2fe57c65b13",
+      "bundle_sha256": "10e0d8ec38bbea426be2ff19d6a4fd0b1eb03e8e834baefeec0ba1e954981d27",
+      "attachment_sha256": "cb9cba2a89e0d0efa9257933530b2c10cf7f89787b824c9a59397987f5f477ed"
+    },
+    "rekor": {
+      "signature": {
+        "inclusion_root_hash": "yW/cBNParm7l7m3+muEoRxhNJuPIZGQ9nqxE6y7K9fc=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3324766437,
+        "signed_entry_timestamp": "MEUCIFlU9QxGqZsYoW2DCzLHgkeTcXCq3+B7/G22mjYWZCl3AiEAnRKRQdSWZVf53h2nMtP+bh2R7/FMQuKYdYHDz2vbzGo="
+      },
+      "sbom_attestation": {
+        "inclusion_root_hash": "0Bc3xUJzqehvYkKaPyoPSfju5yZPgpO1rhTyFbwsXzY=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3324767952,
+        "signed_entry_timestamp": "MEUCIALK6OUZQqT6+z4jDW4KyZfhWvHNfjLViI4Ae9pzoGlCAiEAzSvhPC7LoC2eaHtIV8mgBiM15GfMkxzxDHskJpjMm1c="
+      }
+    },
+    "tools": {
+      "cosign": "v3.1.3",
+      "trivy": "0.76.0"
+    }
+  }
+}
