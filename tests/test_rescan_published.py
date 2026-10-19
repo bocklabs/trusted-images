@@ -65,6 +65,45 @@ class PublishedRescanTests(unittest.TestCase):
             manifest = json.loads((work / "secobserve-upload.json").read_text())
             self.assertEqual(manifest["upstream_ref"] + ":" + manifest["upstream_tag"], self.ref)
 
+    def test_decide_cli_retains_versionless_go_root(self):
+        self.report["Results"][0]["Vulnerabilities"] = []
+        self.report["Results"].append({
+            "Class": "lang-pkgs", "Type": "gobinary", "Target": "usr/bin/server",
+            "Packages": [{"Name": "github.com/example/server", "ID": "github.com/example/server",
+                          "AnalyzedBy": "gobinary", "Relationship": "root",
+                          "Identifier": {"PURL": "pkg:golang/github.com/example/server"}}],
+        })
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory) / "published-rescan"
+            work.mkdir()
+            (work / "selection.json").write_text(json.dumps(self.selection))
+            report_path = work / "trivy-full.json"
+            report_path.write_text(json.dumps(self.report))
+            original = report_path.read_bytes()
+            result = subprocess.run([sys.executable, str(ROOT / "scripts/rescan_published.py"), "decide"],
+                                    cwd=directory, env={**os.environ, "REMEDIATION_ENABLED": "true"},
+                                    check=False, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            decision = json.loads((work / "decision.json").read_text())
+            self.assertEqual(decision["ref"], self.ref)
+            self.assertTrue(decision["package_coverage"])
+            self.assertFalse(decision["proceed"])
+            self.assertEqual(decision["findings"], 0)
+            self.assertEqual(report_path.read_bytes(), original)
+
+    def test_versionless_os_and_go_dependency_fail_closed(self):
+        self.report["Results"][0]["Packages"][0].pop("Version")
+        with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
+            rescan.decide(self.selection, self.report, True)
+        self.report["Results"][0].update({
+            "Class": "lang-pkgs", "Type": "gobinary", "Target": "usr/bin/server",
+            "Packages": [{"Name": "github.com/example/server", "ID": "github.com/example/server",
+                          "AnalyzedBy": "gobinary", "Relationship": "direct",
+                          "Identifier": {"PURL": "pkg:golang/github.com/example/server"}}],
+        })
+        with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
+            rescan.decide(self.selection, self.report, True)
+
     def test_monitoring_disabled_clean_and_no_fix_do_not_mutate(self):
         value = rescan.decide(self.selection, self.report, False)
         self.assertFalse(value["proceed"])

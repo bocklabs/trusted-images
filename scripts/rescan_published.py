@@ -4,13 +4,16 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
+from pathlib import Path
 
 import yaml
-
-from evaluate_promotion import findings, validate_native_inventory, validate_report_results
+from evaluate_promotion import (
+    findings,
+    validate_native_inventory,
+    validate_report_results,
+)
 from finding_identity import canonical, findings_hash, require
 from promote_signing_gate import load_identity
 from reverify_signing import load_current, merged_commit, record_time, verified_record
@@ -40,8 +43,7 @@ def output(values):
     print(canonical(values))
     if os.getenv("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
-            for key, value in values.items():
-                stream.write(f"{key}={value if isinstance(value, str) else canonical(value)}\n")
+            stream.writelines(f"{key}={value if isinstance(value, str) else canonical(value)}\n" for key, value in values.items())
     if os.getenv("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as stream:
             stream.write("\nPublished-image rescan: `" + canonical(values) + "`\n")
@@ -89,10 +91,21 @@ def package_coverage(results):
         packages = result.get("Packages")
         covered = covered and result.get("Class") in ("os-pkgs", "lang-pkgs") and bool(result.get("Type")) and isinstance(packages, list) and bool(packages)
         if packages is not None:
-            require(isinstance(packages, list) and all(isinstance(p, dict) and
-                    isinstance(p.get("Name"), str) and p["Name"] and
-                    isinstance(p.get("Version"), str) and p["Version"] for p in packages),
-                    "invalid scanned package inventory")
+            require(isinstance(packages, list), "invalid scanned package inventory")
+            for package in packages:
+                require(isinstance(package, dict) and isinstance(package.get("Name"), str)
+                        and package["Name"], "invalid scanned package inventory")
+                go_root = (
+                    "Version" not in package and result.get("Class") == "lang-pkgs"
+                    and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
+                    and bool(result["Target"]) and package.get("ID") == package["Name"]
+                    and re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", package["Name"])
+                    and package.get("AnalyzedBy") == "gobinary" and package.get("Relationship") == "root"
+                    and isinstance(package.get("Identifier"), dict)
+                    and package["Identifier"].get("PURL") == "pkg:golang/" + package["Name"]
+                )
+                require(go_root or (isinstance(package.get("Version"), str) and package["Version"]),
+                        "invalid scanned package inventory")
     return bool(covered)
 
 
