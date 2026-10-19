@@ -11,11 +11,11 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from finalize_candidate_config import finalize
-from validate_image import label_drift
+from validate_image import config_drift, label_drift
 
 
 class CandidateMaterializationTests(unittest.TestCase):
-    def test_finalizer_removes_only_new_tool_labels_and_rebinds_descriptors(self) -> None:
+    def test_finalizer_preserves_healthcheck_removes_new_labels_and_rebinds_descriptors(self) -> None:
         original: dict = {"Labels": {"sh.copa.chisel.version": "original"}}
         candidate: dict = {"architecture": "amd64", "config": {"Labels": {
             "sh.copa.chisel.version": "changed", "sh.copa.chisel.release": "ubuntu-24.04",
@@ -58,6 +58,35 @@ class CandidateMaterializationTests(unittest.TestCase):
             finalize(root, baseline)
             self.assertEqual((root / "index.json").read_bytes(), index_bytes)
             self.assertEqual({path.name: path.read_bytes() for path in blobs.iterdir()}, unchanged)
+            healthcheck = {"Test": ["CMD-SHELL", "wget --no-verbose --tries=1 --spider -Y off http://127.0.0.1:$PORT/api/healthcheck || exit 1"],
+                           "Interval": 10000000000, "Timeout": 3000000000, "StartPeriod": 20000000000}
+            original["Healthcheck"] = healthcheck
+            baseline.write_text(json.dumps({"config": original}))
+            for present in (False, True):
+                with self.subTest(changed_healthcheck=present):
+                    candidate_config = copy.deepcopy(expected)
+                    if present:
+                        candidate_config["config"]["Healthcheck"] = {"Test": ["NONE"]}
+                    manifest["config"] = put(candidate_config, "application/vnd.oci.image.config.v1+json")
+                    index["manifests"] = [put(manifest, manifest["mediaType"])]
+                    (root / "index.json").write_text(json.dumps(index))
+                    finalize(root, baseline)
+                    descriptor = json.loads((root / "index.json").read_bytes())["manifests"][0]
+                    raw_manifest = (blobs / descriptor["digest"][7:]).read_bytes()
+                    self.assertEqual((len(raw_manifest), "sha256:" + hashlib.sha256(raw_manifest).hexdigest()),
+                                     (descriptor["size"], descriptor["digest"]))
+                    config_descriptor = json.loads(raw_manifest)["config"]
+                    raw_config = (blobs / config_descriptor["digest"][7:]).read_bytes()
+                    self.assertEqual((len(raw_config), "sha256:" + hashlib.sha256(raw_config).hexdigest()),
+                                     (config_descriptor["size"], config_descriptor["digest"]))
+                    restored = json.loads(raw_config)
+                    if not present:
+                        candidate_config["config"]["Healthcheck"] = healthcheck
+                    self.assertEqual(restored, candidate_config)
+                    health_drift = [item for item in config_drift(original, restored["config"])
+                                    if "Healthcheck" in item]
+                    self.assertEqual(bool(health_drift), present)
+            (root / "index.json").write_bytes(index_bytes)
             broken = json.loads(index_bytes)
             broken["manifests"][0]["size"] += 1
             (root / "index.json").write_text(json.dumps(broken))
