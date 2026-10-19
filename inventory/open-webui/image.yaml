@@ -1,14 +1,14 @@
 apiVersion: trusted-images.bocklabs.dev/v1
 kind: Image
 metadata:
-  name: open-webui-qualification
+  name: open-webui
 spec:
   upstream:
     ref: ghcr.io/open-webui/open-webui
     tag: v0.12.0
     digest: sha256:1565038903151ced924b5a3226f73f40f16963df4b910441f6391f10144afdaa
   destination:
-    package: ghcr.io/bocklabs/open-webui-qualification
+    package: ghcr.io/bocklabs/open-webui
   patchPolicy: enabled
   validation:
     type: http

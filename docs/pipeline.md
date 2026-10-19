@@ -302,24 +302,14 @@ Publication-integrity assertions require exact manifest bytes and anonymous
 readability. If the registry creates a package private by default, the anonymous
 probe fails by design; make the one-time package visibility change, then rerun.
 
-## Qualification run sequence
+## Inventory promotion
 
-Live dispatches are separate operator checkpoints. Review each run and public
-receipt before proceeding; these commands do not themselves authorize a run.
+Dispatch only reviewed inventory entries under the applicable authorization.
 
-1. Prove the deliberately stale `nginx-qualification` patch path:
-
-   ```sh
-   gh workflow run promote.yaml --repo bocklabs/trusted-images --ref main \
-     -f app=nginx-qualification
-   ```
-
-2. Run the current `postgres-exporter` through the same producer policy after
-   qualification passes.
-3. Promote a genuinely newer nginx release when Renovate detects one. If no real
-   update appears within the locked `seven-day` fallback window—and only after all
-   other phase work is ready—use the separately reviewed controlled update to a
-   known newer fixed release.
+```sh
+gh workflow run promote.yaml --repo bocklabs/trusted-images --ref main \
+  -f app=<app>
+```
 
 For a real KEV-blocked candidate, the post-acceptance resume uses:
 

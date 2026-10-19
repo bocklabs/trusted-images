@@ -26,11 +26,10 @@ on:
           - loki
           - mcpo
           - n8n
-          - nginx-qualification
           - node-exporter
           - oikb
           - ollama
-          - open-webui-qualification
+          - open-webui
           - pgvector
           - pipelines
           - portainer-ce
