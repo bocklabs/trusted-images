@@ -1,4 +1,4 @@
-"""Remove newly introduced Copa Chisel labels before binding final OCI bytes."""
+"""Preserve original Healthcheck and remove new Chisel labels before binding OCI bytes."""
 
 import hashlib
 import json
@@ -41,13 +41,17 @@ def finalize(oci: Path, original_config: Path) -> None:
     if manifest.get("schemaVersion") != 2 or manifest.get("mediaType") != MANIFEST_TYPE:
         raise ValueError("invalid OCI image manifest")
     config = read_blob(oci, manifest["config"], CONFIG_TYPE)
-    original = json.loads(original_config.read_bytes())["config"].get("Labels") or {}
+    original_runtime = json.loads(original_config.read_bytes())["config"]
+    original = original_runtime.get("Labels") or {}
     labels = config["config"].get("Labels") or {}
     if not isinstance(original, dict) or not isinstance(labels, dict):
         raise TypeError("OCI config Labels must be objects")
-    removed = {key for key in ("sh.copa.chisel.release", "sh.copa.chisel.version")
-               if key in labels and key not in original}
-    if not removed:
+    removed = {"sh.copa.chisel.release", "sh.copa.chisel.version"} & (labels.keys() - original.keys())
+    # Docker-to-OCI conversion drops the nonstandard Docker Healthcheck field.
+    restore_healthcheck = "Healthcheck" in original_runtime and "Healthcheck" not in config["config"]
+    if restore_healthcheck:
+        config["config"]["Healthcheck"] = original_runtime["Healthcheck"]
+    if not removed and not restore_healthcheck:
         return
     for key in removed:
         del labels[key]
