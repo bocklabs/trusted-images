@@ -302,6 +302,7 @@ class PromoteWorkflowTests(unittest.TestCase):
             (root / "trivy-after-full.json").write_text(json.dumps({"Results": [{"Packages": [
                 {"Name": "deb", "Version": "2", "Identifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
                 {"Name": "lang", "Version": "3", "Identifier": {"PURL": "pkg:pypi/lang@3"}},
+                *[{"Name": "@scope/package", "Version": "4", "Identifier": {"PURL": "pkg:npm/%40scope/package@4"}} for _ in range(2)],
             ], "Vulnerabilities": [
                 {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
                 {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:pypi/lang@3"}},
@@ -311,7 +312,8 @@ class PromoteWorkflowTests(unittest.TestCase):
                 {"type": "operating-system", "name": "os"},
                 {"type": "application", "name": "bin/exporter"},
                 {"type": "library", "name": "deb", "version": "2-1", "purl": "pkg:deb/debian/deb@2-1?arch=amd64", "bom-ref": "deb-ref"},
-                {"type": "library", "name": "lang", "version": "3", "purl": "pkg:pypi/lang@3", "bom-ref": "lang-ref"}],
+                {"type": "library", "name": "lang", "version": "3", "purl": "pkg:pypi/lang@3", "bom-ref": "lang-ref"},
+                *[{"type": "library", "group": "@scope", "name": "package", "version": "4", "purl": "pkg:npm/%40scope/package@4", "bom-ref": f"npm-ref-{i}"} for i in range(2)]],
                 "vulnerabilities": [{"id": "CVE-2026-0001", "affects": [
                     {"ref": "deb-ref"},
                     {"ref": "lang-ref"},
@@ -325,19 +327,45 @@ class PromoteWorkflowTests(unittest.TestCase):
                        GITHUB_OUTPUT=str(root / "output"), GITHUB_STEP_SUMMARY=str(root / "summary"))
             select = subprocess.run(["bash", "-c", by_name["Select the exact final candidate"]["run"]], cwd=root, env=env, capture_output=True, text=True, check=False)
             self.assertEqual(select.returncode, 0, select.stdout + select.stderr)
-            convert = by_name["Convert full report to CycloneDX with parity check"]["run"]
-            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            changed = json.loads(cdx.read_text())
-            changed["vulnerabilities"][0]["id"] = "CVE-2026-9999"
-            cdx.write_text(json.dumps(changed))
-            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("finding identities differ", result.stdout)
-            cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [{"type": "library", "name": "old", "version": "1"}], "vulnerabilities": []}))
-            result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("components differ", result.stdout)
+            published = yaml.safe_load(self.orchestrator)["jobs"]["rescan"]["steps"]
+            conversions = {
+                "candidate": by_name["Convert full report to CycloneDX with parity check"]["run"],
+                "published": next(step["run"] for step in published if step.get("id") == "convert"),
+            }
+            original = json.loads(cdx.read_text())
+            for caller, convert in conversions.items():
+                with self.subTest(caller=caller):
+                    cdx.write_text(json.dumps(original))
+                    result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    changed = json.loads(json.dumps(original))
+                    changed["components"].pop()
+                    cdx.write_text(json.dumps(changed))
+                    result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("components differ", result.stdout)
+                    changed = json.loads(json.dumps(original))
+                    changed["components"][-1]["purl"] = "pkg:npm/%40scope/package@5"
+                    cdx.write_text(json.dumps(changed))
+                    result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("components differ", result.stdout)
+                    changed = json.loads(json.dumps(original))
+                    changed["vulnerabilities"][0]["affects"][0]["ref"] = "unknown-ref"
+                    cdx.write_text(json.dumps(changed))
+                    result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("unknown SBOM package reference", result.stderr)
+                    changed = json.loads(json.dumps(original))
+                    changed["vulnerabilities"][0]["id"] = "CVE-2026-9999"
+                    cdx.write_text(json.dumps(changed))
+                    result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("finding identities differ", result.stdout)
+                    cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [{"type": "library", "name": "old", "version": "1"}], "vulnerabilities": []}))
+                    result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("components differ", result.stdout)
 
     def test_trivy_result_counts_treat_null_as_empty(self) -> None:
         self.assertEqual(
