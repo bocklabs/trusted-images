@@ -12,13 +12,35 @@ on:
           # apps-begin
           - alpine
           - caddy
+          - cadvisor
+          - cloudflared
+          - dcgm-exporter
+          - docling-serve
+          - docling-serve-cu124
+          - flaresolverr
+          - glances
           - grafana
           - hindsight
           - homepage
+          - jellyfin
+          - loki
+          - mcpo
+          - n8n
           - nginx-qualification
+          - node-exporter
+          - oikb
           - ollama
           - open-webui-qualification
+          - pgvector
+          - pipelines
+          - portainer-ce
           - postgres-exporter
+          - prometheus
+          - python
+          - redis-exporter
+          - searxng
+          - secobserve-frontend
+          - tika
           - valkey
           # apps-end
       force_repromote:

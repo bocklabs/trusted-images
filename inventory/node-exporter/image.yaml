@@ -1,0 +1,21 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: node-exporter
+spec:
+  version: 2
+  upstream:
+    ref: prom/node-exporter
+    tag: v1.12.1
+    digest: sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
+  destination:
+    package: ghcr.io/bocklabs/node-exporter
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - --version
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64

@@ -1,0 +1,21 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: cloudflared
+spec:
+  version: 2
+  upstream:
+    ref: cloudflare/cloudflared
+    tag: 2026.10.1
+    digest: sha256:a15a3b50b8dabd57ac2090e9484c0247dba9dfa1f0df4d298d4317f9d69eb2d5
+  destination:
+    package: ghcr.io/bocklabs/cloudflared
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - version
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64

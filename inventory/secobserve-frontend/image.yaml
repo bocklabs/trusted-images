@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: secobserve-frontend
+spec:
+  version: 2
+  upstream:
+    ref: ghcr.io/secobserve/secobserve-frontend
+    tag: 1.61.0
+    digest: sha256:902e8553f6ab994ed2792e7debc196a0c90f2f2c731412e2096bbed35489363d
+  destination:
+    package: ghcr.io/bocklabs/secobserve-frontend
+  patchPolicy: enabled
+  validation:
+    type: http
+    port: 3000
+    path: /
+    expectStatus: 200
+    durationSeconds: 90
+    command: []
+    expectedPlatforms:
+    - linux/amd64

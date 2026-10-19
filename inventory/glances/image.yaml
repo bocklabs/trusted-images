@@ -1,0 +1,24 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: glances
+spec:
+  version: 2
+  upstream:
+    ref: nicolargo/glances
+    tag: 4.5.8-full
+    digest: sha256:63823bf68687b42afab3bced830d1f157447c0204476cb7a62cb1e5e65dc292c
+  destination:
+    package: ghcr.io/bocklabs/glances
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - /venv/bin/python3.14
+    - -m
+    - glances
+    - --version
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64

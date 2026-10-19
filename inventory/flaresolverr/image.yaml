@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: flaresolverr
+spec:
+  version: 2
+  upstream:
+    ref: flaresolverr/flaresolverr
+    tag: v3.5.2
+    digest: sha256:c80ae007ce2ccdcd217a12426e4f039ef763ff90738c808d38810c3e59323767
+  destination:
+    package: ghcr.io/bocklabs/flaresolverr
+  patchPolicy: enabled
+  validation:
+    type: http
+    port: 8191
+    path: /health
+    expectStatus: 200
+    durationSeconds: 60
+    command: []
+    expectedPlatforms:
+    - linux/amd64

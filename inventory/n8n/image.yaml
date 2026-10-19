@@ -1,0 +1,25 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: n8n
+spec:
+  version: 2
+  upstream:
+    ref: n8nio/n8n
+    tag: 2.44.3
+    digest: sha256:5032941f437e1daa421cad0cc3ea57cd054f0d44a7256b38a0a3fca1b460834a
+  destination:
+    package: ghcr.io/bocklabs/n8n
+  patchPolicy: disabled
+  validation:
+    type: oneshot
+    command:
+    - --version
+    expectedExit: 0
+    timeoutSeconds: 60
+    expectedPlatforms:
+    - linux/amd64
+  patchDisabledReason:
+    class: unsupported
+    detail: Exact n8n Alpine-derived image lacks target APK tooling required for supported
+      stable Copa remediation.
