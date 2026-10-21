@@ -265,10 +265,14 @@ def finding_identity(result: dict, finding: dict, label: str) -> tuple[str, dict
     metadata = finding_metadata(result, finding, severity, source, label)
     if metadata["class"] == "lang-pkgs":
         metadata["package"] = package
+        package_path = finding.get("PkgPath", "")
+        require(isinstance(package_path, str), f"{label}.PkgPath must be a string")
         package = ":".join(
             quote(value, safe="")
             for value in (metadata["class"], metadata["type"], metadata["target"], package)
         )
+        if package_path:
+            package += ":" + quote(package_path, safe="")
     return f"{PLATFORM}|{package}|{cve}", metadata
 
 

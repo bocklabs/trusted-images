@@ -994,6 +994,49 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("conflicting duplicate finding", result.stdout + result.stderr)
 
+    def test_language_package_installations_remain_distinct(self):
+        value = report()
+        paths = (
+            "usr/local/lib/node_modules/npm/node_modules/pacote/package.json",
+            "usr/local/lib/node_modules/npm/node_modules/@npmcli/metavuln-calculator/node_modules/pacote/package.json",
+        )
+        rows = [
+            {**vuln("CVE-2026-9496", pkg_name="pacote"),
+             "InstalledVersion": version, "PkgPath": path}
+            for version, path in zip(("19.0.2", "20.0.1"), paths)
+        ]
+        value["Results"].append({
+            "Target": "Node.js", "Class": "lang-pkgs", "Type": "node-pkg",
+            "Vulnerabilities": rows,
+        })
+        write_json(self.full, value)
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        decision = json.loads(self.out.read_text())
+        self.assertEqual(len(decision["delta"]["remaining"]), 2)
+        rows[0]["InstalledVersion"] = "19.0.3"
+        write_json(self.full, value)
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(self.out.read_text())["delta"]["remaining"],
+                         decision["delta"]["remaining"])
+        rows[1]["PkgPath"] = paths[0]
+        write_json(self.full, value)
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("conflicting duplicate finding", result.stdout + result.stderr)
+
+    def test_malformed_language_package_path_fails_closed(self):
+        value = report()
+        value["Results"].append({
+            "Target": "Node.js", "Class": "lang-pkgs", "Type": "node-pkg",
+            "Vulnerabilities": [{**vuln("CVE-2026-9496"), "PkgPath": []}],
+        })
+        write_json(self.full, value)
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("PkgPath must be a string", result.stdout + result.stderr)
+
     def test_low_severity_new_application_cve_blocks(self):
         application = {
             "Target": "app (pip)",
