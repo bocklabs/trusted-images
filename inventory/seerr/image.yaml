@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: seerr
+spec:
+  version: 2
+  upstream:
+    ref: ghcr.io/seerr-team/seerr
+    tag: v3.5.0
+    digest: sha256:27602401178d54f1964442287b9f23f67a3fa2252645ee8065839ea1c3f69e45
+  destination:
+    package: ghcr.io/bocklabs/seerr
+  patchPolicy: enabled
+  validation:
+    type: http
+    command: []
+    port: 5055
+    path: /api/v1/settings/public
+    expectStatus: 200
+    durationSeconds: 90
+    expectedPlatforms:
+    - linux/amd64

@@ -1,0 +1,24 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: ollama-exporter
+spec:
+  version: 2
+  upstream:
+    ref: lucabecker42/ollama-exporter
+    tag: 1.0.3
+    digest: sha256:9fb1f4c5bc4ff819eb13e148debeb7fd474a4c8956d83d39928ea22d95d3de5c
+  destination:
+    package: ghcr.io/bocklabs/ollama-exporter
+  patchPolicy: enabled
+  validation:
+    type: http
+    command: []
+    port: 8000
+    path: /metrics
+    expectStatus: 200
+    durationSeconds: 90
+    expectedPlatforms:
+    - linux/amd64
+    env:
+      API_TIMEOUT: '1'

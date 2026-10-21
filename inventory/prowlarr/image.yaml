@@ -1,0 +1,24 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: prowlarr
+spec:
+  version: 2
+  upstream:
+    ref: linuxserver/prowlarr
+    tag: 2.6.5
+    digest: sha256:f9151e5bc1025c6d0a630d503210cdcb6bb55a7cc098562609d96a408d838902
+  destination:
+    package: ghcr.io/bocklabs/prowlarr
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - /app/prowlarr/bin/Prowlarr
+    - -?
+    - -data=/tmp/prowlarr-admission
+    - -exitimmediately
+    expectedExit: 0
+    timeoutSeconds: 180
+    expectedPlatforms:
+    - linux/amd64
