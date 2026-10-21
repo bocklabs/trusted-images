@@ -21,6 +21,7 @@ from validate_inventory import entry_failures
 
 ARTIFACT = Path("published-rescan")
 SELECTION_FILE = "selection.json"
+INVALID_PACKAGE_INVENTORY = "invalid scanned package inventory"
 
 
 def git(*args):
@@ -91,10 +92,10 @@ def package_coverage(results):
         packages = result.get("Packages")
         covered = covered and result.get("Class") in ("os-pkgs", "lang-pkgs") and bool(result.get("Type")) and isinstance(packages, list) and bool(packages)
         if packages is not None:
-            require(isinstance(packages, list), "invalid scanned package inventory")
+            require(isinstance(packages, list), INVALID_PACKAGE_INVENTORY)
             for package in packages:
                 require(isinstance(package, dict) and isinstance(package.get("Name"), str)
-                        and package["Name"], "invalid scanned package inventory")
+                        and package["Name"], INVALID_PACKAGE_INVENTORY)
                 go_root = (
                     "Version" not in package and result.get("Class") == "lang-pkgs"
                     and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
@@ -105,7 +106,7 @@ def package_coverage(results):
                     and package["Identifier"].get("PURL") == "pkg:golang/" + package["Name"]
                 )
                 require(go_root or (isinstance(package.get("Version"), str) and package["Version"]),
-                        "invalid scanned package inventory")
+                        INVALID_PACKAGE_INVENTORY)
     return bool(covered)
 
 

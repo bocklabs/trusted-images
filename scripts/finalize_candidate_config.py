@@ -17,7 +17,7 @@ def read_blob(oci: Path, descriptor: dict, media_type: str) -> dict:
             or type(descriptor.get("size")) is not int):
         raise ValueError("invalid OCI descriptor")
     raw = (oci / "blobs/sha256" / digest[7:]).read_bytes()
-    if len(raw) != descriptor["size"] or hashlib.sha256(raw).hexdigest() != digest[7:]:
+    if len(raw) != descriptor["size"] or f"sha256:{hashlib.sha256(raw).hexdigest()}" != digest:
         raise ValueError("OCI descriptor digest or size mismatch")
     value = json.loads(raw)
     if not isinstance(value, dict):

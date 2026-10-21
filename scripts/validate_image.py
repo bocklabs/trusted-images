@@ -36,9 +36,9 @@ Order of operations:
 
 
 Docker container logs are appended incrementally to
-<evidence-dir>/validation-logs/<app>.log on every poll iteration: with
---rm the container object vanishes on exit, so a post-mortem capture after
-a crash would find nothing.
+<evidence-dir>/validation-logs/<app>.log on every poll iteration. Detached
+candidates remain available after exit until the profile captures their logs
+and removes them in its finally block.
 
 Untrusted-image execution happens only inside the ephemeral validate job on
 a GitHub-hosted runner (ADR-004). Every docker interaction routes through a
@@ -320,9 +320,7 @@ def docker_run_args(
     env_map: dict[str, str],
 ) -> list[str]:
     """docker run argv for a candidate container under --network none."""
-    args = ["run", "--rm", "--name", container_name, "--network", "none"]
-    if detached:
-        args.insert(1, "-d")
+    args = ["run", "-d" if detached else "--rm", "--name", container_name, "--network", "none"]
     for key in sorted(env_map):
         args += ["-e", f"{key}={env_map[key]}"]
     return args + [ref_digest, *command]

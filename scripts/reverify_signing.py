@@ -10,43 +10,55 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from promote_signing_gate import IMAGE_RE, PREDICATE_TYPE, SIGNATURE_TYPE, downloaded_rows, field, load_identity, statement_from_verified
+from finding_identity import require
+from promote_signing_gate import (
+    IMAGE_RE,
+    PREDICATE_TYPE,
+    SIGNATURE_TYPE,
+    downloaded_rows,
+    field,
+    load_identity,
+    statement_from_verified,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 SHA256 = re.compile(r"[a-f0-9]{64}\Z")
 VERSION = re.compile(r"v?\d+\.\d+\.\d+\Z")
 SCHEMA = "trusted-images.bocklabs.dev/provenance-v1"
+MAIN_REF = "origin/main"
+APP_RE = re.compile(r"[a-z0-9][a-z0-9._-]*")
+CURRENT_FILE = "current.json"
+IDENTITY_FILE = "config/signing-identity.json"
 
 
 def git(*args):
     return subprocess.check_output(["git", *args], cwd=ROOT)
 
 
-def merged_commit(reference="origin/main"):
+def merged_commit(reference=MAIN_REF):
     commit = git("rev-parse", "--verify", reference + "^{commit}").decode().strip()
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ValueError("provenance lookup needs an immutable merged commit")
-    git("merge-base", "--is-ancestor", commit, "origin/main")
+    git("merge-base", "--is-ancestor", commit, MAIN_REF)
     return commit
 
 
 def record_time(record):
-    value = datetime.fromisoformat(record["promoted_at"].replace("Z", "+00:00"))
+    value = datetime.fromisoformat(record["promoted_at"])
     if value.tzinfo is None:
         raise ValueError("publication timestamp requires timezone")
     return value
 
 
 def record_identity(record, app):
-    if not isinstance(record, dict):
-        raise ValueError("provenance record must be an object")
+    require(isinstance(record, dict), "provenance record must be an object")
     for field_name in ("internal", "upstream", "policy", "validation"):
         if field_name in record and not isinstance(record[field_name], dict):
             raise ValueError(f"provenance {field_name} must be an object")
     internal = record.get("internal", {})
     upstream = record.get("upstream", {})
     if (record.get("schema") != SCHEMA or record.get("app") != app
-            or not isinstance(app, str) or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", app)
+            or not isinstance(app, str) or not APP_RE.fullmatch(app)
             or internal.get("package") != f"ghcr.io/bocklabs/{app}"
             or not isinstance(upstream.get("tag"), str)
             or not re.fullmatch(re.escape(upstream["tag"]) + r"-bocklabs\.[1-9][0-9]*", str(internal.get("tag", "")))
@@ -64,13 +76,12 @@ def verified_record(record, app, identity):
     signing = record.get("signing")
     if signing is None:
         return False
-    if not isinstance(signing, dict):
-        raise ValueError("invalid signing block")
+    require(isinstance(signing, dict), "invalid signing block")
     if signing.get("result") == "fail":
         if record.get("policy", {}).get("eligible") is not False or not signing.get("failure"):
             raise ValueError("invalid quarantine record")
         return False
-    signed_record(record, Path("provenance") / app / "current.json", identity)
+    signed_record(record, Path("provenance") / app / CURRENT_FILE, identity)
     return True
 
 
@@ -124,9 +135,9 @@ def historical_rows(commit, path, app, tag):
 
 
 def resolve_record(app, tag, commit=None):
-    if not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", app) or not re.fullmatch(r"[^/]+-bocklabs\.[1-9][0-9]*", tag):
+    if not APP_RE.fullmatch(app) or not re.fullmatch(r"[^/]+-bocklabs\.[1-9]\d*", tag, flags=re.ASCII):
         raise ValueError("invalid exact provenance lookup")
-    commit = merged_commit(commit or "origin/main")
+    commit = merged_commit(commit or MAIN_REF)
     paths = (f"provenance/{app}/current.json", f"provenance/{app}/{tag}.json")
     current = git_record(commit, paths[0])
     if current is not None and record_identity(json.loads(current), app)[0] == tag:
@@ -142,7 +153,7 @@ def resolve_record(app, tag, commit=None):
 def load_current(app, commit=None):
     data = git_record(commit, f"provenance/{app}/current.json") if commit else None
     if commit is None:
-        path = ROOT / "provenance" / app / "current.json"
+        path = ROOT / "provenance" / app / CURRENT_FILE
         if path.is_symlink() or path.parent.is_symlink():
             raise ValueError("unsafe current provenance file")
         data = path.read_bytes() if path.is_file() else None
@@ -154,7 +165,7 @@ def load_current(app, commit=None):
 
 
 def write_current(path, record, identity):
-    if path.name != "current.json" or path.parent.parent.name != "provenance" or path.is_symlink():
+    if path.name != CURRENT_FILE or path.parent.parent.name != "provenance" or path.is_symlink():
         raise ValueError("current provenance must use provenance/<app>/current.json")
     app = path.parent.name
     previous = json.loads(path.read_bytes()) if path.is_file() else None
@@ -171,14 +182,14 @@ def migrate_current(identity):
     grouped: dict[str, list[bytes]] = {}
     paths = sorted((ROOT / "provenance").glob("*/*.json"))
     for path in paths:
-        if path.is_symlink() or path.name == "current.json":
+        if path.is_symlink() or path.name == CURRENT_FILE:
             raise ValueError("migration requires unchanged regular versioned inputs")
         if path.stem != record_identity(json.loads(path.read_bytes()), path.parent.name)[0]:
             raise ValueError("migration tag/path disagreement")
         grouped.setdefault(path.parent.name, []).append(path.read_bytes())
     selected = {app: selected_snapshot(rows, app, identity) for app, rows in grouped.items()}
     for app, data in selected.items():
-        (ROOT / "provenance" / app / "current.json").write_bytes(data)
+        (ROOT / "provenance" / app / CURRENT_FILE).write_bytes(data)
     for path in paths:
         path.unlink()
     return selected
@@ -190,7 +201,7 @@ def validate_current_tree(previous_apps, identity):
         raise ValueError("unsafe provenance directory")
     current_paths = sorted((ROOT / "provenance").rglob("*.json"))
     for path in current_paths:
-        if path.name != "current.json" or path.is_symlink() or len(path.relative_to(ROOT).parts) != 3:
+        if path.name != CURRENT_FILE or path.is_symlink() or len(path.relative_to(ROOT).parts) != 3:
             raise ValueError("live provenance must contain only one regular current.json per app")
         record_identity(json.loads(path.read_bytes()), path.parent.name)
         if path.parent.name not in previous_apps and not verified_record(json.loads(path.read_bytes()), path.parent.name, identity):
@@ -198,7 +209,7 @@ def validate_current_tree(previous_apps, identity):
 
 
 def validate_previous_current(app, rows, was_current, identity):
-    path = ROOT / "provenance" / app / "current.json"
+    path = ROOT / "provenance" / app / CURRENT_FILE
     if not path.is_file():
         raise ValueError("current provenance missing")
     original = selected_snapshot(rows, app, identity)
@@ -217,7 +228,7 @@ def validate_previous_current(app, rows, was_current, identity):
 
 def check_history(base):
     paths = git("ls-tree", "-r", "--name-only", base, "--", "provenance").decode().splitlines()
-    identity = load_identity(ROOT / "config/signing-identity.json")
+    identity = load_identity(ROOT / IDENTITY_FILE)
     previous_apps: dict[str, list[bytes]] = {}
     for name in paths:
         if name.endswith(".json"):
@@ -231,12 +242,10 @@ def check_history(base):
 
 
 def signed_record(record, path, identity) -> tuple[str, str, str]:
-    if not isinstance(record, dict):
-        raise ValueError("signed provenance record must be an object")
+    require(isinstance(record, dict), "signed provenance record must be an object")
     record_identity(record, record.get("app"))
     signing = record.get("signing")
-    if not isinstance(signing, dict):
-        raise ValueError("provenance signing must be an object")
+    require(isinstance(signing, dict), "provenance signing must be an object")
     for field_name in ("image_signature", "sbom_attestation", "tools", "rekor"):
         if field_name in signing and not isinstance(signing[field_name], dict):
             raise ValueError(f"provenance signing.{field_name} must be an object")
@@ -248,7 +257,7 @@ def signed_record(record, path, identity) -> tuple[str, str, str]:
     rekor = signing.get("rekor", {})
     image = f"{internal.get('package')}@{internal.get('digest')}"
     if (record.get("schema") != "trusted-images.bocklabs.dev/provenance-v1"
-            or not isinstance(app, str) or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", app)
+            or not isinstance(app, str) or not APP_RE.fullmatch(app)
             or image != f"ghcr.io/bocklabs/{app}@{internal.get('digest')}"
             or not IMAGE_RE.fullmatch(image)
             or signing.get("result") != "pass" or record.get("policy", {}).get("eligible") is not True
@@ -280,8 +289,7 @@ def signed_records(base, identity) -> list[tuple[str, str, str]]:
         if "signing" not in record:
             continue
         signing = record["signing"]
-        if not isinstance(signing, dict):
-            raise ValueError(f"invalid signing block: {path}")
+        require(isinstance(signing, dict), f"invalid signing block: {path}")
         if signing.get("result") == "fail":
             if record.get("policy", {}).get("eligible") is not False or not signing.get("failure"):
                 raise ValueError(f"invalid quarantine record: {path}")
@@ -335,16 +343,13 @@ def verify(image, signature_hash, attestation_hash, identity):
 def reverify(args):
     if args.resolve:
         data = resolve_record(args.resolve, args.tag, merged_commit(args.commit))
-        if data is None:
-            sys.stdout.write("null\n")
-        else:
-            sys.stdout.buffer.write(data)
+        sys.stdout.buffer.write(b"null\n" if data is None else data)
         return
     if args.migrate:
-        migrate_current(load_identity(ROOT / "config/signing-identity.json"))
+        migrate_current(load_identity(ROOT / IDENTITY_FILE))
         return
     if args.compare:
-        identity = load_identity(ROOT / "config/signing-identity.json")
+        identity = load_identity(ROOT / IDENTITY_FILE)
         candidate = json.loads(args.compare.read_bytes())
         previous = json.loads(args.previous.read_bytes()) if args.previous and args.previous.is_file() else None
         print("update" if replacement(previous, candidate, candidate["app"], identity) else "unchanged")
@@ -352,7 +357,7 @@ def reverify(args):
     if args.history_only:
         check_history(args.history_only)
         return
-    identity = load_identity(ROOT / "config/signing-identity.json")
+    identity = load_identity(ROOT / IDENTITY_FILE)
     if args.record:
         record = json.loads(args.record.read_text())
         records = [signed_record(record, args.record, identity)]
@@ -379,7 +384,7 @@ def main():
     mode.add_argument("--compare", type=Path)
     parser.add_argument("--previous", type=Path)
     parser.add_argument("--tag")
-    parser.add_argument("--commit", default="origin/main")
+    parser.add_argument("--commit", default=MAIN_REF)
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
     if args.out and not args.record:

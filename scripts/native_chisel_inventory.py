@@ -225,7 +225,8 @@ def signed_indexes(directory, suite, codename, architecture):
     try:
         subprocess.run(["gpgv", "--keyring", KEYRING, str(release)], check=True, capture_output=True)
     except subprocess.CalledProcessError as error:
-        detail = (error.stderr or b"").decode(errors="replace").strip()
+        detail = error.stderr or b""
+        detail = detail.decode(errors="replace").strip()
         raise ValueError(f"Ubuntu signature verification failed: {detail}") from error
     text = release.read_text()
     require(f"\nCodename: {codename}\n" in text and "\nOrigin: Ubuntu\n" in text
