@@ -1,0 +1,1086 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "homepage",
+  "upstream": {
+    "ref": "ghcr.io/gethomepage/homepage",
+    "tag": "v2.6.0",
+    "digest": "sha256:3e38fe788223cb46a3ce1f046ef11667b40f7707fdca0dcbfa3f86c5c42bf1e8",
+    "index_digest": "sha256:3e38fe788223cb46a3ce1f046ef11667b40f7707fdca0dcbfa3f86c5c42bf1e8",
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "selected_platform": "linux/amd64",
+    "selected_child_digest": "sha256:4d522c441303b630524079ac630b60e00d0e536752c922293043a31d1baabfb6"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/homepage",
+    "tag": "v2.6.0-bocklabs.1",
+    "digest": "sha256:08e00ed16246ac84d5eb0e928b5d9dc8f7bee56e6f2791605dbc1fa0cd82596f",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39548945030",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.76.0",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "copa": "0.15.0",
+    "skopeo": "v1.22.2",
+    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:8629a880fe32cb8175a9a1629fa717a10eb1b74ac96d0894d84e4cb1694b0d0f",
+      "updated_at": "2026-10-20 07:17:35.368599961 +0000 UTC"
+    },
+    "full_report_sha256": "fee5e8a647cc518a465ea2fb1f036f015a0ec5df9b98b4c61b14cc8c5c6f2042",
+    "copa_report_sha256": "afab85f42587fb3c55688552d589b7b9a1b61f404de0ee926dfee58e2b716f56",
+    "decision_sha256": "c2a08c01539886c19080d8451416264567442b924c13f3dd897358a68042a722",
+    "reports": {
+      "before_sha256": "c1d97c13110ef02df1ea71638956e79d0bde91d5c22b9594f2e555b5ac425225",
+      "final_sha256": "fee5e8a647cc518a465ea2fb1f036f015a0ec5df9b98b4c61b14cc8c5c6f2042",
+      "fixable_sha256": "afab85f42587fb3c55688552d589b7b9a1b61f404de0ee926dfee58e2b716f56"
+    },
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "ghcr.io/gethomepage/homepage:v2.6.0"
+    }
+  },
+  "policy": {
+    "kev": {
+      "matches": [],
+      "catalog": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "sha256": "a3591cd3f9b803d7ba43782fdbc9c89feb66bca6d6ae3dc73689667e77645a7f",
+        "fetched_at": "2026-10-21T05:22:57Z",
+        "catalogVersion": "2026.10.20",
+        "dateReleased": "2026-10-20T19:00:31.8765Z"
+      }
+    },
+    "acceptance": null,
+    "patching": {
+      "disabled": false
+    },
+    "copa": {
+      "classification": "succeeded",
+      "original_child_input": true,
+      "mode": "comprehensive",
+      "release": "0.15.0",
+      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
+      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
+      "limitation": null
+    },
+    "supersedes": {
+      "higher_upstream": false,
+      "original_child_selected": false
+    },
+    "outcome": "eligible with no-fix warnings: CVE-2026-48758:MEDIUM:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-93748:HIGH:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-42338:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-9496:HIGH:ghsa,CVE-2026-9496:HIGH:ghsa,CVE-2026-33671:HIGH:ghsa,CVE-2026-33672:MEDIUM:ghsa,CVE-2026-104844:MEDIUM:ghsa,CVE-2026-9358:LOW:ghsa,CVE-2026-48815:HIGH:ghsa",
+    "eligible": true,
+    "warnings": [
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:%40sigstore%2Fcore:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2F%40sigstore%2Fcore%2Fpackage.json|CVE-2026-48758",
+        "platform": "linux/amd64",
+        "package": "@sigstore/core",
+        "cve": "CVE-2026-48758",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.0",
+        "fixed_version": "3.2.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102276",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102276",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.10, 3.0.7, 2.1.5, 1.1.19",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102277",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102277",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.12, 3.0.9, 2.1.7, 1.1.21",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102278",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102278",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.11, 3.0.8, 2.1.6, 1.1.20",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-13149",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-13149",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.7, 1.1.16, 2.1.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-14257",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-14257",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.8, 3.0.3, 2.1.3, 1.1.17",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-33750",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-33750",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.5, 3.0.2, 2.0.3, 1.1.13",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-69152",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-69152",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "1.1.18, 2.1.4, 3.0.6, 5.0.9",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:http-cache-semantics:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fhttp-cache-semantics%2Fpackage.json|CVE-2026-93748",
+        "platform": "linux/amd64",
+        "package": "http-cache-semantics",
+        "cve": "CVE-2026-93748",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.2.0",
+        "fixed_version": "",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101911",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101911",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.7.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101912",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101912",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.7.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101913",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101913",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.5.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-42338",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-42338",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.1.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-69192",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-69192",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.3.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:pacote:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2F%40npmcli%2Fmetavuln-calculator%2Fnode_modules%2Fpacote%2Fpackage.json|CVE-2026-9496",
+        "platform": "linux/amd64",
+        "package": "pacote",
+        "cve": "CVE-2026-9496",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "20.0.1",
+        "fixed_version": "21.5.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:pacote:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpacote%2Fpackage.json|CVE-2026-9496",
+        "platform": "linux/amd64",
+        "package": "pacote",
+        "cve": "CVE-2026-9496",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "19.0.2",
+        "fixed_version": "21.5.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:picomatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpicomatch%2Fpackage.json|CVE-2026-33671",
+        "platform": "linux/amd64",
+        "package": "picomatch",
+        "cve": "CVE-2026-33671",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.0.3",
+        "fixed_version": "4.0.4, 3.0.2, 2.3.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:picomatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpicomatch%2Fpackage.json|CVE-2026-33672",
+        "platform": "linux/amd64",
+        "package": "picomatch",
+        "cve": "CVE-2026-33672",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.0.3",
+        "fixed_version": "4.0.4, 3.0.2, 2.3.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:postcss-selector-parser:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpostcss-selector-parser%2Fpackage.json|CVE-2026-104844",
+        "platform": "linux/amd64",
+        "package": "postcss-selector-parser",
+        "cve": "CVE-2026-104844",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "7.1.1",
+        "fixed_version": "7.1.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:postcss-selector-parser:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpostcss-selector-parser%2Fpackage.json|CVE-2026-9358",
+        "platform": "linux/amd64",
+        "package": "postcss-selector-parser",
+        "cve": "CVE-2026-9358",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "7.1.1",
+        "fixed_version": "6.1.3, 7.1.3",
+        "severity": "LOW",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:sigstore:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fsigstore%2Fpackage.json|CVE-2026-48815",
+        "platform": "linux/amd64",
+        "package": "sigstore",
+        "cve": "CVE-2026-48815",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "3.1.0",
+        "fixed_version": "4.1.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      }
+    ]
+  },
+  "cves": {
+    "before": [
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:%40sigstore%2Fcore:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2F%40sigstore%2Fcore%2Fpackage.json|CVE-2026-48758",
+        "platform": "linux/amd64",
+        "package": "@sigstore/core",
+        "cve": "CVE-2026-48758",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.0",
+        "fixed_version": "3.2.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102276",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102276",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.10, 3.0.7, 2.1.5, 1.1.19",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102277",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102277",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.12, 3.0.9, 2.1.7, 1.1.21",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102278",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102278",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.11, 3.0.8, 2.1.6, 1.1.20",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-13149",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-13149",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.7, 1.1.16, 2.1.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-14257",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-14257",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.8, 3.0.3, 2.1.3, 1.1.17",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-33750",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-33750",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.5, 3.0.2, 2.0.3, 1.1.13",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-69152",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-69152",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "1.1.18, 2.1.4, 3.0.6, 5.0.9",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:http-cache-semantics:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fhttp-cache-semantics%2Fpackage.json|CVE-2026-93748",
+        "platform": "linux/amd64",
+        "package": "http-cache-semantics",
+        "cve": "CVE-2026-93748",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.2.0",
+        "fixed_version": "",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101911",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101911",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.7.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101912",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101912",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.7.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101913",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101913",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.5.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-42338",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-42338",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.1.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-69192",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-69192",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.3.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:pacote:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2F%40npmcli%2Fmetavuln-calculator%2Fnode_modules%2Fpacote%2Fpackage.json|CVE-2026-9496",
+        "platform": "linux/amd64",
+        "package": "pacote",
+        "cve": "CVE-2026-9496",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "20.0.1",
+        "fixed_version": "21.5.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:pacote:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpacote%2Fpackage.json|CVE-2026-9496",
+        "platform": "linux/amd64",
+        "package": "pacote",
+        "cve": "CVE-2026-9496",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "19.0.2",
+        "fixed_version": "21.5.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:picomatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpicomatch%2Fpackage.json|CVE-2026-33671",
+        "platform": "linux/amd64",
+        "package": "picomatch",
+        "cve": "CVE-2026-33671",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.0.3",
+        "fixed_version": "4.0.4, 3.0.2, 2.3.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:picomatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpicomatch%2Fpackage.json|CVE-2026-33672",
+        "platform": "linux/amd64",
+        "package": "picomatch",
+        "cve": "CVE-2026-33672",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.0.3",
+        "fixed_version": "4.0.4, 3.0.2, 2.3.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:postcss-selector-parser:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpostcss-selector-parser%2Fpackage.json|CVE-2026-104844",
+        "platform": "linux/amd64",
+        "package": "postcss-selector-parser",
+        "cve": "CVE-2026-104844",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "7.1.1",
+        "fixed_version": "7.1.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:postcss-selector-parser:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpostcss-selector-parser%2Fpackage.json|CVE-2026-9358",
+        "platform": "linux/amd64",
+        "package": "postcss-selector-parser",
+        "cve": "CVE-2026-9358",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "7.1.1",
+        "fixed_version": "6.1.3, 7.1.3",
+        "severity": "LOW",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:sigstore:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fsigstore%2Fpackage.json|CVE-2026-48815",
+        "platform": "linux/amd64",
+        "package": "sigstore",
+        "cve": "CVE-2026-48815",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "3.1.0",
+        "fixed_version": "4.1.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|zlib|CVE-2026-85091",
+        "platform": "linux/amd64",
+        "package": "zlib",
+        "cve": "CVE-2026-85091",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/gethomepage/homepage@sha256:4d522c441303b630524079ac630b60e00d0e536752c922293043a31d1baabfb6 (alpine 3.24.2)",
+        "installed_version": "1.3.2-r0",
+        "fixed_version": "1.3.2-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      }
+    ],
+    "final": [
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:%40sigstore%2Fcore:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2F%40sigstore%2Fcore%2Fpackage.json|CVE-2026-48758",
+        "platform": "linux/amd64",
+        "package": "@sigstore/core",
+        "cve": "CVE-2026-48758",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.0",
+        "fixed_version": "3.2.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102276",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102276",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.10, 3.0.7, 2.1.5, 1.1.19",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102277",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102277",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.12, 3.0.9, 2.1.7, 1.1.21",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-102278",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-102278",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.11, 3.0.8, 2.1.6, 1.1.20",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-13149",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-13149",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.7, 1.1.16, 2.1.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-14257",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-14257",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.8, 3.0.3, 2.1.3, 1.1.17",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-33750",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-33750",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "5.0.5, 3.0.2, 2.0.3, 1.1.13",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:brace-expansion:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fbrace-expansion%2Fpackage.json|CVE-2026-69152",
+        "platform": "linux/amd64",
+        "package": "brace-expansion",
+        "cve": "CVE-2026-69152",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "2.0.2",
+        "fixed_version": "1.1.18, 2.1.4, 3.0.6, 5.0.9",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:http-cache-semantics:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fhttp-cache-semantics%2Fpackage.json|CVE-2026-93748",
+        "platform": "linux/amd64",
+        "package": "http-cache-semantics",
+        "cve": "CVE-2026-93748",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.2.0",
+        "fixed_version": "",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101911",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101911",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.7.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101912",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101912",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.7.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101913",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-101913",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.5.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-42338",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-42338",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.1.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-69192",
+        "platform": "linux/amd64",
+        "package": "ip-address",
+        "cve": "CVE-2026-69192",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.1.0",
+        "fixed_version": "10.3.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:pacote:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2F%40npmcli%2Fmetavuln-calculator%2Fnode_modules%2Fpacote%2Fpackage.json|CVE-2026-9496",
+        "platform": "linux/amd64",
+        "package": "pacote",
+        "cve": "CVE-2026-9496",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "20.0.1",
+        "fixed_version": "21.5.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:pacote:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpacote%2Fpackage.json|CVE-2026-9496",
+        "platform": "linux/amd64",
+        "package": "pacote",
+        "cve": "CVE-2026-9496",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "19.0.2",
+        "fixed_version": "21.5.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:picomatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpicomatch%2Fpackage.json|CVE-2026-33671",
+        "platform": "linux/amd64",
+        "package": "picomatch",
+        "cve": "CVE-2026-33671",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.0.3",
+        "fixed_version": "4.0.4, 3.0.2, 2.3.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:picomatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpicomatch%2Fpackage.json|CVE-2026-33672",
+        "platform": "linux/amd64",
+        "package": "picomatch",
+        "cve": "CVE-2026-33672",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "4.0.3",
+        "fixed_version": "4.0.4, 3.0.2, 2.3.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:postcss-selector-parser:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpostcss-selector-parser%2Fpackage.json|CVE-2026-104844",
+        "platform": "linux/amd64",
+        "package": "postcss-selector-parser",
+        "cve": "CVE-2026-104844",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "7.1.1",
+        "fixed_version": "7.1.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:postcss-selector-parser:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fpostcss-selector-parser%2Fpackage.json|CVE-2026-9358",
+        "platform": "linux/amd64",
+        "package": "postcss-selector-parser",
+        "cve": "CVE-2026-9358",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "7.1.1",
+        "fixed_version": "6.1.3, 7.1.3",
+        "severity": "LOW",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:sigstore:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fsigstore%2Fpackage.json|CVE-2026-48815",
+        "platform": "linux/amd64",
+        "package": "sigstore",
+        "cve": "CVE-2026-48815",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "3.1.0",
+        "fixed_version": "4.1.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      }
+    ],
+    "summary": {
+      "resolved": [
+        "CVE-2026-85091"
+      ],
+      "remaining": [
+        "CVE-2026-101911",
+        "CVE-2026-101912",
+        "CVE-2026-101913",
+        "CVE-2026-102276",
+        "CVE-2026-102277",
+        "CVE-2026-102278",
+        "CVE-2026-104844",
+        "CVE-2026-13149",
+        "CVE-2026-14257",
+        "CVE-2026-33671",
+        "CVE-2026-33672",
+        "CVE-2026-33750",
+        "CVE-2026-42338",
+        "CVE-2026-48758",
+        "CVE-2026-48815",
+        "CVE-2026-69152",
+        "CVE-2026-69192",
+        "CVE-2026-9358",
+        "CVE-2026-93748",
+        "CVE-2026-9496"
+      ],
+      "introduced": [],
+      "unresolved_fixable": []
+    }
+  },
+  "packages": {
+    "changes": [
+      {
+        "ecosystem": "alpine",
+        "name": "ca-certificates-bundle",
+        "change": "upgraded",
+        "before": "20260909-r0",
+        "after": "20261020-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libcrypto3",
+        "change": "upgraded",
+        "before": "3.5.8-r0",
+        "after": "3.5.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libssl3",
+        "change": "upgraded",
+        "before": "3.5.8-r0",
+        "after": "3.5.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "zlib",
+        "change": "upgraded",
+        "before": "1.3.2-r0",
+        "after": "1.3.2-r1"
+      }
+    ],
+    "downgrades": [],
+    "downgrade_blocked": false
+  },
+  "validation": {
+    "profile": "http",
+    "result": "pass",
+    "params": {
+      "type": "http",
+      "port": 3000,
+      "path": "/api/healthcheck",
+      "expectStatus": 200,
+      "durationSeconds": 60,
+      "timeoutSeconds": 60,
+      "expectedExit": 0,
+      "command": [],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-10-21T05:21:57Z",
+      "finished_at": "2026-10-21T05:22:57Z",
+      "duration_seconds": 60.1
+    },
+    "health": {
+      "defined": true,
+      "final_status": "healthy"
+    },
+    "runner": "GitHub Actions 1000013241",
+    "baseline": {
+      "entrypoint": [
+        "docker-entrypoint.sh"
+      ],
+      "cmd": [
+        "node",
+        "server.js"
+      ],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "NODE_VERSION=22.23.3",
+        "YARN_VERSION=1.22.22",
+        "NODE_ENV=production",
+        "HOSTNAME=::",
+        "PORT=3000"
+      ]
+    }
+  },
+  "promoted_at": "2026-10-21T05:24:56Z",
+  "notes": "",
+  "signing": {
+    "result": "pass",
+    "image_signature": {
+      "bundle_sha256": "96563320fcc0030e3811227e3ada27995f49422cfb1c10ea8549c224e011ebae",
+      "attachment_sha256": "a403f25e8ac7c32b9461d4cdde2963f2f3cf01f09a08e72993103201940289ac",
+      "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+      "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
+    },
+    "sbom_attestation": {
+      "predicate_type": "https://cyclonedx.org/bom",
+      "predicate_sha256": "9647ef52be690c48568b92021f92b17c1154d8815fd69b01110a8d64af443f23",
+      "bundle_sha256": "08b0b76508b2849fa0c14910129e1e126abd8f5656d211a142e6c6e392695d25",
+      "attachment_sha256": "48f41b6b0b4ea0f2b2118e93f2c869c71ff4b0c4f3d5c140228d4f0554349d8c"
+    },
+    "rekor": {
+      "signature": {
+        "inclusion_root_hash": "nzqHgr/qEJQV6Ymg+pDno7wVhRd75y8s0iuquiXY+GE=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3350289999,
+        "signed_entry_timestamp": "MEYCIQCKpnwhLg+txEI7EvfWdo+7yNN6MocBhot4HVzZeYDN7AIhAJdoH1MVz2AZwm4L23jUkDA+MimqgzAcI3kuV0L9/25y"
+      },
+      "sbom_attestation": {
+        "inclusion_root_hash": "6CvAn5B9CaB2reyXpMHCQ80sfAwZ/uwGdrMXP+syfjI=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3350291449,
+        "signed_entry_timestamp": "MEUCIEDM6/FA9ibwvyRw9W606X7Hz5EEjr5RSbyr3cqBLJHyAiEArTUBxaSdVO5fHepZbliFs1Z1FonxhMWJ+IikR+ITduE="
+      }
+    },
+    "tools": {
+      "cosign": "v3.1.3",
+      "trivy": "0.76.0"
+    }
+  }
+}
