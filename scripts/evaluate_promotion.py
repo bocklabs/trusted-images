@@ -50,6 +50,7 @@ CVE_RE = re.compile(r"^CVE-\d{4}-\d{4,}$")
 LEVELS = ("LOW", "MEDIUM", "HIGH")
 POLICY_NOW = "policy now"
 KEV_CATALOG = "KEV catalog"
+NATIVE_REPORT = "native report"
 IMAGE_MANIFEST_TYPES = {
     "application/vnd.oci.image.manifest.v1+json",
     "application/vnd.docker.distribution.manifest.v2+json",
@@ -520,7 +521,7 @@ def cve_groups(groups: dict) -> dict:
 def validate_arch_inventory(report: dict) -> None:
     if report.get("ArchScanner") is not None or any(
         row.get("Class") == "os-pkgs" and row.get("Type") == "archlinux"
-        for row in validate_report_results(report, "native report", False)
+        for row in validate_report_results(report, NATIVE_REPORT, False)
     ):
         raise ValueError("Arch OS rows require dedicated independent evidence")
 
@@ -531,12 +532,12 @@ def validate_native_inventory(report: dict, path: Path) -> None:
     require(isinstance(metadata, dict), "native report Metadata must be an object")
     os_metadata = metadata.get("OS")
     if isinstance(os_metadata, dict) and os_metadata.get("Family") == "ubuntu":
-        require(package_inventory(report, "native report"), "Ubuntu report lacks OS package inventory")
+        require(package_inventory(report, NATIVE_REPORT), "Ubuntu report lacks OS package inventory")
     marker = report.get("NativeChisel")
     sbom_packages = any(
         isinstance(package, dict) and isinstance(package.get("Identifier"), dict)
         and package["Identifier"].get("BOMRef")
-        for result in validate_report_results(report, "native report", False)
+        for result in validate_report_results(report, NATIVE_REPORT, False)
         if result.get("Class") == "os-pkgs" and isinstance(result.get("Packages"), list)
         for package in result["Packages"]
     )

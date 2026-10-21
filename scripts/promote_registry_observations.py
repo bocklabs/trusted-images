@@ -1,16 +1,17 @@
 """Merge registry observations with trusted provenance."""
 
 import json
-import sys
 import re
+import sys
 from pathlib import Path
+
 from reverify_signing import merged_commit, resolve_record
 
 rows = []
 commit = merged_commit()
 for line in Path("registry-observations.tsv").read_text(encoding="utf-8").splitlines():
     tag, digest = line.split("\t")
-    provenance = resolve_record(sys.argv[1], tag, commit) if re.fullmatch(r"[^/]+-bocklabs\.[1-9][0-9]*", tag) else None
+    provenance = resolve_record(sys.argv[1], tag, commit) if re.fullmatch(r"[^/]+-bocklabs\.[1-9]\d*", tag, flags=re.ASCII) else None
     if provenance is not None:
         record = json.loads(provenance)
         if (

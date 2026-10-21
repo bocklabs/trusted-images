@@ -332,6 +332,7 @@ class ValidateImageTests(unittest.TestCase):
             {
                 "image_inspect": image_inspect(),
                 "inspect_states": [{"State": {"Running": False}}],
+                "logs": "application startup failed",
             }
         )
         result = self.run_cli("process", ("--duration-seconds", "2"))
@@ -342,7 +343,14 @@ class ValidateImageTests(unittest.TestCase):
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "fail")
         self.assert_common_evidence(ev)
-        self.assert_container_removed()
+        calls = self.spool_entries()
+        candidate = next(call for call in calls if call[0] == "run")
+        self.assertIn("-d", candidate)
+        self.assertNotIn("--rm", candidate)
+        name = candidate[candidate.index("--name") + 1]
+        self.assertLess(calls.index(["logs", name]), calls.index(["rm", "-f", name]))
+        log_file = self.evidence_dir / "validation-logs" / f"{APP}.log"
+        self.assertIn("application startup failed", log_file.read_text())
 
     def test_http_crash_after_probe_fails(self) -> None:
         self.write_scenario(
