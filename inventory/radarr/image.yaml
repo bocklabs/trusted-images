@@ -1,0 +1,24 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: radarr
+spec:
+  version: 2
+  upstream:
+    ref: linuxserver/radarr
+    tag: 6.4.4
+    digest: sha256:ea6822c956d26db648b237919f41340318f32e5b7dcc4ba702cf256a0f5f3c12
+  destination:
+    package: ghcr.io/bocklabs/radarr
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - /app/radarr/bin/Radarr
+    - -?
+    - -data=/tmp/radarr-admission
+    - -exitimmediately
+    expectedExit: 0
+    timeoutSeconds: 180
+    expectedPlatforms:
+    - linux/amd64

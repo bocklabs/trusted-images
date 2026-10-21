@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: qbittorrent
+spec:
+  version: 2
+  upstream:
+    ref: linuxserver/qbittorrent
+    tag: 5.2.4
+    digest: sha256:97333cc1ccf903e0bbcd8eb67e3332e4970e9c1ecabe145e499e9c0847ebcaed
+  destination:
+    package: ghcr.io/bocklabs/qbittorrent
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - /app/qbittorrent-nox
+    - --version
+    expectedExit: 0
+    timeoutSeconds: 180
+    expectedPlatforms:
+    - linux/amd64

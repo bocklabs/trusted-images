@@ -1,0 +1,23 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: bazarr
+spec:
+  version: 2
+  upstream:
+    ref: linuxserver/bazarr
+    tag: 1.6.2
+    digest: sha256:fb0437897eaa7f96cf6ac42f795f8dcc208d34ec969eac5d366454e767304eb9
+  destination:
+    package: ghcr.io/bocklabs/bazarr
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - python3
+    - /app/bazarr/bin/bazarr.py
+    - --help
+    expectedExit: 0
+    timeoutSeconds: 180
+    expectedPlatforms:
+    - linux/amd64

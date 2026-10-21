@@ -11,6 +11,7 @@ on:
         options:
           # apps-begin
           - alpine
+          - bazarr
           - caddy
           - cadvisor
           - cloudflared
@@ -19,6 +20,7 @@ on:
           - docling-serve-cu124
           - flaresolverr
           - glances
+          - gluetun
           - grafana
           - hindsight
           - homepage
@@ -29,16 +31,22 @@ on:
           - node-exporter
           - oikb
           - ollama
+          - ollama-exporter
           - open-webui
           - pgvector
           - pipelines
           - portainer-ce
           - postgres-exporter
           - prometheus
+          - prowlarr
           - python
+          - qbittorrent
+          - radarr
           - redis-exporter
           - searxng
           - secobserve-frontend
+          - seerr
+          - sonarr
           - tika
           - valkey
           # apps-end
