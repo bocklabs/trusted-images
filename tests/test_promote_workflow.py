@@ -302,10 +302,12 @@ class PromoteWorkflowTests(unittest.TestCase):
             (root / "trivy-after-full.json").write_text(json.dumps({"Results": [{"Packages": [
                 {"Name": "deb", "Version": "2", "Identifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
                 {"Name": "lang", "Version": "3", "Identifier": {"PURL": "pkg:pypi/lang@3"}},
+                *[{"Name": "org.example:artifact", "Version": "1", "Identifier": {"PURL": "pkg:maven/org.example/artifact@1"}} for _ in range(2)],
                 *[{"Name": "@scope/package", "Version": "4", "Identifier": {"PURL": "pkg:npm/%40scope/package@4"}} for _ in range(2)],
             ], "Vulnerabilities": [
                 {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
                 {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:pypi/lang@3"}},
+                {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:maven/org.example/artifact@1"}},
             ]}]}))
             cdx = root / "fixture-cdx.json"
             cdx.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [
@@ -313,10 +315,13 @@ class PromoteWorkflowTests(unittest.TestCase):
                 {"type": "application", "name": "bin/exporter"},
                 {"type": "library", "name": "deb", "version": "2-1", "purl": "pkg:deb/debian/deb@2-1?arch=amd64", "bom-ref": "deb-ref"},
                 {"type": "library", "name": "lang", "version": "3", "purl": "pkg:pypi/lang@3", "bom-ref": "lang-ref"},
-                *[{"type": "library", "group": "@scope", "name": "package", "version": "4", "purl": "pkg:npm/%40scope/package@4", "bom-ref": f"npm-ref-{i}"} for i in range(2)]],
+                *[{"type": "library", "group": "@scope", "name": "package", "version": "4", "purl": "pkg:npm/%40scope/package@4", "bom-ref": f"npm-ref-{i}"} for i in range(2)],
+                *[{"type": "library", "group": "org.example", "name": "artifact", "version": "1", "purl": "pkg:maven/org.example/artifact@1", "bom-ref": f"maven-ref-{i}"} for i in range(2)]],
                 "vulnerabilities": [{"id": "CVE-2026-0001", "affects": [
                     {"ref": "deb-ref"},
                     {"ref": "lang-ref"},
+                    {"ref": "maven-ref-0"},
+                    {"ref": "maven-ref-1"},
                 ]}]}))
             fake_trivy = root / "trivy"
             fake_trivy.write_text('#!/bin/sh\ncp "$CDX_FIXTURE" trivy-full.cdx.json\n')
@@ -345,7 +350,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("components differ", result.stdout)
                     changed = json.loads(json.dumps(original))
-                    changed["components"][-1]["purl"] = "pkg:npm/%40scope/package@5"
+                    changed["components"][-1]["purl"] = "pkg:maven/org.example/artifact@2"
                     cdx.write_text(json.dumps(changed))
                     result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
                     self.assertNotEqual(result.returncode, 0)
