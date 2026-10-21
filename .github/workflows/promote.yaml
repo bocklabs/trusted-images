@@ -35,6 +35,7 @@ on:
           - open-webui
           - pgvector
           - pipelines
+          - playwright
           - portainer-ce
           - postgres-exporter
           - prometheus
