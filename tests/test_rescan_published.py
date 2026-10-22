@@ -69,9 +69,13 @@ class PublishedRescanTests(unittest.TestCase):
         self.report["Results"][0]["Vulnerabilities"] = []
         self.report["Results"].append({
             "Class": "lang-pkgs", "Type": "gobinary", "Target": "usr/bin/server",
-            "Packages": [{"Name": "github.com/example/server", "ID": "github.com/example/server",
-                          "AnalyzedBy": "gobinary", "Relationship": "root",
-                          "Identifier": {"PURL": "pkg:golang/github.com/example/server"}}],
+            "Packages": [
+                {"Name": "github.com/example/server", "ID": "github.com/example/server",
+                 "AnalyzedBy": "gobinary", "Relationship": "root",
+                 "Identifier": {"PURL": "pkg:golang/github.com/example/server"}},
+                {"Name": "../", "ID": "../", "AnalyzedBy": "gobinary",
+                 "Identifier": {"UID": "2754dbd13052319"}},
+            ],
         })
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory) / "published-rescan"
