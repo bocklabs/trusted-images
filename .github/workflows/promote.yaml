@@ -45,6 +45,7 @@ on:
           - radarr
           - redis-exporter
           - searxng
+          - secobserve-backend
           - secobserve-frontend
           - seerr
           - sonarr

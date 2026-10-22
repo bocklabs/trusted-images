@@ -1,0 +1,30 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: secobserve-backend
+spec:
+  version: 2
+  upstream:
+    ref: ghcr.io/secobserve/secobserve-backend
+    tag: 1.62.0
+    digest: sha256:d58631f4c830d8c52a1fd638fff8e7407e8879358846bd1af4075881f8b40ee4
+  destination:
+    package: ghcr.io/bocklabs/secobserve-backend
+  patchPolicy: enabled
+  validation:
+    type: http
+    command:
+    - api
+    port: 5000
+    path: /api/status/health/
+    expectStatus: 200
+    durationSeconds: 90
+    expectedPlatforms:
+    - linux/amd64
+    env:
+      DATABASE_ENGINE: django.db.backends.sqlite3
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DJANGO_SECRET_KEY: validation-only-public-key-never-use-in-production-0000000000000000
+      FIELD_ENCRYPTION_KEY: MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=
+      ALLOWED_HOSTS: localhost
+      CORS_ALLOWED_ORIGINS: http://localhost
