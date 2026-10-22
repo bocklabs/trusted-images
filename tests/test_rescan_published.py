@@ -73,8 +73,6 @@ class PublishedRescanTests(unittest.TestCase):
                 {"Name": "github.com/example/server", "ID": "github.com/example/server",
                  "AnalyzedBy": "gobinary", "Relationship": "root",
                  "Identifier": {"PURL": "pkg:golang/github.com/example/server"}},
-                {"Name": "../", "ID": "../", "AnalyzedBy": "gobinary",
-                 "Identifier": {"UID": "2754dbd13052319"}},
             ],
         })
         with tempfile.TemporaryDirectory() as directory:
@@ -94,6 +92,27 @@ class PublishedRescanTests(unittest.TestCase):
             self.assertFalse(decision["proceed"])
             self.assertEqual(decision["findings"], 0)
             self.assertEqual(report_path.read_bytes(), original)
+
+    def test_relative_go_placeholder_requires_versioned_root_dependency(self):
+        self.report["Results"][0]["Vulnerabilities"] = []
+        self.report["Results"].append({
+            "Class": "lang-pkgs", "Type": "gobinary", "Target": "usr/bin/cadvisor",
+            "Packages": [
+                {"Name": "github.com/example/cadvisor", "ID": "github.com/example/cadvisor@v1",
+                 "Version": "v1", "AnalyzedBy": "gobinary", "Relationship": "root",
+                 "DependsOn": ["../"],
+                 "Identifier": {"PURL": "pkg:golang/github.com/example/cadvisor@v1"}},
+                {"Name": "../", "ID": "../", "AnalyzedBy": "gobinary",
+                 "Identifier": {"UID": "2754dbd13052319"}},
+            ],
+        })
+        with tempfile.TemporaryDirectory() as directory, patch.object(rescan, "ARTIFACT", Path(directory)):
+            value = rescan.decide(self.selection, self.report, True)
+            self.assertTrue(value["package_coverage"])
+            self.assertFalse(value["proceed"])
+            self.report["Results"][1]["Packages"][0]["DependsOn"] = []
+            with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
+                rescan.decide(self.selection, self.report, True)
 
     def test_versionless_os_and_go_dependency_fail_closed(self):
         self.report["Results"][0]["Packages"][0].pop("Version")
