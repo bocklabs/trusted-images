@@ -12,16 +12,16 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/tika",
-    "tag": "3.3.1.0-full-bocklabs.1",
-    "digest": "sha256:5b9a91e6f6103cb06a72950703fff64b680b0fb98ea63d1923f037cfa2fe1ce7",
+    "tag": "3.3.1.0-full-bocklabs.2",
+    "digest": "sha256:34c981f7fdc092aa80e9a6e770b83ebb0e18f5d02bf04c6b4ad555d91184b11b",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39552123051",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39751442576",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
     "trivy": "0.76.0",
@@ -32,16 +32,16 @@
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:8629a880fe32cb8175a9a1629fa717a10eb1b74ac96d0894d84e4cb1694b0d0f",
-      "updated_at": "2026-10-20 07:17:35.368599961 +0000 UTC"
+      "check_bundle_digest": "sha256:24a3bba55ee3421b0a462915a938af3d66ae6b2fd479ab033f31c9f6e270fe80",
+      "updated_at": "2026-10-22 01:15:55.263770788 +0000 UTC"
     },
-    "full_report_sha256": "8a606ae96e45979d0554865d0c57dee75a63fc258c63b75c1e2d9b948ad77cc5",
-    "copa_report_sha256": "39132afa81fad91285de237f2d127692c22edb88cd1569eaba1704f5ef23719f",
-    "decision_sha256": "e3a3551896b85206586465eace15b445cc593b48c237b4b4f8b4c4a23ed989f7",
+    "full_report_sha256": "11b1872e6ef389db28192f2fd7077519be6ad5dc4c1cb0dd8b553286612f9d42",
+    "copa_report_sha256": "689ccf4e0dca100558c33e8a407ae0695f1dcda42d780574678513ebd018e095",
+    "decision_sha256": "84d3ae04e0dff32e08f75def2a26c33ab045942c353b4079d0b4b98ae2723bc9",
     "reports": {
-      "before_sha256": "fb87bc064a3ed1f107ff3ebf5624ad257ba95bd78528897a9a33afd9799cdcbc",
-      "final_sha256": "8a606ae96e45979d0554865d0c57dee75a63fc258c63b75c1e2d9b948ad77cc5",
-      "fixable_sha256": "39132afa81fad91285de237f2d127692c22edb88cd1569eaba1704f5ef23719f"
+      "before_sha256": "94807bdf2fd26026cdbeb9082cc39d68c787a1c2526cdf8cfc182ca80849a64b",
+      "final_sha256": "11b1872e6ef389db28192f2fd7077519be6ad5dc4c1cb0dd8b553286612f9d42",
+      "fixable_sha256": "689ccf4e0dca100558c33e8a407ae0695f1dcda42d780574678513ebd018e095"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "a3591cd3f9b803d7ba43782fdbc9c89feb66bca6d6ae3dc73689667e77645a7f",
-        "fetched_at": "2026-10-21T05:57:37Z",
-        "catalogVersion": "2026.10.20",
-        "dateReleased": "2026-10-20T19:00:31.8765Z"
+        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
+        "fetched_at": "2026-10-22T09:09:16Z",
+        "catalogVersion": "2026.10.21",
+        "dateReleased": "2026-10-21T14:04:39.8983Z"
       }
     },
     "acceptance": null,
@@ -72,11 +72,14 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
+    "remediation": {
+      "need_sha256": "f42ce3ba4796130b4774eae717c7a56237101f0c0d40a231a26055819f716f09"
+    },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-102473:MEDIUM:ubuntu,CVE-2026-102474:MEDIUM:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2022-0987:LOW:ubuntu,CVE-2024-0217:LOW:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,GHSA-w67g-5rqw-f597:MEDIUM:ghsa,CVE-2025-47911:MEDIUM:nvd,CVE-2025-58190:MEDIUM:nvd,CVE-2026-25680:MEDIUM:,CVE-2026-25681:HIGH:,CVE-2026-27136:HIGH:,CVE-2026-33814:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-42502:MEDIUM:,CVE-2026-42506:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-39824:UNKNOWN:,CVE-2026-27145:HIGH:,CVE-2026-33811:HIGH:nvd,CVE-2026-33814:HIGH:nvd,CVE-2026-33818:HIGH:,CVE-2026-39820:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-39822:HIGH:,CVE-2026-39823:MEDIUM:,CVE-2026-39825:MEDIUM:,CVE-2026-39826:MEDIUM:,CVE-2026-39836:HIGH:nvd,CVE-2026-42499:HIGH:,CVE-2026-42504:HIGH:,CVE-2026-42505:MEDIUM:,CVE-2026-42507:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-56853:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56858:HIGH:,CVE-2026-56859:HIGH:,CVE-2026-56860:HIGH:,CVE-2026-56862:HIGH:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-68494:HIGH:ghsa,CVE-2026-89407:HIGH:ghsa,CVE-2026-89425:HIGH:ghsa,CVE-2026-19032:MEDIUM:ghsa,CVE-2026-54512:HIGH:ghsa,CVE-2026-54513:HIGH:ghsa,CVE-2026-54514:MEDIUM:ghsa,CVE-2026-54515:MEDIUM:ghsa,CVE-2026-54516:MEDIUM:ghsa,CVE-2026-54517:MEDIUM:ghsa,CVE-2026-54518:MEDIUM:ghsa,CVE-2026-59888:MEDIUM:ghsa,CVE-2026-59889:MEDIUM:ghsa,CVE-2026-68497:HIGH:ghsa,CVE-2026-77310:MEDIUM:ghsa,CVE-2026-83557:MEDIUM:ghsa,CVE-2026-91776:HIGH:ghsa,CVE-2026-91777:HIGH:ghsa,GHSA-mhm7-754m-9p8w:MEDIUM:ghsa,CVE-2026-49875:CRITICAL:ghsa,CVE-2026-50645:HIGH:ghsa,CVE-2026-49844:MEDIUM:ghsa,CVE-2024-6763:MEDIUM:ghsa,CVE-2025-11143:LOW:ghsa,CVE-2026-2332:HIGH:ghsa,CVE-2026-10050:HIGH:ghsa,CVE-2026-6790:MEDIUM:ghsa,CVE-2026-71497:MEDIUM:ghsa,CVE-2026-75140:HIGH:ghsa,CVE-2026-18374:MEDIUM:ubuntu,CVE-2026-89092:MEDIUM:ubuntu,CVE-2026-18374:MEDIUM:ubuntu,CVE-2026-89092:MEDIUM:ubuntu,CVE-2026-18374:MEDIUM:ubuntu,CVE-2026-89092:MEDIUM:ubuntu,CVE-2017-7475:LOW:ubuntu,CVE-2018-18064:LOW:ubuntu,CVE-2026-12216:MEDIUM:ubuntu,CVE-2025-1352:LOW:ubuntu,CVE-2025-1376:LOW:ubuntu,CVE-2025-66382:MEDIUM:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-67693:MEDIUM:ubuntu,CVE-2026-88647:MEDIUM:ubuntu,CVE-2026-95184:MEDIUM:ubuntu,CVE-2026-95209:MEDIUM:ubuntu,CVE-2026-95210:MEDIUM:ubuntu,CVE-2018-17432:MEDIUM:ubuntu,CVE-2019-8397:MEDIUM:ubuntu,CVE-2019-9151:MEDIUM:ubuntu,CVE-2019-9152:MEDIUM:ubuntu,CVE-2025-2153:MEDIUM:ubuntu,CVE-2025-2308:MEDIUM:ubuntu,CVE-2025-2309:MEDIUM:ubuntu,CVE-2025-2310:MEDIUM:ubuntu,CVE-2025-2912:MEDIUM:ubuntu,CVE-2025-2913:MEDIUM:ubuntu,CVE-2025-2914:MEDIUM:ubuntu,CVE-2025-2915:MEDIUM:ubuntu,CVE-2025-2923:MEDIUM:ubuntu,CVE-2025-2924:MEDIUM:ubuntu,CVE-2025-2925:MEDIUM:ubuntu,CVE-2025-2926:MEDIUM:ubuntu,CVE-2025-6269:MEDIUM:ubuntu,CVE-2025-6516:MEDIUM:ubuntu,CVE-2025-6750:MEDIUM:ubuntu,CVE-2025-6816:LOW:ubuntu,CVE-2025-6817:LOW:ubuntu,CVE-2025-6818:LOW:ubuntu,CVE-2025-6856:LOW:ubuntu,CVE-2025-6857:LOW:ubuntu,CVE-2025-6858:LOW:ubuntu,CVE-2025-7067:MEDIUM:ubuntu,CVE-2025-7068:MEDIUM:ubuntu,CVE-2025-7069:MEDIUM:ubuntu,CVE-2018-17432:MEDIUM:ubuntu,CVE-2019-8397:MEDIUM:ubuntu,CVE-2019-9151:MEDIUM:ubuntu,CVE-2019-9152:MEDIUM:ubuntu,CVE-2025-2153:MEDIUM:ubuntu,CVE-2025-2308:MEDIUM:ubuntu,CVE-2025-2309:MEDIUM:ubuntu,CVE-2025-2310:MEDIUM:ubuntu,CVE-2025-2912:MEDIUM:ubuntu,CVE-2025-2913:MEDIUM:ubuntu,CVE-2025-2914:MEDIUM:ubuntu,CVE-2025-2915:MEDIUM:ubuntu,CVE-2025-2923:MEDIUM:ubuntu,CVE-2025-2924:MEDIUM:ubuntu,CVE-2025-2925:MEDIUM:ubuntu,CVE-2025-2926:MEDIUM:ubuntu,CVE-2025-6269:MEDIUM:ubuntu,CVE-2025-6516:MEDIUM:ubuntu,CVE-2025-6750:MEDIUM:ubuntu,CVE-2025-6816:LOW:ubuntu,CVE-2025-6817:LOW:ubuntu,CVE-2025-6818:LOW:ubuntu,CVE-2025-6856:LOW:ubuntu,CVE-2025-6857:LOW:ubuntu,CVE-2025-6858:LOW:ubuntu,CVE-2025-7067:MEDIUM:ubuntu,CVE-2025-7068:MEDIUM:ubuntu,CVE-2025-7069:MEDIUM:ubuntu,CVE-2025-5222:LOW:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,CVE-2026-85091:MEDIUM:ubuntu,CVE-2025-14932:MEDIUM:ubuntu,CVE-2025-14933:MEDIUM:ubuntu,CVE-2025-14934:MEDIUM:ubuntu,CVE-2025-14935:MEDIUM:ubuntu,CVE-2025-14936:MEDIUM:ubuntu,CVE-2026-86095:MEDIUM:ubuntu,CVE-2019-6988:LOW:ubuntu,CVE-2023-39328:MEDIUM:ubuntu,CVE-2023-39329:MEDIUM:ubuntu,CVE-2026-13757:MEDIUM:ubuntu,CVE-2022-0987:LOW:ubuntu,CVE-2024-0217:LOW:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-103111:MEDIUM:ubuntu,CVE-2026-86145:MEDIUM:ubuntu,CVE-2026-89156:MEDIUM:ubuntu,CVE-2026-89157:MEDIUM:ubuntu,CVE-2026-89158:MEDIUM:ubuntu,CVE-2026-89160:MEDIUM:ubuntu,CVE-2026-89161:MEDIUM:ubuntu,CVE-2026-89162:MEDIUM:ubuntu,CVE-2023-37769:MEDIUM:ubuntu,CVE-2016-2568:LOW:ubuntu,CVE-2016-2568:LOW:ubuntu,CVE-2019-9543:LOW:ubuntu,CVE-2019-9545:LOW:ubuntu,CVE-2026-93311:MEDIUM:ubuntu,CVE-2026-93653:MEDIUM:ubuntu,CVE-2026-107161:MEDIUM:ubuntu,CVE-2026-107161:MEDIUM:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-73066:MEDIUM:ubuntu,CVE-2026-73067:MEDIUM:ubuntu,CVE-2026-88047:MEDIUM:ubuntu,CVE-2026-88048:MEDIUM:ubuntu,CVE-2026-88049:MEDIUM:ubuntu,CVE-2026-88050:MEDIUM:ubuntu,CVE-2026-88051:MEDIUM:ubuntu,CVE-2026-88052:MEDIUM:ubuntu,CVE-2026-88053:MEDIUM:ubuntu,CVE-2026-88054:MEDIUM:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2025-67899:MEDIUM:ubuntu,CVE-2026-42371:MEDIUM:ubuntu,CVE-2012-0880:LOW:ubuntu,CVE-2026-88807:MEDIUM:ubuntu,CVE-2024-56433:LOW:ubuntu,CVE-2022-0987:LOW:ubuntu,CVE-2024-0217:LOW:ubuntu,CVE-2024-56433:LOW:ubuntu,CVE-2018-6952:LOW:ubuntu,CVE-2019-20633:LOW:ubuntu,CVE-2021-45261:LOW:ubuntu,CVE-2026-56288:LOW:ubuntu,CVE-2026-56289:LOW:ubuntu,CVE-2016-2568:LOW:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-101917:MEDIUM:ubuntu,CVE-2026-101918:MEDIUM:ubuntu,CVE-2026-102266:MEDIUM:ubuntu,CVE-2026-102267:MEDIUM:ubuntu,CVE-2026-102268:MEDIUM:ubuntu,CVE-2026-102271:MEDIUM:ubuntu,CVE-2026-102272:MEDIUM:ubuntu,CVE-2026-102273:MEDIUM:ubuntu,CVE-2026-102274:MEDIUM:ubuntu,CVE-2026-102275:MEDIUM:ubuntu,CVE-2026-35341:MEDIUM:ubuntu,CVE-2026-35344:MEDIUM:ubuntu,CVE-2026-35345:MEDIUM:ubuntu,CVE-2026-35348:MEDIUM:ubuntu,CVE-2026-35350:MEDIUM:ubuntu,CVE-2026-35351:MEDIUM:ubuntu,CVE-2026-35352:MEDIUM:ubuntu,CVE-2026-35354:MEDIUM:ubuntu,CVE-2026-35357:MEDIUM:ubuntu,CVE-2026-35359:MEDIUM:ubuntu,CVE-2026-35360:MEDIUM:ubuntu,CVE-2026-35363:MEDIUM:ubuntu,CVE-2026-35364:MEDIUM:ubuntu,CVE-2026-35367:MEDIUM:ubuntu,CVE-2026-35368:MEDIUM:ubuntu,CVE-2026-35370:MEDIUM:ubuntu,CVE-2026-35371:MEDIUM:ubuntu,CVE-2026-35373:MEDIUM:ubuntu,CVE-2026-35374:MEDIUM:ubuntu,CVE-2026-35377:MEDIUM:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-18477:MEDIUM:ubuntu,CVE-2026-18508:MEDIUM:ubuntu,CVE-2026-73066:MEDIUM:ubuntu,CVE-2026-73067:MEDIUM:ubuntu,CVE-2026-88047:MEDIUM:ubuntu,CVE-2026-88048:MEDIUM:ubuntu,CVE-2026-88049:MEDIUM:ubuntu,CVE-2026-88050:MEDIUM:ubuntu,CVE-2026-88051:MEDIUM:ubuntu,CVE-2026-88052:MEDIUM:ubuntu,CVE-2026-88053:MEDIUM:ubuntu,CVE-2026-88054:MEDIUM:ubuntu,CVE-2021-31879:MEDIUM:ubuntu,CVE-2026-85091:MEDIUM:ubuntu",
+    "outcome": "eligible with no-fix warnings: CVE-2026-102473:MEDIUM:ubuntu,CVE-2026-102474:MEDIUM:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2022-0987:LOW:ubuntu,CVE-2024-0217:LOW:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,GHSA-w67g-5rqw-f597:MEDIUM:ghsa,CVE-2025-47911:MEDIUM:nvd,CVE-2025-58190:MEDIUM:nvd,CVE-2026-25680:MEDIUM:,CVE-2026-25681:HIGH:,CVE-2026-27136:HIGH:,CVE-2026-33814:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-42502:MEDIUM:,CVE-2026-42506:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-39824:UNKNOWN:,CVE-2026-111943:HIGH:,CVE-2026-27145:HIGH:,CVE-2026-33811:HIGH:nvd,CVE-2026-33814:HIGH:nvd,CVE-2026-33818:HIGH:,CVE-2026-39820:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-39822:HIGH:,CVE-2026-39823:MEDIUM:,CVE-2026-39825:MEDIUM:,CVE-2026-39826:MEDIUM:,CVE-2026-39836:HIGH:nvd,CVE-2026-42499:HIGH:,CVE-2026-42504:HIGH:,CVE-2026-42505:MEDIUM:,CVE-2026-42507:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-56853:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56858:HIGH:,CVE-2026-56859:HIGH:,CVE-2026-56860:HIGH:,CVE-2026-56862:HIGH:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-68494:HIGH:ghsa,CVE-2026-89407:HIGH:ghsa,CVE-2026-89425:HIGH:ghsa,CVE-2026-19032:MEDIUM:ghsa,CVE-2026-54512:HIGH:ghsa,CVE-2026-54513:HIGH:ghsa,CVE-2026-54514:MEDIUM:ghsa,CVE-2026-54515:MEDIUM:ghsa,CVE-2026-54516:MEDIUM:ghsa,CVE-2026-54517:MEDIUM:ghsa,CVE-2026-54518:MEDIUM:ghsa,CVE-2026-59888:MEDIUM:ghsa,CVE-2026-59889:MEDIUM:ghsa,CVE-2026-68497:HIGH:ghsa,CVE-2026-77310:MEDIUM:ghsa,CVE-2026-83557:MEDIUM:ghsa,CVE-2026-91776:HIGH:ghsa,CVE-2026-91777:HIGH:ghsa,GHSA-mhm7-754m-9p8w:MEDIUM:ghsa,CVE-2026-49875:CRITICAL:ghsa,CVE-2026-50645:HIGH:ghsa,CVE-2026-49844:MEDIUM:ghsa,CVE-2024-6763:MEDIUM:ghsa,CVE-2025-11143:LOW:ghsa,CVE-2026-2332:HIGH:ghsa,CVE-2026-10050:HIGH:ghsa,CVE-2026-6790:MEDIUM:ghsa,CVE-2026-71497:MEDIUM:ghsa,CVE-2026-75140:HIGH:ghsa,CVE-2026-18374:MEDIUM:ubuntu,CVE-2026-89092:MEDIUM:ubuntu,CVE-2026-18374:MEDIUM:ubuntu,CVE-2026-89092:MEDIUM:ubuntu,CVE-2026-18374:MEDIUM:ubuntu,CVE-2026-89092:MEDIUM:ubuntu,CVE-2017-7475:LOW:ubuntu,CVE-2018-18064:LOW:ubuntu,CVE-2026-12216:MEDIUM:ubuntu,CVE-2025-1352:LOW:ubuntu,CVE-2025-1376:LOW:ubuntu,CVE-2025-66382:MEDIUM:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-86469:MEDIUM:ubuntu,CVE-2026-67693:MEDIUM:ubuntu,CVE-2026-88647:MEDIUM:ubuntu,CVE-2026-95184:MEDIUM:ubuntu,CVE-2026-95209:MEDIUM:ubuntu,CVE-2026-95210:MEDIUM:ubuntu,CVE-2018-17432:MEDIUM:ubuntu,CVE-2019-8397:MEDIUM:ubuntu,CVE-2019-9151:MEDIUM:ubuntu,CVE-2019-9152:MEDIUM:ubuntu,CVE-2025-2153:MEDIUM:ubuntu,CVE-2025-2308:MEDIUM:ubuntu,CVE-2025-2309:MEDIUM:ubuntu,CVE-2025-2310:MEDIUM:ubuntu,CVE-2025-2912:MEDIUM:ubuntu,CVE-2025-2913:MEDIUM:ubuntu,CVE-2025-2914:MEDIUM:ubuntu,CVE-2025-2915:MEDIUM:ubuntu,CVE-2025-2923:MEDIUM:ubuntu,CVE-2025-2924:MEDIUM:ubuntu,CVE-2025-2925:MEDIUM:ubuntu,CVE-2025-2926:MEDIUM:ubuntu,CVE-2025-6269:MEDIUM:ubuntu,CVE-2025-6516:MEDIUM:ubuntu,CVE-2025-6750:MEDIUM:ubuntu,CVE-2025-6816:LOW:ubuntu,CVE-2025-6817:LOW:ubuntu,CVE-2025-6818:LOW:ubuntu,CVE-2025-6856:LOW:ubuntu,CVE-2025-6857:LOW:ubuntu,CVE-2025-6858:LOW:ubuntu,CVE-2025-7067:MEDIUM:ubuntu,CVE-2025-7068:MEDIUM:ubuntu,CVE-2025-7069:MEDIUM:ubuntu,CVE-2018-17432:MEDIUM:ubuntu,CVE-2019-8397:MEDIUM:ubuntu,CVE-2019-9151:MEDIUM:ubuntu,CVE-2019-9152:MEDIUM:ubuntu,CVE-2025-2153:MEDIUM:ubuntu,CVE-2025-2308:MEDIUM:ubuntu,CVE-2025-2309:MEDIUM:ubuntu,CVE-2025-2310:MEDIUM:ubuntu,CVE-2025-2912:MEDIUM:ubuntu,CVE-2025-2913:MEDIUM:ubuntu,CVE-2025-2914:MEDIUM:ubuntu,CVE-2025-2915:MEDIUM:ubuntu,CVE-2025-2923:MEDIUM:ubuntu,CVE-2025-2924:MEDIUM:ubuntu,CVE-2025-2925:MEDIUM:ubuntu,CVE-2025-2926:MEDIUM:ubuntu,CVE-2025-6269:MEDIUM:ubuntu,CVE-2025-6516:MEDIUM:ubuntu,CVE-2025-6750:MEDIUM:ubuntu,CVE-2025-6816:LOW:ubuntu,CVE-2025-6817:LOW:ubuntu,CVE-2025-6818:LOW:ubuntu,CVE-2025-6856:LOW:ubuntu,CVE-2025-6857:LOW:ubuntu,CVE-2025-6858:LOW:ubuntu,CVE-2025-7067:MEDIUM:ubuntu,CVE-2025-7068:MEDIUM:ubuntu,CVE-2025-7069:MEDIUM:ubuntu,CVE-2025-5222:LOW:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,CVE-2020-25664:MEDIUM:ubuntu,CVE-2026-30929:MEDIUM:ubuntu,CVE-2026-32636:MEDIUM:ubuntu,CVE-2026-33900:MEDIUM:ubuntu,CVE-2026-33905:MEDIUM:ubuntu,CVE-2026-34238:MEDIUM:ubuntu,CVE-2026-40310:MEDIUM:ubuntu,CVE-2026-40311:MEDIUM:ubuntu,CVE-2026-40312:MEDIUM:ubuntu,CVE-2026-56361:MEDIUM:ubuntu,CVE-2026-56370:MEDIUM:ubuntu,CVE-2026-56372:MEDIUM:ubuntu,CVE-2026-56374:MEDIUM:ubuntu,CVE-2026-61465:MEDIUM:ubuntu,CVE-2026-61857:MEDIUM:ubuntu,CVE-2026-61858:MEDIUM:ubuntu,CVE-2026-61861:MEDIUM:ubuntu,CVE-2026-61863:MEDIUM:ubuntu,CVE-2026-61864:MEDIUM:ubuntu,CVE-2026-61865:MEDIUM:ubuntu,CVE-2026-61866:MEDIUM:ubuntu,CVE-2026-61870:MEDIUM:ubuntu,CVE-2026-62946:MEDIUM:ubuntu,CVE-2026-93586:MEDIUM:ubuntu,CVE-2026-93587:MEDIUM:ubuntu,CVE-2026-93588:MEDIUM:ubuntu,CVE-2026-93589:MEDIUM:ubuntu,CVE-2026-93590:MEDIUM:ubuntu,CVE-2026-85091:MEDIUM:ubuntu,CVE-2025-14932:MEDIUM:ubuntu,CVE-2025-14933:MEDIUM:ubuntu,CVE-2025-14934:MEDIUM:ubuntu,CVE-2025-14935:MEDIUM:ubuntu,CVE-2025-14936:MEDIUM:ubuntu,CVE-2026-86095:MEDIUM:ubuntu,CVE-2019-6988:LOW:ubuntu,CVE-2023-39328:MEDIUM:ubuntu,CVE-2023-39329:MEDIUM:ubuntu,CVE-2026-13757:MEDIUM:ubuntu,CVE-2022-0987:LOW:ubuntu,CVE-2024-0217:LOW:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-103111:MEDIUM:ubuntu,CVE-2026-86145:MEDIUM:ubuntu,CVE-2026-89156:MEDIUM:ubuntu,CVE-2026-89157:MEDIUM:ubuntu,CVE-2026-89158:MEDIUM:ubuntu,CVE-2026-89160:MEDIUM:ubuntu,CVE-2026-89161:MEDIUM:ubuntu,CVE-2026-89162:MEDIUM:ubuntu,CVE-2023-37769:MEDIUM:ubuntu,CVE-2016-2568:LOW:ubuntu,CVE-2016-2568:LOW:ubuntu,CVE-2019-9543:LOW:ubuntu,CVE-2019-9545:LOW:ubuntu,CVE-2026-93311:MEDIUM:ubuntu,CVE-2026-93653:MEDIUM:ubuntu,CVE-2026-107161:MEDIUM:ubuntu,CVE-2026-107161:MEDIUM:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-73066:MEDIUM:ubuntu,CVE-2026-73067:MEDIUM:ubuntu,CVE-2026-88047:MEDIUM:ubuntu,CVE-2026-88048:MEDIUM:ubuntu,CVE-2026-88049:MEDIUM:ubuntu,CVE-2026-88050:MEDIUM:ubuntu,CVE-2026-88051:MEDIUM:ubuntu,CVE-2026-88052:MEDIUM:ubuntu,CVE-2026-88053:MEDIUM:ubuntu,CVE-2026-88054:MEDIUM:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2025-67899:MEDIUM:ubuntu,CVE-2026-42371:MEDIUM:ubuntu,CVE-2012-0880:LOW:ubuntu,CVE-2026-88807:MEDIUM:ubuntu,CVE-2024-56433:LOW:ubuntu,CVE-2022-0987:LOW:ubuntu,CVE-2024-0217:LOW:ubuntu,CVE-2024-56433:LOW:ubuntu,CVE-2018-6952:LOW:ubuntu,CVE-2019-20633:LOW:ubuntu,CVE-2021-45261:LOW:ubuntu,CVE-2026-56288:LOW:ubuntu,CVE-2026-56289:LOW:ubuntu,CVE-2016-2568:LOW:ubuntu,CVE-2026-49014:MEDIUM:ubuntu,CVE-2026-8084:MEDIUM:ubuntu,CVE-2026-8086:MEDIUM:ubuntu,CVE-2026-8087:MEDIUM:ubuntu,CVE-2026-8088:MEDIUM:ubuntu,CVE-2026-8212:MEDIUM:ubuntu,CVE-2026-8213:MEDIUM:ubuntu,CVE-2026-101917:MEDIUM:ubuntu,CVE-2026-101918:MEDIUM:ubuntu,CVE-2026-102266:MEDIUM:ubuntu,CVE-2026-102267:MEDIUM:ubuntu,CVE-2026-102268:MEDIUM:ubuntu,CVE-2026-102271:MEDIUM:ubuntu,CVE-2026-102272:MEDIUM:ubuntu,CVE-2026-102273:MEDIUM:ubuntu,CVE-2026-102274:MEDIUM:ubuntu,CVE-2026-102275:MEDIUM:ubuntu,CVE-2026-35341:MEDIUM:ubuntu,CVE-2026-35344:MEDIUM:ubuntu,CVE-2026-35345:MEDIUM:ubuntu,CVE-2026-35348:MEDIUM:ubuntu,CVE-2026-35350:MEDIUM:ubuntu,CVE-2026-35351:MEDIUM:ubuntu,CVE-2026-35352:MEDIUM:ubuntu,CVE-2026-35354:MEDIUM:ubuntu,CVE-2026-35357:MEDIUM:ubuntu,CVE-2026-35359:MEDIUM:ubuntu,CVE-2026-35360:MEDIUM:ubuntu,CVE-2026-35363:MEDIUM:ubuntu,CVE-2026-35364:MEDIUM:ubuntu,CVE-2026-35367:MEDIUM:ubuntu,CVE-2026-35368:MEDIUM:ubuntu,CVE-2026-35370:MEDIUM:ubuntu,CVE-2026-35371:MEDIUM:ubuntu,CVE-2026-35373:MEDIUM:ubuntu,CVE-2026-35374:MEDIUM:ubuntu,CVE-2026-35377:MEDIUM:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-40228:LOW:ubuntu,CVE-2026-18477:MEDIUM:ubuntu,CVE-2026-18508:MEDIUM:ubuntu,CVE-2026-73066:MEDIUM:ubuntu,CVE-2026-73067:MEDIUM:ubuntu,CVE-2026-88047:MEDIUM:ubuntu,CVE-2026-88048:MEDIUM:ubuntu,CVE-2026-88049:MEDIUM:ubuntu,CVE-2026-88050:MEDIUM:ubuntu,CVE-2026-88051:MEDIUM:ubuntu,CVE-2026-88052:MEDIUM:ubuntu,CVE-2026-88053:MEDIUM:ubuntu,CVE-2026-88054:MEDIUM:ubuntu,CVE-2021-31879:MEDIUM:ubuntu,CVE-2026-85091:MEDIUM:ubuntu",
     "eligible": true,
     "warnings": [
       {
@@ -1869,6 +1872,20 @@
         "installed_version": "v0.33.0",
         "fixed_version": "0.44.0",
         "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fpebble:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/pebble",
+        "installed_version": "v1.26.2",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -5086,7 +5103,7 @@
         "class": "os-pkgs",
         "type": "ubuntu",
         "target": "candidate-final.tar (ubuntu 26.04)",
-        "installed_version": "26.01.0-2ubuntu0.2",
+        "installed_version": "26.01.0-2ubuntu0.3",
         "fixed_version": "",
         "severity": "LOW",
         "severity_source": "ubuntu"
@@ -5100,7 +5117,7 @@
         "class": "os-pkgs",
         "type": "ubuntu",
         "target": "candidate-final.tar (ubuntu 26.04)",
-        "installed_version": "26.01.0-2ubuntu0.2",
+        "installed_version": "26.01.0-2ubuntu0.3",
         "fixed_version": "",
         "severity": "LOW",
         "severity_source": "ubuntu"
@@ -5114,7 +5131,7 @@
         "class": "os-pkgs",
         "type": "ubuntu",
         "target": "candidate-final.tar (ubuntu 26.04)",
-        "installed_version": "26.01.0-2ubuntu0.2",
+        "installed_version": "26.01.0-2ubuntu0.3",
         "fixed_version": "",
         "severity": "MEDIUM",
         "severity_source": "ubuntu"
@@ -5128,7 +5145,7 @@
         "class": "os-pkgs",
         "type": "ubuntu",
         "target": "candidate-final.tar (ubuntu 26.04)",
-        "installed_version": "26.01.0-2ubuntu0.2",
+        "installed_version": "26.01.0-2ubuntu0.3",
         "fixed_version": "",
         "severity": "MEDIUM",
         "severity_source": "ubuntu"
@@ -8441,6 +8458,19 @@
         "installed_version": "v0.33.0",
         "fixed_version": "0.44.0",
         "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fpebble:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/pebble",
+        "installed_version": "v1.26.2",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -15828,6 +15858,19 @@
         "severity_source": "ubuntu"
       },
       {
+        "identity": "linux/amd64|libpoppler156|CVE-2026-107705",
+        "platform": "linux/amd64",
+        "package": "libpoppler156",
+        "cve": "CVE-2026-107705",
+        "class": "os-pkgs",
+        "type": "ubuntu",
+        "target": "apache/tika@sha256:a3892121eafdee277b860e458b9966abfd11112d49f84cd494f5e87da4292b95 (ubuntu 26.04)",
+        "installed_version": "26.01.0-2build2",
+        "fixed_version": "26.01.0-2ubuntu0.3",
+        "severity": "MEDIUM",
+        "severity_source": "ubuntu"
+      },
+      {
         "identity": "linux/amd64|libpoppler156|CVE-2026-93311",
         "platform": "linux/amd64",
         "package": "libpoppler156",
@@ -22798,6 +22841,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fpebble:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/pebble",
+        "installed_version": "v1.26.2",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fpebble:stdlib|CVE-2026-27145",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -25782,7 +25838,7 @@
         "class": "os-pkgs",
         "type": "ubuntu",
         "target": "candidate-final.tar (ubuntu 26.04)",
-        "installed_version": "26.01.0-2ubuntu0.2",
+        "installed_version": "26.01.0-2ubuntu0.3",
         "fixed_version": "",
         "severity": "LOW",
         "severity_source": "ubuntu"
@@ -25795,7 +25851,7 @@
         "class": "os-pkgs",
         "type": "ubuntu",
         "target": "candidate-final.tar (ubuntu 26.04)",
-        "installed_version": "26.01.0-2ubuntu0.2",
+        "installed_version": "26.01.0-2ubuntu0.3",
         "fixed_version": "",
         "severity": "LOW",
         "severity_source": "ubuntu"
@@ -25808,7 +25864,7 @@
         "class": "os-pkgs",
         "type": "ubuntu",
         "target": "candidate-final.tar (ubuntu 26.04)",
-        "installed_version": "26.01.0-2ubuntu0.2",
+        "installed_version": "26.01.0-2ubuntu0.3",
         "fixed_version": "",
         "severity": "MEDIUM",
         "severity_source": "ubuntu"
@@ -25821,7 +25877,7 @@
         "class": "os-pkgs",
         "type": "ubuntu",
         "target": "candidate-final.tar (ubuntu 26.04)",
-        "installed_version": "26.01.0-2ubuntu0.2",
+        "installed_version": "26.01.0-2ubuntu0.3",
         "fixed_version": "",
         "severity": "MEDIUM",
         "severity_source": "ubuntu"
@@ -26906,6 +26962,7 @@
         "CVE-2026-102620",
         "CVE-2026-102621",
         "CVE-2026-10536",
+        "CVE-2026-107705",
         "CVE-2026-107928",
         "CVE-2026-107929",
         "CVE-2026-11352",
@@ -27339,6 +27396,7 @@
         "CVE-2026-102474",
         "CVE-2026-103111",
         "CVE-2026-107161",
+        "CVE-2026-111943",
         "CVE-2026-12216",
         "CVE-2026-13757",
         "CVE-2026-18374",
@@ -27874,7 +27932,7 @@
         "name": "libnss3",
         "change": "upgraded",
         "before": "2:3.120-1ubuntu2",
-        "after": "2:3.120-1ubuntu2.1"
+        "after": "2:3.120-1ubuntu2.2"
       },
       {
         "ecosystem": "ubuntu",
@@ -27944,7 +28002,7 @@
         "name": "libpoppler156",
         "change": "upgraded",
         "before": "26.01.0-2build2",
-        "after": "26.01.0-2ubuntu0.2"
+        "after": "26.01.0-2ubuntu0.3"
       },
       {
         "ecosystem": "ubuntu",
@@ -28276,15 +28334,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-21T05:57:07Z",
-      "finished_at": "2026-10-21T05:57:37Z",
+      "started_at": "2026-10-22T09:08:46Z",
+      "finished_at": "2026-10-22T09:09:16Z",
       "duration_seconds": 30.1
     },
     "health": {
       "defined": false,
       "final_status": "none-defined"
     },
-    "runner": "GitHub Actions 1000013277",
+    "runner": "GitHub Actions 1000013812",
     "baseline": {
       "entrypoint": [
         "/bin/sh",
@@ -28298,34 +28356,34 @@
       ]
     }
   },
-  "promoted_at": "2026-10-21T05:59:45Z",
+  "promoted_at": "2026-10-22T09:11:06Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "7b5857a4b9929474aa8d8cd62cfc6034a32df0ca7ba928459fdf36657f0f6274",
-      "attachment_sha256": "bdb80ebe383a3e76a526bfb9cb4cf34982104c4d8cf3c9815028dbd070ad1e05",
+      "bundle_sha256": "958bc90ad8f675c7ce26e709e8019b0e8db584300f60cade48ac9c19b159f053",
+      "attachment_sha256": "98e6dbde3add304d74cf9c7d32071ccef96d6aa9a389314d4fe113462e4f8b64",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "2acd5af4091512860b9918570bbcfe0d61b869781bcf1d77eecd13d75a68496a",
-      "bundle_sha256": "35ac37d5cb66d1be95ab206557be299549729753b51204d528f7fe5515a9b0c0",
-      "attachment_sha256": "c19ba671ad1f09fe9f029a6114478da8580f2a6e2b16faca672a88837610dd6b"
+      "predicate_sha256": "4e2271f278847f403d73f5ffd04b0b75e3ba9520d29c26f537cdaf501bbd1fb3",
+      "bundle_sha256": "b409a57e3c093d6a277e3f5221ab37fb369ac64183f1185348716a1f8c337eb8",
+      "attachment_sha256": "bba596a273799099dc117f8224df0652dc5651686165f647595c5f87a18d142b"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "EdflB0UiKkId1ywaPB+jBndR6NZ6KlZw6WfXrhonp9w=",
+        "inclusion_root_hash": "KbbuKSXkZQcYte/8m+IiWKOZMkkizJvQ5h3UVI6pPW4=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3350752211,
-        "signed_entry_timestamp": "MEUCIQDfFZ8NxbE7vObtY5l3Frb6gyIvTqyBsJ5hocQJfhi+mQIgRwrO2aQ8/q6n3lTq6iVKgRA8vPr0CqYmoCrz4YLwqSk="
+        "log_index": 3382766848,
+        "signed_entry_timestamp": "MEYCIQCA43oa22OaRHH3FCx7bmRMmNSwLegHJyD70K18eE+vdAIhALpvHtIFGEsnAUKT1gs4XNZeBjdTUg2Saxif1NH8SOGy"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "ZtLR2jqNCBvM1bxpbQelzxrBn2+75p7yoOvEknEY/jU=",
+        "inclusion_root_hash": "11LVJTxrittDgx/Jk58GsbmNUznCUa1mem3hWaBesxs=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3350753917,
-        "signed_entry_timestamp": "MEUCIQC9ZU/eLB+CiYqyqga7z73eSmX7Y0QMNE8QupJihkUynAIgViUWMqX45BoNSs9+YBolcNP0ujHtLaKYT/M1oF0CP14="
+        "log_index": 3382770750,
+        "signed_entry_timestamp": "MEUCIFxd/wl+YUL6bLsRDILFV/tUl6cNi7PYcL6KaPj7SxJnAiEAk+MmWNn69eanT9+a3CcAfezYX1kLs5CgLNuJtj9cAYk="
       }
     },
     "tools": {
