@@ -113,6 +113,14 @@ def package_coverage(results):
                     and isinstance(package.get("Identifier"), dict)
                     and set(package["Identifier"]) == {"UID"}
                     and isinstance(package["Identifier"]["UID"], str)
+                    and any(
+                        isinstance(root, dict) and root.get("Relationship") == "root"
+                        and isinstance(root.get("Version"), str) and bool(root["Version"])
+                        and isinstance(root.get("Identifier"), dict)
+                        and str(root["Identifier"].get("PURL", "")).startswith("pkg:golang/")
+                        and isinstance(root.get("DependsOn"), list) and "../" in root["DependsOn"]
+                        for root in packages
+                    )
                 )
                 require(go_root or go_relative_root
                         or (isinstance(package.get("Version"), str) and package["Version"]),
