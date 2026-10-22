@@ -70,7 +70,7 @@ class PublishedRescanTests(unittest.TestCase):
         self.report["Results"].append({
             "Class": "lang-pkgs", "Type": "gobinary", "Target": "usr/bin/server",
             "Packages": [
-                {"Name": "github.com/example/server", "ID": "github.com/example/server",
+                {"Name": "github.com/Example/Server", "ID": "github.com/Example/Server",
                  "AnalyzedBy": "gobinary", "Relationship": "root",
                  "Identifier": {"PURL": "pkg:golang/github.com/example/server"}},
             ],

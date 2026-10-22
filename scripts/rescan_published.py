@@ -103,7 +103,8 @@ def package_coverage(results):
                     and re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", package["Name"])
                     and package.get("AnalyzedBy") == "gobinary" and package.get("Relationship") == "root"
                     and isinstance(package.get("Identifier"), dict)
-                    and package["Identifier"].get("PURL") == "pkg:golang/" + package["Name"]
+                    and isinstance(package["Identifier"].get("PURL"), str)
+                    and package["Identifier"]["PURL"].casefold() == ("pkg:golang/" + package["Name"]).casefold()
                 )
                 go_relative_root = (
                     "Version" not in package and result.get("Class") == "lang-pkgs"
