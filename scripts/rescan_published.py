@@ -105,7 +105,17 @@ def package_coverage(results):
                     and isinstance(package.get("Identifier"), dict)
                     and package["Identifier"].get("PURL") == "pkg:golang/" + package["Name"]
                 )
-                require(go_root or (isinstance(package.get("Version"), str) and package["Version"]),
+                go_relative_root = (
+                    "Version" not in package and result.get("Class") == "lang-pkgs"
+                    and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
+                    and bool(result["Target"]) and package.get("ID") == package["Name"] == "../"
+                    and package.get("AnalyzedBy") == "gobinary" and "Relationship" not in package
+                    and isinstance(package.get("Identifier"), dict)
+                    and set(package["Identifier"]) == {"UID"}
+                    and isinstance(package["Identifier"]["UID"], str)
+                )
+                require(go_root or go_relative_root
+                        or (isinstance(package.get("Version"), str) and package["Version"]),
                         INVALID_PACKAGE_INVENTORY)
     return bool(covered)
 
