@@ -1,0 +1,262 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "qbittorrent",
+  "upstream": {
+    "ref": "linuxserver/qbittorrent",
+    "tag": "5.3.0",
+    "digest": "sha256:e887804fa9de4c60f5f0fb1f3a7e4febe40a8f69fe736f70c4e8589b1f868dab",
+    "index_digest": "sha256:e887804fa9de4c60f5f0fb1f3a7e4febe40a8f69fe736f70c4e8589b1f868dab",
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "selected_platform": "linux/amd64",
+    "selected_child_digest": "sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/qbittorrent",
+    "tag": "5.3.0-bocklabs.1",
+    "digest": "sha256:d71068cf0c90a934638d230fd5eee3da3658a46d181ab5c697dd4e229a43fbce",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39869797027",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.76.1",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "copa": "0.15.0",
+    "skopeo": "v1.22.2",
+    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:e417537406128bd80426f6cd3b9a1e45f9c64f490793b71941dc630b41f10654",
+      "updated_at": "2026-10-22 01:15:55.263770788 +0000 UTC"
+    },
+    "full_report_sha256": "46154e63bb3ea2d6e6c3a10dea18eec99acb0d0ae2ad6d6f860d498762aa1755",
+    "copa_report_sha256": "674ac7c3c25fd67ef0f8514cfd6a4b8d90445dee0db53b91b7d0f2fe76d0e4a4",
+    "decision_sha256": "16405f73ea79bc662dc275e9857cd41ffdf26bc046cd3346e863525d64b591b3",
+    "reports": {
+      "before_sha256": "1faf209a15875fb330bcbb52b6c27de7f5f612f5887c170e52ee40dbe5f008f7",
+      "final_sha256": "46154e63bb3ea2d6e6c3a10dea18eec99acb0d0ae2ad6d6f860d498762aa1755",
+      "fixable_sha256": "674ac7c3c25fd67ef0f8514cfd6a4b8d90445dee0db53b91b7d0f2fe76d0e4a4"
+    },
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "linuxserver/qbittorrent:5.3.0"
+    }
+  },
+  "policy": {
+    "kev": {
+      "matches": [],
+      "catalog": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
+        "fetched_at": "2026-10-22T23:10:19Z",
+        "catalogVersion": "2026.10.21",
+        "dateReleased": "2026-10-21T14:04:39.8983Z"
+      }
+    },
+    "acceptance": null,
+    "patching": {
+      "disabled": false
+    },
+    "copa": {
+      "classification": "succeeded",
+      "original_child_input": true,
+      "mode": "comprehensive",
+      "release": "0.15.0",
+      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
+      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
+      "limitation": null
+    },
+    "supersedes": {
+      "higher_upstream": false,
+      "original_child_selected": false
+    },
+    "outcome": "patched",
+    "eligible": true,
+    "warnings": []
+  },
+  "cves": {
+    "before": [
+      {
+        "identity": "linux/amd64|musl-utils|CVE-2026-107891",
+        "platform": "linux/amd64",
+        "package": "musl-utils",
+        "cve": "CVE-2026-107891",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "1.2.6-r2",
+        "fixed_version": "1.2.6-r3",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|musl|CVE-2026-107891",
+        "platform": "linux/amd64",
+        "package": "musl",
+        "cve": "CVE-2026-107891",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "1.2.6-r2",
+        "fixed_version": "1.2.6-r3",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      }
+    ],
+    "final": [],
+    "summary": {
+      "resolved": [
+        "CVE-2026-107891"
+      ],
+      "remaining": [],
+      "introduced": [],
+      "unresolved_fixable": []
+    }
+  },
+  "packages": {
+    "changes": [
+      {
+        "ecosystem": "alpine",
+        "name": "alpine-release",
+        "change": "upgraded",
+        "before": "3.24.2-r0",
+        "after": "3.24.3-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "brotli-libs",
+        "change": "upgraded",
+        "before": "1.2.0-r1",
+        "after": "1.2.1-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "c-ares",
+        "change": "upgraded",
+        "before": "1.34.8-r0",
+        "after": "1.34.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "ca-certificates",
+        "change": "upgraded",
+        "before": "20260909-r0",
+        "after": "20261020-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "ca-certificates-bundle",
+        "change": "upgraded",
+        "before": "20260909-r0",
+        "after": "20261020-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "musl",
+        "change": "upgraded",
+        "before": "1.2.6-r2",
+        "after": "1.2.6-r3"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "musl-utils",
+        "change": "upgraded",
+        "before": "1.2.6-r2",
+        "after": "1.2.6-r3"
+      }
+    ],
+    "downgrades": [],
+    "downgrade_blocked": false
+  },
+  "validation": {
+    "profile": "oneshot",
+    "result": "pass",
+    "params": {
+      "type": "oneshot",
+      "port": null,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 180,
+      "expectedExit": 0,
+      "command": [
+        "/app/qbittorrent-nox",
+        "--version"
+      ],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-10-22T23:10:11Z",
+      "finished_at": "2026-10-22T23:10:19Z",
+      "duration_seconds": 8.6
+    },
+    "health": {
+      "defined": false,
+      "final_status": "not-applicable"
+    },
+    "runner": "GitHub Actions 1000014028",
+    "baseline": {
+      "entrypoint": [
+        "/init"
+      ],
+      "cmd": [],
+      "env": [
+        "PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "PS1=$(whoami)@$(hostname):$(pwd)\\$ ",
+        "HOME=/config",
+        "TERM=xterm",
+        "S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0",
+        "S6_VERBOSITY=1",
+        "S6_STAGE2_HOOK=/docker-mods",
+        "VIRTUAL_ENV=/lsiopy",
+        "LSIO_FIRST_PARTY=true",
+        "XDG_CONFIG_HOME=/config",
+        "XDG_DATA_HOME=/config"
+      ]
+    }
+  },
+  "promoted_at": "2026-10-22T23:11:58Z",
+  "notes": "",
+  "signing": {
+    "result": "pass",
+    "image_signature": {
+      "bundle_sha256": "43b7a40fd82e3903859a3a6242ddec20317bc18a93f365a94ccd266ba325612e",
+      "attachment_sha256": "61d4aa0e8d27393e97f72216deb345c4acda69a5c317629f08ebd19a4b3c8bdc",
+      "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+      "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
+    },
+    "sbom_attestation": {
+      "predicate_type": "https://cyclonedx.org/bom",
+      "predicate_sha256": "9e1030be28346150227bff15b622793f184a7fe5d17a26b69fe343fef5dabc78",
+      "bundle_sha256": "220911541f82c2495cf5f6b5e32a1858ef75c7f70bde35d6676aed7f723636bc",
+      "attachment_sha256": "efce3de427e94bfca6f381986be33d3e39267ad59a50b08bfe0237248733225c"
+    },
+    "rekor": {
+      "signature": {
+        "inclusion_root_hash": "pCfWdin5A3IRRw5vmDgwSHB9uLiOhrWye+M2O0mnk90=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3403882037,
+        "signed_entry_timestamp": "MEUCIA/9aUCZO0ltrYjBv2+RsMm8BmYKeDBY3eRC18awGFcGAiEAky+XvPP+s8lp/IVsk1nHDmt0kTF4+AdGkwjoDnE565A="
+      },
+      "sbom_attestation": {
+        "inclusion_root_hash": "GtHURU75LRZ3iFmuzUuiokJdO09dsavSUpDMnixsKyc=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3403885359,
+        "signed_entry_timestamp": "MEYCIQDbK9ic3dk69+WTZ592TGHNHGJcAgs52uIf698m6RDUjgIhAKC22Sw9vkmoC9E3YzIczsgb9rzCIXQgRNyLWsl9MOUh"
+      }
+    },
+    "tools": {
+      "cosign": "v3.1.4",
+      "trivy": "0.76.1"
+    }
+  }
+}
