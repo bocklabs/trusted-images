@@ -1,0 +1,978 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "glances",
+  "upstream": {
+    "ref": "nicolargo/glances",
+    "tag": "4.5.8-full",
+    "digest": "sha256:63823bf68687b42afab3bced830d1f157447c0204476cb7a62cb1e5e65dc292c",
+    "index_digest": "sha256:63823bf68687b42afab3bced830d1f157447c0204476cb7a62cb1e5e65dc292c",
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "selected_platform": "linux/amd64",
+    "selected_child_digest": "sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/glances",
+    "tag": "4.5.8-full-bocklabs.1",
+    "digest": "sha256:37bde0b84609b66bc994c7f7fce4d6fa1b57918f0b68f6065ca0976e26149240",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39860403157",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.76.1",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "copa": "0.15.0",
+    "skopeo": "v1.22.2",
+    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:e417537406128bd80426f6cd3b9a1e45f9c64f490793b71941dc630b41f10654",
+      "updated_at": "2026-10-22 01:15:55.263770788 +0000 UTC"
+    },
+    "full_report_sha256": "9394598ef17135f7226ce79737d28798c33de6aac3e9384dc9ace6531349a91b",
+    "copa_report_sha256": "12bd1defe808929cb881139471908766f5083c0d624d3d39abb2826901d7f205",
+    "decision_sha256": "adc82108564d7c9b4090c72ec3ec91d2e49553dc54c21304401a9333a5fdbcf5",
+    "reports": {
+      "before_sha256": "49357648b99a318b68df42ee896145c7ccc1b2b2037c7351905e91c541f46103",
+      "final_sha256": "9394598ef17135f7226ce79737d28798c33de6aac3e9384dc9ace6531349a91b",
+      "fixable_sha256": "12bd1defe808929cb881139471908766f5083c0d624d3d39abb2826901d7f205"
+    },
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "nicolargo/glances:4.5.8-full"
+    }
+  },
+  "policy": {
+    "kev": {
+      "matches": [],
+      "catalog": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
+        "fetched_at": "2026-10-22T21:52:11Z",
+        "catalogVersion": "2026.10.21",
+        "dateReleased": "2026-10-21T14:04:39.8983Z"
+      }
+    },
+    "acceptance": null,
+    "patching": {
+      "disabled": false
+    },
+    "copa": {
+      "classification": "succeeded",
+      "original_child_input": true,
+      "mode": "comprehensive",
+      "release": "0.15.0",
+      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
+      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
+      "limitation": null
+    },
+    "supersedes": {
+      "higher_upstream": false,
+      "original_child_selected": false
+    },
+    "outcome": "eligible with no-fix warnings: GHSA-6q48-6c7w-9gw2:CRITICAL:ghsa,CVE-2024-23342:HIGH:ghsa,CVE-2026-85394:CRITICAL:ghsa",
+    "eligible": true,
+    "warnings": [
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:certifi:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fcertifi-2026.7.22.dist-info%2FMETADATA|GHSA-6q48-6c7w-9gw2",
+        "platform": "linux/amd64",
+        "package": "certifi",
+        "cve": "GHSA-6q48-6c7w-9gw2",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "2026.7.22",
+        "fixed_version": "2026.10.19",
+        "severity": "CRITICAL",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:ecdsa:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fecdsa-0.19.2.dist-info%2FMETADATA|CVE-2024-23342",
+        "platform": "linux/amd64",
+        "package": "ecdsa",
+        "cve": "CVE-2024-23342",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "0.19.2",
+        "fixed_version": "",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:python-jose:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fpython_jose-3.5.0.dist-info%2FMETADATA|CVE-2026-85394",
+        "platform": "linux/amd64",
+        "package": "python-jose",
+        "cve": "CVE-2026-85394",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "3.5.0",
+        "fixed_version": "",
+        "severity": "CRITICAL",
+        "severity_source": "ghsa"
+      }
+    ]
+  },
+  "cves": {
+    "before": [
+      {
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:certifi:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fcertifi-2026.7.22.dist-info%2FMETADATA|GHSA-6q48-6c7w-9gw2",
+        "platform": "linux/amd64",
+        "package": "certifi",
+        "cve": "GHSA-6q48-6c7w-9gw2",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "2026.7.22",
+        "fixed_version": "2026.10.19",
+        "severity": "CRITICAL",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:ecdsa:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fecdsa-0.19.2.dist-info%2FMETADATA|CVE-2024-23342",
+        "platform": "linux/amd64",
+        "package": "ecdsa",
+        "cve": "CVE-2024-23342",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "0.19.2",
+        "fixed_version": "",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:python-jose:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fpython_jose-3.5.0.dist-info%2FMETADATA|CVE-2026-85394",
+        "platform": "linux/amd64",
+        "package": "python-jose",
+        "cve": "CVE-2026-85394",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "3.5.0",
+        "fixed_version": "",
+        "severity": "CRITICAL",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|libexpat|CVE-2026-102633",
+        "platform": "linux/amd64",
+        "package": "libexpat",
+        "cve": "CVE-2026-102633",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "2.8.5-r0",
+        "fixed_version": "2.9.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libexpat|CVE-2026-77214",
+        "platform": "linux/amd64",
+        "package": "libexpat",
+        "cve": "CVE-2026-77214",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "2.8.5-r0",
+        "fixed_version": "2.9.0-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssh2|CVE-2025-15661",
+        "platform": "linux/amd64",
+        "package": "libssh2",
+        "cve": "CVE-2025-15661",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.11.1-r3",
+        "fixed_version": "1.11.1-r4",
+        "severity": "MEDIUM",
+        "severity_source": "nvd"
+      },
+      {
+        "identity": "linux/amd64|libssh2|CVE-2026-58050",
+        "platform": "linux/amd64",
+        "package": "libssh2",
+        "cve": "CVE-2026-58050",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.11.1-r3",
+        "fixed_version": "1.11.1-r4",
+        "severity": "HIGH",
+        "severity_source": "nvd"
+      },
+      {
+        "identity": "linux/amd64|libssh2|CVE-2026-58051",
+        "platform": "linux/amd64",
+        "package": "libssh2",
+        "cve": "CVE-2026-58051",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.11.1-r3",
+        "fixed_version": "1.11.1-r4",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssh2|CVE-2026-66032",
+        "platform": "linux/amd64",
+        "package": "libssh2",
+        "cve": "CVE-2026-66032",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.11.1-r3",
+        "fixed_version": "1.11.1-r4",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssh2|CVE-2026-66033",
+        "platform": "linux/amd64",
+        "package": "libssh2",
+        "cve": "CVE-2026-66033",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.11.1-r3",
+        "fixed_version": "1.11.1-r4",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssh2|CVE-2026-66034",
+        "platform": "linux/amd64",
+        "package": "libssh2",
+        "cve": "CVE-2026-66034",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.11.1-r3",
+        "fixed_version": "1.11.1-r4",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssh2|CVE-2026-66035",
+        "platform": "linux/amd64",
+        "package": "libssh2",
+        "cve": "CVE-2026-66035",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.11.1-r3",
+        "fixed_version": "1.11.1-r4",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|musl-utils|CVE-2026-107891",
+        "platform": "linux/amd64",
+        "package": "musl-utils",
+        "cve": "CVE-2026-107891",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.2.6-r2",
+        "fixed_version": "1.2.6-r3",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|musl|CVE-2026-107891",
+        "platform": "linux/amd64",
+        "package": "musl",
+        "cve": "CVE-2026-107891",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.2.6-r2",
+        "fixed_version": "1.2.6-r3",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|nghttp2-libs|CVE-2026-58055",
+        "platform": "linux/amd64",
+        "package": "nghttp2-libs",
+        "cve": "CVE-2026-58055",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.69.0-r0",
+        "fixed_version": "1.70.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|pyc|CVE-2026-15310",
+        "platform": "linux/amd64",
+        "package": "pyc",
+        "cve": "CVE-2026-15310",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|pyc|CVE-2026-15806",
+        "platform": "linux/amd64",
+        "package": "pyc",
+        "cve": "CVE-2026-15806",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|pyc|CVE-2026-17084",
+        "platform": "linux/amd64",
+        "package": "pyc",
+        "cve": "CVE-2026-17084",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|pyc|CVE-2026-19445",
+        "platform": "linux/amd64",
+        "package": "pyc",
+        "cve": "CVE-2026-19445",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|pyc|CVE-2026-19553",
+        "platform": "linux/amd64",
+        "package": "pyc",
+        "cve": "CVE-2026-19553",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|pyc|CVE-2026-19672",
+        "platform": "linux/amd64",
+        "package": "pyc",
+        "cve": "CVE-2026-19672",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|pyc|CVE-2026-82049",
+        "platform": "linux/amd64",
+        "package": "pyc",
+        "cve": "CVE-2026-82049",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pycache-pyc0|CVE-2026-15310",
+        "platform": "linux/amd64",
+        "package": "python3-pycache-pyc0",
+        "cve": "CVE-2026-15310",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pycache-pyc0|CVE-2026-15806",
+        "platform": "linux/amd64",
+        "package": "python3-pycache-pyc0",
+        "cve": "CVE-2026-15806",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pycache-pyc0|CVE-2026-17084",
+        "platform": "linux/amd64",
+        "package": "python3-pycache-pyc0",
+        "cve": "CVE-2026-17084",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pycache-pyc0|CVE-2026-19445",
+        "platform": "linux/amd64",
+        "package": "python3-pycache-pyc0",
+        "cve": "CVE-2026-19445",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pycache-pyc0|CVE-2026-19553",
+        "platform": "linux/amd64",
+        "package": "python3-pycache-pyc0",
+        "cve": "CVE-2026-19553",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pycache-pyc0|CVE-2026-19672",
+        "platform": "linux/amd64",
+        "package": "python3-pycache-pyc0",
+        "cve": "CVE-2026-19672",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pycache-pyc0|CVE-2026-82049",
+        "platform": "linux/amd64",
+        "package": "python3-pycache-pyc0",
+        "cve": "CVE-2026-82049",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pyc|CVE-2026-15310",
+        "platform": "linux/amd64",
+        "package": "python3-pyc",
+        "cve": "CVE-2026-15310",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pyc|CVE-2026-15806",
+        "platform": "linux/amd64",
+        "package": "python3-pyc",
+        "cve": "CVE-2026-15806",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pyc|CVE-2026-17084",
+        "platform": "linux/amd64",
+        "package": "python3-pyc",
+        "cve": "CVE-2026-17084",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pyc|CVE-2026-19445",
+        "platform": "linux/amd64",
+        "package": "python3-pyc",
+        "cve": "CVE-2026-19445",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pyc|CVE-2026-19553",
+        "platform": "linux/amd64",
+        "package": "python3-pyc",
+        "cve": "CVE-2026-19553",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pyc|CVE-2026-19672",
+        "platform": "linux/amd64",
+        "package": "python3-pyc",
+        "cve": "CVE-2026-19672",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3-pyc|CVE-2026-82049",
+        "platform": "linux/amd64",
+        "package": "python3-pyc",
+        "cve": "CVE-2026-82049",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3|CVE-2026-15310",
+        "platform": "linux/amd64",
+        "package": "python3",
+        "cve": "CVE-2026-15310",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3|CVE-2026-15806",
+        "platform": "linux/amd64",
+        "package": "python3",
+        "cve": "CVE-2026-15806",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3|CVE-2026-17084",
+        "platform": "linux/amd64",
+        "package": "python3",
+        "cve": "CVE-2026-17084",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3|CVE-2026-19445",
+        "platform": "linux/amd64",
+        "package": "python3",
+        "cve": "CVE-2026-19445",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3|CVE-2026-19553",
+        "platform": "linux/amd64",
+        "package": "python3",
+        "cve": "CVE-2026-19553",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3|CVE-2026-19672",
+        "platform": "linux/amd64",
+        "package": "python3",
+        "cve": "CVE-2026-19672",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|python3|CVE-2026-82049",
+        "platform": "linux/amd64",
+        "package": "python3",
+        "cve": "CVE-2026-82049",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "3.14.7-r1",
+        "fixed_version": "3.14.8-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|zlib|CVE-2026-85091",
+        "platform": "linux/amd64",
+        "package": "zlib",
+        "cve": "CVE-2026-85091",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "nicolargo/glances@sha256:312b9e3f28dece5c13c981d22ecf99eb6ec8ef329695303c96f2d3d108e42a9f (alpine 3.24.2)",
+        "installed_version": "1.3.2-r0",
+        "fixed_version": "1.3.2-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      }
+    ],
+    "final": [
+      {
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:certifi:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fcertifi-2026.7.22.dist-info%2FMETADATA|GHSA-6q48-6c7w-9gw2",
+        "platform": "linux/amd64",
+        "package": "certifi",
+        "cve": "GHSA-6q48-6c7w-9gw2",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "2026.7.22",
+        "fixed_version": "2026.10.19",
+        "severity": "CRITICAL",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:ecdsa:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fecdsa-0.19.2.dist-info%2FMETADATA|CVE-2024-23342",
+        "platform": "linux/amd64",
+        "package": "ecdsa",
+        "cve": "CVE-2024-23342",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "0.19.2",
+        "fixed_version": "",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:python-pkg:Python:python-jose:venv%2Flib%2Fpython3.14%2Fsite-packages%2Fpython_jose-3.5.0.dist-info%2FMETADATA|CVE-2026-85394",
+        "platform": "linux/amd64",
+        "package": "python-jose",
+        "cve": "CVE-2026-85394",
+        "class": "lang-pkgs",
+        "type": "python-pkg",
+        "target": "Python",
+        "installed_version": "3.5.0",
+        "fixed_version": "",
+        "severity": "CRITICAL",
+        "severity_source": "ghsa"
+      }
+    ],
+    "summary": {
+      "resolved": [
+        "CVE-2025-15661",
+        "CVE-2026-102633",
+        "CVE-2026-107891",
+        "CVE-2026-15310",
+        "CVE-2026-15806",
+        "CVE-2026-17084",
+        "CVE-2026-19445",
+        "CVE-2026-19553",
+        "CVE-2026-19672",
+        "CVE-2026-58050",
+        "CVE-2026-58051",
+        "CVE-2026-58055",
+        "CVE-2026-66032",
+        "CVE-2026-66033",
+        "CVE-2026-66034",
+        "CVE-2026-66035",
+        "CVE-2026-77214",
+        "CVE-2026-82049",
+        "CVE-2026-85091"
+      ],
+      "remaining": [
+        "CVE-2024-23342",
+        "CVE-2026-85394",
+        "GHSA-6q48-6c7w-9gw2"
+      ],
+      "introduced": [],
+      "unresolved_fixable": []
+    }
+  },
+  "packages": {
+    "changes": [
+      {
+        "ecosystem": "alpine",
+        "name": "alpine-release",
+        "change": "upgraded",
+        "before": "3.24.2-r0",
+        "after": "3.24.3-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "brotli-libs",
+        "change": "upgraded",
+        "before": "1.2.0-r1",
+        "after": "1.2.1-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "c-ares",
+        "change": "upgraded",
+        "before": "1.34.8-r0",
+        "after": "1.34.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "ca-certificates-bundle",
+        "change": "upgraded",
+        "before": "20260909-r0",
+        "after": "20261020-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libcrypto3",
+        "change": "upgraded",
+        "before": "3.5.8-r0",
+        "after": "3.5.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libexpat",
+        "change": "upgraded",
+        "before": "2.8.5-r0",
+        "after": "2.9.0-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libssh2",
+        "change": "upgraded",
+        "before": "1.11.1-r3",
+        "after": "1.11.1-r4"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libssl3",
+        "change": "upgraded",
+        "before": "3.5.8-r0",
+        "after": "3.5.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "musl",
+        "change": "upgraded",
+        "before": "1.2.6-r2",
+        "after": "1.2.6-r3"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "musl-utils",
+        "change": "upgraded",
+        "before": "1.2.6-r2",
+        "after": "1.2.6-r3"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "nghttp2-libs",
+        "change": "upgraded",
+        "before": "1.69.0-r0",
+        "after": "1.70.0-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "pyc",
+        "change": "upgraded",
+        "before": "3.14.7-r1",
+        "after": "3.14.8-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "python3",
+        "change": "upgraded",
+        "before": "3.14.7-r1",
+        "after": "3.14.8-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "python3-pyc",
+        "change": "upgraded",
+        "before": "3.14.7-r1",
+        "after": "3.14.8-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "python3-pycache-pyc0",
+        "change": "upgraded",
+        "before": "3.14.7-r1",
+        "after": "3.14.8-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "tzdata",
+        "change": "upgraded",
+        "before": "2026d-r0",
+        "after": "2026e-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "zlib",
+        "change": "upgraded",
+        "before": "1.3.2-r0",
+        "after": "1.3.2-r1"
+      }
+    ],
+    "downgrades": [],
+    "downgrade_blocked": false
+  },
+  "validation": {
+    "profile": "oneshot",
+    "result": "pass",
+    "params": {
+      "type": "oneshot",
+      "port": null,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 30,
+      "expectedExit": 0,
+      "command": [
+        "/venv/bin/python3.14",
+        "-m",
+        "glances",
+        "--version"
+      ],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-10-22T21:52:10Z",
+      "finished_at": "2026-10-22T21:52:11Z",
+      "duration_seconds": 0.5
+    },
+    "health": {
+      "defined": false,
+      "final_status": "not-applicable"
+    },
+    "runner": "GitHub Actions 1000013991",
+    "baseline": {
+      "entrypoint": [],
+      "cmd": [
+        "/bin/sh",
+        "-c",
+        "/venv/bin/python${PYTHON_VERSION} -m glances ${GLANCES_OPT}"
+      ],
+      "env": [
+        "PATH=/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "PYTHON_VERSION=3.14"
+      ]
+    }
+  },
+  "promoted_at": "2026-10-22T21:53:45Z",
+  "notes": "",
+  "signing": {
+    "result": "pass",
+    "image_signature": {
+      "bundle_sha256": "59aee227e602544325f0da81769d0381f7fc2cac72f5bb99d6c9405049e21c81",
+      "attachment_sha256": "654d54a4223f25a88cc4285df44a4cf9e33b6641000d340aa3d0228dbee1bd65",
+      "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+      "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
+    },
+    "sbom_attestation": {
+      "predicate_type": "https://cyclonedx.org/bom",
+      "predicate_sha256": "f959bf6197c9dce5138950b8f831d1fc724bd97794a7cca8e9a99363ee82963e",
+      "bundle_sha256": "a4f8740f4aae64c3c93383a15ffd47fae041294788c75a2af76be36f7a5722a9",
+      "attachment_sha256": "c145798e6614b53cf51f7dbeb2f2a8b2801e35ae584e9745f09bf526bf9a77a1"
+    },
+    "rekor": {
+      "signature": {
+        "inclusion_root_hash": "CeMjcuenm8XAuhdXTJ+crhiz+qA4P8DnOUoZIkuTx4g=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3401969937,
+        "signed_entry_timestamp": "MEQCIALdYYDl7Rr9q9BvIwKjkBGvpJkav6gqWHaTBpvtNapJAiAa6/+RpgBeI+oYCtQ2SXj+aUmvtGHs+qJoVZH7szeH4w=="
+      },
+      "sbom_attestation": {
+        "inclusion_root_hash": "m+OA1zr+7BazBT8LTN52DpAZarxGXL9CK9OwHcMSxbc=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3401972766,
+        "signed_entry_timestamp": "MEQCIDBYH1fLIp76vRXzGJkKV/r+8FZMbUJOhC5l44HUcO/8AiB5I1D9BSuXgMc2VgZUA8cGHy28bJw9WdL6Mub9m7voGQ=="
+      }
+    },
+    "tools": {
+      "cosign": "v3.1.4",
+      "trivy": "0.76.1"
+    }
+  }
+}
