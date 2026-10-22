@@ -143,6 +143,6 @@ for (const tool of tools) {
   if (releaseVersions.size !== 1) throw new Error(`miss: ${tool.cli} release pins diverged`);
   console.log(`tool: ${tool.action} digest and ${tool.cli} ${[...releaseVersions][0]} -> automerge`);
 }
-if (config.automerge !== false || !config.platformAutomerge || config.automergeStrategy !== "merge") {
+if (config.automerge !== false || !config.platformAutomerge || config.automergeStrategy !== "merge-commit") {
   throw new Error("miss: required-check automerge defaults drifted");
 }

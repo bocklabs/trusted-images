@@ -9,7 +9,7 @@
   ],
   "automerge": false,
   "automergeType": "pr",
-  "automergeStrategy": "merge",
+  "automergeStrategy": "merge-commit",
   "platformAutomerge": true,
   "customManagers": [
     {
@@ -116,6 +116,12 @@
         "SecObserve/secobserve_actions_templates"
       ],
       "enabled": false
+    },
+    {
+      "description": "Review Playwright image updates with the revision-specific native validation command.",
+      "matchPackageNames": ["mcr.microsoft.com/playwright"],
+      "matchFileNames": ["inventory/playwright/image.yaml"],
+      "automerge": false
     }
   ]
 }
