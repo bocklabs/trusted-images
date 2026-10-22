@@ -1,0 +1,217 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "redis-exporter",
+  "upstream": {
+    "ref": "oliver006/redis_exporter",
+    "tag": "v1.95.0",
+    "digest": "sha256:afb21407aba3df1b4010899f155fc6b1ba2026c97b725d72aca4019d772e7b6b",
+    "index_digest": "sha256:afb21407aba3df1b4010899f155fc6b1ba2026c97b725d72aca4019d772e7b6b",
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "selected_platform": "linux/amd64",
+    "selected_child_digest": "sha256:855957b82786168061ccf19c785821136af1447c56ff5183369629cc74861094"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/redis-exporter",
+    "tag": "v1.95.0-bocklabs.1",
+    "digest": "sha256:855957b82786168061ccf19c785821136af1447c56ff5183369629cc74861094",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39825205022",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.76.1",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "copa": null,
+    "skopeo": "v1.22.2",
+    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:944f226dc06b9786a514f85b768776e282e3050fa111776909bd8b26162005e4",
+      "updated_at": "2026-10-22 01:15:55.263770788 +0000 UTC"
+    },
+    "full_report_sha256": "75131caeff8dcb9a93d9cd49b0479728b875303db440b0ef9f0fd87a64688aba",
+    "copa_report_sha256": "a57d32024e5c1c49a35f00e49f263aefdcc17460fb3a7aefcc50c6a386004c46",
+    "decision_sha256": "04cd758e4f83cf73906596ad6975814aaffd33ee5e81f48fb9c2e2394012aa53",
+    "reports": {
+      "before_sha256": "75131caeff8dcb9a93d9cd49b0479728b875303db440b0ef9f0fd87a64688aba",
+      "final_sha256": "75131caeff8dcb9a93d9cd49b0479728b875303db440b0ef9f0fd87a64688aba",
+      "fixable_sha256": "a57d32024e5c1c49a35f00e49f263aefdcc17460fb3a7aefcc50c6a386004c46"
+    },
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "oliver006/redis_exporter:v1.95.0"
+    }
+  },
+  "policy": {
+    "kev": {
+      "matches": [],
+      "catalog": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
+        "fetched_at": "2026-10-22T17:44:34Z",
+        "catalogVersion": "2026.10.21",
+        "dateReleased": "2026-10-21T14:04:39.8983Z"
+      }
+    },
+    "acceptance": null,
+    "patching": {
+      "disabled": false
+    },
+    "copa": {
+      "classification": "not-required",
+      "original_child_input": false,
+      "mode": "not-required",
+      "release": null,
+      "source_sha": null,
+      "runtime_digest": null,
+      "limitation": null
+    },
+    "supersedes": {
+      "higher_upstream": false,
+      "original_child_selected": false
+    },
+    "outcome": "eligible with no-fix warnings: GO-2026-5932:UNKNOWN:",
+    "eligible": true,
+    "warnings": [
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:redis_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/crypto",
+        "cve": "GO-2026-5932",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "redis_exporter",
+        "installed_version": "v0.58.0",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      }
+    ]
+  },
+  "cves": {
+    "before": [
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:redis_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/crypto",
+        "cve": "GO-2026-5932",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "redis_exporter",
+        "installed_version": "v0.58.0",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      }
+    ],
+    "final": [
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:redis_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/crypto",
+        "cve": "GO-2026-5932",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "redis_exporter",
+        "installed_version": "v0.58.0",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      }
+    ],
+    "summary": {
+      "resolved": [],
+      "remaining": [
+        "GO-2026-5932"
+      ],
+      "introduced": [],
+      "unresolved_fixable": []
+    }
+  },
+  "packages": {
+    "changes": [],
+    "downgrades": [],
+    "downgrade_blocked": false
+  },
+  "validation": {
+    "profile": "oneshot",
+    "result": "pass",
+    "params": {
+      "type": "oneshot",
+      "port": null,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 30,
+      "expectedExit": 0,
+      "command": [
+        "--version"
+      ],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-10-22T17:44:34Z",
+      "finished_at": "2026-10-22T17:44:34Z",
+      "duration_seconds": 0.2
+    },
+    "health": {
+      "defined": false,
+      "final_status": "not-applicable"
+    },
+    "runner": "GitHub Actions 1000013910",
+    "baseline": {
+      "entrypoint": [
+        "/redis_exporter"
+      ],
+      "cmd": [],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  },
+  "promoted_at": "2026-10-22T17:45:43Z",
+  "notes": "",
+  "signing": {
+    "result": "pass",
+    "image_signature": {
+      "bundle_sha256": "ec2cad608a82bea7353452a46a8282f230c3dae6a776ae30f60c75f5bccf52a5",
+      "attachment_sha256": "78ab21fc835a1a44c6240b80640128ab82461fdc2fa16f80526b112c39d6daea",
+      "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+      "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
+    },
+    "sbom_attestation": {
+      "predicate_type": "https://cyclonedx.org/bom",
+      "predicate_sha256": "745399c4b2fe23683943fa60bbc9ccd693cbe838a9052b07a68c017725ba8dc7",
+      "bundle_sha256": "57417122653f2e7ea34b756cb26c10da2671662a7ad31134277f313d4419f03e",
+      "attachment_sha256": "f0655151cc42f1ff97104ad6fd8568eb92fcf269c445113756bf8a3bb3af736a"
+    },
+    "rekor": {
+      "signature": {
+        "inclusion_root_hash": "PcYBDrTNBjtaIwdcTlcXZDlvsczE3UwVaU4DwOJPaRs=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3395547696,
+        "signed_entry_timestamp": "MEUCIEzHp6utE8QkvQ9TcKBaiKNaNm3QY5+nLZJcyhgAaEiVAiEA73Qer37EFrbAm0ihvXJ8HQK2ktsFgRACjuDS71AvbhE="
+      },
+      "sbom_attestation": {
+        "inclusion_root_hash": "dirfNXREOib3gvBRJB1QVOqPJsbzibUUwJTFfLF5MAA=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3395551310,
+        "signed_entry_timestamp": "MEQCICmeuq469Y7OhWkndBXO/TXplnxHICAcAxUSGV/ysF53AiAFP06cs3RJsjhA2dOhc5aFKuOn/r1OqmNdZyU3rfaQZA=="
+      }
+    },
+    "tools": {
+      "cosign": "v3.1.4",
+      "trivy": "0.76.1"
+    }
+  }
+}
