@@ -6,7 +6,7 @@ dependencies = ["PyYAML==6.0.3", "univers==32.0.1"]
 
 [dependency-groups]
 dev = [
-  "coverage==7.16.2",
+  "coverage==7.17.0",
   "mypy==2.4.0",
   "pre-commit==4.7.0",
   "types-PyYAML==6.0.12.20260906",
