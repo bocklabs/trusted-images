@@ -58,6 +58,8 @@ metadata as audit evidence. Trivy JSON provides no binary hash for a direct
 comparison. Runtime matching uses the immutable image/config identity and the
 package's `Layer.Digest` and `Layer.DiffID`, plus the reviewed target and module.
 Malformed or stale evidence fails with an explicit validation error.
+Inventory CI and rescans use the same parser for required binding fields.
+Inventory CI also rejects invalid JSON and unknown top-level, layer or source keys.
 The rescan decision retains the review hash and an explicit unknown
 application-version limitation. Raw scan rows and findings remain unchanged.
 Other versionless dependencies still fail coverage. A changed image requires a

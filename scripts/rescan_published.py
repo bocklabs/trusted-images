@@ -17,7 +17,7 @@ from evaluate_promotion import (
 from finding_identity import canonical, findings_hash, require
 from promote_signing_gate import load_identity
 from reverify_signing import load_current, merged_commit, record_time, verified_record
-from validate_inventory import dig, entry_failures
+from validate_inventory import dig, entry_failures, parse_go_file_build
 
 INVENTORY = Path(__file__).resolve().parents[1] / "inventory"
 ARTIFACT = Path("published-rescan")
@@ -95,14 +95,7 @@ def reviewed_file_build(selection, report):
         return None
     require(path.is_file() and not path.is_symlink(), "unsafe Go file-build evidence")
     raw = path.read_bytes()
-    review = json.loads(raw)
-    require(isinstance(review, dict) and review.get("schema") == "trusted-images.bocklabs.dev/go-file-build-v1",
-            "invalid Go file-build evidence")
-    for field in ("ref", "config_digest", "upstream_child_digest", "target", "module", "binary_sha256",
-                  "layer.Digest", "layer.DiffID", "source.repository", "source.revision"):
-        present, value = dig(review, field)
-        require(present and isinstance(value, str) and value, f"invalid Go file-build evidence: {field}")
-    require(re.fullmatch(r"[0-9a-f]{64}", review["binary_sha256"]), "invalid Go file-build evidence: binary_sha256")
+    review = parse_go_file_build(raw, path)
     require(review["ref"] == selection["ref"], "Go file-build evidence is stale for the selected published image")
     metadata = report.get("Metadata", {})
     require(isinstance(metadata, dict), "Go file-build scan Metadata must be an object")
