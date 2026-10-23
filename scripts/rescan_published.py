@@ -17,7 +17,7 @@ from evaluate_promotion import (
 from finding_identity import canonical, findings_hash, require
 from promote_signing_gate import load_identity
 from reverify_signing import load_current, merged_commit, record_time, verified_record
-from validate_inventory import entry_failures
+from validate_inventory import dig, entry_failures
 
 INVENTORY = Path(__file__).resolve().parents[1] / "inventory"
 ARTIFACT = Path("published-rescan")
@@ -98,16 +98,23 @@ def reviewed_file_build(selection, report):
     review = json.loads(raw)
     require(isinstance(review, dict) and review.get("schema") == "trusted-images.bocklabs.dev/go-file-build-v1",
             "invalid Go file-build evidence")
-    if review.get("ref") != selection["ref"]:
-        return None
+    for field in ("ref", "config_digest", "upstream_child_digest", "target", "module", "binary_sha256",
+                  "layer.Digest", "layer.DiffID", "source.repository", "source.revision"):
+        present, value = dig(review, field)
+        require(present and isinstance(value, str) and value, f"invalid Go file-build evidence: {field}")
+    require(re.fullmatch(r"[0-9a-f]{64}", review["binary_sha256"]), "invalid Go file-build evidence: binary_sha256")
+    require(review["ref"] == selection["ref"], "Go file-build evidence is stale for the selected published image")
     metadata = report.get("Metadata", {})
-    labels = metadata.get("ImageConfig", {}).get("config", {}).get("Labels", {})
-    require(review["config_digest"] == metadata.get("ImageID")
+    require(isinstance(metadata, dict), "Go file-build scan Metadata must be an object")
+    _, labels = dig(report, "Metadata.ImageConfig.config.Labels")
+    diff_ids = metadata.get("DiffIDs")
+    require(isinstance(diff_ids, list), "Go file-build scan DiffIDs must be a list")
+    require(isinstance(labels, dict) and review["config_digest"] == metadata.get("ImageID")
             and review["upstream_child_digest"] == selection["published"]["upstream"]["selected_child_digest"]
-            and review["layer"]["DiffID"] in metadata.get("DiffIDs", [])
+            and review["layer"]["DiffID"] in diff_ids
             and review["source"]["repository"] == labels.get("org.opencontainers.image.source")
             and review["source"]["revision"] == labels.get("org.opencontainers.image.revision"),
-            "Go file-build evidence differs from scanned image")
+            "Go file-build scan evidence differs from scanned image")
     return {**review, "review_sha256": hashlib.sha256(raw).hexdigest()}
 
 

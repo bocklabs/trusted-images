@@ -142,7 +142,8 @@ class PublishedRescanTests(unittest.TestCase):
         review = {"schema": "trusted-images.bocklabs.dev/go-file-build-v1", "ref": self.ref,
             "config_digest": "sha256:" + "e" * 64,
             "upstream_child_digest": self.record["upstream"]["selected_child_digest"],
-            "target": "server", "module": package["Name"], "layer": package["Layer"], "source": source}
+            "target": "server", "module": package["Name"], "layer": package["Layer"], "source": source,
+            "binary_sha256": "a" * 64}
         original = copy.deepcopy(self.report)
         with tempfile.TemporaryDirectory() as directory, patch.object(rescan, "INVENTORY", Path(directory)):
             path = Path(directory) / "postgres-exporter" / "go-file-build.json"
@@ -153,6 +154,22 @@ class PublishedRescanTests(unittest.TestCase):
             self.assertFalse(value["proceed"])
             self.assertEqual(value["coverage_limitations"][0]["version"], "unknown")
             self.assertEqual(self.report, original)
+            for field in ("layer", "source", "config_digest", "binary_sha256", "target", "module"):
+                with self.subTest(review_field=field):
+                    path.write_text(json.dumps({**review, field: None}))
+                    with self.assertRaisesRegex(ValueError, "invalid Go file-build evidence"):
+                        rescan.decide(self.selection, self.report, True)
+            path.write_text(json.dumps({**review, "ref": self.ref + "-stale"}))
+            with self.assertRaisesRegex(ValueError, "stale"):
+                rescan.decide(self.selection, self.report, True)
+            path.write_text(json.dumps(review))
+            for field, value in (("ImageConfig", None), ("ImageConfig", {"config": None}),
+                                 ("ImageConfig", {"config": {"Labels": None}}), ("DiffIDs", None)):
+                with self.subTest(metadata_field=field, value=value):
+                    malformed = copy.deepcopy(original)
+                    malformed["Metadata"][field] = value
+                    with self.assertRaisesRegex(ValueError, "Go file-build scan"):
+                        rescan.decide(self.selection, malformed, True)
             package["Name"] = package["ID"] = "github.com/other/dependency"
             identifier["PURL"] = "pkg:golang/github.com/other/dependency"
             with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
