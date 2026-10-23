@@ -170,6 +170,11 @@ class PublishedRescanTests(unittest.TestCase):
                     malformed["Metadata"][field] = value
                     with self.assertRaisesRegex(ValueError, "Go file-build scan"):
                         rescan.decide(self.selection, malformed, True)
+            for upstream in ({"selected_child_digest": None}, {}):
+                with self.subTest(upstream=upstream):
+                    selected = {**self.selection, "published": {"upstream": upstream}}
+                    with self.assertRaisesRegex(ValueError, "differs from scanned image"):
+                        rescan.decide(selected, self.report, True)
             package["Name"] = package["ID"] = "github.com/other/dependency"
             identifier["PURL"] = "pkg:golang/github.com/other/dependency"
             with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):

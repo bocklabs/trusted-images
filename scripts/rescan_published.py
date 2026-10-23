@@ -110,7 +110,7 @@ def reviewed_file_build(selection, report):
     diff_ids = metadata.get("DiffIDs")
     require(isinstance(diff_ids, list), "Go file-build scan DiffIDs must be a list")
     require(isinstance(labels, dict) and review["config_digest"] == metadata.get("ImageID")
-            and review["upstream_child_digest"] == selection["published"]["upstream"]["selected_child_digest"]
+            and review["upstream_child_digest"] == dig(selection, "published.upstream.selected_child_digest")[1]
             and review["layer"]["DiffID"] in diff_ids
             and review["source"]["repository"] == labels.get("org.opencontainers.image.source")
             and review["source"]["revision"] == labels.get("org.opencontainers.image.revision"),
