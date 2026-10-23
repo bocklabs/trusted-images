@@ -28,9 +28,9 @@ class CurrentRefreshTests(unittest.TestCase):
         self.apps = {self.head: "postgres-exporter", "4" * 40: "ollama"}
         self.records = {app: json.loads((ROOT / f"provenance/{app}/current.json").read_bytes()) for app in self.apps.values()}
         self.candidates = copy.deepcopy(self.records)
-        self.candidates["postgres-exporter"]["internal"]["tag"] = "v0.20.1-bocklabs.8"
-        self.candidates["ollama"]["internal"]["tag"] = "0.40.6-bocklabs.2"
         for record in self.candidates.values():
+            tag, revision = record["internal"]["tag"].rsplit(".", 1)
+            record["internal"]["tag"] = f"{tag}.{int(revision) + 1}"
             record["promoted_at"] = "2099-01-01T00:00:00Z"
         self.calls: list[tuple] = []
         self.enterContext(patch.object(refresh, "git", side_effect=self.git))
