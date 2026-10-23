@@ -127,6 +127,41 @@ class PublishedRescanTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
             rescan.decide(self.selection, self.report, True)
 
+    def test_reviewed_file_build_accepts_only_bound_first_party_module(self):
+        identifier = {"PURL": "pkg:golang/github.com/example/server"}
+        layer = {"Digest": "sha256:" + "b" * 64, "DiffID": "sha256:" + "c" * 64}
+        package = {"Name": "github.com/example/server", "ID": "github.com/example/server",
+                   "AnalyzedBy": "gobinary", "Identifier": identifier, "Layer": layer}
+        self.report["Results"].append({"Class": "lang-pkgs", "Type": "gobinary", "Target": "server",
+                                       "Packages": [package]})
+        self.report["Results"][0]["Vulnerabilities"] = []
+        source = {"repository": "https://github.com/example/server", "revision": "d" * 40}
+        self.report["Metadata"].update(ImageID="sha256:" + "e" * 64, DiffIDs=[layer["DiffID"]],
+            ImageConfig={"config": {"Labels": {"org.opencontainers.image.source": source["repository"],
+                                                "org.opencontainers.image.revision": source["revision"]}}})
+        review = {"schema": "trusted-images.bocklabs.dev/go-file-build-v1", "ref": self.ref,
+            "config_digest": "sha256:" + "e" * 64,
+            "upstream_child_digest": self.record["upstream"]["selected_child_digest"],
+            "target": "server", "module": package["Name"], "layer": package["Layer"], "source": source}
+        original = copy.deepcopy(self.report)
+        with tempfile.TemporaryDirectory() as directory, patch.object(rescan, "INVENTORY", Path(directory)):
+            path = Path(directory) / "postgres-exporter" / "go-file-build.json"
+            path.parent.mkdir()
+            path.write_text(json.dumps(review))
+            value = rescan.decide(self.selection, self.report, True)
+            self.assertTrue(value["package_coverage"])
+            self.assertFalse(value["proceed"])
+            self.assertEqual(value["coverage_limitations"][0]["version"], "unknown")
+            self.assertEqual(self.report, original)
+            package["Name"] = package["ID"] = "github.com/other/dependency"
+            identifier["PURL"] = "pkg:golang/github.com/other/dependency"
+            with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
+                rescan.decide(self.selection, self.report, True)
+            self.report = copy.deepcopy(original)
+            self.report["Metadata"]["ImageID"] = "sha256:" + "f" * 64
+            with self.assertRaisesRegex(ValueError, "differs from scanned image"):
+                rescan.decide(self.selection, self.report, True)
+
     def test_monitoring_disabled_clean_and_no_fix_do_not_mutate(self):
         value = rescan.decide(self.selection, self.report, False)
         self.assertFalse(value["proceed"])
