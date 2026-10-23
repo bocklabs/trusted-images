@@ -37,10 +37,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           ocr_version: ${{ env.OCR_VERSION }}
           sticky_summary: 'true'
-          max_tokens_budget: '1000000'
           llm_reasoning_effort: max
           effort: high
           incremental: 'true'
           checkpoint_range: 'true'
-          stream_progress: 'true'
           upload_artifacts: 'true'

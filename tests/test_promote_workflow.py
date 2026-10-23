@@ -48,6 +48,15 @@ class TagAllocationTests(unittest.TestCase):
             "platforms": list(platforms),
         }
 
+    def test_single_manifest_allocates_and_reuses_its_verified_identity(self) -> None:
+        for observations, expected in (
+            ([], ("v1.2.3-bocklabs.1", False, False, False)),
+            ([self.observation(1, index=DIGEST_A)],
+             ("v1.2.3-bocklabs.1", True, False, False)),
+        ):
+            with self.subTest(observations=observations):
+                self.assertEqual(self.select("v1.2.3", DIGEST_A, DIGEST_A, observations), expected)
+
     def test_normal_rerun_uses_newest_matching_revision(self) -> None:
         result = self.select(
             "v1.2.3",

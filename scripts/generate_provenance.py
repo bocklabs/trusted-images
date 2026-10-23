@@ -19,7 +19,7 @@ import hashlib
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import evaluate_promotion as promotion
@@ -120,8 +120,7 @@ def value_of(args: argparse.Namespace, flag: str) -> str:
 
 def load_json(path: str, label: str) -> dict:
     value = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise ValueError(f"{label} must be a JSON object")
+    promotion.require(isinstance(value, dict), f"{label} must be a JSON object")
     return value
 
 
@@ -132,7 +131,7 @@ def file_sha256(path: Path) -> str:
 def parse_utc(value: str, label: str) -> datetime:
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value):
         raise ValueError(f"{label} must use strict UTC YYYY-MM-DDTHH:MM:SSZ")
-    return datetime.strptime(value, UTC_FORMAT).replace(tzinfo=timezone.utc)
+    return datetime.strptime(value, UTC_FORMAT).replace(tzinfo=UTC)
 
 
 def finding_rows(findings: dict) -> list[dict]:
@@ -256,13 +255,11 @@ def policy_evidence(
         )
 
     acceptance = decision["policy"]["acceptance"]
-    if not matched:
-        if acceptance is not None:
-            raise ValueError("policy acceptance cannot exist without a KEV match")
-    elif acceptance is None:
-        raise ValueError("nonempty KEV matches require exact acceptance evidence")
-    else:
+    if matched:
+        promotion.require(acceptance is not None, "nonempty KEV matches require exact acceptance evidence")
         validate_acceptance(args, decision, acceptance, matched)
+    else:
+        promotion.require(acceptance is None, "policy acceptance cannot exist without a KEV match")
 
     catalog = {
         "url": receipt["catalog"]["url"],
@@ -462,13 +459,8 @@ def decision_violations(
         violations.extend(
             decision_match_violations(args, decision, expected, decision_sha)
         )
-    if provided_child:
-        if platforms != ["linux/amd64"]:
-            violations.append("--platforms must be exactly linux/amd64 for new records")
-        if provided_child == value_of(args, "--upstream-digest"):
-            violations.append(
-                "--upstream-child-digest must differ from the index digest"
-            )
+    if provided_child and platforms != ["linux/amd64"]:
+        violations.append("--platforms must be exactly linux/amd64 for new records")
     return violations, decision
 
 
@@ -765,7 +757,7 @@ def build_record(
                 "env": json.loads(value_of(args, "--validation-env")),
             },
         },
-        "promoted_at": datetime.now(timezone.utc).strftime(UTC_FORMAT),
+        "promoted_at": datetime.now(UTC).strftime(UTC_FORMAT),
         "notes": args.notes,
     }
     signing = load_json(value_of(args, "--signing-evidence"), "--signing-evidence")
@@ -821,8 +813,8 @@ def main() -> int:
 
     out = Path(value_of(args, "--out"))
     if out.parent.parent.name == "provenance":
-        from reverify_signing import write_current
         from promote_signing_gate import load_identity
+        from reverify_signing import write_current
 
         try:
             write_current(out, record, load_identity(Path(__file__).resolve().parents[1] / "config/signing-identity.json"))
