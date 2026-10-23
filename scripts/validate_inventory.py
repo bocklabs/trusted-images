@@ -44,11 +44,13 @@ Usage: validate_inventory.py [ROOT]   (ROOT defaults to ./inventory)
 PyYAML 6.0.3 is the one deliberate dependency; everything else is stdlib.
 """
 
+import json
 import re
 import sys
 from pathlib import Path
 
 import yaml
+from finding_identity import require
 
 API_VERSION = "trusted-images.bocklabs.dev/v1"
 KIND = "Image"
@@ -346,6 +348,41 @@ def version_failure(path: Path, values: dict[str, object]) -> list[str]:
     return []
 
 
+def parse_go_file_build(raw: bytes, path: Path) -> dict:
+    try:
+        review = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise ValueError(f"{path}: invalid Go file-build JSON: {exc}") from exc
+    require(isinstance(review, dict) and review.get("schema") == "trusted-images.bocklabs.dev/go-file-build-v1",
+            f"{path}: invalid Go file-build evidence")
+    for field in ("ref", "config_digest", "upstream_child_digest", "target", "module", "binary_sha256",
+                  "layer.Digest", "layer.DiffID", "source.repository", "source.revision"):
+        present, value = dig(review, field)
+        require(present and isinstance(value, str) and value, f"{path}: invalid Go file-build evidence: {field}")
+    require(re.fullmatch(r"[0-9a-f]{64}", review["binary_sha256"]),
+            f"{path}: invalid Go file-build evidence: binary_sha256")
+    for value, prefix, allowed in (
+        (review, "", {"schema", "ref", "config_digest", "upstream_child_digest", "target", "module", "layer",
+                      "binary_sha256", "source", "build_info", "evidence_run", "limitation"}),
+        (review["layer"], "layer.", {"Digest", "DiffID"}),
+        (review["source"], "source.", {"repository", "revision", "files"}),
+    ):
+        unknown = sorted(set(value) - allowed)
+        require(not unknown, f"{path}: unknown Go file-build field: {prefix}{', '.join(unknown)}")
+    return review
+
+
+
+def go_file_build_failures(path: Path) -> list[str]:
+    try:
+        require(path.is_file() and not path.is_symlink() and path.with_name("image.yaml").is_file(),
+                f"{path}: Go file-build evidence requires a regular file beside image.yaml")
+        parse_go_file_build(path.read_bytes(), path)
+    except (OSError, ValueError) as exc:
+        return [str(exc)]
+    return []
+
+
 def entry_failures(path: Path, data: object) -> list[str]:
     """All schema-v2 violations in one entry, each naming file + rule."""
     name = path.parent.name
@@ -364,7 +401,7 @@ def entry_failures(path: Path, data: object) -> list[str]:
 
 
 def validate(root: Path) -> list[str]:
-    """Validate every inventory/<app>/image.yaml under root; return violations."""
+    """Validate inventory entries and optional reviewed Go file-build evidence."""
     if not root.is_dir():
         return [f"inventory root not found: {root}"]
 
@@ -393,6 +430,8 @@ def validate(root: Path) -> list[str]:
                 )
             else:
                 packages[package] = entry
+    for proof in sorted(root.glob("*/go-file-build.json")):
+        failures.extend(go_file_build_failures(proof))
     return failures
 
 

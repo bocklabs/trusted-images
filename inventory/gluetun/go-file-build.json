@@ -1,0 +1,38 @@
+{
+  "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
+  "ref": "ghcr.io/bocklabs/gluetun:v3.41.3-bocklabs.1@sha256:046b49055bbdf8a76dd327388088414e69b01fa436a1c652fbadb12d4b994944",
+  "config_digest": "sha256:3dad0cdcdd0975416c2ddd2970d69d8b87e39ce029e7e294d6150352316818c4",
+  "upstream_child_digest": "sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e",
+  "target": "gluetun-entrypoint",
+  "module": "github.com/qdm12/gluetun",
+  "layer": {
+    "Digest": "sha256:d830941ec93d408671ecbb7af8e62159331b48596d7eab0dae07bd620fc862e7",
+    "DiffID": "sha256:5292e7f16f16fce35a219f8f7470e9faede1e29e9a668e73029b78bfc7ab1b3d"
+  },
+  "binary_sha256": "c5930e42a32c689469016009f2651e1807865a9bba926974cb40119f7b397bd3",
+  "source": {
+    "repository": "https://github.com/passteque/gluetun",
+    "revision": "3d1e20c5551e9cae1f9d938dc7b7214a6987f27e",
+    "files": {
+      "Dockerfile": {
+        "url": "https://raw.githubusercontent.com/passteque/gluetun/3d1e20c5551e9cae1f9d938dc7b7214a6987f27e/Dockerfile",
+        "sha256": "e9c5eab8ae5596faa12d45fb5b7365a39f94e9deaa90e74a4b909cb7866bb20a"
+      },
+      "go.mod": {
+        "url": "https://raw.githubusercontent.com/passteque/gluetun/3d1e20c5551e9cae1f9d938dc7b7214a6987f27e/go.mod",
+        "sha256": "bd507e7ac8614ac3ad9651832527ea2fe214b292717e3cb72a9ee3bff7f933f1"
+      }
+    }
+  },
+  "build_info": {
+    "program": "command-line-arguments",
+    "main_module": null,
+    "module_version": "(devel)",
+    "go_version": "go1.25.11",
+    "sha256": "22160a40150579e3d45e117a7d836ab2d55e5e2109f65970a84f0f01bb93cffa",
+    "go_package_count": 53,
+    "versioned_go_package_count": 52
+  },
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/39985094446",
+  "limitation": "The first-party module version is unknown. Its vulnerability coverage is not established."
+}

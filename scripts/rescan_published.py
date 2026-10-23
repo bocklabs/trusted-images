@@ -17,8 +17,9 @@ from evaluate_promotion import (
 from finding_identity import canonical, findings_hash, require
 from promote_signing_gate import load_identity
 from reverify_signing import load_current, merged_commit, record_time, verified_record
-from validate_inventory import entry_failures
+from validate_inventory import dig, entry_failures, parse_go_file_build
 
+INVENTORY = Path(__file__).resolve().parents[1] / "inventory"
 ARTIFACT = Path("published-rescan")
 SELECTION_FILE = "selection.json"
 INVALID_PACKAGE_INVENTORY = "invalid scanned package inventory"
@@ -86,7 +87,31 @@ def select():
     output({"ref": ref, "proceed": False})
 
 
-def package_coverage(results):
+def reviewed_file_build(selection, report):
+    app = selection["app"]
+    require(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", app), "invalid inventory app")
+    path = INVENTORY / app / "go-file-build.json"
+    if not path.exists():
+        return None
+    require(path.is_file() and not path.is_symlink(), "unsafe Go file-build evidence")
+    raw = path.read_bytes()
+    review = parse_go_file_build(raw, path)
+    require(review["ref"] == selection["ref"], "Go file-build evidence is stale for the selected published image")
+    metadata = report.get("Metadata", {})
+    require(isinstance(metadata, dict), "Go file-build scan Metadata must be an object")
+    _, labels = dig(report, "Metadata.ImageConfig.config.Labels")
+    diff_ids = metadata.get("DiffIDs")
+    require(isinstance(diff_ids, list), "Go file-build scan DiffIDs must be a list")
+    require(isinstance(labels, dict) and review["config_digest"] == metadata.get("ImageID")
+            and review["upstream_child_digest"] == dig(selection, "published.upstream.selected_child_digest")[1]
+            and review["layer"]["DiffID"] in diff_ids
+            and review["source"]["repository"] == labels.get("org.opencontainers.image.source")
+            and review["source"]["revision"] == labels.get("org.opencontainers.image.revision"),
+            "Go file-build scan evidence differs from scanned image")
+    return {**review, "review_sha256": hashlib.sha256(raw).hexdigest()}
+
+
+def package_coverage(results, file_build=None):
     covered = bool(results)
     for result in results:
         packages = result.get("Packages")
@@ -101,7 +126,11 @@ def package_coverage(results):
                     and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
                     and bool(result["Target"]) and package.get("ID") == package["Name"]
                     and re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", package["Name"])
-                    and package.get("AnalyzedBy") == "gobinary" and package.get("Relationship") == "root"
+                    and package.get("AnalyzedBy") == "gobinary"
+                    and (package.get("Relationship") == "root" or (
+                        file_build is not None and "Relationship" not in package
+                        and (result["Target"], package["Name"], package.get("Layer"))
+                        == (file_build["target"], file_build["module"], file_build["layer"])))
                     and isinstance(package.get("Identifier"), dict)
                     and isinstance(package["Identifier"].get("PURL"), str)
                     and package["Identifier"]["PURL"].casefold() == ("pkg:golang/" + package["Name"]).casefold()
@@ -135,7 +164,8 @@ def decide(selection, report, enabled):
     results = validate_report_results(report, "published full report", False)
     normalized = findings(report, "published full report")
     require(report.get("Metadata", {}).get("OS", {}).get("EOSL") is not True, "published image is end-of-life")
-    covered = package_coverage(results)
+    file_build = reviewed_file_build(selection, report)
+    covered = package_coverage(results, file_build)
     spec = selection["spec"]
     changed_upstream = spec["upstream"] != {k: selection["published"]["upstream"][k] for k in ("ref", "tag", "digest")}
     requested = []
@@ -155,6 +185,10 @@ def decide(selection, report, enabled):
     value = {"app": selection["app"], "ref": selection["ref"], "proceed": False,
              "force_repromote": False, "findings": len(normalized), "no_fix": no_fix,
              "unsupported": unsupported, "actionable": len(requested), "package_coverage": bool(covered)}
+    if file_build is not None:
+        value["coverage_limitations"] = [{"target": file_build["target"], "module": file_build["module"],
+            "version": "unknown", "reason": "reviewed first-party Go file build has no module version",
+            "review_sha256": file_build["review_sha256"]}]
     if not covered:
         value["reason"] = "unsupported scanner/package coverage; full report retained"
     elif not requested:

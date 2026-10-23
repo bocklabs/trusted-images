@@ -7,6 +7,7 @@ negative case — that the failure output names the offending file, field, or
 value. stdlib unittest only; PyYAML is used to build the fixtures.
 """
 
+import json
 import subprocess
 import sys
 import tempfile
@@ -42,6 +43,7 @@ def valid_entry() -> dict:
 def run_validator(root: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(VALIDATOR), str(root)],
+        check=False,
         capture_output=True,
         text=True,
     )
@@ -78,6 +80,33 @@ class ValidatorTests(unittest.TestCase):
 
     def test_valid_entry_passes(self) -> None:
         self.assert_valid()
+
+    def test_go_file_build_evidence_is_checked_with_inventory(self) -> None:
+        entry = valid_entry()
+        entry["metadata"]["name"] = "gluetun"
+        entry["spec"]["destination"]["package"] = "ghcr.io/bocklabs/gluetun"
+        self.write_entry("gluetun", entry)
+        path = self.root / "gluetun" / "go-file-build.json"
+        valid = (REPO_ROOT / "inventory/gluetun/go-file-build.json").read_text()
+        path.write_text(valid)
+        self.assertEqual(run_validator(self.root).returncode, 0)
+        path.write_text("{")
+        result = run_validator(self.root)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(str(path), result.stdout)
+        self.assertIn("invalid Go file-build JSON", result.stdout)
+        review = json.loads(valid)
+        review["layer"]["DiffId"] = review["layer"].pop("DiffID")
+        path.write_text(json.dumps(review))
+        result = run_validator(self.root)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("layer.DiffID", result.stdout)
+        review = json.loads(valid)
+        review["unexpected"] = True
+        path.write_text(json.dumps(review))
+        result = run_validator(self.root)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("unexpected", result.stdout)
 
     def test_missing_digest_field_fails(self) -> None:
         entry = valid_entry()
