@@ -309,8 +309,14 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" "$SKOPEO" \
             inspect --raw ${CREDS[@]+"${CREDS[@]}"} \
             "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
-          jq -e '.manifests | length > 0' upstream-index.json > /dev/null \
-            || { echo "FATAL: upstream index carries no manifests"; exit 1; }
+          jq -e '
+            if .mediaType == "application/vnd.oci.image.index.v1+json"
+               or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"
+            then (.manifests | type == "array" and length > 0)
+            else .mediaType == "application/vnd.oci.image.manifest.v1+json"
+                 or .mediaType == "application/vnd.docker.distribution.manifest.v2+json"
+            end' upstream-index.json > /dev/null \
+            || { echo "FATAL: upstream root is not a supported image manifest or nonempty index"; exit 1; }
           echo "upstream index bytes: $(wc -c < upstream-index.json)"
 
       - name: Resolve the exact linux/amd64 child
@@ -323,7 +329,10 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SELECTED_DIGEST="$(jq -er '[.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64")][0].digest' upstream-index.json)"
+          SELECTED_DIGEST="${UPSTREAM_INDEX_DIGEST}"
+          if jq -e 'has("manifests")' upstream-index.json > /dev/null; then
+            SELECTED_DIGEST="$(jq -er '[.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64")][0].digest' upstream-index.json)"
+          fi
           SKOPEO="${SKOPEO_IMAGE}"
           CREDS=()
           if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then

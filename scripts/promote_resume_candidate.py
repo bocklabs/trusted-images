@@ -153,7 +153,7 @@ if module.sha256_file(root / INDEX_FILENAME) != spec["upstream"]["digest"]:
     raise SystemExit("FATAL: candidate upstream index digest mismatch")
 if (
     module.select_child(
-        json.loads((root / INDEX_FILENAME).read_text()),
+        root / INDEX_FILENAME,
         root / CHILD_FILENAME,
         root / "child-config.json",
     )

@@ -92,11 +92,11 @@ KEV policy still applies; remediation promises no zero-CVE result.
 
 1. **Validate inventory and candidate** in a read-only validation job. The job
    has no network egress for the container and only read GitHub/registry scope.
-   Static checks select the upstream index's exact `linux/amd64` child and record
+   Static checks select the pinned root's exact `linux/amd64` image and record
    runtime configuration. Live validation follows the inventory `http`, `process`,
    or `oneshot` profile and observes an image-defined healthcheck when present.
-2. **Resolve immutable identities**: the pinned upstream index, its exactly one
-   selected `linux/amd64` child, the append-only internal tag, and any existing
+2. **Resolve immutable identities**: the pinned upstream index or image manifest,
+   its exact `linux/amd64` image, the append-only internal tag, and any existing
    same-candidate revision.
 3. **Scan the child twice with one frozen scanner database**: a full report with
    every severity and unfixed finding, plus a fixable-OS-only report. Their
@@ -187,9 +187,11 @@ Native Chisel scan orchestration is unavailable. An empty OS scan cannot establi
 
 ## Identity and reuse
 
-New records are exactly `linux/amd64`. Inventory keeps the upstream index digest
-so Renovate continues to see upstream changes; the workflow resolves and records
-the selected child as well. A clean promotion's internal manifest digest equals
+New records are exactly `linux/amd64`. Inventory keeps the upstream root digest
+so Renovate continues to see upstream changes. An index must contain exactly one
+selected child. A single image manifest is its own selected child, with identical
+original bytes. Both paths verify the manifest/config hashes and sizes and require
+a `linux/amd64` config before image execution. A clean promotion's internal manifest digest equals
 the selected child. A patched promotion is the new manifest produced from that
 child.
 

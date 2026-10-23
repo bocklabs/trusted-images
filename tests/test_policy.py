@@ -766,6 +766,30 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("KEV", result.stdout + result.stderr)
 
+    def test_single_manifest_preserves_pinned_bytes_and_requires_amd64_config(self):
+        self.index.write_bytes(self.child.read_bytes())
+        self.index_digest = fixture_digest(child_manifest())
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        decision = json.loads(self.out.read_text())
+        self.assertEqual(decision["selected_child_digest"], self.index_digest)
+
+        self.child.write_bytes(self.child.read_bytes() + b"\n")
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("upstream manifest bytes", result.stdout + result.stderr)
+
+        config = {**CONFIG_VALUE, "architecture": "arm64"}
+        write_json(self.config, config)
+        manifest = child_manifest()
+        manifest["config"].update(digest=fixture_digest(config), size=self.config.stat().st_size)
+        write_json(self.child, manifest)
+        self.index.write_bytes(self.child.read_bytes())
+        self.index_digest = fixture_digest(manifest)
+        result = self.run_policy()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("platform", result.stdout + result.stderr)
+
     def test_index_must_resolve_one_exact_amd64_child(self):
         index = json.loads(self.index.read_text())
         index["manifests"].append(index["manifests"][0])
