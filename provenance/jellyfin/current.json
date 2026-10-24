@@ -12,19 +12,19 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/jellyfin",
-    "tag": "10.11.11-bocklabs.1",
-    "digest": "sha256:940d64f1c4c0b4c34669ce440206b66e52c47530dcd673615dd7205ceb110f41",
+    "tag": "10.11.11-bocklabs.2",
+    "digest": "sha256:f044c76b1cd26fa2a97b284ff2ec517f9369de068f490b1ba22d09dca5072de0",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39550369338",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40077851232",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
-    "trivy": "0.76.0",
+    "trivy": "0.76.1",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
     "skopeo": "v1.22.2",
@@ -32,16 +32,16 @@
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:8629a880fe32cb8175a9a1629fa717a10eb1b74ac96d0894d84e4cb1694b0d0f",
-      "updated_at": "2026-10-20 07:17:35.368599961 +0000 UTC"
+      "check_bundle_digest": "sha256:37fd6d795e264343f874626baeb0d43b06ad8018d9d0d3a466b366942ced3f2f",
+      "updated_at": "2026-10-24 07:11:13.37117014 +0000 UTC"
     },
-    "full_report_sha256": "ef37543ff3539d70f6d76d34ae864d675f9ff069d1ad0de0e8afe4c0eb119ada",
-    "copa_report_sha256": "f33afd80591f9bc887479947a0b7d5adc8ecd8a82a3b46a26a7b39d3c60bf6c0",
-    "decision_sha256": "fca66c5db7da808f433ca6652eef3914b6aefa93f542eb4c2171dd5ccb138dc0",
+    "full_report_sha256": "d30e06507079796b4a5f6ed4a62a8c0419830f3bdf97eb557179c7a4738e71f0",
+    "copa_report_sha256": "4358b4ffcaeeaaabfa12f15bf77e3b101c24f8f2db2c97fa7bf53bbd49457de2",
+    "decision_sha256": "4af02963918d08323ff9da261b94b4594af7c6eea2fc745f010264ab0bd34a9c",
     "reports": {
-      "before_sha256": "e707277475a9d233e466285d3e3a645a200105d23b78833507fbf87df2ea21ad",
-      "final_sha256": "ef37543ff3539d70f6d76d34ae864d675f9ff069d1ad0de0e8afe4c0eb119ada",
-      "fixable_sha256": "f33afd80591f9bc887479947a0b7d5adc8ecd8a82a3b46a26a7b39d3c60bf6c0"
+      "before_sha256": "d5eadd62741ed185498b09a72a8162426c53c5ba454b1fc4ac427a65d64caa4a",
+      "final_sha256": "d30e06507079796b4a5f6ed4a62a8c0419830f3bdf97eb557179c7a4738e71f0",
+      "fixable_sha256": "4358b4ffcaeeaaabfa12f15bf77e3b101c24f8f2db2c97fa7bf53bbd49457de2"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "a3591cd3f9b803d7ba43782fdbc9c89feb66bca6d6ae3dc73689667e77645a7f",
-        "fetched_at": "2026-10-21T05:40:32Z",
-        "catalogVersion": "2026.10.20",
-        "dateReleased": "2026-10-20T19:00:31.8765Z"
+        "sha256": "97a6e54bc74c651ab3c55657191db9adec6c63b05ca54e4205327cfd97a8fb70",
+        "fetched_at": "2026-10-24T08:29:05Z",
+        "catalogVersion": "2026.10.23",
+        "dateReleased": "2026-10-23T19:30:18.9209Z"
       }
     },
     "acceptance": null,
@@ -72,11 +72,14 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
+    "remediation": {
+      "need_sha256": "65e3112716a01d895ac0c13c66fcf516dbc8786b0fbb932b33aace76b3b9358f"
+    },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2011-3374:LOW:debian,TEMP-0841856-B18BAF:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2017-18018:LOW:debian,CVE-2025-5278:LOW:debian,CVE-2026-56391:LOW:debian,CVE-2026-56392:LOW:debian,CVE-2025-10966:LOW:debian,CVE-2025-14017:LOW:debian,CVE-2025-15079:LOW:debian,CVE-2025-15224:LOW:debian,CVE-2026-10536:MEDIUM:,CVE-2026-107928:LOW:,CVE-2026-107929:LOW:,CVE-2026-11856:MEDIUM:,CVE-2026-12064:HIGH:,CVE-2026-13608:LOW:,CVE-2026-18924:LOW:,CVE-2026-19931:MEDIUM:,CVE-2026-80229:LOW:,CVE-2026-80230:LOW:,CVE-2026-80255:LOW:,CVE-2026-82208:LOW:debian,CVE-2026-82209:LOW:,CVE-2026-8458:HIGH:,CVE-2026-86409:LOW:,CVE-2026-86410:LOW:,CVE-2026-86414:LOW:,CVE-2026-87862:LOW:,CVE-2026-87863:LOW:,CVE-2026-87864:LOW:,CVE-2026-87865:LOW:,CVE-2026-87866:LOW:debian,CVE-2026-8926:MEDIUM:,CVE-2026-8932:MEDIUM:,CVE-2026-9079:MEDIUM:,CVE-2026-9080:MEDIUM:,CVE-2026-92386:LOW:,CVE-2026-92387:LOW:,CVE-2026-92388:MEDIUM:,CVE-2026-92389:LOW:,CVE-2026-92390:LOW:,CVE-2026-92391:LOW:,CVE-2026-94266:LOW:,CVE-2026-9545:MEDIUM:,CVE-2026-9547:LOW:debian,CVE-2026-102473:LOW:debian,CVE-2026-102474:LOW:debian,CVE-2026-53910:LOW:debian,CVE-2026-102010:MEDIUM:,CVE-2026-95619:MEDIUM:,CVE-2026-45591:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-45491:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2025-6965:HIGH:ghsa,GHSA-qrmm-w75w-3wpx:MEDIUM:ghsa,CVE-2026-54369:HIGH:,CVE-2026-54370:MEDIUM:,CVE-2011-3374:LOW:debian,CVE-2026-54371:MEDIUM:,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2026-42250:MEDIUM:,CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-18374:MEDIUM:,CVE-2026-19499:MEDIUM:,CVE-2026-19542:MEDIUM:,CVE-2026-5435:MEDIUM:,CVE-2026-6238:MEDIUM:,CVE-2026-6368:MEDIUM:,CVE-2026-6791:MEDIUM:,CVE-2026-77117:MEDIUM:,CVE-2026-80489:MEDIUM:,CVE-2026-8674:MEDIUM:,CVE-2026-86805:MEDIUM:,CVE-2026-89092:MEDIUM:,CVE-2026-95818:MEDIUM:,CVE-2026-97399:LOW:,CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-18374:MEDIUM:,CVE-2026-19499:MEDIUM:,CVE-2026-19542:MEDIUM:,CVE-2026-5435:MEDIUM:,CVE-2026-6238:MEDIUM:,CVE-2026-6368:MEDIUM:,CVE-2026-6791:MEDIUM:,CVE-2026-77117:MEDIUM:,CVE-2026-80489:MEDIUM:,CVE-2026-8674:MEDIUM:,CVE-2026-86805:MEDIUM:,CVE-2026-89092:MEDIUM:,CVE-2026-95818:MEDIUM:,CVE-2026-97399:LOW:,CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-18374:MEDIUM:,CVE-2026-19499:MEDIUM:,CVE-2026-19542:MEDIUM:,CVE-2026-5435:MEDIUM:,CVE-2026-6238:MEDIUM:,CVE-2026-6368:MEDIUM:,CVE-2026-6791:MEDIUM:,CVE-2026-77117:MEDIUM:,CVE-2026-80489:MEDIUM:,CVE-2026-8674:MEDIUM:,CVE-2026-86805:MEDIUM:,CVE-2026-89092:MEDIUM:,CVE-2026-95818:MEDIUM:,CVE-2026-97399:LOW:,CVE-2017-7475:LOW:debian,CVE-2018-18064:LOW:debian,CVE-2025-50422:LOW:,CVE-2025-10966:LOW:debian,CVE-2025-14017:LOW:debian,CVE-2025-15079:LOW:debian,CVE-2025-15224:LOW:debian,CVE-2026-10536:MEDIUM:,CVE-2026-107928:LOW:,CVE-2026-107929:LOW:,CVE-2026-11856:MEDIUM:,CVE-2026-12064:HIGH:,CVE-2026-13608:LOW:,CVE-2026-18924:LOW:,CVE-2026-19931:MEDIUM:,CVE-2026-80229:LOW:,CVE-2026-80230:LOW:,CVE-2026-80255:LOW:,CVE-2026-82208:LOW:debian,CVE-2026-82209:LOW:,CVE-2026-8458:HIGH:,CVE-2026-86409:LOW:,CVE-2026-86410:LOW:,CVE-2026-86414:LOW:,CVE-2026-87862:LOW:,CVE-2026-87863:LOW:,CVE-2026-87864:LOW:,CVE-2026-87865:LOW:,CVE-2026-87866:LOW:debian,CVE-2026-8926:MEDIUM:,CVE-2026-8932:MEDIUM:,CVE-2026-9079:MEDIUM:,CVE-2026-9080:MEDIUM:,CVE-2026-92386:LOW:,CVE-2026-92387:LOW:,CVE-2026-92388:MEDIUM:,CVE-2026-92389:LOW:,CVE-2026-92390:LOW:,CVE-2026-92391:LOW:,CVE-2026-94266:LOW:,CVE-2026-9545:MEDIUM:,CVE-2026-9547:LOW:debian,CVE-2024-25260:LOW:debian,CVE-2025-1352:LOW:debian,CVE-2025-1365:LOW:debian,CVE-2025-1371:LOW:debian,CVE-2025-1372:LOW:debian,CVE-2025-1376:LOW:debian,CVE-2025-1377:LOW:debian,CVE-2025-66382:MEDIUM:nvd,CVE-2026-95512:MEDIUM:,CVE-2026-102010:MEDIUM:,CVE-2026-95619:MEDIUM:,CVE-2011-3389:LOW:debian,CVE-2026-67693:LOW:debian,CVE-2026-88647:LOW:debian,CVE-2026-88648:LOW:debian,CVE-2026-95184:LOW:debian,CVE-2026-95209:LOW:debian,CVE-2026-95210:LOW:debian,CVE-2018-5709:LOW:debian,CVE-2024-26458:LOW:debian,CVE-2024-26461:LOW:debian,CVE-2026-107708:MEDIUM:,CVE-2026-107778:MEDIUM:,CVE-2026-11850:LOW:debian,CVE-2018-5709:LOW:debian,CVE-2024-26458:LOW:debian,CVE-2024-26461:LOW:debian,CVE-2026-107708:MEDIUM:,CVE-2026-107778:MEDIUM:,CVE-2026-11850:LOW:debian,CVE-2018-5709:LOW:debian,CVE-2024-26458:LOW:debian,CVE-2024-26461:LOW:debian,CVE-2026-107708:MEDIUM:,CVE-2026-107778:MEDIUM:,CVE-2026-11850:LOW:debian,CVE-2018-5709:LOW:debian,CVE-2024-26458:LOW:debian,CVE-2024-26461:LOW:debian,CVE-2026-107708:MEDIUM:,CVE-2026-107778:MEDIUM:,CVE-2026-11850:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2015-3276:LOW:debian,CVE-2017-14159:LOW:debian,CVE-2017-17740:LOW:debian,CVE-2020-15719:LOW:debian,CVE-2026-22185:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2026-58055:MEDIUM:,CVE-2026-13757:MEDIUM:,CVE-2026-18938:MEDIUM:,CVE-2026-54411:MEDIUM:,CVE-2026-54411:MEDIUM:,CVE-2026-54411:MEDIUM:,CVE-2026-54411:MEDIUM:,CVE-2023-37769:LOW:debian,CVE-2021-4214:LOW:debian,CVE-2026-3713:LOW:debian,CVE-2026-107161:MEDIUM:,CVE-2026-107161:MEDIUM:,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2021-45346:LOW:debian,CVE-2025-70873:LOW:debian,CVE-2026-50812:MEDIUM:,CVE-2026-50813:MEDIUM:,CVE-2026-102010:MEDIUM:,CVE-2026-95619:MEDIUM:,CVE-2013-4392:LOW:debian,CVE-2023-31437:LOW:debian,CVE-2023-31438:LOW:debian,CVE-2023-31439:LOW:debian,CVE-2026-15059:MEDIUM:,CVE-2026-16742:HIGH:,CVE-2026-40228:LOW:nvd,CVE-2026-5673:LOW:debian,CVE-2026-5673:LOW:debian,CVE-2025-6141:LOW:,CVE-2025-69720:HIGH:nvd,CVE-2013-4392:LOW:debian,CVE-2023-31437:LOW:debian,CVE-2023-31438:LOW:debian,CVE-2023-31439:LOW:debian,CVE-2026-15059:MEDIUM:,CVE-2026-16742:HIGH:,CVE-2026-40228:LOW:nvd,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2026-88806:HIGH:,CVE-2026-94283:MEDIUM:,CVE-2026-94284:MEDIUM:,CVE-2026-94285:MEDIUM:,CVE-2026-88806:HIGH:,CVE-2026-94283:MEDIUM:,CVE-2026-94284:MEDIUM:,CVE-2026-94285:MEDIUM:,CVE-2026-88806:HIGH:,CVE-2026-94283:MEDIUM:,CVE-2026-94284:MEDIUM:,CVE-2026-94285:MEDIUM:,CVE-2025-25467:LOW:debian,CVE-2026-11979:LOW:debian,CVE-2026-6653:CRITICAL:nvd,CVE-2026-74860:HIGH:,CVE-2026-76781:MEDIUM:,CVE-2026-86137:MEDIUM:nvd,CVE-2026-86138:HIGH:nvd,CVE-2026-86139:HIGH:nvd,CVE-2026-86140:HIGH:nvd,CVE-2026-86141:LOW:nvd,CVE-2026-86142:HIGH:nvd,CVE-2026-86143:HIGH:nvd,CVE-2026-86144:HIGH:nvd,CVE-2026-88807:HIGH:,CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-18374:MEDIUM:,CVE-2026-19499:MEDIUM:,CVE-2026-19542:MEDIUM:,CVE-2026-5435:MEDIUM:,CVE-2026-6238:MEDIUM:,CVE-2026-6368:MEDIUM:,CVE-2026-6791:MEDIUM:,CVE-2026-77117:MEDIUM:,CVE-2026-80489:MEDIUM:,CVE-2026-8674:MEDIUM:,CVE-2026-86805:MEDIUM:,CVE-2026-89092:MEDIUM:,CVE-2026-95818:MEDIUM:,CVE-2026-97399:LOW:,CVE-2007-5686:LOW:debian,CVE-2024-56433:LOW:,TEMP-0628843-DBAD28:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2025-6141:LOW:,CVE-2025-69720:HIGH:nvd,CVE-2025-6141:LOW:,CVE-2025-69720:HIGH:nvd,CVE-2007-5686:LOW:debian,CVE-2024-56433:LOW:,TEMP-0628843-DBAD28:LOW:debian,CVE-2011-4116:LOW:debian,CVE-2026-15534:MEDIUM:,CVE-2026-82560:UNKNOWN:,CVE-2026-9538:HIGH:nvd,TEMP-0517018-A83CE6:LOW:debian,CVE-2005-2541:LOW:debian,CVE-2026-18477:MEDIUM:,CVE-2026-18508:MEDIUM:,CVE-2026-5704:MEDIUM:nvd,TEMP-0290435-0B57B5:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2026-27171:MEDIUM:nvd,CVE-2026-85091:MEDIUM:",
+    "outcome": "eligible with no-fix warnings: CVE-2011-3374:LOW:debian,TEMP-0841856-B18BAF:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2017-18018:LOW:debian,CVE-2025-5278:LOW:debian,CVE-2026-56391:LOW:debian,CVE-2026-56392:LOW:debian,CVE-2025-10966:LOW:debian,CVE-2025-14017:LOW:debian,CVE-2025-15079:LOW:debian,CVE-2025-15224:LOW:debian,CVE-2026-10536:MEDIUM:,CVE-2026-107928:LOW:,CVE-2026-107929:LOW:,CVE-2026-11856:MEDIUM:,CVE-2026-12064:HIGH:,CVE-2026-13608:LOW:,CVE-2026-18924:LOW:,CVE-2026-19931:MEDIUM:,CVE-2026-80229:LOW:,CVE-2026-80230:LOW:,CVE-2026-80255:LOW:,CVE-2026-82208:LOW:debian,CVE-2026-82209:LOW:,CVE-2026-8458:HIGH:,CVE-2026-86409:LOW:,CVE-2026-86410:LOW:,CVE-2026-86414:LOW:,CVE-2026-87862:LOW:,CVE-2026-87863:LOW:,CVE-2026-87864:LOW:,CVE-2026-87865:LOW:,CVE-2026-87866:LOW:debian,CVE-2026-8926:MEDIUM:,CVE-2026-8932:MEDIUM:,CVE-2026-9079:MEDIUM:,CVE-2026-9080:MEDIUM:,CVE-2026-92386:LOW:,CVE-2026-92387:LOW:,CVE-2026-92388:MEDIUM:,CVE-2026-92389:LOW:,CVE-2026-92390:LOW:,CVE-2026-92391:LOW:,CVE-2026-94266:LOW:,CVE-2026-9545:MEDIUM:,CVE-2026-9547:LOW:debian,CVE-2026-102473:LOW:debian,CVE-2026-102474:LOW:debian,CVE-2026-53910:LOW:debian,CVE-2026-102010:MEDIUM:,CVE-2026-95619:MEDIUM:,CVE-2026-45591:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-45491:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2025-6965:HIGH:ghsa,GHSA-qrmm-w75w-3wpx:MEDIUM:ghsa,CVE-2026-54369:HIGH:,CVE-2026-54370:MEDIUM:,CVE-2011-3374:LOW:debian,CVE-2026-54371:MEDIUM:,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2026-42250:MEDIUM:,CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-18374:MEDIUM:,CVE-2026-19499:MEDIUM:,CVE-2026-19542:MEDIUM:,CVE-2026-5435:MEDIUM:,CVE-2026-6238:MEDIUM:,CVE-2026-6368:MEDIUM:,CVE-2026-6791:MEDIUM:,CVE-2026-77117:MEDIUM:,CVE-2026-80489:MEDIUM:,CVE-2026-8674:MEDIUM:,CVE-2026-86805:MEDIUM:,CVE-2026-89092:MEDIUM:,CVE-2026-95818:MEDIUM:,CVE-2026-97399:LOW:,CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-18374:MEDIUM:,CVE-2026-19499:MEDIUM:,CVE-2026-19542:MEDIUM:,CVE-2026-5435:MEDIUM:,CVE-2026-6238:MEDIUM:,CVE-2026-6368:MEDIUM:,CVE-2026-6791:MEDIUM:,CVE-2026-77117:MEDIUM:,CVE-2026-80489:MEDIUM:,CVE-2026-8674:MEDIUM:,CVE-2026-86805:MEDIUM:,CVE-2026-89092:MEDIUM:,CVE-2026-95818:MEDIUM:,CVE-2026-97399:LOW:,CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-18374:MEDIUM:,CVE-2026-19499:MEDIUM:,CVE-2026-19542:MEDIUM:,CVE-2026-5435:MEDIUM:,CVE-2026-6238:MEDIUM:,CVE-2026-6368:MEDIUM:,CVE-2026-6791:MEDIUM:,CVE-2026-77117:MEDIUM:,CVE-2026-80489:MEDIUM:,CVE-2026-8674:MEDIUM:,CVE-2026-86805:MEDIUM:,CVE-2026-89092:MEDIUM:,CVE-2026-95818:MEDIUM:,CVE-2026-97399:LOW:,CVE-2017-7475:LOW:debian,CVE-2018-18064:LOW:debian,CVE-2025-50422:LOW:,CVE-2025-10966:LOW:debian,CVE-2025-14017:LOW:debian,CVE-2025-15079:LOW:debian,CVE-2025-15224:LOW:debian,CVE-2026-10536:MEDIUM:,CVE-2026-107928:LOW:,CVE-2026-107929:LOW:,CVE-2026-11856:MEDIUM:,CVE-2026-12064:HIGH:,CVE-2026-13608:LOW:,CVE-2026-18924:LOW:,CVE-2026-19931:MEDIUM:,CVE-2026-80229:LOW:,CVE-2026-80230:LOW:,CVE-2026-80255:LOW:,CVE-2026-82208:LOW:debian,CVE-2026-82209:LOW:,CVE-2026-8458:HIGH:,CVE-2026-86409:LOW:,CVE-2026-86410:LOW:,CVE-2026-86414:LOW:,CVE-2026-87862:LOW:,CVE-2026-87863:LOW:,CVE-2026-87864:LOW:,CVE-2026-87865:LOW:,CVE-2026-87866:LOW:debian,CVE-2026-8926:MEDIUM:,CVE-2026-8932:MEDIUM:,CVE-2026-9079:MEDIUM:,CVE-2026-9080:MEDIUM:,CVE-2026-92386:LOW:,CVE-2026-92387:LOW:,CVE-2026-92388:MEDIUM:,CVE-2026-92389:LOW:,CVE-2026-92390:LOW:,CVE-2026-92391:LOW:,CVE-2026-94266:LOW:,CVE-2026-9545:MEDIUM:,CVE-2026-9547:LOW:debian,CVE-2024-25260:LOW:debian,CVE-2025-1352:LOW:debian,CVE-2025-1365:LOW:debian,CVE-2025-1371:LOW:debian,CVE-2025-1372:LOW:debian,CVE-2025-1376:LOW:debian,CVE-2025-1377:LOW:debian,CVE-2025-66382:MEDIUM:nvd,CVE-2026-113351:MEDIUM:,CVE-2026-115506:UNKNOWN:,CVE-2026-95512:MEDIUM:,CVE-2026-102010:MEDIUM:,CVE-2026-95619:MEDIUM:,CVE-2011-3389:LOW:debian,CVE-2026-67693:LOW:debian,CVE-2026-88647:LOW:debian,CVE-2026-88648:LOW:debian,CVE-2026-95184:LOW:debian,CVE-2026-95209:LOW:debian,CVE-2026-95210:LOW:debian,CVE-2018-5709:LOW:debian,CVE-2024-26458:LOW:debian,CVE-2024-26461:LOW:debian,CVE-2026-107708:MEDIUM:,CVE-2026-107778:MEDIUM:,CVE-2026-11850:LOW:debian,CVE-2018-5709:LOW:debian,CVE-2024-26458:LOW:debian,CVE-2024-26461:LOW:debian,CVE-2026-107708:MEDIUM:,CVE-2026-107778:MEDIUM:,CVE-2026-11850:LOW:debian,CVE-2018-5709:LOW:debian,CVE-2024-26458:LOW:debian,CVE-2024-26461:LOW:debian,CVE-2026-107708:MEDIUM:,CVE-2026-107778:MEDIUM:,CVE-2026-11850:LOW:debian,CVE-2018-5709:LOW:debian,CVE-2024-26458:LOW:debian,CVE-2024-26461:LOW:debian,CVE-2026-107708:MEDIUM:,CVE-2026-107778:MEDIUM:,CVE-2026-11850:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2015-3276:LOW:debian,CVE-2017-14159:LOW:debian,CVE-2017-17740:LOW:debian,CVE-2020-15719:LOW:debian,CVE-2026-22185:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2026-58055:MEDIUM:,CVE-2026-13757:MEDIUM:,CVE-2026-18938:MEDIUM:,CVE-2026-54411:MEDIUM:,CVE-2026-54411:MEDIUM:,CVE-2026-54411:MEDIUM:,CVE-2026-54411:MEDIUM:,CVE-2023-37769:LOW:debian,CVE-2021-4214:LOW:debian,CVE-2026-3713:LOW:debian,CVE-2026-107161:MEDIUM:,CVE-2026-107161:MEDIUM:,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2021-45346:LOW:debian,CVE-2025-70873:LOW:debian,CVE-2026-50812:MEDIUM:,CVE-2026-50813:MEDIUM:,CVE-2026-102010:MEDIUM:,CVE-2026-95619:MEDIUM:,CVE-2013-4392:LOW:debian,CVE-2023-31437:LOW:debian,CVE-2023-31438:LOW:debian,CVE-2023-31439:LOW:debian,CVE-2026-15059:MEDIUM:,CVE-2026-16742:HIGH:,CVE-2026-40228:LOW:nvd,CVE-2026-5673:LOW:debian,CVE-2026-5673:LOW:debian,CVE-2025-6141:LOW:,CVE-2025-69720:HIGH:nvd,CVE-2013-4392:LOW:debian,CVE-2023-31437:LOW:debian,CVE-2023-31438:LOW:debian,CVE-2023-31439:LOW:debian,CVE-2026-15059:MEDIUM:,CVE-2026-16742:HIGH:,CVE-2026-40228:LOW:nvd,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2026-88806:HIGH:,CVE-2026-94283:MEDIUM:,CVE-2026-94284:MEDIUM:,CVE-2026-94285:MEDIUM:,CVE-2026-88806:HIGH:,CVE-2026-94283:MEDIUM:,CVE-2026-94284:MEDIUM:,CVE-2026-94285:MEDIUM:,CVE-2026-88806:HIGH:,CVE-2026-94283:MEDIUM:,CVE-2026-94284:MEDIUM:,CVE-2026-94285:MEDIUM:,CVE-2025-25467:LOW:debian,CVE-2026-11979:LOW:debian,CVE-2026-6653:CRITICAL:nvd,CVE-2026-74860:HIGH:,CVE-2026-76781:MEDIUM:,CVE-2026-86137:MEDIUM:nvd,CVE-2026-86138:HIGH:nvd,CVE-2026-86139:HIGH:nvd,CVE-2026-86140:HIGH:nvd,CVE-2026-86141:LOW:nvd,CVE-2026-86142:HIGH:nvd,CVE-2026-86143:HIGH:nvd,CVE-2026-86144:HIGH:nvd,CVE-2026-88807:HIGH:,CVE-2026-110654:LOW:debian,CVE-2026-110654:LOW:debian,CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-18374:MEDIUM:,CVE-2026-19499:MEDIUM:,CVE-2026-19542:MEDIUM:,CVE-2026-5435:MEDIUM:,CVE-2026-6238:MEDIUM:,CVE-2026-6368:MEDIUM:,CVE-2026-6791:MEDIUM:,CVE-2026-77117:MEDIUM:,CVE-2026-80489:MEDIUM:,CVE-2026-8674:MEDIUM:,CVE-2026-86805:MEDIUM:,CVE-2026-89092:MEDIUM:,CVE-2026-95818:MEDIUM:,CVE-2026-97399:LOW:,CVE-2007-5686:LOW:debian,CVE-2024-56433:LOW:,TEMP-0628843-DBAD28:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2025-6141:LOW:,CVE-2025-69720:HIGH:nvd,CVE-2025-6141:LOW:,CVE-2025-69720:HIGH:nvd,CVE-2007-5686:LOW:debian,CVE-2024-56433:LOW:,TEMP-0628843-DBAD28:LOW:debian,CVE-2011-4116:LOW:debian,CVE-2026-15534:MEDIUM:,CVE-2026-82560:UNKNOWN:,CVE-2026-9538:HIGH:nvd,TEMP-0517018-A83CE6:LOW:debian,CVE-2005-2541:LOW:debian,CVE-2026-18477:MEDIUM:,CVE-2026-18508:MEDIUM:,CVE-2026-5704:MEDIUM:nvd,TEMP-0290435-0B57B5:LOW:debian,CVE-2022-0563:LOW:debian,CVE-2026-3184:MEDIUM:nvd,CVE-2026-76642:HIGH:,CVE-2026-78408:HIGH:,CVE-2026-78409:HIGH:,CVE-2026-78410:HIGH:,CVE-2026-27171:MEDIUM:nvd,CVE-2026-85091:MEDIUM:",
     "eligible": true,
     "warnings": [
       {
@@ -2979,6 +2982,34 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|libexpat1|CVE-2026-113351",
+        "platform": "linux/amd64",
+        "package": "libexpat1",
+        "cve": "CVE-2026-113351",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.7)",
+        "installed_version": "2.9.0-1~deb13u1",
+        "fixed_version": "",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|libexpat1|CVE-2026-115506",
+        "platform": "linux/amd64",
+        "package": "libexpat1",
+        "cve": "CVE-2026-115506",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.7)",
+        "installed_version": "2.9.0-1~deb13u1",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|libfreetype6|CVE-2026-95512",
         "platform": "linux/amd64",
         "package": "libfreetype6",
@@ -4729,6 +4760,34 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|libzvbi-common|CVE-2026-110654",
+        "platform": "linux/amd64",
+        "package": "libzvbi-common",
+        "cve": "CVE-2026-110654",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.7)",
+        "installed_version": "0.2.44-1",
+        "fixed_version": "",
+        "severity": "LOW",
+        "severity_source": "debian"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|libzvbi0t64|CVE-2026-110654",
+        "platform": "linux/amd64",
+        "package": "libzvbi0t64",
+        "cve": "CVE-2026-110654",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.7)",
+        "installed_version": "0.2.44-1",
+        "fixed_version": "",
+        "severity": "LOW",
+        "severity_source": "debian"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|locales|CVE-2010-4756",
         "platform": "linux/amd64",
         "package": "locales",
@@ -5778,6 +5837,19 @@
         "installed_version": "1:2.41-5",
         "fixed_version": "",
         "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|ca-certificates|DSA-6572-1",
+        "platform": "linux/amd64",
+        "package": "ca-certificates",
+        "cve": "DSA-6572-1",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "jellyfin/jellyfin@sha256:0b901391a662862eddb5dc55d244d7883cbb6236ef5b9a6ea82abc78a89819f0 (debian 13.5)",
+        "installed_version": "20250419",
+        "fixed_version": "20250419+deb13u1",
+        "severity": "UNKNOWN",
         "severity_source": ""
       },
       {
@@ -7220,6 +7292,19 @@
         "target": "jellyfin/jellyfin@sha256:0b901391a662862eddb5dc55d244d7883cbb6236ef5b9a6ea82abc78a89819f0 (debian 13.5)",
         "installed_version": "2.41-5",
         "fixed_version": "",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libbrotli1|CVE-2026-111497",
+        "platform": "linux/amd64",
+        "package": "libbrotli1",
+        "cve": "CVE-2026-111497",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "jellyfin/jellyfin@sha256:0b901391a662862eddb5dc55d244d7883cbb6236ef5b9a6ea82abc78a89819f0 (debian 13.5)",
+        "installed_version": "1.1.0-2+b7",
+        "fixed_version": "1.1.0-2+deb13u1",
         "severity": "HIGH",
         "severity_source": ""
       },
@@ -9028,6 +9113,32 @@
         "installed_version": "2.7.1-2",
         "fixed_version": "2.9.0-1~deb13u1",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libexpat1|CVE-2026-113351",
+        "platform": "linux/amd64",
+        "package": "libexpat1",
+        "cve": "CVE-2026-113351",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "jellyfin/jellyfin@sha256:0b901391a662862eddb5dc55d244d7883cbb6236ef5b9a6ea82abc78a89819f0 (debian 13.5)",
+        "installed_version": "2.7.1-2",
+        "fixed_version": "",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libexpat1|CVE-2026-115506",
+        "platform": "linux/amd64",
+        "package": "libexpat1",
+        "cve": "CVE-2026-115506",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "jellyfin/jellyfin@sha256:0b901391a662862eddb5dc55d244d7883cbb6236ef5b9a6ea82abc78a89819f0 (debian 13.5)",
+        "installed_version": "2.7.1-2",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
         "severity_source": ""
       },
       {
@@ -12240,6 +12351,32 @@
         "fixed_version": "",
         "severity": "HIGH",
         "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libzvbi-common|CVE-2026-110654",
+        "platform": "linux/amd64",
+        "package": "libzvbi-common",
+        "cve": "CVE-2026-110654",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "jellyfin/jellyfin@sha256:0b901391a662862eddb5dc55d244d7883cbb6236ef5b9a6ea82abc78a89819f0 (debian 13.5)",
+        "installed_version": "0.2.44-1",
+        "fixed_version": "",
+        "severity": "LOW",
+        "severity_source": "debian"
+      },
+      {
+        "identity": "linux/amd64|libzvbi0t64|CVE-2026-110654",
+        "platform": "linux/amd64",
+        "package": "libzvbi0t64",
+        "cve": "CVE-2026-110654",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "jellyfin/jellyfin@sha256:0b901391a662862eddb5dc55d244d7883cbb6236ef5b9a6ea82abc78a89819f0 (debian 13.5)",
+        "installed_version": "0.2.44-1",
+        "fixed_version": "",
+        "severity": "LOW",
+        "severity_source": "debian"
       },
       {
         "identity": "linux/amd64|locales|CVE-2010-4756",
@@ -17197,6 +17334,32 @@
         "severity_source": "nvd"
       },
       {
+        "identity": "linux/amd64|libexpat1|CVE-2026-113351",
+        "platform": "linux/amd64",
+        "package": "libexpat1",
+        "cve": "CVE-2026-113351",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.7)",
+        "installed_version": "2.9.0-1~deb13u1",
+        "fixed_version": "",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libexpat1|CVE-2026-115506",
+        "platform": "linux/amd64",
+        "package": "libexpat1",
+        "cve": "CVE-2026-115506",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.7)",
+        "installed_version": "2.9.0-1~deb13u1",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|libfreetype6|CVE-2026-95512",
         "platform": "linux/amd64",
         "package": "libfreetype6",
@@ -18822,6 +18985,32 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|libzvbi-common|CVE-2026-110654",
+        "platform": "linux/amd64",
+        "package": "libzvbi-common",
+        "cve": "CVE-2026-110654",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.7)",
+        "installed_version": "0.2.44-1",
+        "fixed_version": "",
+        "severity": "LOW",
+        "severity_source": "debian"
+      },
+      {
+        "identity": "linux/amd64|libzvbi0t64|CVE-2026-110654",
+        "platform": "linux/amd64",
+        "package": "libzvbi0t64",
+        "cve": "CVE-2026-110654",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.7)",
+        "installed_version": "0.2.44-1",
+        "fixed_version": "",
+        "severity": "LOW",
+        "severity_source": "debian"
+      },
+      {
         "identity": "linux/amd64|locales|CVE-2010-4756",
         "platform": "linux/amd64",
         "package": "locales",
@@ -19630,6 +19819,7 @@
         "CVE-2026-0992",
         "CVE-2026-102633",
         "CVE-2026-103111",
+        "CVE-2026-111497",
         "CVE-2026-11822",
         "CVE-2026-11824",
         "CVE-2026-12087",
@@ -19754,6 +19944,7 @@
         "CVE-2026-92392",
         "CVE-2026-93990",
         "DSA-6549-1",
+        "DSA-6572-1",
         "TEMP-1147318-639065"
       ],
       "remaining": [
@@ -19816,6 +20007,9 @@
         "CVE-2026-107778",
         "CVE-2026-107928",
         "CVE-2026-107929",
+        "CVE-2026-110654",
+        "CVE-2026-113351",
+        "CVE-2026-115506",
         "CVE-2026-11850",
         "CVE-2026-11856",
         "CVE-2026-11979",
@@ -20022,6 +20216,13 @@
       },
       {
         "ecosystem": "debian",
+        "name": "libbrotli1",
+        "change": "upgraded",
+        "before": "1.1.0-2+b7",
+        "after": "1.1.0-2+deb13u1"
+      },
+      {
+        "ecosystem": "debian",
         "name": "libc-bin",
         "change": "upgraded",
         "before": "2.41-12+deb13u3",
@@ -20200,7 +20401,7 @@
         "name": "tzdata",
         "change": "upgraded",
         "before": "2026b-0+deb13u1",
-        "after": "2026c-0+deb13u1"
+        "after": "2026e-0+deb13u1"
       },
       {
         "ecosystem": "debian",
@@ -20231,15 +20432,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-21T05:39:01Z",
-      "finished_at": "2026-10-21T05:40:32Z",
+      "started_at": "2026-10-24T08:27:35Z",
+      "finished_at": "2026-10-24T08:29:05Z",
       "duration_seconds": 90.1
     },
     "health": {
       "defined": true,
       "final_status": "healthy"
     },
-    "runner": "GitHub Actions 1000013264",
+    "runner": "GitHub Actions 1000014333",
     "baseline": {
       "entrypoint": [
         "/jellyfin/jellyfin"
@@ -20266,39 +20467,39 @@
       ]
     }
   },
-  "promoted_at": "2026-10-21T05:43:30Z",
+  "promoted_at": "2026-10-24T08:31:05Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "79f47b4b6a24b1136a182b1ec1b31a8f0f11ad38a470b511e5dcc5111b87219f",
-      "attachment_sha256": "0567b48b717e8f600a1c2f67083ba4737c8f2e44eb6efa05026292576fa3772b",
+      "bundle_sha256": "6f3e0e570a3008fbd711d24d414f709b5516ec800f52e58547782179496357e2",
+      "attachment_sha256": "8d400f4263d0ba00a181b2c483d890d78388c42578d42f1abe28dcad4d08f316",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "f80c4fe86a52a2770878252be4edd9c654da8925397567e63349731ac487fd00",
-      "bundle_sha256": "471d189a3c46581b080bc40c63a54112aace8adeb47726024061875543b94acf",
-      "attachment_sha256": "e9dd4f0b73de9bfe1dcd382ed4c8582121e2b2ef41899b0a5a5978caf1327168"
+      "predicate_sha256": "7a429ed193030434fcccfff95c7d85e96dc7a64c2b82fe5f3ebd91dc68fda89d",
+      "bundle_sha256": "8eda50b870c329f36815e6abd49993a6bea63dee4facd0c3ae43c913ad75bdf0",
+      "attachment_sha256": "f8a81dbd97f08bb5fe4fc91783f8db110f16756e14fbe6478844d77ad988c820"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "8UcdkS8zZdmKJLGWkJjEpU6R3P6twYIJ3Y1y5L+ruR4=",
+        "inclusion_root_hash": "e4RZrJBFaxKg9LTBE2imDdqIpY5vsb8ggTtdv1yya/Q=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3350532068,
-        "signed_entry_timestamp": "MEUCIFAQ8wRMSVVQNUCqmtMcd7g9auYV96mcfg8aQ6VB3j89AiEA5JafJ7XBBOKHiqSffkfxh5erAOYbcWT8XAAMBaxMXG0="
+        "log_index": 3438526999,
+        "signed_entry_timestamp": "MEUCIQCbhKYas4sLaL3jsMNhbpJuA33sqrsHAX3bq7D3Zy6jQAIgHD/v5gGKOEMi2r+8Ys4EwclgK3h8qtlcaiF8SWD98Lg="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "26oLDYclO1eQ+ZwCS6eWbaOcOpjBvZHselIVWA9fMeQ=",
+        "inclusion_root_hash": "oGl1gqS/Y+POvraCNIfBc60T6KDqZkuVrBsy8TZZ5/E=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3350534169,
-        "signed_entry_timestamp": "MEUCIESytT3OPJVOlnQiSPMWU9tAWPhbJ/xmxr07TPG7rQwwAiEAs/OcIppkvTg7Us6HQeVVn2VAZaNSLpvbqsd6gAuxMPA="
+        "log_index": 3438527162,
+        "signed_entry_timestamp": "MEQCIG/AySs3w+ZHBUZh1tioMllBeLMT6pQ2e2jf11SEuZ0kAiBOsUnGK36w2C1ohw6VJeVQPP2TP9nYOJNiuIS82geX6g=="
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.0"
+      "trivy": "0.76.1"
     }
   }
 }
