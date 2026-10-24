@@ -39,6 +39,11 @@ runs:
         RECOVERED_DIGEST: ${{ inputs.recovered_digest }}
       run: |
         set -euo pipefail
+        COUNT=0
+        [ -z "${PATCHED_DIGEST}" ] || COUNT=$((COUNT + 1))
+        [ -z "${RESUME_DIGEST}" ] || COUNT=$((COUNT + 1))
+        [ -z "${RECOVERED_DIGEST}" ] || COUNT=$((COUNT + 1))
+        [ "${COUNT}" -le 1 ] || { echo "FATAL: multiple candidate sources selected"; exit 1; }
         if [ -n "${PATCHED_DIGEST}" ]; then
           cp trivy-after-full.json trivy-full.json
           echo "digest=${PATCHED_DIGEST}" >> "$GITHUB_OUTPUT"

@@ -25,8 +25,11 @@ runs:
       run: |
         set -euo pipefail
         source scripts/lib/oci.sh
+        RECOVERED_DIGEST="${RECOVERED_DIGEST:-$(jq -er .recovered_digest validation-context/context.json)}"
+        [ "$(sha256sum candidate-manifest.json | awk '{print $1}')" = "${RECOVERED_DIGEST#sha256:}" ] || {
+          echo "FATAL: recovered candidate manifest digest mismatch"
+          exit 1
+        }
         RECOVERY_IMAGE_ID="$(load_oci_archive "${SKOPEO_IMAGE}" resume-final.tar recovered:candidate)"
         echo "image_id=${RECOVERY_IMAGE_ID}" >> "$GITHUB_OUTPUT"
-        RECOVERED_DIGEST="${RECOVERED_DIGEST:-$(jq -er .recovered_digest validation-context/context.json)}"
-        [ "$(sha256sum candidate-manifest.json | awk '{print $1}')" = "${RECOVERED_DIGEST#sha256:}" ]
         echo "candidate_digest=${RECOVERED_DIGEST}" >> "$GITHUB_OUTPUT"

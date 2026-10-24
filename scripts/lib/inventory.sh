@@ -3,7 +3,7 @@
 
 emit_inventory_context() {
   local stage="$1" image="$2" app="$3" tag="${4:-}" out
-  out="$(python3 scripts/promote_inventory.py "$stage" "$image" "$app" "$tag")"
+  out="$(python3 scripts/promote_inventory.py "$stage" "$image" "$app" "$tag")" || return
   printf '%s\n' "$out"
   printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
 }

@@ -105,6 +105,10 @@ runs:
           echo "Existing signed provenance retained; only current run artifacts were refreshed" >> "$GITHUB_STEP_SUMMARY"
           exit 0
         fi
+        [[ "${SKOPEO_IMAGE}" =~ ^[^@]+:[^@]+@sha256:[a-f0-9]{64}$ ]] || {
+          echo "FATAL: Skopeo image identity is invalid"
+          exit 1
+        }
         SKOPEO_VERSION="${SKOPEO_IMAGE#*:}"
         SKOPEO_VERSION="${SKOPEO_VERSION%%@*}"
         FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
@@ -135,6 +139,10 @@ runs:
         fi
         RECOVERY_ARGS=()
         if [ -n "${RECOVER_TAG}" ]; then
+          jq -e '.mode == "recovery"' validation-context/context.json > /dev/null || {
+            echo "FATAL: recovery provenance context is missing"
+            exit 1
+          }
           ORIGINAL_RUN_URL="$(jq -er .original_run_url validation-context/context.json)"
           ORIGINAL_SOURCE_SHA="$(jq -er .original_source_sha validation-context/context.json)"
           RECOVERY_ARGS=(

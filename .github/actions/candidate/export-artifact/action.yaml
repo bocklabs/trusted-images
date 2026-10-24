@@ -93,18 +93,18 @@ runs:
         cp -r validation-logs candidate-artifact/ 2> /dev/null || true
         printf '%s\n' "${SOURCE_SHA}" > candidate-artifact/source.sha
         rm -f candidate-final.tar resume-final.tar
+        [ -d candidate-oci ] || { echo "FATAL: candidate OCI layout is missing"; exit 1; }
         mv candidate-oci candidate-artifact/candidate-oci
         INTERNAL_TAG="${RESUME_INTERNAL_TAG:-${PATCH_INTERNAL_TAG:-${TAG_INTERNAL_TAG}}}"
         SKIP_COPY="${RESUME_SKIP_COPY:-${PATCH_SKIP_COPY:-${TAG_SKIP_COPY}}}"
+        [ -n "${INTERNAL_TAG}" ] || echo "WARNING: no internal tag allocated; artifact is review-only" >&2
         case "${SKIP_COPY}" in true|false) ;; *) echo "FATAL: invalid tag skip decision"; exit 1 ;; esac
         jq -n --arg internal_tag "${INTERNAL_TAG}" \
           --argjson skip_copy "${SKIP_COPY}" \
           '{internal_tag:$internal_tag, skip_copy:$skip_copy}' > candidate-artifact/tag-decision.json
-        (
-          cd "$PWD"
-          find candidate-artifact -type f ! -name SHA256SUMS -print0 \
-            | sort -z | xargs -0 sha256sum > candidate-artifact/SHA256SUMS
-        )
+        find candidate-artifact -type f ! -name SHA256SUMS -print0 \
+          | sort -z | xargs -0 sha256sum > candidate-artifact/SHA256SUMS
         SHA="$(sha256sum candidate-artifact/SHA256SUMS | awk '{print $1}')"
+        [[ "${GITHUB_RUN_ATTEMPT}" =~ ^[1-9][0-9]*$ ]] || { echo "FATAL: run attempt is invalid"; exit 1; }
         echo "manifest_sha256=${SHA}" >> "$GITHUB_OUTPUT"
         echo "run_attempt=${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"

@@ -110,6 +110,7 @@ jobs:
           source_sha: ${{ github.sha }}
           run_id: ${{ github.run_id }}
           candidate_run_attempt: ${{ inputs.candidate_run_attempt }}
+          candidate_artifact_id: ${{ inputs.candidate_artifact_id }}
           upstream_index_digest: ${{ steps.entry.outputs.upstream_digest }}
           accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}
           resume_original_run_attempt: ${{ inputs.resume_original_run_attempt }}
@@ -172,7 +173,7 @@ jobs:
         with:
           app: ${{ steps.entry.outputs.app }}
           internal_tag: ${{ steps.candidate.outputs.internal_tag }}
-          skip_copy: ${{ steps.candidate.outputs.skip_copy }}
+          skip_copy: ${{ steps.occupancy.outputs.skip_copy }}
           candidate_digest: ${{ steps.candidate.outputs.candidate_digest }}
           gh_token: ${{ github.token }}
           actor: ${{ github.actor }}
@@ -183,7 +184,7 @@ jobs:
         with:
           app: ${{ steps.entry.outputs.app }}
           internal_tag: ${{ steps.candidate.outputs.internal_tag }}
-          skip_copy: ${{ steps.candidate.outputs.skip_copy }}
+          skip_copy: ${{ steps.occupancy.outputs.skip_copy }}
           candidate_digest: ${{ steps.candidate.outputs.candidate_digest }}
           trivy_version: ${{ steps.candidate.outputs.trivy_version }}
 
@@ -197,7 +198,7 @@ jobs:
 
       - name: Record quarantined publication after failed verification
         id: quarantine-decision
-        if: ${{ failure() && steps.probe.outputs.result == 'pass' && steps.signing-gate.outcome == 'failure' && steps.candidate.outputs.skip_copy != 'true' }}
+        if: ${{ failure() && steps.probe.outputs.result == 'pass' && steps.signing-gate.outcome == 'failure' && steps.occupancy.outputs.skip_copy != 'true' }}
         uses: ./.github/actions/publish/record-quarantine
         with:
           app: ${{ steps.entry.outputs.app }}
@@ -233,12 +234,13 @@ jobs:
           app: ${{ steps.entry.outputs.app }}
           candidate_digest: ${{ steps.candidate.outputs.candidate_digest }}
           internal_tag: ${{ steps.candidate.outputs.internal_tag }}
-          skip_copy: ${{ steps.candidate.outputs.skip_copy }}
+          skip_copy: ${{ steps.occupancy.outputs.skip_copy }}
           fallback_used: ${{ steps.copy.outputs.fallback_used }}
           divergence_note: ${{ steps.copy.outputs.divergence_note }}
           probe_result: ${{ steps.probe.outputs.result }}
           signing_result: ${{ steps.signing.outcome }}
           signing_gate_result: ${{ steps.signing-gate.outcome }}
+          platform_result: ${{ steps.assertplatforms.outcome }}
           secobserve_api_base_url: ${{ vars.SECOBSERVE_API_BASE_URL }}
           run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
@@ -249,7 +251,7 @@ jobs:
         with:
           app: ${{ steps.entry.outputs.app }}
           trivy_version: ${{ steps.candidate.outputs.trivy_version }}
-          skip_copy: ${{ steps.candidate.outputs.skip_copy }}
+          skip_copy: ${{ steps.occupancy.outputs.skip_copy }}
           upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
           upstream_tag: ${{ steps.entry.outputs.upstream_tag }}
           upstream_digest: ${{ steps.entry.outputs.upstream_digest }}
@@ -290,7 +292,7 @@ jobs:
           candidate_digest: ${{ steps.candidate.outputs.candidate_digest }}
           internal_tag: ${{ steps.candidate.outputs.internal_tag }}
           run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          skip_copy: ${{ steps.candidate.outputs.skip_copy }}
+          skip_copy: ${{ steps.occupancy.outputs.skip_copy }}
           recover_tag: ${{ inputs.recover_tag }}
 
       - name: Auto-merge signed provenance PR
@@ -334,6 +336,7 @@ jobs:
             verify-signature.json
             verify-attestation.json
             signing-evidence.json
+            signing-evidence.original.json
             resolved-provenance.json
             generated-provenance.json
           if-no-files-found: warn

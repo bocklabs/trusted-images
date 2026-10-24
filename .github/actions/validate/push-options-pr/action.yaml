@@ -16,8 +16,12 @@ runs:
         BRANCH="chore/sync-dispatch-options"
         git config user.name "bocklabs-release[bot]"
         git config user.email "bocklabs-release[bot]@users.noreply.github.com"
-        git checkout -b "$BRANCH"
+        git checkout -B "$BRANCH"
         git add .github/workflows/promote.yaml
+        if git diff --cached --quiet; then
+          echo "dispatch options already synchronized"
+          exit 0
+        fi
         git commit -m "chore: sync promote dispatch options with inventory"
         git push --force origin "$BRANCH"
         PR_URL="$(gh pr list --head "$BRANCH" --base main --state open --json url --jq '.[0].url // ""')"

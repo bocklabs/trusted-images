@@ -24,5 +24,6 @@ runs:
         CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
       run: |
         set -euo pipefail
+        [ -n "${CANDIDATE_DIGEST}" ] || { echo "FATAL: published candidate digest is empty"; exit 1; }
         source scripts/lib/decision.sh
         write_published_decision '.published.digest = $digest' --arg digest "${CANDIDATE_DIGEST}"

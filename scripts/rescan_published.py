@@ -229,7 +229,7 @@ def decide(selection, report, enabled):
             "version": "unknown", "reason": "reviewed first-party Go file build has no module version",
             "review_sha256": file_build["review_sha256"]}])
     if not covered:
-        value["reason"] = "unsupported scanner/package coverage; full report retained"
+        value["reason"] = "package coverage incomplete; full report retained"
     elif not requested:
         value["reason"] = "no actionable fix; full findings retained"
     elif not enabled:

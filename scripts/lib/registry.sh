@@ -18,6 +18,11 @@ run_skopeo() {
 }
 
 copy_source_oci() {
+  [ -n "${1:-}" ] && [ -n "${2:-}" ] && [ -n "${3:-}" ] || {
+    echo "FATAL: source OCI copy requires ref, digest, and target" >&2
+    return 1
+  }
+  [ -n "${SKOPEO_IMAGE:-}" ] || { echo "FATAL: Skopeo image is empty" >&2; return 1; }
   set_skopeo_credentials "$1"
   run_skopeo "${SKOPEO_IMAGE}" \
     copy --retry-times 3 --preserve-digests --remove-signatures ${SKOPEO_CREDS[@]+"${SKOPEO_CREDS[@]}"} \

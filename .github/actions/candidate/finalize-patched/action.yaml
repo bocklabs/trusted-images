@@ -45,7 +45,7 @@ runs:
         done < <(jq -r '.[]' label-changes.json)
         CONTAINER="$(docker create copa:candidate)"
         trap 'docker rm "${CONTAINER}" > /dev/null' EXIT
-        docker commit "${CHANGES[@]}" "${CONTAINER}" copa:final > /dev/null
+        docker commit ${CHANGES[@]+"${CHANGES[@]}"} "${CONTAINER}" copa:final > /dev/null
         docker image inspect copa:final --format '{{json .Config.Labels}}' > after-labels.json
         python3 scripts/promote_label_changes.py before-labels.json after-labels.json
         docker save copa:final --output candidate-final.tar

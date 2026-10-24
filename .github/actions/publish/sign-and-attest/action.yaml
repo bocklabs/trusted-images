@@ -38,7 +38,7 @@ runs:
         git fetch origin main
         if [ "${SKIP_COPY}" = true ]; then
           source scripts/lib/provenance.sh
-          resolve_provenance "${RECORD}"
+          resolve_provenance "${APP}" "${INTERNAL_TAG}" "${RECORD}"
           if git ls-tree --name-only origin/main -- "provenance/${APP}/current.json" | grep -q .; then
             git show "origin/main:provenance/${APP}/current.json" > current-at-verification.json
           fi

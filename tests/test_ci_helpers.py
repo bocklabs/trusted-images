@@ -108,6 +108,21 @@ sys.exit(22)
             external = self.run_bash(script, cwd=root, env={**env, "REF": "quay.io/example/app"})
             self.assertEqual(external.stdout, "")
 
+    def test_app_name_allowlist_rejects_paths_and_shell_metacharacters(self) -> None:
+        script = 'source scripts/lib/validate.sh; require_app_name "$APP"'
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.workspace(root)
+            for app in ("example", "example.app", "example-app_1"):
+                with self.subTest(app=app):
+                    result = self.run_bash(script, cwd=root, env={"APP": app})
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            for app in ("../example", "-x", "example app", "example/name", ""):
+                with self.subTest(app=app):
+                    result = self.run_bash(script, cwd=root, env={"APP": app})
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("invalid app name", result.stdout)
+
     def test_load_oci_archive_returns_loaded_image_id(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -167,6 +182,7 @@ esac
                 "sha256:abc",
             )
             self.assertRegex(output.read_text(), r"decision_sha256=[a-f0-9]{64}")
+            self.assertRegex(output.read_text(), r"(?m)^now=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 
 if __name__ == "__main__":

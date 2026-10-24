@@ -36,7 +36,6 @@ runs:
         if [ -z "$DB_UPDATED" ]; then
           echo "FATAL: trivy --version (cache dir $TRIVY_CACHE_DIR) carries no DB metadata (DB not downloaded where expected?)"
           cat trivy-db-meta-1.txt
-        du -sh "$TRIVY_CACHE_DIR"/{db,java-db,fanal} 2>/dev/null >> "$GITHUB_STEP_SUMMARY" || true
           exit 1
         fi
         echo "db_digest=${DB_DIGEST}" >> "$GITHUB_OUTPUT"

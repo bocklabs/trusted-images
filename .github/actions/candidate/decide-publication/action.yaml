@@ -43,9 +43,7 @@ runs:
         set -euo pipefail
         if [ "${SKIP_COPY}" = true ] && [ "${FORCE_REPROMOTE}" != true ] && [ -z "${RECOVER_TAG}" ] && [ -z "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
           RECORD="reuse-provenance.json"
-          git fetch origin main
-          source scripts/lib/provenance.sh
-          resolve_provenance "${RECORD}"
+          [ -s "${RECORD}" ] || { echo "FATAL: reuse provenance artifact is missing"; exit 1; }
           jq -e --arg app "${APP}" --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '
             .schema == "trusted-images.bocklabs.dev/provenance-v1" and .app == $app and
             .internal.package == ("ghcr.io/bocklabs/" + $app) and .internal.tag == $tag and

@@ -35,9 +35,27 @@ runs:
         set -euo pipefail
         test -s trivy-after-full.json
         [ "${AFTER_SCAN_OUTCOME}" = success ] || { echo "FATAL: patched Trivy scan failed; report retained"; exit 1; }
-        jq -e '.Metadata.OS.EOSL != true' trivy-after-full.json > /dev/null
+        jq -e '.Metadata.OS.EOSL != true' trivy-after-full.json > /dev/null || {
+          echo "FATAL: patched candidate is EOL; report retained"
+          exit 1
+        }
         trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-after.txt
         diff -u trivy-db-meta-1.txt trivy-db-meta-after.txt
         BEFORE_SHA="$(sha256sum trivy-before-full.json | awk '{print $1}')"
         AFTER_SHA="$(sha256sum trivy-after-full.json | awk '{print $1}')"
-        jq -n             --arg action_sha "ed142fd0673e97e23eac54620cfb913e5ce36c25"             --arg db_digest "${DB_DIGEST}"             --arg db_updated "${DB_UPDATED}"             --arg before_name "$(jq -r .ArtifactName trivy-before-full.json)"             --arg before_id "$(jq -r .Metadata.ImageID trivy-before-full.json)"             --arg before_manifest "${SELECTED_DIGEST}"             --arg before_sha "${BEFORE_SHA}"             --arg after_name "$(jq -r .ArtifactName trivy-after-full.json)"             --arg after_id "$(jq -r .Metadata.ImageID trivy-after-full.json)"             --arg after_manifest "${CANDIDATE_DIGEST}"             --arg after_sha "${AFTER_SHA}"             '{trivy_action_sha:$action_sha,trivy_db_digest:$db_digest,trivy_db_updated_at:$db_updated,before:{artifact_name:$before_name,image_id:$before_id,manifest_digest:$before_manifest,report_sha256:$before_sha},after:{artifact_name:$after_name,image_id:$after_id,manifest_digest:$after_manifest,report_sha256:$after_sha}}'             > scan-receipt.json
+        BEFORE_ID="$(jq -er .Metadata.ImageID trivy-before-full.json)"
+        AFTER_ID="$(jq -er .Metadata.ImageID trivy-after-full.json)"
+        jq -n \
+          --arg action_sha "ed142fd0673e97e23eac54620cfb913e5ce36c25" \
+          --arg db_digest "${DB_DIGEST}" \
+          --arg db_updated "${DB_UPDATED}" \
+          --arg before_name "$(jq -r .ArtifactName trivy-before-full.json)" \
+          --arg before_id "${BEFORE_ID}" \
+          --arg before_manifest "${SELECTED_DIGEST}" \
+          --arg before_sha "${BEFORE_SHA}" \
+          --arg after_name "$(jq -r .ArtifactName trivy-after-full.json)" \
+          --arg after_id "${AFTER_ID}" \
+          --arg after_manifest "${CANDIDATE_DIGEST}" \
+          --arg after_sha "${AFTER_SHA}" \
+          '{trivy_action_sha:$action_sha,trivy_db_digest:$db_digest,trivy_db_updated_at:$db_updated,before:{artifact_name:$before_name,image_id:$before_id,manifest_digest:$before_manifest,report_sha256:$before_sha},after:{artifact_name:$after_name,image_id:$after_id,manifest_digest:$after_manifest,report_sha256:$after_sha}}' \
+          > scan-receipt.json

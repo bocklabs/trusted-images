@@ -22,7 +22,7 @@ runs:
       run: |
         set -euo pipefail
         source scripts/lib/ghcr.sh
-        TOKEN="$(ghcr_require_pull_token "${APP}" ghcr-token.json)"
+        TOKEN="$(ghcr_require_pull_token "${APP}" assert-digest-token.json)"
         PUSHED="$(curl --fail-with-body -sSI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${GHCR_MANIFEST_ACCEPT}" \
           "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}" \
           | tr -d '\r' | awk 'tolower($1)=="docker-content-digest:"{print $2}')"

@@ -28,8 +28,10 @@ runs:
       run: |
         set -euo pipefail
         source scripts/lib/decision.sh
+        [ -s signing-evidence.json ] || { echo "FATAL: signing evidence is missing"; exit 1; }
         REASON="$(jq -r '.reason // "verification failed" | gsub("[^A-Za-z0-9 .:_/-]"; " ") | .[:160]' signing-evidence.json 2>/dev/null || echo 'verification failed')"
         REASON="${REASON:-verification failed}"
+        cp signing-evidence.json signing-evidence.original.json
         jq -n --arg reason "${REASON}" '{result:"fail",reason:$reason}' > signing-evidence.json
         write_published_decision '.eligible = false | .reason = "signing verification failed" | .published.digest = $digest | .provenance.merged = false' --arg digest "${CANDIDATE_DIGEST}"
         echo "failure=${REASON}" >> "$GITHUB_OUTPUT"

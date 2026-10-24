@@ -188,7 +188,6 @@ else:
     def test_provenance_writeback_preserves_existing_main_record(self):
         steps = load_workflow(ROOT / ".github/workflows/promote-publish.yaml")["jobs"]["promote"]["steps"]
         writeback = next(step["run"] for step in steps if step["name"] == "Open provenance PR for operator review")
-        writeback = writeback.replace("${{ steps.app-token.outputs.token }}", "test-token")
         record = self.dir / "provenance/example/current.json"
         record.parent.mkdir(parents=True)
         history = self.dir / "history.json"
@@ -199,7 +198,7 @@ else:
         fake.chmod(0o755)
         env = {**os.environ, "PATH": str(self.dir) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
                "APP": "example", "INTERNAL_TAG": "v1-bocklabs.1", "REPO": "bocklabs/trusted-images",
-               "SKIP_COPY": "true", "RECOVER_TAG": "", "CANDIDATE_DIGEST": DIGEST,
+               "SKIP_COPY": "true", "RECOVER_TAG": "", "CANDIDATE_DIGEST": DIGEST, "GH_TOKEN": "test-token",
                "EXPECTED_IDENTITY": json.loads(IDENTITY.read_text())["certificate_identity"],
                "EXPECTED_ISSUER": json.loads(IDENTITY.read_text())["certificate_oidc_issuer"], "DIGEST": DIGEST,
                "HISTORY": str(history), "SPOOL": str(spool),
@@ -299,7 +298,7 @@ else:
 
     def test_changed_current_uses_owned_pr_lease_and_exact_auto_merge(self):
         steps = load_workflow(ROOT / ".github/workflows/promote-publish.yaml")["jobs"]["promote"]["steps"]
-        writeback = next(s["run"] for s in steps if s["name"] == "Open provenance PR for operator review").replace("${{ steps.app-token.outputs.token }}", "fixture-token")
+        writeback = next(s["run"] for s in steps if s["name"] == "Open provenance PR for operator review")
         auto_merge = next(s["run"] for s in steps if s["name"] == "Auto-merge signed provenance PR")
         previous = self.example_record()
         generated = json.loads(json.dumps(previous))
@@ -342,6 +341,7 @@ elif a[:2]==['pr','view']: print('true')
         env = {**os.environ, "PATH": f"{self.dir}:{Path(sys.executable).parent}:{os.environ['PATH']}",
                "FIXTURE_ROOT": str(self.dir), "APP": "example", "INTERNAL_TAG": "v1-bocklabs.2",
                "CANDIDATE_DIGEST": DIGEST, "SKIP_COPY": "false", "RECOVER_TAG": "", "REPO": "bocklabs/trusted-images",
+               "GH_TOKEN": "fixture-token",
                "RUN_URL": "https://example.test/runs/2", "GITHUB_OUTPUT": str(self.dir / "output"),
                "GITHUB_STEP_SUMMARY": str(self.dir / "summary")}
         pending = json.loads(json.dumps(generated))

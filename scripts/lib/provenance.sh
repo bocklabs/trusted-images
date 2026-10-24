@@ -2,5 +2,7 @@
 # Shared provenance helpers for local composite actions.
 
 resolve_provenance() {
-  python3 scripts/reverify_signing.py --resolve "$APP" --tag "$INTERNAL_TAG" > "$1"
+  local app="$1" tag="$2" out="$3"
+  python3 scripts/reverify_signing.py --resolve "$app" --tag "$tag" > "${out}.tmp"
+  mv "${out}.tmp" "$out"
 }

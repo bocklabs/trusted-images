@@ -33,5 +33,6 @@ runs:
           exit 1
         }
         COUNT="$(jq '[((.Results // [])[] | .Vulnerabilities[]?)] | length' trivy-copa.json)"
+        [[ "${COUNT}" =~ ^[0-9]+$ ]] || { echo "FATAL: invalid fixable finding count"; exit 1; }
         echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
         echo "fixable OS findings: ${COUNT}"

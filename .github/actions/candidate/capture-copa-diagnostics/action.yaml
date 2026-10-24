@@ -19,10 +19,6 @@ runs:
           -e 's/((token|password|secret|authorization)[=:][[:space:]]*)[^[:space:]&]+/\1[redacted]/gI' \
           > copa-diagnostics.txt
         docker image inspect ghcr.io/project-copacetic/copa-action:v0.15.0 --format '{{.Id}}' > copa-action-image-id-after.txt
-        cmp copa-action-image-id.txt copa-action-image-id-after.txt || {
-          echo "FATAL: pinned Copa action runtime changed during patching"
-          exit 1
-        }
         classification=succeeded
         if [ "${COPA_OUTCOME}" != success ]; then
           classification=unknown
@@ -37,6 +33,10 @@ runs:
           fi
         fi
         printf '\ncopa_action_outcome=%s\nclassification=%s\n' "${COPA_OUTCOME}" "${classification}" >> copa-diagnostics.txt
+        cmp copa-action-image-id.txt copa-action-image-id-after.txt || {
+          echo "FATAL: pinned Copa action runtime changed during patching"
+          exit 1
+        }
         [ "${COPA_OUTCOME}" = success ] || {
           echo "FATAL: Copa action failed (${classification}); diagnostics retained"
           exit 1

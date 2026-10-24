@@ -93,7 +93,7 @@ runs:
           python3 scripts/validate_requested_remediation.py
         fi
         require_app_name "${APP}"
-        if [ -z "${RECOVER_TAG}" ] && ! ls inventory/ | grep -qFx -- "${APP}"; then
+        if [ -z "${RECOVER_TAG}" ] && [ ! -d "inventory/${APP}" ]; then
           echo "FATAL: app not in inventory: ${APP}"
           exit 1
         fi
@@ -167,7 +167,7 @@ runs:
           rm -rf recovery-candidate
           gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
             --name candidate --dir recovery-candidate
-        python3 scripts/promote_recovery_candidate.py "${PROVENANCE}" recovery-candidate
+          python3 scripts/promote_recovery_candidate.py "${PROVENANCE}" recovery-candidate
           cp recovery-candidate/candidate-manifest.json candidate-manifest.json
           rm -rf candidate-oci
           cp -a recovery-candidate/candidate-oci candidate-oci
@@ -196,5 +196,5 @@ runs:
         fi
 
         source scripts/lib/inventory.sh
-        emit_inventory_context recovery validation-context/image.yaml "${APP}" "${RECOVER_TAG}"
+        emit_inventory_context candidate validation-context/image.yaml "${APP}"
         python3 scripts/promote_inventory.py policy validation-context/image.yaml > validation-context/patch-policy.json

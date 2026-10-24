@@ -37,7 +37,13 @@ runs:
       run: |
         set -euo pipefail
         source scripts/lib/registry.sh
+        [ -n "${GH_TOKEN}" ] || { echo "FATAL: GHCR token is empty"; exit 1; }
         SKOPEO="${SKOPEO_IMAGE}"
+        AUTH_FILE="$PWD/.skopeo-auth.json"
+        trap 'rm -f "${AUTH_FILE}"' EXIT
+        AUTH="$(printf 'bocklabs-bot:%s' "${GH_TOKEN}" | base64 | tr -d '\n')"
+        printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "${AUTH}" > "${AUTH_FILE}"
+        chmod 600 "${AUTH_FILE}"
         rm -f pushed-digest.txt
         run_skopeo "$SKOPEO" \
           copy --retry-times 3 \
@@ -45,9 +51,10 @@ runs:
             --remove-signatures \
             --dest-tls-verify \
             --digestfile /workspace/pushed-digest.txt \
-            --dest-creds "bocklabs-bot:${GH_TOKEN}" \
+            --dest-authfile /workspace/.skopeo-auth.json \
             "oci:/workspace/candidate-artifact/candidate-oci:candidate" \
             "docker://ghcr.io/bocklabs/${APP}:${INTERNAL_TAG}"
+        [ -s pushed-digest.txt ] || { echo "FATAL: Skopeo did not write the pushed digest"; exit 1; }
         [ "$(cat pushed-digest.txt)" = "${CANDIDATE_DIGEST}" ] || {
           echo "FATAL: copied digest differs from the verified candidate"
           exit 1

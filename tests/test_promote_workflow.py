@@ -237,7 +237,8 @@ class PromoteWorkflowTests(unittest.TestCase):
             command.chmod(0o755)
             arguments = root / "arguments"
             env = {**os.environ, "PATH": str(root) + os.pathsep + os.environ["PATH"],
-                   "ARGUMENTS": str(arguments), "HEAD_SHA": "abc123", "PR_URL": "https://example.invalid/pull/1"}
+                   "ARGUMENTS": str(arguments), "GH_TOKEN": "test-token",
+                   "HEAD_SHA": "abc123", "PR_URL": "https://example.invalid/pull/1"}
             result = subprocess.run(["bash", "-c", auto_merge["run"]], env=env, capture_output=True, text=True, check=False)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(arguments.read_text().splitlines(),
@@ -439,6 +440,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                     value["policy"]["eligible"] = eligible
                     value.update(fields)
                     record.write_text(json.dumps(value))
+                    (root / "reuse-provenance.json").write_text(record.read_text())
                     original_record = record.read_bytes()
                     output, summary = root / "output", root / "summary"
                     output.write_text("")
@@ -468,7 +470,9 @@ class PromoteWorkflowTests(unittest.TestCase):
                    if step["name"] == "Push options PR")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "git").write_text("#!/bin/sh\nexit 0\n")
+            (root / "git").write_text(
+                '#!/bin/sh\ncase "$*" in "diff --cached --quiet") exit 1;; *) exit 0;; esac\n'
+            )
             (root / "git").chmod(0o755)
             (root / "gh").write_text("""#!/bin/sh
 echo "$1 $2" >> "$TRACE"
@@ -1100,6 +1104,29 @@ elif args[0] == 'run':
             "--recover-tag",
             self.workflow[self.workflow.index("Digest-preserving copy to GHCR") :],
         )
+
+    def test_resume_and_occupancy_use_the_authoritative_tag_state(self) -> None:
+        candidate = load_workflow(CANDIDATE_WORKFLOW)["jobs"]["validate"]["steps"]
+        candidate_by_name = {step["name"]: step for step in candidate}
+        policy = candidate_by_name["Evaluate one promotion decision"]["with"]["internal_tag"]
+        self.assertIn("steps.resume.outputs.internal_tag", policy)
+        publication = candidate_by_name["Decide whether publication is required"]["with"]
+        self.assertIn("steps.resume.outputs.skip_copy", publication["skip_copy"])
+        self.assertIn("steps.resume.outputs.internal_tag", publication["internal_tag"])
+
+        publisher = load_workflow(PUBLISHER_WORKFLOW)["jobs"]["promote"]["steps"]
+        for name in (
+            "Sign and attest published digest",
+            "Verify signing evidence",
+            "Record quarantined publication after failed verification",
+            "Job summary evidence panel",
+            "Generate provenance record",
+            "Open provenance PR for operator review",
+        ):
+            step = next(item for item in publisher if item["name"] == name)
+            value = step.get("with", {}).get("skip_copy", step.get("if", ""))
+            with self.subTest(step=name):
+                self.assertIn("steps.occupancy.outputs.skip_copy", value)
 
     def test_decision_writers_and_evidence_rendering_are_bounded(self) -> None:
         workflow = self.loaded_workflow()

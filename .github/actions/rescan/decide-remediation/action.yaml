@@ -22,4 +22,5 @@ runs:
       env:
         REMEDIATION_ENABLED: ${{ inputs.remediation_enabled }}
       run: |
+        set -euo pipefail
         python3 scripts/rescan_published.py decide

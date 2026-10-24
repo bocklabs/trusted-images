@@ -37,12 +37,16 @@ runs:
         if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
           EXPECTED="$(cat pushed-digest.txt)"
         fi
+        # GHCR issues this pull token anonymously; no user credentials are sent.
         TOKEN="$(ghcr_pull_token "${APP}" probe-token.json)"
-        HDRS="$(curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${GHCR_INDEX_ACCEPT}" \
+        AUTH=()
+        [ -z "${TOKEN}" ] || AUTH=(-H "Authorization: Bearer ${TOKEN}")
+        STATUS="$(curl -sS -I -o /dev/null -D probe.headers -w '%{http_code}' \
+          ${AUTH[@]+"${AUTH[@]}"} -H "Accept: ${GHCR_INDEX_ACCEPT}" \
           "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
         PUSHED=""
-        if echo "${HDRS}" | grep -qi '^HTTP/2 200'; then
-          PUSHED="$(echo "${HDRS}" | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}')"
+        if [ "${STATUS}" = 200 ]; then
+          PUSHED="$(grep -i '^docker-content-digest:' probe.headers | tr -d '\r' | awk '{print $2}')"
           if [ -n "${PUSHED}" ] && [ "${PUSHED}" = "${EXPECTED}" ]; then
             echo "result=pass" >> "$GITHUB_OUTPUT"
             echo "probe: anonymous 200 + docker-content-digest match (${PUSHED})"

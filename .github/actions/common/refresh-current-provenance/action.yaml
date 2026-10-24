@@ -3,7 +3,7 @@ description: Refresh armed current provenance PRs
 inputs:
   gh_token:
     description: Workflow input.
-    required: false
+    required: true
 runs:
   using: composite
   steps:
@@ -13,5 +13,6 @@ runs:
         GH_TOKEN: ${{ inputs.gh_token }}
       run: |
         set -euo pipefail
+        [ -n "${GH_TOKEN}" ] || { echo "FATAL: provenance refresh token is empty"; exit 1; }
         git fetch origin main
         python3 scripts/refresh_current_provenance.py

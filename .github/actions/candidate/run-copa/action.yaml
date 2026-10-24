@@ -13,6 +13,10 @@ runs:
         ORIGINAL_CHILD: ${{ inputs.original_child }}
       run: |
         set -euo pipefail
+        [[ "${ORIGINAL_CHILD}" =~ ^[^@[:space:]]+@sha256:[a-f0-9]{64}$ ]] || {
+          echo "FATAL: original candidate reference is invalid"
+          exit 1
+        }
         docker run --net=host \
           --mount="type=bind,source=${PWD},target=/data" \
           --mount=type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \

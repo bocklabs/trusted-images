@@ -20,4 +20,8 @@ runs:
         PR_URL: ${{ inputs.pr_url }}
         HEAD_SHA: ${{ inputs.head_sha }}
       run: |
+        [ -n "${GH_TOKEN}" ] && [ -n "${PR_URL}" ] && [ -n "${HEAD_SHA}" ] || {
+          echo "FATAL: auto-merge requires a token, PR URL, and head SHA"
+          exit 1
+        }
         gh pr merge --auto --merge --match-head-commit "${HEAD_SHA}" "${PR_URL}"

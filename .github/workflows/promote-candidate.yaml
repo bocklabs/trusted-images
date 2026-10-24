@@ -135,6 +135,8 @@ jobs:
         id: resume_materialize
         if: inputs.accepted_candidate_run_id != ''
         uses: ./.github/actions/candidate/materialize-resume
+        with:
+          skopeo_image: ${{ env.SKOPEO_IMAGE }}
 
       - name: Fetch upstream index
         id: index
@@ -447,7 +449,7 @@ jobs:
           copa_executed: ${{ steps.copa.outcome == 'success' }}
           run_id: ${{ github.run_id }}
           run_attempt: ${{ github.run_attempt }}
-          internal_tag: ${{ steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
+          internal_tag: ${{ steps.resume.outputs.internal_tag || steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
           upstream_index_digest: ${{ steps.entry.outputs.upstream_digest }}
           candidate_digest: ${{ steps.final.outputs.digest }}
           github_repository: ${{ github.repository }}
@@ -467,8 +469,8 @@ jobs:
           force_repromote: ${{ inputs.force_repromote }}
           recover_tag: ${{ inputs.recover_tag }}
           accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}
-          skip_copy: ${{ steps.tag.outputs.skip_copy }}
-          internal_tag: ${{ steps.tag.outputs.internal_tag }}
+          skip_copy: ${{ steps.resume.outputs.skip_copy || steps.tag.outputs.skip_copy }}
+          internal_tag: ${{ steps.resume.outputs.internal_tag || steps.tag.outputs.internal_tag }}
           candidate_digest: ${{ steps.final.outputs.digest }}
 
       - name: Export checksum-bound candidate artifact

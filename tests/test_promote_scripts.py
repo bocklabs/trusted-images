@@ -470,6 +470,14 @@ class RecoveryTests(PromotionScriptTestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: recover_tag does not match", result.stderr)
 
+    def test_candidate_context_emits_validation_without_recovery_tag(self) -> None:
+        image = self.tmp / "image.yaml"
+        image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
+        result = self.run_script("promote_inventory.py", "candidate", str(image), APP)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("validation_type=http", result.stdout.splitlines())
+        self.assertIn("validation_port=8080", result.stdout.splitlines())
+
 
 class ResumeTests(PromotionScriptTestCase):
     def test_resume_artifact_id_selects_the_single_live_run_artifact(self) -> None:

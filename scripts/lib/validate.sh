@@ -3,8 +3,8 @@
 
 require_app_name() {
   local app="$1"
-  if [ -z "$app" ] || [[ "$app" == */* ]] || [[ "$app" == *..* ]]; then
-    echo "FATAL: app not in inventory: ${app}"
+  if [[ ! "${app}" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
+    echo "FATAL: invalid app name: ${app}"
     return 1
   fi
 }

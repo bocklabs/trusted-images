@@ -31,14 +31,17 @@ runs:
         BEFORE: ${{ inputs.before }}
       run: |
         set -euo pipefail
+        echo "changed=false" >> "$GITHUB_OUTPUT"
         if [[ "${EVENT_NAME}" == pull_request ]]; then
+          [ -n "${BASE_REF}" ] || { echo "FATAL: pull request base ref is empty"; exit 1; }
           BASE="$(git merge-base HEAD "origin/${BASE_REF}")"
         else
+          [ -n "${BEFORE}" ] || { echo "FATAL: push before-SHA is empty"; exit 1; }
           BASE="${BEFORE}"
         fi
         git rev-parse --verify "${BASE}^{commit}" > /dev/null
         echo "base=${BASE}" >> "$GITHUB_OUTPUT"
-        mapfile -t VERSIONS < <(sed -nE 's/^[[:space:]]+cosign-release: (v[0-9]+\.[0-9]+\.[0-9]+)$/\1/p' .github/workflows/promote-publish.yaml)
+        mapfile -t VERSIONS < <(sed -nE 's/^[[:space:]]+cosign-release:[[:space:]]+(v[0-9]+\.[0-9]+\.[0-9]+)[[:space:]]*$/\1/p' .github/workflows/promote-publish.yaml)
         if [[ "${#VERSIONS[@]}" -ne 1 ]]; then
           echo 'FATAL: expected one checked-out Cosign release pin' >&2
           exit 1

@@ -55,7 +55,8 @@ runs:
         fi
         git config user.name "bocklabs-release[bot]"
         git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
-        APP_TOKEN="${{ steps.app-token.outputs.token }}"
+        [ -n "${GH_TOKEN}" ] || { echo "FATAL: provenance token is empty"; exit 1; }
+        APP_TOKEN="${GH_TOKEN}"
         REMOTE="https://x-access-token:${APP_TOKEN}@github.com/${REPO}.git"
         GENERATED="$(mktemp)"
         cp generated-provenance.json "${GENERATED}"

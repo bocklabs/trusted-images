@@ -34,6 +34,11 @@ runs:
       run: |
         set -euo pipefail
         source scripts/lib/registry.sh
+        [ -n "${UPSTREAM_REF}" ] || { echo "FATAL: upstream reference is empty"; exit 1; }
+        [[ "${UPSTREAM_INDEX_DIGEST}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
+          echo "FATAL: upstream index digest is invalid"
+          exit 1
+        }
         SELECTED_DIGEST="${UPSTREAM_INDEX_DIGEST}"
         if jq -e '.mediaType == "application/vnd.oci.image.index.v1+json" or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"' upstream-index.json > /dev/null; then
           SELECTED_DIGEST="$(jq -er '
@@ -43,6 +48,10 @@ runs:
               else error("upstream index must contain exactly one linux/amd64 child without a variant")
               end' upstream-index.json)"
         fi
+        [[ "${SELECTED_DIGEST}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
+          echo "FATAL: selected child digest is invalid"
+          exit 1
+        }
         copy_source_oci "${UPSTREAM_REF}" "${SELECTED_DIGEST}" "upstream-oci:child"
         cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json
         CONFIG_DIGEST="$(jq -er .config.digest child-manifest.json)"

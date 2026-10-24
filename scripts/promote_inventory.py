@@ -14,7 +14,7 @@ if stage == "policy":
         policy["patchDisabledReason"] = spec["patchDisabledReason"]
     print(json.dumps(policy, sort_keys=True))
     sys.exit(0)
-if stage not in {"normal", "recovery"}:
+if stage not in {"normal", "recovery", "candidate"}:
     raise SystemExit("FATAL: unknown inventory stage: " + stage)
 app = sys.argv[3]
 if spec["destination"]["package"] != f"ghcr.io/bocklabs/{app}":

@@ -18,14 +18,14 @@ runs:
       run: |
         set -euo pipefail
         source scripts/lib/ghcr.sh
-        TOKEN="$(ghcr_require_pull_token "${APP}" ghcr-token.json)"
+        TOKEN="$(ghcr_require_pull_token "${APP}" assert-platform-token.json)"
         curl --fail-with-body -sS -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${GHCR_MANIFEST_ACCEPT}" \
           "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CANDIDATE_DIGEST}" > pushed-manifest.json
         jq -e 'has("manifests") | not' pushed-manifest.json > /dev/null || {
           echo "FATAL: published candidate is an index (D-20)"
           exit 1
         }
-        cmp pushed-manifest.json candidate-manifest.json || {
+        cmp pushed-manifest.json "candidate-artifact/candidate-oci/blobs/sha256/${CANDIDATE_DIGEST#sha256:}" || {
           echo "FATAL: published manifest bytes differ from the verified candidate"
           exit 1
         }

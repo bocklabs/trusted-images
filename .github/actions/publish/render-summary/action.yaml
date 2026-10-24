@@ -28,6 +28,9 @@ inputs:
   signing_gate_result:
     description: Workflow input.
     required: false
+  platform_result:
+    description: Workflow input.
+    required: false
   secobserve_api_base_url:
     description: Workflow input.
     required: false
@@ -49,6 +52,7 @@ runs:
         PROBE_RESULT: ${{ inputs.probe_result }}
         SIGNING_RESULT: ${{ inputs.signing_result }}
         SIGNING_GATE_RESULT: ${{ inputs.signing_gate_result }}
+        PLATFORM_RESULT: ${{ inputs.platform_result }}
         SECOBSERVE_API_BASE_URL: ${{ inputs.secobserve_api_base_url }}
         RUN_URL: ${{ inputs.run_url }}
       run: |
@@ -64,7 +68,12 @@ runs:
             DIGEST_LINE="FAIL — pushed ${PUSHED} != candidate"
           fi
         fi
-        PLATFORM_LINE="PASS — exact linux/amd64 manifest verified"
+        PLATFORM_LINE="N/A — platform assertion did not run"
+        if [ "${PLATFORM_RESULT:-}" = "success" ]; then
+          PLATFORM_LINE="PASS — exact linux/amd64 manifest verified"
+        elif [ "${PLATFORM_RESULT:-}" = "failure" ]; then
+          PLATFORM_LINE="FAIL — exact linux/amd64 manifest assertion failed"
+        fi
 
         DB_LINE="N/A — DB metadata not captured"
         if [ -f trivy-db-meta-1.txt ] && [ -f trivy-db-meta-2.txt ]; then
@@ -101,7 +110,7 @@ runs:
           V_TYPE="$(jq -r '.validation.type // "?"' validation-evidence.json)"
           V_PARAMS="$(jq -c '.validation.params // {}' validation-evidence.json)"
           V_HSTATUS="$(jq -r '.validation.health.final_status // "?"' validation-evidence.json)"
-          V_TIMINGS="$(jq -r '.validation.timings | "\(.started_at) → \(.finished_at) (\(.duration_seconds)s)"' validation-evidence.json)"
+          V_TIMINGS="$(jq -r '.validation.timings // {} | "\(.started_at // "?") → \(.finished_at // "?") (\(.duration_seconds // "?")s)"' validation-evidence.json)"
           V_RUNNER="$(jq -r '.validation.runner // "?"' validation-evidence.json)"
           V_BASELINE="$(jq -c '{entrypoint: .validation.baseline.entrypoint, cmd: .validation.baseline.cmd, env: .validation.baseline.env}' validation-evidence.json)"
           VALID_RESULT_LINE="N/A — result '${V_RESULT}' not recorded"
@@ -110,7 +119,7 @@ runs:
           elif [ "${V_RESULT}" = "fail" ]; then
             VALID_RESULT_LINE="FAIL — validation recorded fail"
           fi
-          HEALTH_LINE="FAIL — HEALTHCHECK stuck in '${V_HSTATUS}' at the deadline (D-10)"
+          HEALTH_LINE="N/A — HEALTHCHECK status '${V_HSTATUS}' not mapped"
           if [ "${V_HSTATUS}" = "healthy" ]; then
             HEALTH_LINE="PASS — HEALTHCHECK reached healthy (D-10)"
           elif [ "${V_HSTATUS}" = "none-defined" ]; then
@@ -119,6 +128,8 @@ runs:
             HEALTH_LINE="N/A — oneshot profile: container exits by design"
           elif [ "${V_HSTATUS}" = "unhealthy" ] || [ "${V_HSTATUS}" = "gone" ]; then
             HEALTH_LINE="FAIL — HEALTHCHECK status '${V_HSTATUS}' (D-10)"
+          elif [ "${V_HSTATUS}" = "starting" ]; then
+            HEALTH_LINE="FAIL — HEALTHCHECK stuck in 'starting' at the deadline (D-10)"
           fi
         fi
 
@@ -152,7 +163,9 @@ runs:
           echo
           echo "### Vulnerabilities (deduped, full report)"
           echo
-          if [ -s trivy-full.json ]; then
+            REPORT=trivy-full.json
+            [ -s "$REPORT" ] || REPORT=candidate-artifact/trivy-full.json
+            if [ -s "$REPORT" ]; then
             echo "| Severity | Count |"
             echo "| --- | ---: |"
             jq -r '
@@ -171,7 +184,7 @@ runs:
               + "| Low | \([$v[] | select(.Severity == "LOW")] | length) |\n"
               + "| Unknown | \([$v[] | select(.Severity == "UNKNOWN")] | length) |\n"
               + "| **Total** | \($v | length) |"
-            ' trivy-full.json
+              ' "$REPORT"
           else
             echo "> Trivy report unavailable for this run."
           fi
