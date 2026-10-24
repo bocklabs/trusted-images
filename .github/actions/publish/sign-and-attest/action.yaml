@@ -39,6 +39,10 @@ runs:
         if [ "${SKIP_COPY}" = true ]; then
           source scripts/lib/provenance.sh
           resolve_provenance "${APP}" "${INTERNAL_TAG}" "${RECORD}"
+          jq -e 'type == "object"' "${RECORD}" > /dev/null || {
+            echo "FATAL: reused provenance record is missing"
+            exit 1
+          }
           if git ls-tree --name-only origin/main -- "provenance/${APP}/current.json" | grep -q .; then
             git show "origin/main:provenance/${APP}/current.json" > current-at-verification.json
           fi

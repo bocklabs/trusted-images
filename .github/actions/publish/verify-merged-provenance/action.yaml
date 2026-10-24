@@ -53,6 +53,9 @@ runs:
           exit 1
         }
         jq '.provenance.merged = true' candidate-decision.json > candidate-decision.next.json
+        python3 scripts/promote_decision_integrity.py final candidate-decision.next.json || {
+          rm -f candidate-decision.next.json
+          exit 1
+        }
         mv candidate-decision.next.json candidate-decision.json
-        python3 scripts/promote_decision_integrity.py final candidate-decision.json
         echo "candidate-decision.json is complete; publication and provenance are verified" >> "$GITHUB_STEP_SUMMARY"
