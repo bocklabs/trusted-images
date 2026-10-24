@@ -154,6 +154,16 @@ class GenerateGoFileBuildTests(unittest.TestCase):
         )
         self.assertIn("structural_drift != 'true'", merge["if"])
 
+    def test_rescan_refreshes_evidence_before_remediation_decision(self):
+        workflow = yaml.safe_load(
+            (ROOT / ".github/workflows/promote.yaml").read_text(encoding="utf-8")
+        )
+        names = [step["name"] for step in workflow["jobs"]["rescan"]["steps"]]
+        self.assertLess(
+            names.index("Generate Go file-build evidence for this scan"),
+            names.index("Decide producer remediation need"),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -153,6 +153,15 @@ jobs:
         with:
           workdir: published-rescan
 
+      - name: Generate Go file-build evidence for this scan
+        if: steps.convert.outcome == 'success'
+        uses: ./.github/actions/validate/generate-go-evidence
+        with:
+          app: ${{ inputs.app }}
+          report: published-rescan/trivy-full.json
+          selection: published-rescan/selection.json
+          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
       - name: Decide producer remediation need
         id: decision
         if: steps.convert.outcome == 'success'
