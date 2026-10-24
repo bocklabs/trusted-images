@@ -1,0 +1,45 @@
+name: capture-trivy-db
+description: Capture Trivy DB metadata
+inputs:
+  trivy_cache_dir:
+    description: Workflow input.
+    required: false
+outputs:
+  db_digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.db_digest }}
+  db_updated:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.db_updated }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        TRIVY_CACHE_DIR: ${{ inputs.trivy_cache_dir }}
+      run: |
+        set -euo pipefail
+        trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-1.txt
+        # vuln-only scans download no check bundle: trivy v0.74 prints no digest
+        # line and db/metadata.json has none, so resolve the DB artifact's
+        # manifest digest (the repo trivy's own log names) via anonymous HEAD.
+        TOKEN="$(curl -fsSL "https://mirror.gcr.io/v2/token?scope=repository:aquasec/trivy-db:pull&service=mirror.gcr.io" | jq -r '.token // .access_token')"
+        DB_DIGEST="$(curl -fsSI -H "Authorization: Bearer ${TOKEN}" \
+          -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json' \
+          "https://mirror.gcr.io/v2/aquasec/trivy-db/manifests/2" | tr -d '\r' | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+        DB_UPDATED="$(grep -i 'UpdatedAt:' trivy-db-meta-1.txt | head -1 | sed 's/.*UpdatedAt:[[:space:]]*//')" || true
+        case "$DB_DIGEST" in
+          sha256:????????????????????????????????????????????????????????????????) ;;
+          *) echo "FATAL: no usable Trivy DB digest (got '${DB_DIGEST:-<empty>}')"; cat trivy-db-meta-1.txt; exit 1 ;;
+        esac
+        if [ -z "$DB_UPDATED" ]; then
+          echo "FATAL: trivy --version (cache dir $TRIVY_CACHE_DIR) carries no DB metadata (DB not downloaded where expected?)"
+          cat trivy-db-meta-1.txt
+        du -sh "$TRIVY_CACHE_DIR"/{db,java-db,fanal} 2>/dev/null >> "$GITHUB_STEP_SUMMARY" || true
+          exit 1
+        fi
+        echo "db_digest=${DB_DIGEST}" >> "$GITHUB_OUTPUT"
+        echo "db_updated=${DB_UPDATED}" >> "$GITHUB_OUTPUT"
+        cat trivy-db-meta-1.txt
+        du -sh "$TRIVY_CACHE_DIR"/{db,java-db,fanal} 2>/dev/null >> "$GITHUB_STEP_SUMMARY" || true

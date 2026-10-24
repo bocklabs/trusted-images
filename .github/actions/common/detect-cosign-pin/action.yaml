@@ -1,0 +1,53 @@
+name: detect-cosign-pin
+description: Detect Cosign verifier pin change
+inputs:
+  event_name:
+    description: Workflow input.
+    required: false
+  base_ref:
+    description: Workflow input.
+    required: false
+  before:
+    description: Workflow input.
+    required: false
+outputs:
+  base:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.base }}
+  changed:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.changed }}
+  version:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.version }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        EVENT_NAME: ${{ inputs.event_name }}
+        BASE_REF: ${{ inputs.base_ref }}
+        BEFORE: ${{ inputs.before }}
+      run: |
+        set -euo pipefail
+        if [[ "${EVENT_NAME}" == pull_request ]]; then
+          BASE="$(git merge-base HEAD "origin/${BASE_REF}")"
+        else
+          BASE="${BEFORE}"
+        fi
+        git rev-parse --verify "${BASE}^{commit}" > /dev/null
+        echo "base=${BASE}" >> "$GITHUB_OUTPUT"
+        mapfile -t VERSIONS < <(sed -nE 's/^[[:space:]]+cosign-release: (v[0-9]+\.[0-9]+\.[0-9]+)$/\1/p' .github/workflows/promote-publish.yaml)
+        if [[ "${#VERSIONS[@]}" -ne 1 ]]; then
+          echo 'FATAL: expected one checked-out Cosign release pin' >&2
+          exit 1
+        fi
+        echo "version=${VERSIONS[0]}" >> "$GITHUB_OUTPUT"
+        if git diff --unified=0 "${BASE}" HEAD -- .github/workflows/promote-publish.yaml .github/workflows/validate.yaml |
+          grep -Eq '^[+-][[:space:]]*([u]ses:[[:space:]]+sigstore/cosign-installer@[a-f0-9]{40}|cosign-release:[[:space:]]+v[0-9]+\.[0-9]+\.[0-9]+)'; then
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+        fi
+        if git diff --name-only "${BASE}" HEAD -- provenance | grep -q .; then
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+        fi

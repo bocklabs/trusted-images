@@ -1,0 +1,200 @@
+name: resolve-entry
+description: Resolve inventory entry and validation params
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  requested_remediation:
+    description: Workflow input.
+    required: false
+  force_repromote:
+    description: Workflow input.
+    required: false
+  recover_tag:
+    description: Workflow input.
+    required: false
+  recovery_run_id:
+    description: Workflow input.
+    required: false
+  accepted_candidate_run_id:
+    description: Workflow input.
+    required: false
+  gh_token:
+    description: Workflow input.
+    required: false
+  repo:
+    description: Workflow input.
+    required: false
+outputs:
+  app:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.app }}
+  patch_policy:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.patch_policy }}
+  upstream_digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.upstream_digest }}
+  upstream_ref:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.upstream_ref }}
+  upstream_tag:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.upstream_tag }}
+  validation_command:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_command }}
+  validation_duration_seconds:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_duration_seconds }}
+  validation_env:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_env }}
+  validation_expect_status:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_expect_status }}
+  validation_expected_exit:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_expected_exit }}
+  validation_expected_platforms:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_expected_platforms }}
+  validation_path:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_path }}
+  validation_port:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_port }}
+  validation_timeout_seconds:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_timeout_seconds }}
+  validation_type:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_type }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        REQUESTED_REMEDIATION: ${{ inputs.requested_remediation }}
+        FORCE_REPROMOTE: ${{ inputs.force_repromote }}
+        RECOVER_TAG: ${{ inputs.recover_tag }}
+        RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
+        ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+        GH_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ inputs.repo }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/validate.sh
+        if [ -n "${REQUESTED_REMEDIATION}" ]; then
+          [ "${FORCE_REPROMOTE}" = true ] && [ -z "${RECOVER_TAG}${RECOVERY_RUN_ID}${ACCEPTED_CANDIDATE_RUN_ID}" ] || { echo "FATAL: requested remediation requires fresh allocation"; exit 1; }
+          python3 scripts/validate_requested_remediation.py
+        fi
+        require_app_name "${APP}"
+        if [ -z "${RECOVER_TAG}" ] && ! ls inventory/ | grep -qFx -- "${APP}"; then
+          echo "FATAL: app not in inventory: ${APP}"
+          exit 1
+        fi
+        if [ "${FORCE_REPROMOTE}" = "true" ] && [ -n "${RECOVER_TAG}" ]; then
+          echo "FATAL: force_repromote and recover_tag cannot be combined"
+          exit 1
+        fi
+        if [ "${FORCE_REPROMOTE}" = "true" ] && [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+          echo "FATAL: force_repromote and accepted_candidate_run_id cannot be combined"
+          exit 1
+        fi
+        if [ -n "${RECOVER_TAG}" ] && [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+          echo "FATAL: recover inputs and accepted_candidate_run_id cannot be combined"
+          exit 1
+        fi
+        [[ -z "${ACCEPTED_CANDIDATE_RUN_ID}" || "${ACCEPTED_CANDIDATE_RUN_ID}" =~ ^[1-9][0-9]*$ ]] || {
+          echo "FATAL: accepted_candidate_run_id must be numeric"
+          exit 1
+        }
+        if [ -n "${RECOVERY_RUN_ID}" ] && [ -z "${RECOVER_TAG}" ]; then
+          echo "FATAL: recovery_run_id requires recover_tag"
+          exit 1
+        fi
+
+        mkdir -p validation-context
+        if [ -n "${RECOVER_TAG}" ]; then
+          PROVENANCE="validation-context/recovery-provenance.json"
+          git fetch origin main
+          python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${RECOVER_TAG}" > "${PROVENANCE}"
+          jq -e --arg app "${APP}" --arg tag "${RECOVER_TAG}" '
+            .schema == "trusted-images.bocklabs.dev/provenance-v1" and
+            .app == $app and .internal.tag == $tag and
+            .internal.platforms == ["linux/amd64"] and
+            (.upstream.index_digest | type == "string") and
+            (.upstream.selected_child_digest | type == "string") and
+            (.internal.digest | type == "string")
+          ' "${PROVENANCE}" > /dev/null || {
+            echo "FATAL: recovery provenance is not a Phase 05 single-platform record"
+            exit 1
+          }
+          RECORDED_URL="$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${PROVENANCE}")"
+          ORIGINAL_RUN_ID="${RECORDED_URL##*/}"
+          if [ -n "${RECOVERY_RUN_ID}" ] && [ "${RECOVERY_RUN_ID}" != "${ORIGINAL_RUN_ID}" ]; then
+            echo "FATAL: recovery_run_id does not match the existing provenance record"
+            exit 1
+          fi
+          gh api "repos/${REPO}/actions/runs/${ORIGINAL_RUN_ID}" > validation-context/original-run.json
+          jq -e --arg repo "${REPO}" '
+            .repository.full_name == $repo and
+            .path == ".github/workflows/promote.yaml" and
+            .event == "workflow_dispatch" and
+            (.head_sha | test("^[a-f0-9]{40}$"))
+          ' validation-context/original-run.json > /dev/null || {
+            echo "FATAL: recovery run does not belong to this repository's promote workflow"
+            exit 1
+          }
+          gh api --paginate "repos/${REPO}/actions/runs/${ORIGINAL_RUN_ID}/artifacts" \
+            --jq '.artifacts[] | select(.expired == false) | .name' \
+            > validation-context/original-artifacts.txt
+          for ARTIFACT in validation-evidence trivy-full-report trivy-copa-report candidate; do
+            grep -qFx "${ARTIFACT}" validation-context/original-artifacts.txt || {
+              echo "FATAL: original run is missing required artifact ${ARTIFACT}"
+              exit 1
+            }
+          done
+          mkdir -p "${RUNNER_TEMP}/original-validation" "${RUNNER_TEMP}/original-report"
+          gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
+            --name validation-evidence --dir "${RUNNER_TEMP}/original-validation"
+          gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
+            --name trivy-full-report --dir "${RUNNER_TEMP}/original-report"
+          rm -rf recovery-candidate
+          gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
+            --name candidate --dir recovery-candidate
+        python3 scripts/promote_recovery_candidate.py "${PROVENANCE}" recovery-candidate
+          cp recovery-candidate/candidate-manifest.json candidate-manifest.json
+          rm -rf candidate-oci
+          cp -a recovery-candidate/candidate-oci candidate-oci
+          jq -e --arg app "${APP}" \
+            '.app == $app and .validation.result == "pass"' \
+            "${RUNNER_TEMP}/original-validation/validation-evidence.json" > /dev/null || {
+            echo "FATAL: original validation artifact is not bound to this app and a passing validation"
+            exit 1
+          }
+          ORIGINAL_SOURCE_SHA="$(jq -r '.head_sha' validation-context/original-run.json)"
+          ORIGINAL_RUN_URL="$(jq -r '.html_url' validation-context/original-run.json)"
+          gh api -H "Accept: application/vnd.github.raw+json" \
+            "repos/${REPO}/contents/inventory/${APP}/image.yaml?ref=${ORIGINAL_SOURCE_SHA}" \
+            > validation-context/image.yaml
+          python3 scripts/promote_recovery_report_binding.py validation-context/image.yaml "${RUNNER_TEMP}/original-report/secobserve-upload.json" "${APP}"
+          jq -n \
+            --arg original_run_url "${ORIGINAL_RUN_URL}" \
+            --arg original_source_sha "${ORIGINAL_SOURCE_SHA}" \
+            --arg recovered_tag "${RECOVER_TAG}" \
+            --arg recovered_digest "$(jq -er .internal.digest "${PROVENANCE}")" \
+            '{mode:"recovery", original_run_url:$original_run_url, original_source_sha:$original_source_sha, recovered_tag:$recovered_tag, recovered_digest:$recovered_digest}' \
+            > validation-context/context.json
+        else
+          cp "inventory/${APP}/image.yaml" validation-context/image.yaml
+          jq -n '{mode:"normal"}' > validation-context/context.json
+        fi
+
+        source scripts/lib/inventory.sh
+        emit_inventory_context recovery validation-context/image.yaml "${APP}" "${RECOVER_TAG}"
+        python3 scripts/promote_inventory.py policy validation-context/image.yaml > validation-context/patch-policy.json

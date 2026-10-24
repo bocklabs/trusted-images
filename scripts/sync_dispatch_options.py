@@ -21,7 +21,7 @@ def main() -> int:
         print("FATAL: apps-block not found in promote.yaml")
         return 1
 
-    current = re.findall(r"^\s+- (\S+)$", match.group(2), re.M)
+    current = re.findall(r"^\s+- (\S+)$", match.group(2), re.MULTILINE)
     if current == apps:
         print("options in sync")
         return 0

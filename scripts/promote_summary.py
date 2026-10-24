@@ -1,7 +1,8 @@
 """Render the promotion run summary."""
 
-from collections import Counter
 import json
+import os
+from collections import Counter
 from pathlib import Path
 
 
@@ -42,6 +43,19 @@ print()
 decision_path = Path("candidate-decision.json")
 if decision_path.is_file():
     decision = json.loads(decision_path.read_text(encoding="utf-8"))
+    print("### Candidate assessment")
+    print()
+    print(f"- Candidate: `{decision['candidate']['digest']}`")
+    print(f"- Eligible: {decision['eligible']}; validation: {decision['validation']['result']}")
+    if not decision["eligible"]:
+        print(f"- Not published: {decision['reason'][:300]}")
+    for group in ("resolved", "remaining", "introduced", "unresolved_fixable"):
+        print(f"- {group}: {len(decision['delta'][group])}")
+    if "remediation" in decision:
+        print(f"- Requested findings: {len(decision['remediation']['findings'])}")
+    run_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com") + "/" + os.environ.get("GITHUB_REPOSITORY", "") + "/actions/runs/" + str(decision["run_id"])
+    print(f"- Artifacts: [candidate, patch-scan-reports, validation-evidence, validation-container-logs]({run_url}#artifacts)")
+    print()
     print("### Package changes")
     print()
     print("| Ecosystem | Package | Change | Before | After |")

@@ -1,0 +1,65 @@
+name: decide-publication
+description: Decide whether publication is required
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  force_repromote:
+    description: Workflow input.
+    required: false
+  recover_tag:
+    description: Workflow input.
+    required: false
+  accepted_candidate_run_id:
+    description: Workflow input.
+    required: false
+  skip_copy:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+outputs:
+  publication_required:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.publication_required }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        FORCE_REPROMOTE: ${{ inputs.force_repromote }}
+        RECOVER_TAG: ${{ inputs.recover_tag }}
+        ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+        SKIP_COPY: ${{ inputs.skip_copy }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+      run: |
+        set -euo pipefail
+        if [ "${SKIP_COPY}" = true ] && [ "${FORCE_REPROMOTE}" != true ] && [ -z "${RECOVER_TAG}" ] && [ -z "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+          RECORD="reuse-provenance.json"
+          git fetch origin main
+          source scripts/lib/provenance.sh
+          resolve_provenance "${RECORD}"
+          jq -e --arg app "${APP}" --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '
+            .schema == "trusted-images.bocklabs.dev/provenance-v1" and .app == $app and
+            .internal.package == ("ghcr.io/bocklabs/" + $app) and .internal.tag == $tag and
+            .internal.digest == $digest and (.policy.eligible | type == "boolean") and
+            ((has("signing") | not) or ((.signing | type == "object") and
+              (.signing.result == "pass" or (.signing.result == "fail" and
+                (.signing.failure | type == "string") and (.signing.failure | length > 0)))))
+          ' "${RECORD}" >/dev/null || { echo "FATAL: malformed or mismatched reuse provenance"; exit 1; }
+          if jq -e '.policy.eligible == false or (has("signing") | not) or .signing.result == "fail"' "${RECORD}" >/dev/null; then
+            NOTICE="No promotion performed; existing revision lacks eligible signing evidence and remains unchanged. Choose force_repromote=true for a new revision."
+            echo "::warning::${NOTICE}"
+            echo "${NOTICE}" >> "$GITHUB_STEP_SUMMARY"
+            echo "publication_required=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+        fi
+        echo "publication_required=true" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,38 @@
+name: registry-credentials
+description: Resolve source registry credentials
+inputs:
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  dockerhub_username:
+    description: Workflow input.
+    required: false
+  dockerhub_token:
+    description: Workflow input.
+    required: false
+outputs:
+  pass:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.pass }}
+  user:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.user }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        DOCKERHUB_USERNAME: ${{ inputs.dockerhub_username }}
+        DOCKERHUB_TOKEN: ${{ inputs.dockerhub_token }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/registry.sh
+        if is_dockerhub_ref "${UPSTREAM_REF}"; then
+          echo "user=${DOCKERHUB_USERNAME}" >> "$GITHUB_OUTPUT"
+          echo "pass=${DOCKERHUB_TOKEN}" >> "$GITHUB_OUTPUT"
+        else
+          echo "user=" >> "$GITHUB_OUTPUT"
+          echo "pass=" >> "$GITHUB_OUTPUT"
+        fi

@@ -1,0 +1,19 @@
+name: materialize-resume
+description: Materialize preserved candidate for fresh checks
+outputs:
+  image_id:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.image_id }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        source scripts/lib/oci.sh
+        RESUME_IMAGE_ID="$(load_oci_archive \
+          "quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63f5bc8b5d4d336036" \
+          resume-final.tar resume:candidate)"
+        printf '%s\n' "${RESUME_IMAGE_ID}" > resume-candidate-image-id.txt
+        echo "image_id=${RESUME_IMAGE_ID}" >> "$GITHUB_OUTPUT"

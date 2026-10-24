@@ -1,0 +1,56 @@
+name: copy-to-ghcr
+description: Digest-preserving copy to GHCR
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  gh_token:
+    description: Workflow input.
+    required: false
+  skopeo_image:
+    description: Workflow input.
+    required: false
+outputs:
+  divergence_note:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.divergence_note }}
+  fallback_used:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.fallback_used }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        GH_TOKEN: ${{ inputs.gh_token }}
+        SKOPEO_IMAGE: ${{ inputs.skopeo_image }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/registry.sh
+        SKOPEO="${SKOPEO_IMAGE}"
+        rm -f pushed-digest.txt
+        run_skopeo "$SKOPEO" \
+          copy --retry-times 3 \
+            --preserve-digests \
+            --remove-signatures \
+            --dest-tls-verify \
+            --digestfile /workspace/pushed-digest.txt \
+            --dest-creds "bocklabs-bot:${GH_TOKEN}" \
+            "oci:/workspace/candidate-artifact/candidate-oci:candidate" \
+            "docker://ghcr.io/bocklabs/${APP}:${INTERNAL_TAG}"
+        [ "$(cat pushed-digest.txt)" = "${CANDIDATE_DIGEST}" ] || {
+          echo "FATAL: copied digest differs from the verified candidate"
+          exit 1
+        }
+        echo "fallback_used=false" >> "$GITHUB_OUTPUT"
+        echo "divergence_note=" >> "$GITHUB_OUTPUT"

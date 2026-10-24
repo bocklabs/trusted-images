@@ -233,7 +233,7 @@ class ValidateImageTests(unittest.TestCase):
                 "0",
             ),
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("image Id", result.stdout + result.stderr)
 
     def test_local_image_requires_committed_image_id(self):
@@ -254,7 +254,7 @@ class ValidateImageTests(unittest.TestCase):
                 "0",
             ),
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("--local-image-id", result.stdout + result.stderr)
 
     def load_evidence(self) -> dict:
@@ -303,7 +303,7 @@ class ValidateImageTests(unittest.TestCase):
             "http",
             ("--port", "9187", "--timeout-seconds", "2", "--duration-seconds", "2"),
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         output = result.stdout + result.stderr
         self.assertIn("FATAL", output)
         self.assertIn("D-11", output)
@@ -313,6 +313,17 @@ class ValidateImageTests(unittest.TestCase):
         self.assert_container_removed()
         log_file = self.evidence_dir / "validation-logs" / f"{APP}.log"
         self.assertTrue(log_file.is_file() and log_file.stat().st_size > 0)
+
+    def test_oneshot_retains_output_and_distinguishes_launch_failure(self):
+        self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 1, "oneshot_stdout": "native assertion failed"})
+        result = self.run_cli("oneshot", ("--expected-exit", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        log = self.evidence_dir / "validation-logs" / f"{APP}.log"
+        self.assertIn("native assertion failed", log.read_text())
+        self.assertNotIn("logs_note", self.load_evidence()["validation"])
+        self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 125})
+        result = self.run_cli("oneshot", ("--expected-exit", "0"))
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
 
     def test_oneshot_wrong_exit_fails(self) -> None:
         self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 1})
@@ -436,7 +447,7 @@ class ValidateImageTests(unittest.TestCase):
             finally:
                 release.set()
                 worker.join(5)
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("never returned 200 within 1s", result.stdout + result.stderr)
         self.assertLess(elapsed, 2.5)
         self.assertEqual(self.load_evidence()["validation"]["result"], "fail")
@@ -494,7 +505,9 @@ class ValidateImageTests(unittest.TestCase):
             ev["validation"]["health"],
             {"defined": False, "final_status": "not-applicable"},
         )
-        self.assertIn("log", ev["validation"]["logs_note"].lower())
+        log_file = self.evidence_dir / "validation-logs" / f"{APP}.log"
+        self.assertTrue(log_file.is_file())
+        self.assertNotIn("logs_note", ev["validation"])
         self.assert_common_evidence(ev)
         self.assert_network_isolated()
 
@@ -571,7 +584,7 @@ class ValidateImageTests(unittest.TestCase):
 
     def test_copa_baseimage_normalized_repository_keeps_selected_child(self) -> None:
         child = "sha256:" + "b1" * 32
-        for label_child, expected in ((child, 0), ("sha256:" + "c1" * 32, 1)):
+        for label_child, expected in ((child, 0), ("sha256:" + "c1" * 32, 2)):
             with self.subTest(child=label_child):
                 self.spool = self.tmp / f"docker-spool-{expected}.jsonl"
                 self.write_scenario(
@@ -665,7 +678,7 @@ class ValidateImageTests(unittest.TestCase):
         result = self.run_cli(
             "process", (*self.baseline_args(), "--duration-seconds", "0")
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("permitted additions", result.stdout + result.stderr)
 
     def test_null_and_empty_runtime_values_remain_distinct(self) -> None:
@@ -680,7 +693,7 @@ class ValidateImageTests(unittest.TestCase):
         result = self.run_cli(
             "process", (*self.baseline_args(), "--duration-seconds", "0")
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("D-14", result.stdout + result.stderr)
 
     def test_added_null_runtime_field_is_drift(self) -> None:
@@ -695,7 +708,7 @@ class ValidateImageTests(unittest.TestCase):
         result = self.run_cli(
             "process", (*self.baseline_args(), "--duration-seconds", "0")
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("config field 'User'", result.stdout + result.stderr)
 
     def test_config_drift_outside_label_additions_fails(self) -> None:
@@ -713,7 +726,7 @@ class ValidateImageTests(unittest.TestCase):
             "process",
             (*self.patched_args(), "--duration-seconds", "0"),
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("D-14", result.stdout + result.stderr)
         self.assertIn("runtime config changed", result.stdout + result.stderr)
         self.assertIn("config field 'Env'", result.stdout + result.stderr)
@@ -731,7 +744,7 @@ class ValidateImageTests(unittest.TestCase):
         result = self.run_cli(
             "process", (*self.baseline_args(), "--duration-seconds", "0")
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("config field 'ArgsEscaped'", result.stdout + result.stderr)
 
     def test_existing_label_value_cannot_change(self) -> None:
@@ -746,13 +759,13 @@ class ValidateImageTests(unittest.TestCase):
         result = self.run_cli(
             "process", (*self.baseline_args(), "--duration-seconds", "0")
         )
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("existing label", result.stdout + result.stderr)
 
     def test_platform_mismatch_and_candidate_index_fail(self) -> None:
         self.write_scenario({"image_inspect": image_inspect(architecture="arm64")})
         result = self.run_cli("process", ("--duration-seconds", "0"))
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("D-20", result.stdout + result.stderr)
 
         self.index.write_text(
@@ -766,7 +779,7 @@ class ValidateImageTests(unittest.TestCase):
         )
         self.write_scenario({"image_inspect": image_inspect()})
         result = self.run_cli("process", ("--duration-seconds", "0"))
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("index", result.stdout + result.stderr)
 
     # --- invocation-shape + usage contracts ---

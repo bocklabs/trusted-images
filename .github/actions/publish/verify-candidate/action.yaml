@@ -1,0 +1,141 @@
+name: verify-candidate
+description: Verify candidate artifact
+inputs:
+  expected_manifest_sha256:
+    description: Workflow input.
+    required: false
+  app:
+    description: Workflow input.
+    required: false
+  source_sha:
+    description: Workflow input.
+    required: false
+  run_id:
+    description: Workflow input.
+    required: false
+  candidate_run_attempt:
+    description: Workflow input.
+    required: false
+  upstream_index_digest:
+    description: Workflow input.
+    required: false
+  accepted_candidate_run_id:
+    description: Workflow input.
+    required: false
+  resume_original_run_attempt:
+    description: Workflow input.
+    required: false
+  resume_original_source_sha:
+    description: Workflow input.
+    required: false
+  resume_artifact_id:
+    description: Workflow input.
+    required: false
+  gh_token:
+    description: Workflow input.
+    required: false
+  repo:
+    description: Workflow input.
+    required: false
+outputs:
+  candidate_digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.candidate_digest }}
+  internal_tag:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.internal_tag }}
+  selected_child_digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.selected_child_digest }}
+  skip_copy:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.skip_copy }}
+  trivy_version:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.trivy_version }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        EXPECTED_MANIFEST_SHA256: ${{ inputs.expected_manifest_sha256 }}
+        APP: ${{ inputs.app }}
+        SOURCE_SHA: ${{ inputs.source_sha }}
+        RUN_ID: ${{ inputs.run_id }}
+        CANDIDATE_RUN_ATTEMPT: ${{ inputs.candidate_run_attempt }}
+        UPSTREAM_INDEX_DIGEST: ${{ inputs.upstream_index_digest }}
+        ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+        RESUME_ORIGINAL_RUN_ATTEMPT: ${{ inputs.resume_original_run_attempt }}
+        RESUME_ORIGINAL_SOURCE_SHA: ${{ inputs.resume_original_source_sha }}
+        RESUME_ARTIFACT_ID: ${{ inputs.resume_artifact_id }}
+        GH_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ inputs.repo }}
+      run: |
+        set -euo pipefail
+        test -n "${EXPECTED_MANIFEST_SHA256}" || { echo "FATAL: candidate checksum output is absent"; exit 1; }
+        ACTUAL_MANIFEST_SHA="$(sha256sum candidate-artifact/SHA256SUMS | awk '{print $1}')"
+        [ "${ACTUAL_MANIFEST_SHA}" = "${EXPECTED_MANIFEST_SHA256}" ] || {
+          echo "FATAL: candidate checksum manifest changed (${ACTUAL_MANIFEST_SHA} != ${EXPECTED_MANIFEST_SHA256})"
+          exit 1
+        }
+        sha256sum -c candidate-artifact/SHA256SUMS
+        python3 scripts/promote_candidate_artifact.py
+        if [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
+          gh api "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}" > publisher-resume-run.json
+          ARTIFACT_ID="$(jq -er .artifact_id candidate-artifact/resume-artifact-id.txt 2>/dev/null || jq -er '.resume.artifact_id' candidate-artifact/candidate-decision.json)"
+          gh api "repos/${REPO}/actions/artifacts/${ARTIFACT_ID}" > publisher-resume-artifact.json
+        fi
+        [ "$(cat candidate-artifact/source.sha)" = "${SOURCE_SHA}" ] || {
+          echo "FATAL: candidate source SHA binding failed"
+          exit 1
+        }
+        cmp "inventory/${APP}/image.yaml" candidate-artifact/inventory-image.yaml || {
+          echo "FATAL: candidate inventory bytes differ from this run"
+          exit 1
+        }
+        INDEX_SHA="$(sha256sum candidate-artifact/upstream-index.json | awk '{print $1}')"
+        [ "sha256:${INDEX_SHA}" = "${UPSTREAM_INDEX_DIGEST}" ] || {
+          echo "FATAL: candidate upstream index bytes differ from the inventory digest"
+          exit 1
+        }
+        TAG_FROM_ALLOCATION="$(jq -er .internal_tag candidate-artifact/tag-decision.json)"
+        [ "${TAG_FROM_ALLOCATION}" = "$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)" ] || {
+          echo "FATAL: allocated tag differs from the candidate decision"
+          exit 1
+        }
+
+        python3 scripts/promote_decision_integrity.py candidate candidate-artifact/candidate-decision.json
+
+        INTERNAL_TAG="$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)"
+        SELECTED_CHILD="$(jq -er .selected_child_digest candidate-artifact/candidate-decision.json)"
+        CANDIDATE_DIGEST="$(jq -er .candidate.digest candidate-artifact/candidate-decision.json)"
+        TRIVY_VERSION="$(sed -n '1s/^Version: //p' candidate-artifact/trivy-db-meta-1.txt)"
+        [[ "${TRIVY_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'FATAL: candidate scanner version is invalid'; exit 1; }
+        [ "$(sha256sum candidate-artifact/child-manifest.json | awk '{print $1}')" = "${SELECTED_CHILD#sha256:}" ] || { echo "FATAL: child manifest digest mismatch"; exit 1; }
+        [ "$(sha256sum candidate-artifact/candidate-manifest.json | awk '{print $1}')" = "${CANDIDATE_DIGEST#sha256:}" ] || { echo "FATAL: candidate manifest digest mismatch"; exit 1; }
+        CANDIDATE_BLOB="candidate-artifact/candidate-oci/blobs/sha256/${CANDIDATE_DIGEST#sha256:}"
+        cmp candidate-artifact/candidate-manifest.json "${CANDIDATE_BLOB}" || { echo "FATAL: OCI layout does not preserve candidate bytes"; exit 1; }
+        cmp candidate-artifact/child-manifest.json candidate-artifact/candidate-manifest.json \
+          || jq -e '.copa.original_child_input == true and .patching.disabled == false' candidate-artifact/candidate-decision.json > /dev/null \
+          || { echo "FATAL: patched candidate requires copa.original_child_input=true and patching.disabled=false"; jq -c '{copa:.copa,patching:.patching}' candidate-artifact/candidate-decision.json; exit 1; }
+        TAG_SKIP="$(jq -r .skip_copy candidate-artifact/tag-decision.json)"
+        {
+          echo "internal_tag=${INTERNAL_TAG}"
+          echo "skip_copy=${TAG_SKIP}"
+          echo "selected_child_digest=${SELECTED_CHILD}"
+          echo "candidate_digest=${CANDIDATE_DIGEST}"
+          echo "trivy_version=${TRIVY_VERSION}"
+          echo "decision_sha256=$(sha256sum candidate-artifact/candidate-decision.json | awk '{print $1}')"
+        } >> "$GITHUB_OUTPUT"
+        cp candidate-artifact/trivy-full.json candidate-artifact/trivy-full.cdx.json \
+          candidate-artifact/trivy-before-full.json candidate-artifact/trivy-copa.json \
+          candidate-artifact/kev.json candidate-artifact/secobserve-upload.json \
+          candidate-artifact/validation-evidence.json candidate-artifact/candidate-decision.json \
+          candidate-artifact/trivy-db-meta-1.txt candidate-artifact/trivy-db-meta-2.txt .
+        cp candidate-artifact/candidate-manifest.json candidate-manifest.json
+        for evidence in native-before native-after; do
+          if [ -d "candidate-artifact/${evidence}" ]; then
+            cp -a "candidate-artifact/${evidence}" .
+          fi
+        done

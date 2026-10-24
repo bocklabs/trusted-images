@@ -1,0 +1,48 @@
+name: select-published
+description: Select latest merged published image under app lock
+inputs:
+  automatic_rescan:
+    description: Workflow input.
+    required: false
+  input_app:
+    description: Workflow input.
+    required: false
+  input_force_repromote:
+    description: Workflow input.
+    required: false
+  input_recover_tag:
+    description: Workflow input.
+    required: false
+  input_recovery_run_id:
+    description: Workflow input.
+    required: false
+  input_accepted_candidate_run_id:
+    description: Workflow input.
+    required: false
+outputs:
+  proceed:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.proceed }}
+  ref:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.ref }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        AUTOMATIC_RESCAN: ${{ inputs.automatic_rescan }}
+        INPUT_APP: ${{ inputs.input_app }}
+        INPUT_FORCE_REPROMOTE: ${{ inputs.input_force_repromote }}
+        INPUT_RECOVER_TAG: ${{ inputs.input_recover_tag }}
+        INPUT_RECOVERY_RUN_ID: ${{ inputs.input_recovery_run_id }}
+        INPUT_ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.input_accepted_candidate_run_id }}
+      run: |
+        set -euo pipefail
+        if [ "$AUTOMATIC_RESCAN" = true ]; then
+          git fetch origin main
+          python3 scripts/rescan_published.py select
+        else
+          echo 'proceed=true' >> "$GITHUB_OUTPUT"
+        fi

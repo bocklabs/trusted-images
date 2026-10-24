@@ -1,0 +1,31 @@
+name: assert-platform
+description: Assert exact linux/amd64 manifest
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/ghcr.sh
+        TOKEN="$(ghcr_require_pull_token "${APP}" ghcr-token.json)"
+        curl --fail-with-body -sS -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${GHCR_MANIFEST_ACCEPT}" \
+          "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CANDIDATE_DIGEST}" > pushed-manifest.json
+        jq -e 'has("manifests") | not' pushed-manifest.json > /dev/null || {
+          echo "FATAL: published candidate is an index (D-20)"
+          exit 1
+        }
+        cmp pushed-manifest.json candidate-manifest.json || {
+          echo "FATAL: published manifest bytes differ from the verified candidate"
+          exit 1
+        }

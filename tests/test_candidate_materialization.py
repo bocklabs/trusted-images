@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import yaml
+from tests.workflow_helpers import load_workflow
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from finalize_candidate_config import finalize
@@ -98,7 +98,7 @@ class CandidateMaterializationTests(unittest.TestCase):
                 finalize(root, baseline)
 
     def test_scan_and_runtime_archive_are_materialized_from_final_oci(self) -> None:
-        workflow = yaml.safe_load((Path(__file__).parents[1] / ".github/workflows/promote-candidate.yaml").read_text())
+        workflow = load_workflow(Path(__file__).parents[1] / ".github/workflows/promote-candidate.yaml")
         steps = workflow["jobs"]["validate"]["steps"]
         run = next(step["run"] for step in steps if step.get("id") == "patched")
         self.assertLess(run.index("python3 scripts/finalize_candidate_config.py candidate-oci child-config.json"),

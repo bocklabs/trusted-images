@@ -1,0 +1,35 @@
+name: record-quarantine
+description: Record quarantined publication after failed verification
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+outputs:
+  decision_sha256:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.decision_sha256 }}
+  failure:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.failure }}
+  now:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.now }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/decision.sh
+        REASON="$(jq -r '.reason // "verification failed" | gsub("[^A-Za-z0-9 .:_/-]"; " ") | .[:160]' signing-evidence.json 2>/dev/null || echo 'verification failed')"
+        REASON="${REASON:-verification failed}"
+        jq -n --arg reason "${REASON}" '{result:"fail",reason:$reason}' > signing-evidence.json
+        write_published_decision '.eligible = false | .reason = "signing verification failed" | .published.digest = $digest | .provenance.merged = false' --arg digest "${CANDIDATE_DIGEST}"
+        echo "failure=${REASON}" >> "$GITHUB_OUTPUT"

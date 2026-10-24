@@ -1,0 +1,24 @@
+name: run-tests
+description: Run the unit test suite with or without coverage.
+inputs:
+  coverage:
+    description: Enable coverage collection and the 80 percent gate.
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        COVERAGE: ${{ inputs.coverage }}
+      run: |
+        set -euo pipefail
+        if [ "${COVERAGE}" = true ]; then
+          uv run --locked coverage run --branch -m unittest discover -s tests
+          uv run --locked coverage combine --quiet
+          uv run --locked coverage report --fail-under=80
+          uv run --locked coverage xml
+        else
+          python -m unittest discover -s tests -v
+        fi

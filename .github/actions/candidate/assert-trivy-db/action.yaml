@@ -1,0 +1,20 @@
+name: assert-trivy-db
+description: Assert single DB across scans
+inputs:
+  trivy_cache_dir:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        TRIVY_CACHE_DIR: ${{ inputs.trivy_cache_dir }}
+      run: |
+        set -euo pipefail
+        trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-2.txt
+        if ! diff -u trivy-db-meta-1.txt trivy-db-meta-2.txt; then
+          echo "FATAL: Trivy DB changed between scans (SCAN-03)"
+          exit 1
+        fi

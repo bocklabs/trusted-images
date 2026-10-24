@@ -1,0 +1,17 @@
+name: refresh-current-provenance
+description: Refresh armed current provenance PRs
+inputs:
+  gh_token:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+      run: |
+        set -euo pipefail
+        git fetch origin main
+        python3 scripts/refresh_current_provenance.py

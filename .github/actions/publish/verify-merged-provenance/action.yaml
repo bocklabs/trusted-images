@@ -1,0 +1,58 @@
+name: verify-merged-provenance
+description: Verify merged provenance and publish the final decision
+inputs:
+  gh_token:
+    description: Workflow input.
+    required: false
+  repo:
+    description: Workflow input.
+    required: false
+  app:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  pr_url:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ inputs.repo }}
+        APP: ${{ inputs.app }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        PR_URL: ${{ inputs.pr_url }}
+      run: |
+        set -euo pipefail
+        RECORD="provenance/${APP}/current.json"
+        jq -e '.result == "pass"' signing-evidence.json > /dev/null
+        if [ -n "${PR_URL}" ]; then
+          jq -e '.provenance.merged == false' candidate-decision.json > /dev/null
+          echo "Publication and signature verified; provenance merge pending: ${PR_URL}; app=${APP}; tag=${INTERNAL_TAG}; digest=${CANDIDATE_DIGEST}; run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Ineligible for consumption until exact provenance merges; deployment remains operator-controlled." >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+        git fetch origin main
+        if [ -f current-at-verification.json ] && jq -e --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '.internal.tag == $tag and .internal.digest == $digest' current-at-verification.json > /dev/null; then
+          git show "origin/main:${RECORD}" > current-after-verification.json
+          cmp current-at-verification.json current-after-verification.json || { echo 'FATAL: current changed after verification'; exit 1; }
+        fi
+        python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > main-provenance.json
+        EXPECTED=generated-provenance.json
+        if [ -f resolved-provenance.json ]; then EXPECTED=resolved-provenance.json; fi
+        cmp "${EXPECTED}" main-provenance.json || {
+          echo "FATAL: producer main does not carry the exact generated provenance bytes"
+          exit 1
+        }
+        jq '.provenance.merged = true' candidate-decision.json > candidate-decision.next.json
+        mv candidate-decision.next.json candidate-decision.json
+        python3 scripts/promote_decision_integrity.py final candidate-decision.json
+        echo "candidate-decision.json is complete; publication and provenance are verified" >> "$GITHUB_STEP_SUMMARY"

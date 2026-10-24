@@ -1,0 +1,45 @@
+name: resolve-entry
+description: Resolve inventory entry
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  candidate_run_attempt:
+    description: Workflow input.
+    required: false
+  candidate_artifact_id:
+    description: Workflow input.
+    required: false
+outputs:
+  app:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.app }}
+  dest_package:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.dest_package }}
+  upstream_digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.upstream_digest }}
+  upstream_ref:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.upstream_ref }}
+  upstream_tag:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.upstream_tag }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        CANDIDATE_RUN_ATTEMPT: ${{ inputs.candidate_run_attempt }}
+        CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/validate.sh
+        require_app_name "${APP}"
+        [[ "$CANDIDATE_RUN_ATTEMPT" =~ ^[1-9][0-9]*$ && "$CANDIDATE_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]] || { echo "FATAL: candidate producer outputs are absent or invalid"; exit 1; }
+        test -s validation-context/image.yaml || { echo "FATAL: validation context is empty"; exit 1; }
+        source scripts/lib/inventory.sh
+        emit_inventory_context normal validation-context/image.yaml "${APP}"

@@ -1,0 +1,206 @@
+name: generate-provenance
+description: Generate provenance record
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  trivy_version:
+    description: Workflow input.
+    required: false
+  skip_copy:
+    description: Workflow input.
+    required: false
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  upstream_tag:
+    description: Workflow input.
+    required: false
+  upstream_digest:
+    description: Workflow input.
+    required: false
+  media_type:
+    description: Workflow input.
+    required: false
+  selected_child_digest:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  decision_sha256:
+    description: Workflow input.
+    required: false
+  signing_failure:
+    description: Workflow input.
+    required: false
+  signing_result:
+    description: Workflow input.
+    required: false
+  db_digest:
+    description: Workflow input.
+    required: false
+  db_updated:
+    description: Workflow input.
+    required: false
+  dest_package:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  fallback_used:
+    description: Workflow input.
+    required: false
+  divergence_note:
+    description: Workflow input.
+    required: false
+  run_url:
+    description: Workflow input.
+    required: false
+  dispatched_by:
+    description: Workflow input.
+    required: false
+  recover_tag:
+    description: Workflow input.
+    required: false
+  now:
+    description: Workflow input.
+    required: false
+  skopeo_image:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        TRIVY_VERSION: ${{ inputs.trivy_version }}
+        SKIP_COPY: ${{ inputs.skip_copy }}
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        UPSTREAM_TAG: ${{ inputs.upstream_tag }}
+        UPSTREAM_DIGEST: ${{ inputs.upstream_digest }}
+        MEDIA_TYPE: ${{ inputs.media_type }}
+        SELECTED_CHILD_DIGEST: ${{ inputs.selected_child_digest }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        DECISION_SHA256: ${{ inputs.decision_sha256 }}
+        SIGNING_FAILURE: ${{ inputs.signing_failure }}
+        SIGNING_RESULT: ${{ inputs.signing_result }}
+        DB_DIGEST: ${{ inputs.db_digest }}
+        DB_UPDATED: ${{ inputs.db_updated }}
+        DEST_PACKAGE: ${{ inputs.dest_package }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        FALLBACK_USED: ${{ inputs.fallback_used }}
+        DIVERGENCE_NOTE: ${{ inputs.divergence_note }}
+        RUN_URL: ${{ inputs.run_url }}
+        DISPATCHED_BY: ${{ inputs.dispatched_by }}
+        RECOVER_TAG: ${{ inputs.recover_tag }}
+        NOW: ${{ inputs.now }}
+        SKOPEO_IMAGE: ${{ inputs.skopeo_image }}
+      run: |
+        set -euo pipefail
+        if [ "${SKIP_COPY}" = true ]; then
+          echo "Existing signed provenance retained; only current run artifacts were refreshed" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+        SKOPEO_VERSION="${SKOPEO_IMAGE#*:}"
+        SKOPEO_VERSION="${SKOPEO_VERSION%%@*}"
+        FULL_SHA="$(sha256sum trivy-full.json | awk '{print $1}')"
+        COPA_SHA="$(sha256sum trivy-copa.json | awk '{print $1}')"
+        PLATFORMS="linux/amd64"
+        NOW="${NOW:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+        echo "now=${NOW}" >> "$GITHUB_OUTPUT"
+        # The actual pushed digest; upstream digest when nothing was pushed now (idempotent skip).
+        INTERNAL_DIGEST="${CANDIDATE_DIGEST}"
+        # D-14: the validation block comes verbatim from the validate job's
+        # evidence artifact, never hand-typed; result must be pass (fail-closed).
+        VALIDATION_RESULT="$(jq -r '.validation.result' validation-evidence.json)"
+        if [ "${VALIDATION_RESULT}" != "pass" ]; then
+          echo "FATAL: validation evidence result is '${VALIDATION_RESULT}', not 'pass' — refusing to write provenance (D-12/D-14)"
+          exit 1
+        fi
+        VALIDATION_TYPE="$(jq -r '.validation.type' validation-evidence.json)"
+        VALIDATION_PARAMS="$(jq -c '.validation.params' validation-evidence.json)"
+        VALIDATION_TIMINGS="$(jq -c '.validation.timings' validation-evidence.json)"
+        VALIDATION_HEALTH="$(jq -c '.validation.health' validation-evidence.json)"
+        VALIDATION_RUNNER="$(jq -r '.validation.runner' validation-evidence.json)"
+        VALIDATION_ENTRYPOINT="$(jq -c '.validation.baseline.entrypoint' validation-evidence.json)"
+        VALIDATION_CMD="$(jq -c '.validation.baseline.cmd' validation-evidence.json)"
+        VALIDATION_ENV="$(jq -c '.validation.baseline.env' validation-evidence.json)"
+        NOTES_ARGS=()
+        if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ] && [ -n "${DIVERGENCE_NOTE:-}" ]; then
+          NOTES_ARGS+=(--notes "${DIVERGENCE_NOTE}")
+        fi
+        RECOVERY_ARGS=()
+        if [ -n "${RECOVER_TAG}" ]; then
+          ORIGINAL_RUN_URL="$(jq -er .original_run_url validation-context/context.json)"
+          ORIGINAL_SOURCE_SHA="$(jq -er .original_source_sha validation-context/context.json)"
+          RECOVERY_ARGS=(
+            --original-run-url "${ORIGINAL_RUN_URL}"
+            --original-source-sha "${ORIGINAL_SOURCE_SHA}"
+            --recovered-tag "${INTERNAL_TAG}"
+            --recovered-digest "${INTERNAL_DIGEST}"
+          )
+        fi
+        COPA_ARGS=()
+        if [ "$(jq -r .copa.original_child_input candidate-decision.json)" = true ]; then
+          COPA_ARGS=(--copa-version 0.15.0)
+        fi
+        SIGNING_ARGS=(--signing-result pass)
+        if [ "${SIGNING_RESULT}" = fail ]; then
+          SIGNING_ARGS=(--signing-result fail --signing-failure "${SIGNING_FAILURE}")
+        fi
+        python3 scripts/generate_provenance.py \
+          --app "${APP}" \
+          --upstream-ref "${UPSTREAM_REF}" \
+          --upstream-tag "${UPSTREAM_TAG}" \
+          --upstream-digest "${UPSTREAM_DIGEST}" \
+          --upstream-child-digest "${SELECTED_CHILD_DIGEST}" \
+          --media-type "${MEDIA_TYPE}" \
+          --internal-package "${DEST_PACKAGE}" \
+          --internal-tag "${INTERNAL_TAG}" \
+          --internal-digest "${INTERNAL_DIGEST}" \
+          --platforms "${PLATFORMS}" \
+          --run-url "${RUN_URL}" \
+          --workflow promote \
+          --dispatched-by "${DISPATCHED_BY}" \
+          --trivy-version "${TRIVY_VERSION}" \
+          --trivy-action-sha ed142fd0673e97e23eac54620cfb913e5ce36c25 \
+          --skopeo-version "${SKOPEO_VERSION}" \
+          --skopeo-image-digest "${SKOPEO_IMAGE##*@}" \
+          --trivy-db-check-bundle-digest "${DB_DIGEST}" \
+          --trivy-db-updated-at "${DB_UPDATED}" \
+          --full-report-sha256 "${FULL_SHA}" \
+          --copa-report-sha256 "${COPA_SHA}" \
+          --decision-sha256 "${DECISION_SHA256}" \
+          --decision candidate-decision.json \
+          --before-report trivy-before-full.json \
+          --final-report trivy-full.json \
+          --fixable-report trivy-copa.json \
+          --kev-report kev.json \
+          --now "${NOW}" \
+          --secobserve-product trusted-images \
+          --secobserve-origin "${UPSTREAM_REF}:${UPSTREAM_TAG}" \
+          --validation-type "${VALIDATION_TYPE}" \
+          --validation-result "${VALIDATION_RESULT}" \
+          --validation-params "${VALIDATION_PARAMS}" \
+          --validation-timings "${VALIDATION_TIMINGS}" \
+          --validation-health "${VALIDATION_HEALTH}" \
+          --validation-runner "${VALIDATION_RUNNER}" \
+          --validation-entrypoint "${VALIDATION_ENTRYPOINT}" \
+          --validation-cmd "${VALIDATION_CMD}" \
+          --validation-env "${VALIDATION_ENV}" \
+          --signing-evidence "$PWD/signing-evidence.json" \
+          "${SIGNING_ARGS[@]}" \
+          "${RECOVERY_ARGS[@]}" \
+          "${COPA_ARGS[@]}" \
+          "${NOTES_ARGS[@]}" \
+          --out generated-provenance.json
+        {
+          echo "### Provenance record"
+          echo
+          echo "Full machine-readable run record: generated-provenance.json; valid new publications update provenance/${APP}/current.json."
+          echo
+        } >> "$GITHUB_STEP_SUMMARY"

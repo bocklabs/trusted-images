@@ -1,0 +1,55 @@
+name: probe-anonymous
+description: Anonymous-pull probe
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  fallback_used:
+    description: Workflow input.
+    required: false
+outputs:
+  result:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.result }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        FALLBACK_USED: ${{ inputs.fallback_used }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/ghcr.sh
+        # Runs on copy, fallback, and skip paths alike. Success (200 + digest
+        # equality) is the only assertable fact: the registry hides private and
+        # nonexistent packages behind the same not-found answer.
+        EXPECTED="${CANDIDATE_DIGEST}"
+        if [ -n "${FALLBACK_USED:-}" ] && [ "${FALLBACK_USED}" = "true" ]; then
+          EXPECTED="$(cat pushed-digest.txt)"
+        fi
+        TOKEN="$(ghcr_pull_token "${APP}" probe-token.json)"
+        HDRS="$(curl -sI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${GHCR_INDEX_ACCEPT}" \
+          "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
+        PUSHED=""
+        if echo "${HDRS}" | grep -qi '^HTTP/2 200'; then
+          PUSHED="$(echo "${HDRS}" | grep -i '^docker-content-digest:' | tr -d '\r' | awk '{print $2}')"
+          if [ -n "${PUSHED}" ] && [ "${PUSHED}" = "${EXPECTED}" ]; then
+            echo "result=pass" >> "$GITHUB_OUTPUT"
+            echo "probe: anonymous 200 + docker-content-digest match (${PUSHED})"
+            exit 0
+          fi
+        fi
+        echo "result=fail" >> "$GITHUB_OUTPUT"
+        echo "FATAL: package not anonymously readable at expected digest"
+        echo "probe digest: ${PUSHED:-none} / expected: ${EXPECTED}"
+        exit 1

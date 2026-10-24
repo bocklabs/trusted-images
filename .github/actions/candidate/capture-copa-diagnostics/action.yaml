@@ -1,0 +1,44 @@
+name: capture-copa-diagnostics
+description: Capture Copa diagnostics and fail closed
+inputs:
+  copa_outcome:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        COPA_OUTCOME: ${{ inputs.copa_outcome }}
+      run: |
+        set -euo pipefail
+        docker logs copa-action 2>&1 | sed -E \
+          -e 's#(https?://)[^/@]+:[^/@]+@#\1[redacted]@#g' \
+          -e 's/(Bearer )[A-Za-z0-9._~+\/-]+/\1[redacted]/gI' \
+          -e 's/((token|password|secret|authorization)[=:][[:space:]]*)[^[:space:]&]+/\1[redacted]/gI' \
+          > copa-diagnostics.txt
+        docker image inspect ghcr.io/project-copacetic/copa-action:v0.15.0 --format '{{.Id}}' > copa-action-image-id-after.txt
+        cmp copa-action-image-id.txt copa-action-image-id-after.txt || {
+          echo "FATAL: pinned Copa action runtime changed during patching"
+          exit 1
+        }
+        classification=succeeded
+        if [ "${COPA_OUTCOME}" != success ]; then
+          classification=unknown
+          if grep -Eqi 'GPG error:|NO_PUBKEY|EXPKEYSIG|REVKEYSIG|KEYEXPIRED|BADSIG|signatures? were invalid|signature verification (failed|error)' copa-diagnostics.txt; then
+            classification=gpg
+          elif grep -Eqi 'end.of.life|eol' copa-diagnostics.txt; then
+            classification=eol
+          elif grep -Eqi 'unsupported|not supported|no supported' copa-diagnostics.txt; then
+            classification=unsupported
+          elif grep -Eqi 'no fix|no fixes|nothing to patch' copa-diagnostics.txt; then
+            classification=no-fix
+          fi
+        fi
+        printf '\ncopa_action_outcome=%s\nclassification=%s\n' "${COPA_OUTCOME}" "${classification}" >> copa-diagnostics.txt
+        [ "${COPA_OUTCOME}" = success ] || {
+          echo "FATAL: Copa action failed (${classification}); diagnostics retained"
+          exit 1
+        }
+        docker image inspect copa:candidate --format '{{.Id}}' > copa-candidate-image-id.txt

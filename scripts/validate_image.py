@@ -64,13 +64,6 @@ CURL_IMAGE = "curlimages/curl:v8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb
 PROFILES = ("http", "process", "oneshot")
 POLL_INTERVAL_SECONDS = 2
 LOGS_DIRNAME = "validation-logs"
-# Pitfall 6: a oneshot container exits under --rm before any incremental
-# docker logs capture can run — record the honest absence in the evidence
-# instead of pretending a log artifact exists.
-ONESHOT_LOG_NOTE = (
-    "no incremental log capture: the oneshot container exits under --rm "
-    "before docker logs can run; container output streams in the job log"
-)
 SHA256_DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
 
 
@@ -273,13 +266,21 @@ def sleep_until(deadline: float) -> None:
         time.sleep(min(POLL_INTERVAL_SECONDS, remaining))
 
 
+def health_result(status: object) -> tuple[str | None, int, str | None]:
+    if status == "healthy":
+        return "healthy", 0, None
+    if status in ("unhealthy", "gone"):
+        return status, 1 if status == "unhealthy" else 2, f"health gate failed: status '{status}' (D-10)"
+    return None, 0, None
+
+
 def wait_for_healthy(
     container_name: str,
     healthcheck_defined: bool,
     deadline: float,
     logs_path: Path,
     health: dict,
-) -> str | None:
+) -> tuple[str | None, int]:
     """D-10 gate, shared by both long-running profiles.
 
     Polls .State.Health.Status on the named container only when the image
@@ -292,23 +293,21 @@ def wait_for_healthy(
     """
     if not healthcheck_defined:
         health["final_status"] = "none-defined"
-        return None
+        return None, 0
     while True:
         append_logs(logs_path, container_name)
         ok, out = docker("inspect", container_name)
         status = inspect_value(out, ("State", "Health", "Status")) if ok else "gone"
-        if status == "healthy":
-            health["final_status"] = "healthy"
-            return None
-        if status in ("unhealthy", "gone"):
-            health["final_status"] = status
-            return f"health gate failed: status '{status}' (D-10)"
+        final_status, code, reason = health_result(status)
+        if final_status is not None:
+            health["final_status"] = final_status
+            return reason, code
         if time.monotonic() >= deadline:
             health["final_status"] = status if isinstance(status, str) else "unknown"
             return (
                 f"health gate failed: stuck in '{status}' at the "
                 f"durationSeconds deadline (D-10)"
-            )
+            ), 1 if status == "starting" else 2
         sleep_until(deadline)
 
 
@@ -353,15 +352,15 @@ def probe_http(args, container_name, logs_path):
         )
         last_status = out.strip() if ok else "sidecar-error"
         if last_status == expect:
-            return None
+            return None, 0
         sleep_until(probe_deadline)
     append_logs(logs_path, container_name)
     if last_status != expect:
         return (
             f"http probe on {url} never returned {expect} within "
             f"{args.timeout_seconds}s (D-11); last status: {last_status}"
-        )
-    return None
+        ), 1 if last_status.isdigit() and int(last_status) >= 100 else 2
+    return None, 0
 
 
 def profile_longrunning(
@@ -374,7 +373,7 @@ def profile_longrunning(
     started_mono: float,
     logs_path: Path,
     health: dict,
-) -> str | None:
+) -> tuple[str | None, int]:
     """D-07/D-08/D-10/D-11 http and process profiles.
 
     Both run the candidate detached under --network none and share the
@@ -387,18 +386,18 @@ def profile_longrunning(
         *docker_run_args(True, container_name, ref_digest, command, env_map)
     )
     if not ok:
-        return f"candidate failed to start under --network none: {out}"
+        return f"candidate failed to start under --network none: {out}", 2
     try:
         if args.validation_type == "http":
-            reason = probe_http(args, container_name, logs_path)
+            reason, status = probe_http(args, container_name, logs_path)
             if reason is not None:
-                return reason
+                return reason, status
         deadline = started_mono + args.duration_seconds
-        reason = wait_for_healthy(
+        reason, status = wait_for_healthy(
             container_name, healthcheck_defined, deadline, logs_path, health
         )
         if reason is not None:
-            return reason
+            return reason, status
         remaining = deadline - time.monotonic()
         if remaining > 0:
             time.sleep(remaining)
@@ -406,8 +405,8 @@ def profile_longrunning(
         ok, out = docker("inspect", container_name)
         running = inspect_value(out, ("State", "Running")) if ok else None
         if running is not True:
-            return "container not running when durationSeconds elapsed (D-11)"
-        return None
+            return "container not running when durationSeconds elapsed (D-11)", 1 if running is False else 2
+        return None, 0
     finally:
         docker("rm", "-f", container_name)
 
@@ -418,7 +417,8 @@ def profile_oneshot(
     ref_digest: str,
     command: list[str],
     env_map: dict[str, str],
-) -> str | None:
+    logs_path: Path,
+) -> tuple[str | None, int]:
     """D-08/D-11 oneshot profile. None on pass, FATAL reason on failure.
 
     Runs blocking under the coreutils timeout wrapper (D-08 runaway
@@ -436,10 +436,14 @@ def profile_oneshot(
         )
     finally:
         docker("rm", "-f", container_name)
+    logs_path.parent.mkdir(parents=True, exist_ok=True)
+    logs_path.write_text(proc.stdout + proc.stderr, encoding="utf-8")
     actual = proc.returncode
+    if not 0 <= actual < 124:
+        return f"oneshot execution failed with status {actual}", 2
     if actual != args.expected_exit:
-        return f"oneshot exit code {actual} != expectedExit {args.expected_exit} (D-11)"
-    return None
+        return f"oneshot exit code {actual} != expectedExit {args.expected_exit} (D-11)", 1
+    return None, 0
 
 
 def runtime_inputs(args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
@@ -628,9 +632,8 @@ def validation_profile_reason(
     logs_path,
 ):
     if args.validation_type == "oneshot":
-        ev["validation"]["logs_note"] = ONESHOT_LOG_NOTE
         ev["validation"]["health"]["final_status"] = "not-applicable"
-        return profile_oneshot(args, container_name, ref_digest, command, env_map)
+        return profile_oneshot(args, container_name, ref_digest, command, env_map, logs_path)
     return profile_longrunning(
         args,
         container_name,
@@ -671,7 +674,7 @@ def main() -> int:
         evidence_out.write_text(json.dumps(ev, indent=2) + "\n", encoding="utf-8")
         print(evidence_out)
 
-    def fail(reason: str, code: int = 1) -> int:
+    def fail(reason: str, code: int = 2) -> int:
         ev["validation"]["result"] = "fail"
         finish()
         print(f"FATAL: {reason}")
@@ -711,7 +714,7 @@ def main() -> int:
 
     healthcheck_defined = record_baseline_contract(ev, config, inspected)
     container_name = f"val-{args.app}-{os.environ.get('GITHUB_RUN_ID') or os.getpid()}"
-    reason = validation_profile_reason(
+    reason, status = validation_profile_reason(
         args,
         ev,
         ref_digest,
@@ -723,10 +726,14 @@ def main() -> int:
         logs_path,
     )
     if reason is not None:
-        return fail(reason)
+        return fail(reason, status)
     finish()
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"FATAL: validation execution failed: {exc}")
+        sys.exit(2)

@@ -1,0 +1,25 @@
+name: decide-remediation
+description: Decide producer remediation need
+inputs:
+  remediation_enabled:
+    description: Workflow input.
+    required: false
+outputs:
+  force_repromote:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.force_repromote }}
+  proceed:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.proceed }}
+  requested_remediation:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.requested_remediation }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        REMEDIATION_ENABLED: ${{ inputs.remediation_enabled }}
+      run: |
+        python3 scripts/rescan_published.py decide

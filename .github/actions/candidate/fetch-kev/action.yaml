@@ -1,0 +1,13 @@
+name: fetch-kev
+description: Fetch CISA KEV catalog
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        KEV_URL="https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+        KEV_FETCHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        curl --fail --location --silent --show-error --max-time 30 "${KEV_URL}" > kev.json
+        printf '%s\n' "${KEV_FETCHED_AT}" > kev-fetched-at.txt

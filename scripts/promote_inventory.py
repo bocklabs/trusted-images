@@ -2,10 +2,12 @@
 
 import json
 import sys
+
 import yaml
 
 stage, path = sys.argv[1:3]
-spec = yaml.safe_load(open(path))["spec"]
+with open(path, encoding="utf-8") as stream:
+    spec = yaml.safe_load(stream)["spec"]
 if stage == "policy":
     policy = {"patchPolicy": spec["patchPolicy"]}
     if spec["patchPolicy"] == "disabled":

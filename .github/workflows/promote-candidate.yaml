@@ -35,6 +35,10 @@ on:
     outputs:
       publication_required:
         value: ${{ jobs.validate.outputs.publication_required }}
+      candidate_run_attempt:
+        value: ${{ jobs.validate.outputs.candidate_run_attempt }}
+      candidate_artifact_id:
+        value: ${{ jobs.validate.outputs.candidate_artifact_id }}
       candidate_manifest_sha256:
         value: ${{ jobs.validate.outputs.candidate_manifest_sha256 }}
       db_digest:
@@ -70,6 +74,8 @@ jobs:
       issues: read
     outputs:
       publication_required: ${{ steps.publication.outputs.publication_required }}
+      candidate_run_attempt: ${{ steps.candidate.outputs.run_attempt }}
+      candidate_artifact_id: ${{ steps.upload_candidate.outputs.artifact-id }}
       candidate_manifest_sha256: ${{ steps.candidate.outputs.manifest_sha256 }}
       db_digest: ${{ steps.dbmeta1.outputs.db_digest }}
       db_updated: ${{ steps.dbmeta1.outputs.db_updated }}
@@ -85,151 +91,26 @@ jobs:
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      - name: Acquire pinned Skopeo helper
+        uses: ./.github/actions/pull-image
         with:
-          enable-cache: true
+          image: ${{ env.SKOPEO_IMAGE }}
 
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version-file: .python-version
-
-      - name: Sync Python dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          uv sync --locked
-          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: Set up Python environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Resolve inventory entry and validation params
         id: entry
-        shell: bash
-        env:
-          APP: ${{ inputs.app }}
-          REQUESTED_REMEDIATION: ${{ inputs.requested_remediation }}
-          FORCE_REPROMOTE: ${{ inputs.force_repromote }}
-          RECOVER_TAG: ${{ inputs.recover_tag }}
-          RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
-          ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          if [ -n "${REQUESTED_REMEDIATION}" ]; then
-            [ "${FORCE_REPROMOTE}" = true ] && [ -z "${RECOVER_TAG}${RECOVERY_RUN_ID}${ACCEPTED_CANDIDATE_RUN_ID}" ] || { echo "FATAL: requested remediation requires fresh allocation"; exit 1; }
-            PYTHONPATH=scripts python3 -c 'import json, os; from evaluate_promotion import requested_remediation; requested_remediation(json.loads(os.environ["REQUESTED_REMEDIATION"]), os.environ["APP"])'
-          fi
-          if [ -z "${APP}" ] || [[ "${APP}" == */* ]] || [[ "${APP}" == *..* ]]; then
-            echo "FATAL: app not in inventory: ${APP}"
-            exit 1
-          fi
-          if [ -z "${RECOVER_TAG}" ] && ! ls inventory/ | grep -qFx -- "${APP}"; then
-            echo "FATAL: app not in inventory: ${APP}"
-            exit 1
-          fi
-          if [ "${FORCE_REPROMOTE}" = "true" ] && [ -n "${RECOVER_TAG}" ]; then
-            echo "FATAL: force_repromote and recover_tag cannot be combined"
-            exit 1
-          fi
-          if [ "${FORCE_REPROMOTE}" = "true" ] && [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
-            echo "FATAL: force_repromote and accepted_candidate_run_id cannot be combined"
-            exit 1
-          fi
-          if [ -n "${RECOVER_TAG}" ] && [ -n "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
-            echo "FATAL: recover inputs and accepted_candidate_run_id cannot be combined"
-            exit 1
-          fi
-          [[ -z "${ACCEPTED_CANDIDATE_RUN_ID}" || "${ACCEPTED_CANDIDATE_RUN_ID}" =~ ^[1-9][0-9]*$ ]] || {
-            echo "FATAL: accepted_candidate_run_id must be numeric"
-            exit 1
-          }
-          if [ -n "${RECOVERY_RUN_ID}" ] && [ -z "${RECOVER_TAG}" ]; then
-            echo "FATAL: recovery_run_id requires recover_tag"
-            exit 1
-          fi
-
-          mkdir -p validation-context
-          if [ -n "${RECOVER_TAG}" ]; then
-            PROVENANCE="validation-context/recovery-provenance.json"
-            git fetch origin main
-            python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${RECOVER_TAG}" > "${PROVENANCE}"
-            jq -e --arg app "${APP}" --arg tag "${RECOVER_TAG}" '
-              .schema == "trusted-images.bocklabs.dev/provenance-v1" and
-              .app == $app and .internal.tag == $tag and
-              .internal.platforms == ["linux/amd64"] and
-              (.upstream.index_digest | type == "string") and
-              (.upstream.selected_child_digest | type == "string") and
-              (.internal.digest | type == "string")
-            ' "${PROVENANCE}" > /dev/null || {
-              echo "FATAL: recovery provenance is not a Phase 05 single-platform record"
-              exit 1
-            }
-            RECORDED_URL="$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${PROVENANCE}")"
-            ORIGINAL_RUN_ID="${RECORDED_URL##*/}"
-            if [ -n "${RECOVERY_RUN_ID}" ] && [ "${RECOVERY_RUN_ID}" != "${ORIGINAL_RUN_ID}" ]; then
-              echo "FATAL: recovery_run_id does not match the existing provenance record"
-              exit 1
-            fi
-            gh api "repos/${REPO}/actions/runs/${ORIGINAL_RUN_ID}" > validation-context/original-run.json
-            jq -e --arg repo "${REPO}" '
-              .repository.full_name == $repo and
-              .path == ".github/workflows/promote.yaml" and
-              .event == "workflow_dispatch" and
-              (.head_sha | test("^[a-f0-9]{40}$"))
-            ' validation-context/original-run.json > /dev/null || {
-              echo "FATAL: recovery run does not belong to this repository's promote workflow"
-              exit 1
-            }
-            gh api --paginate "repos/${REPO}/actions/runs/${ORIGINAL_RUN_ID}/artifacts" \
-              --jq '.artifacts[] | select(.expired == false) | .name' \
-              > validation-context/original-artifacts.txt
-            for ARTIFACT in validation-evidence trivy-full-report trivy-copa-report candidate; do
-              grep -qFx "${ARTIFACT}" validation-context/original-artifacts.txt || {
-                echo "FATAL: original run is missing required artifact ${ARTIFACT}"
-                exit 1
-              }
-            done
-            mkdir -p "${RUNNER_TEMP}/original-validation" "${RUNNER_TEMP}/original-report"
-            gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
-              --name validation-evidence --dir "${RUNNER_TEMP}/original-validation"
-            gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
-              --name trivy-full-report --dir "${RUNNER_TEMP}/original-report"
-            rm -rf recovery-candidate
-            gh run download "${ORIGINAL_RUN_ID}" --repo "${REPO}" \
-              --name candidate --dir recovery-candidate
-          python3 scripts/promote_recovery_candidate.py "${PROVENANCE}" recovery-candidate
-            cp recovery-candidate/candidate-manifest.json candidate-manifest.json
-            rm -rf candidate-oci
-            cp -a recovery-candidate/candidate-oci candidate-oci
-            jq -e --arg app "${APP}" \
-              '.app == $app and .validation.result == "pass"' \
-              "${RUNNER_TEMP}/original-validation/validation-evidence.json" > /dev/null || {
-              echo "FATAL: original validation artifact is not bound to this app and a passing validation"
-              exit 1
-            }
-            ORIGINAL_SOURCE_SHA="$(jq -r '.head_sha' validation-context/original-run.json)"
-            ORIGINAL_RUN_URL="$(jq -r '.html_url' validation-context/original-run.json)"
-            gh api -H "Accept: application/vnd.github.raw+json" \
-              "repos/${REPO}/contents/inventory/${APP}/image.yaml?ref=${ORIGINAL_SOURCE_SHA}" \
-              > validation-context/image.yaml
-            python3 scripts/promote_recovery_report_binding.py validation-context/image.yaml "${RUNNER_TEMP}/original-report/secobserve-upload.json" "${APP}"
-            jq -n \
-              --arg original_run_url "${ORIGINAL_RUN_URL}" \
-              --arg original_source_sha "${ORIGINAL_SOURCE_SHA}" \
-              --arg recovered_tag "${RECOVER_TAG}" \
-              --arg recovered_digest "$(jq -er .internal.digest "${PROVENANCE}")" \
-              '{mode:"recovery", original_run_url:$original_run_url, original_source_sha:$original_source_sha, recovered_tag:$recovered_tag, recovered_digest:$recovered_digest}' \
-              > validation-context/context.json
-          else
-            cp "inventory/${APP}/image.yaml" validation-context/image.yaml
-            jq -n '{mode:"normal"}' > validation-context/context.json
-          fi
-
-          OUT="$(python3 scripts/promote_inventory.py recovery validation-context/image.yaml "${APP}" "${RECOVER_TAG}")"
-          python3 scripts/promote_inventory.py policy validation-context/image.yaml > validation-context/patch-policy.json
-          echo "${OUT}"
-          echo "${OUT}" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/candidate/resolve-entry
+        with:
+          app: ${{ inputs.app }}
+          requested_remediation: ${{ inputs.requested_remediation }}
+          force_repromote: ${{ inputs.force_repromote }}
+          recover_tag: ${{ inputs.recover_tag }}
+          recovery_run_id: ${{ inputs.recovery_run_id }}
+          accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}
+          gh_token: ${{ github.token }}
+          repo: ${{ github.repository }}
 
       - name: Upload validation context
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -242,296 +123,70 @@ jobs:
       - name: Restore the exact accepted candidate
         id: resume
         if: inputs.accepted_candidate_run_id != ''
-        shell: bash
-        env:
-          ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          APP: ${{ steps.entry.outputs.app }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          rm -rf resume-download candidate-oci resume-run.json resume-branch.json resume-artifacts.jsonl
-          gh api "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}" > resume-run.json
-          gh api "repos/${REPO}/branches/main" > resume-branch.json
-          jq -e --arg repo "${REPO}" --arg run_id "${ACCEPTED_CANDIDATE_RUN_ID}" '
-            .id == ($run_id | tonumber) and .repository.full_name == $repo and
-            .path == ".github/workflows/promote.yaml" and .event == "workflow_dispatch" and
-            .head_branch == "main" and (.head_sha | test("^[a-f0-9]{40}$")) and
-            (.run_attempt | type == "number" and . > 0) and .status == "completed"
-          ' resume-run.json > /dev/null || {
-            echo "FATAL: accepted candidate is the wrong run or was not dispatched from protected main"
-            exit 1
-          }
-          jq -e '.name == "main" and .protected == true' resume-branch.json > /dev/null || {
-            echo "FATAL: repository main is not protected"
-            exit 1
-          }
-          gh api --paginate "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}/artifacts?per_page=100" \
-            --jq '.artifacts[] | select(.name == "candidate")' > resume-artifacts.jsonl
-          ARTIFACT_ID="$(python3 scripts/promote_resume_artifact_id.py "${ACCEPTED_CANDIDATE_RUN_ID}")"
-          printf '%s\n' "${ARTIFACT_ID}" > resume-artifact-id.txt
-          gh run download "${ACCEPTED_CANDIDATE_RUN_ID}" --repo "${REPO}" \
-            --name candidate --dir resume-download
-          python3 scripts/promote_resume_candidate.py "${ACCEPTED_CANDIDATE_RUN_ID}" "${ARTIFACT_ID}"
+        uses: ./.github/actions/candidate/restore-accepted
+        with:
+          accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}
+          gh_token: ${{ github.token }}
+          repo: ${{ github.repository }}
+          app: ${{ steps.entry.outputs.app }}
+          github_repository: ${{ github.repository }}
 
       - name: Materialize preserved candidate for fresh checks
         id: resume_materialize
         if: inputs.accepted_candidate_run_id != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          SKOPEO="quay.io/skopeo/stable:v1.22.2@sha256:545723edab7793112a5c8fc36963f5cad43c6f27c0bda63f5bc8b5d4d336036"
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-            copy --preserve-digests \
-            oci:/workspace/candidate-oci:candidate \
-            docker-archive:/workspace/resume-final.tar:resume:candidate
-          docker load --input resume-final.tar
-          RESUME_IMAGE_ID="$(docker image inspect resume:candidate --format '{{.Id}}')"
-          printf '%s\n' "${RESUME_IMAGE_ID}" > resume-candidate-image-id.txt
-          echo "image_id=${RESUME_IMAGE_ID}" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/candidate/materialize-resume
 
       - name: Fetch upstream index
         id: index
-        shell: bash
-        env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          SKOPEO="${SKOPEO_IMAGE}"
-          CREDS=()
-          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-          CREDS=(--creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
-          fi
-          docker run --rm --user "$(id -u):$(id -g)" "$SKOPEO" \
-            inspect --raw ${CREDS[@]+"${CREDS[@]}"} \
-            "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
-          jq -e '
-            if .mediaType == "application/vnd.oci.image.index.v1+json"
-               or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"
-            then (.manifests | type == "array" and length > 0)
-            else (.mediaType == "application/vnd.oci.image.manifest.v1+json"
-                  or .mediaType == "application/vnd.docker.distribution.manifest.v2+json")
-                 and (has("manifests") | not)
-                 and (.config.digest | type == "string")
-                 and (.layers | type == "array")
-            end' upstream-index.json > /dev/null \
-            || { echo "FATAL: upstream root is not a supported image manifest or nonempty index"; exit 1; }
-          echo "upstream index bytes: $(wc -c < upstream-index.json)"
+        uses: ./.github/actions/candidate/fetch-upstream-index
+        with:
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          upstream_digest: ${{ steps.entry.outputs.upstream_digest }}
+          dockerhub_username: ${{ vars.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          skopeo_image: ${{ env.SKOPEO_IMAGE }}
 
       - name: Resolve the exact linux/amd64 child
         id: child
-        shell: bash
-        env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          SELECTED_DIGEST="${UPSTREAM_INDEX_DIGEST}"
-          if jq -e '.mediaType == "application/vnd.oci.image.index.v1+json" or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"' upstream-index.json > /dev/null; then
-            SELECTED_DIGEST="$(jq -er '
-              [.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64")]
-              | if length == 1 and (.[0].platform.variant == null or .[0].platform.variant == "")
-                then .[0].digest
-                else error("upstream index must contain exactly one linux/amd64 child without a variant")
-                end' upstream-index.json)"
-          fi
-          SKOPEO="${SKOPEO_IMAGE}"
-          CREDS=()
-          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
-          fi
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-            copy --preserve-digests --remove-signatures ${CREDS[@]+"${CREDS[@]}"} \
-            "docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" "oci:/workspace/upstream-oci:child"
-          cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json
-          CONFIG_DIGEST="$(jq -er .config.digest child-manifest.json)"
-          cp "upstream-oci/blobs/sha256/${CONFIG_DIGEST#sha256:}" child-config.json
-          SELECTED_DIGEST="$(python3 scripts/evaluate_promotion.py --resolve-only \
-            --index upstream-index.json \
-            --upstream-index-digest "${UPSTREAM_INDEX_DIGEST}" \
-            --child-manifest child-manifest.json \
-            --child-config child-config.json \
-            --selected-digest-out selected-child.txt)"
-          echo "digest=${SELECTED_DIGEST}" >> "$GITHUB_OUTPUT"
-          echo "selected linux/amd64 child: ${SELECTED_DIGEST}"
+        uses: ./.github/actions/candidate/resolve-child
+        with:
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          upstream_index_digest: ${{ steps.entry.outputs.upstream_digest }}
+          dockerhub_username: ${{ vars.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          skopeo_image: ${{ env.SKOPEO_IMAGE }}
 
       - name: Compute internal tag and detect skip
         id: tag
         if: inputs.accepted_candidate_run_id == ''
-        shell: bash
-        env:
-          APP: ${{ steps.entry.outputs.app }}
-          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
-          UPSTREAM_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          SELECTED_CHILD_DIGEST: ${{ steps.child.outputs.digest }}
-          FORCE_REPROMOTE: ${{ inputs.force_repromote }}
-          RECOVER_TAG: ${{ inputs.recover_tag }}
-        run: |
-          set -euo pipefail
-          set +e
-          TOKEN_STATUS="$(curl --fail-with-body -sS \
-            -o registry-token.json -w '%{http_code}' \
-            "https://ghcr.io/token?scope=repository:bocklabs/${APP}:pull")"
-          CURL_STATUS=$?
-          set -e
-          TOKEN=""
-          if [ "${CURL_STATUS}" -eq 0 ]; then
-            TOKEN="$(jq -er .token registry-token.json)"
-          elif [ "${TOKEN_STATUS}" = "403" ] && \
-            jq -e '(.errors // []) | any(.code == "DENIED")' registry-token.json > /dev/null; then
-            echo "GHCR package is not created yet; using anonymous tag discovery"
-          else
-            echo "FATAL: GHCR token request failed (${TOKEN_STATUS:-network error})"
-            exit 1
-          fi
-          AUTH=()
-          if [ -n "${TOKEN}" ]; then
-            AUTH=(-H "Authorization: Bearer ${TOKEN}")
-          fi
-          INDEX_ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
-          : > registry-tags.txt
-          : > registry-pages.txt
-          URL="https://ghcr.io/v2/bocklabs/${APP}/tags/list?n=100"
-          if [ -z "${TOKEN}" ]; then
-            URL=""
-          fi
-          FIRST_PAGE=true
-          while [ -n "${URL}" ]; do
-            grep -qFx "${URL}" registry-pages.txt && {
-              echo "FATAL: registry pagination cycle detected"
-              exit 1
-            }
-            printf '%s\n' "${URL}" >> registry-pages.txt
-            set +e
-            STATUS="$(curl --fail-with-body -sS \
-              ${AUTH[@]+"${AUTH[@]}"} \
-              -D registry-page.headers -o registry-page.json -w '%{http_code}' "${URL}")"
-            CURL_STATUS=$?
-            set -e
-            if [ "${CURL_STATUS}" -ne 0 ]; then
-              if [ "${FIRST_PAGE}" = true ] && [ "${STATUS}" = 404 ]; then
-                break
-              fi
-              echo "FATAL: registry tag listing failed (${STATUS:-network error})"
-              exit 1
-            fi
-            [ "${STATUS}" = 200 ] || { echo "FATAL: unexpected tag listing status ${STATUS}"; exit 1; }
-            jq -e 'type == "object" and ((.tags // []) | type == "array" and all(type == "string"))' \
-              registry-page.json > /dev/null || { echo "FATAL: malformed registry tag page"; exit 1; }
-          jq -r '.tags // [] | .[]' registry-page.json >> registry-tags.txt
-          URL="$(python3 scripts/promote_registry_next_link.py)"
-          if [ -n "${URL}" ] && [[ "${URL}" != "https://ghcr.io/v2/bocklabs/${APP}/tags/list?"* ]]; then
-              echo "FATAL: registry pagination left the expected package URL"
-              exit 1
-            fi
-            FIRST_PAGE=false
-          done
-
-          python3 scripts/promote_registry_candidates.py "${UPSTREAM_TAG}" registry-tags.txt > registry-candidates.txt
-          : > registry-observations.tsv
-          while IFS= read -r CAND; do
-            [ -n "${CAND}" ] || continue
-            set +e
-            STATUS="$(curl --fail-with-body -sS -I \
-              ${AUTH[@]+"${AUTH[@]}"} -H "Accept: ${INDEX_ACCEPT}" \
-              -D registry-head.headers -o /dev/null -w '%{http_code}' \
-              "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CAND}")"
-            CURL_STATUS=$?
-            set -e
-            [ "${CURL_STATUS}" -eq 0 ] && [ "${STATUS}" = 200 ] || {
-              echo "FATAL: registry manifest HEAD failed for observed tag ${CAND} (${STATUS:-network error})"
-              exit 1
-            }
-            CAND_DIGEST="$(tr -d '\r' < registry-head.headers \
-              | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
-            [[ "${CAND_DIGEST}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
-              echo "FATAL: observed tag ${CAND} has no valid digest HEAD"
-              exit 1
-            }
-            printf '%s\t%s\n' "${CAND}" "${CAND_DIGEST}" >> registry-observations.tsv
-          done < registry-candidates.txt
-          python3 scripts/promote_registry_observations.py "${APP}" > registry-observations.json
-
-          ARGS=(
-            --upstream-tag "${UPSTREAM_TAG}"
-            --upstream-digest "${UPSTREAM_DIGEST}"
-            --selected-child-digest "${SELECTED_CHILD_DIGEST}"
-            --observations registry-observations.json
-          )
-          [ "${FORCE_REPROMOTE}" = "true" ] && ARGS+=(--force-repromote)
-          if [ -n "${RECOVER_TAG}" ]; then
-            ARGS+=(
-              --recover-tag "${RECOVER_TAG}"
-              --recover-candidate-digest "$(jq -er .recovered_digest validation-context/context.json)"
-            )
-          fi
-          RESULT="$(python3 scripts/resolve_internal_tag.py "${ARGS[@]}")"
-          INTERNAL_TAG="$(jq -er .internal_tag <<<"${RESULT}")"
-          SKIP_COPY="$(jq -er '.skip_copy | tostring' <<<"${RESULT}")"
-          {
-            echo "skip_copy=${SKIP_COPY}"
-            echo "internal_tag=${INTERNAL_TAG}"
-            echo "higher_upstream=$(jq -r .supersedes.higher_upstream <<<"${RESULT}")"
-            echo "original_child_selected=$(jq -r .supersedes.original_child_selected <<<"${RESULT}")"
-            if [ "${SKIP_COPY}" = true ] && [ -z "${RECOVER_TAG}" ]; then
-              REUSE_RECORD="reuse-provenance.json"
-              git fetch origin main
-              python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > "${REUSE_RECORD}"
-              echo "reuse_candidate_digest=$(jq -er .internal.digest "${REUSE_RECORD}")"
-              echo "reuse_run_url=$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${REUSE_RECORD}")"
-            fi
-          } >> "$GITHUB_OUTPUT"
-          echo "skip_copy:    ${SKIP_COPY}"
-          echo "internal_tag: ${INTERNAL_TAG}"
+        uses: ./.github/actions/candidate/compute-tag
+        with:
+          app: ${{ steps.entry.outputs.app }}
+          upstream_tag: ${{ steps.entry.outputs.upstream_tag }}
+          upstream_digest: ${{ steps.entry.outputs.upstream_digest }}
+          selected_child_digest: ${{ steps.child.outputs.digest }}
+          force_repromote: ${{ inputs.force_repromote }}
+          recover_tag: ${{ inputs.recover_tag }}
 
       - name: Restore the exact reused candidate
         id: reuse
         if: steps.tag.outputs.skip_copy == 'true' && inputs.accepted_candidate_run_id == '' && inputs.recover_tag == ''
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          APP: ${{ steps.entry.outputs.app }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
-          REUSE_CANDIDATE_DIGEST: ${{ steps.tag.outputs.reuse_candidate_digest }}
-          REUSE_RUN_URL: ${{ steps.tag.outputs.reuse_run_url }}
-        run: |
-          set -euo pipefail
-          REUSE_RUN_ID="${REUSE_RUN_URL##*/}"
-          [[ "${REUSE_RUN_ID}" =~ ^[1-9][0-9]*$ ]] || { echo "FATAL: reused provenance has no run ID"; exit 1; }
-          gh api "repos/${REPO}/actions/runs/${REUSE_RUN_ID}" > reuse-run.json
-          jq -e --arg repo "${REPO}" '.repository.full_name == $repo and .path == ".github/workflows/promote.yaml"' reuse-run.json > /dev/null
-          rm -rf reused-candidate
-          gh run download "${REUSE_RUN_ID}" --repo "${REPO}" --name candidate --dir reused-candidate
-          python3 scripts/promote_reused_candidate.py "${REUSE_CANDIDATE_DIGEST}" reused-candidate
-          cp reused-candidate/candidate-manifest.json candidate-manifest.json
-          cp reused-candidate/candidate-decision.json original-candidate-decision.json
-          rm -rf candidate-oci
-          cp -a reused-candidate/candidate-oci candidate-oci
-          echo "candidate_digest=${REUSE_CANDIDATE_DIGEST}" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/candidate/restore-reused
+        with:
+          gh_token: ${{ github.token }}
+          repo: ${{ github.repository }}
+          app: ${{ steps.entry.outputs.app }}
+          internal_tag: ${{ steps.tag.outputs.internal_tag }}
+          reuse_candidate_digest: ${{ steps.tag.outputs.reuse_candidate_digest }}
+          reuse_run_url: ${{ steps.tag.outputs.reuse_run_url }}
 
       - name: Resolve source registry credentials
         id: creds
-        shell: bash
-        env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            echo "user=${DOCKERHUB_USERNAME}" >> "$GITHUB_OUTPUT"
-            echo "pass=${DOCKERHUB_TOKEN}" >> "$GITHUB_OUTPUT"
-          else
-            echo "user=" >> "$GITHUB_OUTPUT"
-            echo "pass=" >> "$GITHUB_OUTPUT"
-          fi
+        uses: ./.github/actions/candidate/registry-credentials
+        with:
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          dockerhub_username: ${{ vars.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Trivy full scan
         id: scanbefore
@@ -557,32 +212,9 @@ jobs:
 
       - name: Capture Trivy DB metadata
         id: dbmeta1
-        shell: bash
-        env:
-          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy # same cache dir trivy-action scanned with
-        run: |
-          set -euo pipefail
-          trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-1.txt
-          # vuln-only scans download no check bundle: trivy v0.74 prints no digest
-          # line and db/metadata.json has none, so resolve the DB artifact's
-          # manifest digest (the repo trivy's own log names) via anonymous HEAD.
-          TOKEN="$(curl -fsSL "https://mirror.gcr.io/v2/token?scope=repository:aquasec/trivy-db:pull&service=mirror.gcr.io" | jq -r '.token // .access_token')"
-          DB_DIGEST="$(curl -fsSI -H "Authorization: Bearer ${TOKEN}" \
-            -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json' \
-            "https://mirror.gcr.io/v2/aquasec/trivy-db/manifests/2" | tr -d '\r' | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
-          DB_UPDATED="$(grep -i 'UpdatedAt:' trivy-db-meta-1.txt | head -1 | sed 's/.*UpdatedAt:[[:space:]]*//')" || true
-          case "$DB_DIGEST" in
-            sha256:????????????????????????????????????????????????????????????????) ;;
-            *) echo "FATAL: no usable Trivy DB digest (got '${DB_DIGEST:-<empty>}')"; cat trivy-db-meta-1.txt; exit 1 ;;
-          esac
-          if [ -z "$DB_UPDATED" ]; then
-            echo "FATAL: trivy --version (cache dir $TRIVY_CACHE_DIR) carries no DB metadata (DB not downloaded where expected?)"
-            cat trivy-db-meta-1.txt
-            exit 1
-          fi
-          echo "db_digest=${DB_DIGEST}" >> "$GITHUB_OUTPUT"
-          echo "db_updated=${DB_UPDATED}" >> "$GITHUB_OUTPUT"
-          cat trivy-db-meta-1.txt
+        uses: ./.github/actions/candidate/capture-trivy-db
+        with:
+          trivy_cache_dir: ${{ github.workspace }}/.cache/trivy
 
       - name: Trivy Copa-shaped scan (fixable OS only)
         id: scanfixable
@@ -597,6 +229,7 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: 'true' # no action input exists — env pass-through; reuse scan 1's DB
         with:
           version: v0.76.1
+          skip-setup-trivy: 'true'
           image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
           format: json
@@ -609,177 +242,62 @@ jobs:
 
       - name: Assert single DB across scans
         id: dbassert
-        shell: bash
-        env:
-          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
-        run: |
-          set -euo pipefail
-          trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-2.txt
-          if ! diff -u trivy-db-meta-1.txt trivy-db-meta-2.txt; then
-            echo "FATAL: Trivy DB changed between scans (SCAN-03)"
-            exit 1
-          fi
+        uses: ./.github/actions/candidate/assert-trivy-db
+        with:
+          trivy_cache_dir: ${{ github.workspace }}/.cache/trivy
 
       - name: Preserve and gate the pre-patch reports
         id: fixable
-        shell: bash
-        env:
-          FULL_SCAN_OUTCOME: ${{ steps.scanbefore.outcome }}
-          FIXABLE_SCAN_OUTCOME: ${{ steps.scanfixable.outcome }}
-        run: |
-          set -euo pipefail
-          test -s trivy-full.json
-          test -s trivy-copa.json
-          cp trivy-full.json trivy-before-full.json
-          [ "${FULL_SCAN_OUTCOME}" = success ] && [ "${FIXABLE_SCAN_OUTCOME}" = success ] || {
-            echo "FATAL: pre-patch Trivy scan failed; reports retained"
-            exit 1
-          }
-          jq -e '.Metadata.OS.EOSL != true' trivy-full.json > /dev/null || {
-            echo "FATAL: Metadata.OS.EOSL blocked the pre-patch candidate"
-            exit 1
-          }
-          COUNT="$(jq '[((.Results // [])[] | .Vulnerabilities[]?)] | length' trivy-copa.json)"
-          echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
-          echo "fixable OS findings: ${COUNT}"
+        uses: ./.github/actions/candidate/gate-pre-patch-reports
+        with:
+          full_scan_outcome: ${{ steps.scanbefore.outcome }}
+          fixable_scan_outcome: ${{ steps.scanfixable.outcome }}
 
       - name: Materialize the exact recovered candidate
         id: recovery
         if: inputs.recover_tag != '' || steps.reuse.outputs.candidate_digest != ''
-        shell: bash
-        env:
-          RECOVERED_DIGEST: ${{ steps.reuse.outputs.candidate_digest }}
-        run: |
-          set -euo pipefail
-          SKOPEO="${SKOPEO_IMAGE}"
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-            copy --preserve-digests \
-            oci:/workspace/candidate-oci:candidate \
-            docker-archive:/workspace/resume-final.tar:recovered:candidate
-          docker load --input resume-final.tar
-          RECOVERY_IMAGE_ID="$(docker image inspect recovered:candidate --format '{{.Id}}')"
-          echo "image_id=${RECOVERY_IMAGE_ID}" >> "$GITHUB_OUTPUT"
-          RECOVERED_DIGEST="${RECOVERED_DIGEST:-$(jq -er .recovered_digest validation-context/context.json)}"
-          [ "$(sha256sum candidate-manifest.json | awk '{print $1}')" = "${RECOVERED_DIGEST#sha256:}" ]
-          echo "candidate_digest=${RECOVERED_DIGEST}" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/candidate/materialize-recovery
+        with:
+          recovered_digest: ${{ steps.reuse.outputs.candidate_digest }}
+          skopeo_image: ${{ env.SKOPEO_IMAGE }}
 
       - name: Pull exact candidate child
         if: inputs.accepted_candidate_run_id == ''
-        shell: bash
-        env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            echo "${DOCKERHUB_TOKEN}" | docker login docker.io --username "${DOCKERHUB_USERNAME}" --password-stdin
-          fi
-          docker pull "${UPSTREAM_REF}@${SELECTED_DIGEST}"
+        uses: ./.github/actions/candidate/pull-child
+        with:
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          selected_digest: ${{ steps.child.outputs.digest }}
+          dockerhub_username: ${{ vars.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Allocate the immutable patched revision before metadata
         id: patchtag
         if: inputs.accepted_candidate_run_id == '' && inputs.recover_tag == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
-        shell: bash
-        env:
-          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
-          UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
-          RECOVER_TAG: ${{ inputs.recover_tag }}
-        run: |
-          set -euo pipefail
-          [ -z "${RECOVER_TAG}" ] || { echo "FATAL: original-child patching cannot recover an immutable published revision"; exit 1; }
-          RESULT="$(python3 scripts/resolve_internal_tag.py \
-            --upstream-tag "${UPSTREAM_TAG}" \
-            --upstream-digest "${UPSTREAM_INDEX_DIGEST}" \
-            --selected-child-digest "${SELECTED_DIGEST}" \
-            --observations registry-observations.json --force-repromote)"
-          echo "internal_tag=$(jq -er .internal_tag <<<"${RESULT}")" >> "$GITHUB_OUTPUT"
-          echo "skip_copy=false" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/candidate/allocate-patched-tag
+        with:
+          upstream_tag: ${{ steps.entry.outputs.upstream_tag }}
+          upstream_index_digest: ${{ steps.entry.outputs.upstream_digest }}
+          selected_digest: ${{ steps.child.outputs.digest }}
+          recover_tag: ${{ inputs.recover_tag }}
 
       - name: Pin and verify the Copa action runtime
         id: copapin
         if: inputs.recover_tag == '' && inputs.accepted_candidate_run_id == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
-        shell: bash
-        run: |
-          set -euo pipefail
-          ACTION_SHA=7de81b0830c8a4d1edb4a63a77e65a6d7ef8dc95
-          curl --fail --silent --show-error "https://raw.githubusercontent.com/project-copacetic/copa-action/${ACTION_SHA}/action.yaml" > copa-action.yaml
-          curl --fail --silent --show-error "https://raw.githubusercontent.com/project-copacetic/copa-action/${ACTION_SHA}/entrypoint.sh" > copa-entrypoint.sh
-          printf '%s\n' \
-            'ac737a970f24c5929cd04e9d4813e3ecab458568c73e0e12de1430ecfc4bdc31  copa-action.yaml' \
-            'f8a240115438c09958b0e29784025a314fde8d7b77ef8cb1a06133412b33506d  copa-entrypoint.sh' | sha256sum -c
-          docker pull ghcr.io/project-copacetic/copa-action:v0.15.0@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b
-          docker image inspect ghcr.io/project-copacetic/copa-action@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b             --format '{{json .RepoDigests}}' | grep -F 'sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b'
-          docker tag ghcr.io/project-copacetic/copa-action@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b ghcr.io/project-copacetic/copa-action:v0.15.0
-          docker image inspect ghcr.io/project-copacetic/copa-action:v0.15.0 --format '{{.Id}}' > copa-action-image-id.txt
+        uses: ./.github/actions/candidate/pin-copa-runtime
 
       - name: Run pinned Copa from the original child
         id: copa
         if: inputs.recover_tag == '' && inputs.accepted_candidate_run_id == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
         continue-on-error: true
-        shell: bash
-        env:
-          ORIGINAL_CHILD: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
-        run: |
-          set -euo pipefail
-          docker run --net=host \
-            --mount="type=bind,source=${PWD},target=/data" \
-            --mount=type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-            --name=copa-action --entrypoint=/bin/sh \
-            ghcr.io/project-copacetic/copa-action:v0.15.0@sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b \
-            -ec '
-              copa --version > /data/copa-version-before.txt
-              grep -Eq "^copa version v?0\\.15\\.0$" /data/copa-version-before.txt
-              docker buildx create --name=copa-action
-              docker buildx use --default copa-action
-              set +e
-              copa patch --image "$1" --tag copa:candidate \
-                --addr buildx://copa-action --loader docker --timeout 30m
-              status=$?
-              set -e
-              copa --version > /data/copa-version-after.txt
-              cmp /data/copa-version-before.txt /data/copa-version-after.txt
-              exit "$status"
-            ' copa "$ORIGINAL_CHILD"
+        uses: ./.github/actions/candidate/run-copa
+        with:
+          original_child: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
 
       - name: Capture Copa diagnostics and fail closed
         if: always() && steps.copa.outcome != 'skipped' && steps.copapin.outcome == 'success'
-        shell: bash
-        env:
-          COPA_OUTCOME: ${{ steps.copa.outcome }}
-        run: |
-          set -euo pipefail
-          docker logs copa-action 2>&1 | sed -E \
-            -e 's#(https?://)[^/@]+:[^/@]+@#\1[redacted]@#g' \
-            -e 's/(Bearer )[A-Za-z0-9._~+\/-]+/\1[redacted]/gI' \
-            -e 's/((token|password|secret|authorization)[=:][[:space:]]*)[^[:space:]&]+/\1[redacted]/gI' \
-            > copa-diagnostics.txt
-          docker image inspect ghcr.io/project-copacetic/copa-action:v0.15.0 --format '{{.Id}}' > copa-action-image-id-after.txt
-          cmp copa-action-image-id.txt copa-action-image-id-after.txt || {
-            echo "FATAL: pinned Copa action runtime changed during patching"
-            exit 1
-          }
-          classification=succeeded
-          if [ "${COPA_OUTCOME}" != success ]; then
-            classification=unknown
-            if grep -Eqi 'GPG error:|NO_PUBKEY|EXPKEYSIG|REVKEYSIG|KEYEXPIRED|BADSIG|signatures? were invalid|signature verification (failed|error)' copa-diagnostics.txt; then
-              classification=gpg
-            elif grep -Eqi 'end.of.life|eol' copa-diagnostics.txt; then
-              classification=eol
-            elif grep -Eqi 'unsupported|not supported|no supported' copa-diagnostics.txt; then
-              classification=unsupported
-            elif grep -Eqi 'no fix|no fixes|nothing to patch' copa-diagnostics.txt; then
-              classification=no-fix
-            fi
-          fi
-          printf '\ncopa_action_outcome=%s\nclassification=%s\n' "${COPA_OUTCOME}" "${classification}" >> copa-diagnostics.txt
-          [ "${COPA_OUTCOME}" = success ] || {
-            echo "FATAL: Copa action failed (${classification}); diagnostics retained"
-            exit 1
-          }
-          docker image inspect copa:candidate --format '{{.Id}}' > copa-candidate-image-id.txt
+        uses: ./.github/actions/candidate/capture-copa-diagnostics
+        with:
+          copa_outcome: ${{ steps.copa.outcome }}
 
       - name: Upload Copa diagnostics
         if: always() && steps.copapin.outcome == 'success'
@@ -801,41 +319,13 @@ jobs:
       - name: Add only provenance labels and export final bytes
         id: patched
         if: inputs.recover_tag == '' && inputs.accepted_candidate_run_id == '' && steps.reuse.outputs.candidate_digest == '' && steps.entry.outputs.patch_policy == 'enabled' && fromJSON(steps.fixable.outputs.count) > 0
-        shell: bash
-        env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
-          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
-          INTERNAL_TAG: ${{ steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
-        run: |
-          set -euo pipefail
-          docker image inspect copa:candidate --format '{{json .Config.Labels}}' > before-labels.json
-          python3 scripts/promote_proposed_labels.py before-labels.json > label-changes.json
-          CHANGES=()
-          while IFS= read -r CHANGE; do
-            CHANGES+=(--change "${CHANGE}")
-          done < <(jq -r '.[]' label-changes.json)
-          CONTAINER="$(docker create copa:candidate)"
-          trap 'docker rm "${CONTAINER}" > /dev/null' EXIT
-          docker commit "${CHANGES[@]}" "${CONTAINER}" copa:final > /dev/null
-          docker image inspect copa:final --format '{{json .Config.Labels}}' > after-labels.json
-          python3 scripts/promote_label_changes.py before-labels.json after-labels.json
-          docker save copa:final --output candidate-final.tar
-          SKOPEO="${SKOPEO_IMAGE}"
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"             copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
-          python3 scripts/finalize_candidate_config.py candidate-oci child-config.json
-          CANDIDATE_MANIFEST_DIGEST="$(jq -er '.manifests[0].digest' candidate-oci/index.json)"
-          cp "candidate-oci/blobs/sha256/${CANDIDATE_MANIFEST_DIGEST#sha256:}" candidate-manifest.json
-          rm candidate-final.tar
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-            copy --format v2s2 oci:/workspace/candidate-oci:candidate \
-            docker-archive:/workspace/candidate-final.tar:copa:final
-          docker load --input candidate-final.tar
-          FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
-          [ "${FINAL_IMAGE_ID}" = "$(jq -er .config.digest candidate-manifest.json)" ]
-          sha256sum candidate-manifest.json | awk -v d="${CANDIDATE_MANIFEST_DIGEST}" '{ if ("sha256:" $1 != d) exit 1; print "digest=sha256:" $1 }' > candidate-digest.txt
-          cat candidate-digest.txt >> "$GITHUB_OUTPUT"
-          echo "image_id=${FINAL_IMAGE_ID}" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/candidate/finalize-patched
+        with:
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          upstream_tag: ${{ steps.entry.outputs.upstream_tag }}
+          selected_digest: ${{ steps.child.outputs.digest }}
+          internal_tag: ${{ steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
+          skopeo_image: ${{ env.SKOPEO_IMAGE }}
 
       - name: Rescan the exact patched bytes with the frozen DB
         id: scanafter
@@ -849,6 +339,7 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: 'true'
         with:
           version: v0.76.1
+          skip-setup-trivy: 'true'
           input: candidate-final.tar
           scanners: vuln
           format: json
@@ -870,6 +361,7 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: 'true'
         with:
           version: v0.76.1
+          skip-setup-trivy: 'true'
           input: resume-final.tar
           scanners: vuln
           format: json
@@ -881,334 +373,124 @@ jobs:
 
       - name: Build the paired patched scan receipt
         if: steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest
-        shell: bash
-        env:
-          DB_DIGEST: ${{ steps.dbmeta1.outputs.db_digest }}
-          DB_UPDATED: ${{ steps.dbmeta1.outputs.db_updated }}
-          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
-          CANDIDATE_DIGEST: ${{ steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest }}
-          AFTER_SCAN_OUTCOME: ${{ (steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest) && (steps.patched.outputs.digest && steps.scanafter.outcome || steps.scanresumed.outcome) }}
-          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
-        run: |
-          set -euo pipefail
-          test -s trivy-after-full.json
-          [ "${AFTER_SCAN_OUTCOME}" = success ] || { echo "FATAL: patched Trivy scan failed; report retained"; exit 1; }
-          jq -e '.Metadata.OS.EOSL != true' trivy-after-full.json > /dev/null
-          trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-after.txt
-          diff -u trivy-db-meta-1.txt trivy-db-meta-after.txt
-          BEFORE_SHA="$(sha256sum trivy-before-full.json | awk '{print $1}')"
-          AFTER_SHA="$(sha256sum trivy-after-full.json | awk '{print $1}')"
-          jq -n             --arg action_sha "ed142fd0673e97e23eac54620cfb913e5ce36c25"             --arg db_digest "${DB_DIGEST}"             --arg db_updated "${DB_UPDATED}"             --arg before_name "$(jq -r .ArtifactName trivy-before-full.json)"             --arg before_id "$(jq -r .Metadata.ImageID trivy-before-full.json)"             --arg before_manifest "${SELECTED_DIGEST}"             --arg before_sha "${BEFORE_SHA}"             --arg after_name "$(jq -r .ArtifactName trivy-after-full.json)"             --arg after_id "$(jq -r .Metadata.ImageID trivy-after-full.json)"             --arg after_manifest "${CANDIDATE_DIGEST}"             --arg after_sha "${AFTER_SHA}"             '{trivy_action_sha:$action_sha,trivy_db_digest:$db_digest,trivy_db_updated_at:$db_updated,before:{artifact_name:$before_name,image_id:$before_id,manifest_digest:$before_manifest,report_sha256:$before_sha},after:{artifact_name:$after_name,image_id:$after_id,manifest_digest:$after_manifest,report_sha256:$after_sha}}'             > scan-receipt.json
+        uses: ./.github/actions/candidate/build-scan-receipt
+        with:
+          db_digest: ${{ steps.dbmeta1.outputs.db_digest }}
+          db_updated: ${{ steps.dbmeta1.outputs.db_updated }}
+          selected_digest: ${{ steps.child.outputs.digest }}
+          candidate_digest: ${{ steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest }}
+          after_scan_outcome: ${{ (steps.patched.outputs.digest || steps.resume.outputs.candidate_digest || steps.recovery.outputs.candidate_digest) && (steps.patched.outputs.digest && steps.scanafter.outcome || steps.scanresumed.outcome) }}
+          trivy_cache_dir: ${{ github.workspace }}/.cache/trivy
 
       - name: Select the exact final candidate
         id: final
-        shell: bash
-        env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
-          PATCHED_DIGEST: ${{ steps.patched.outputs.digest }}
-          RESUME_DIGEST: ${{ steps.resume.outputs.candidate_digest }}
-          RECOVERED_DIGEST: ${{ steps.recovery.outputs.candidate_digest }}
-        run: |
-          set -euo pipefail
-          if [ -n "${PATCHED_DIGEST}" ]; then
-            cp trivy-after-full.json trivy-full.json
-            echo "digest=${PATCHED_DIGEST}" >> "$GITHUB_OUTPUT"
-            echo "ref=copa:final" >> "$GITHUB_OUTPUT"
-            echo "patched=true" >> "$GITHUB_OUTPUT"
-          elif [ -n "${RESUME_DIGEST}" ]; then
-            cp trivy-after-full.json trivy-full.json
-            echo "digest=${RESUME_DIGEST}" >> "$GITHUB_OUTPUT"
-            echo "ref=resume:candidate" >> "$GITHUB_OUTPUT"
-            echo "patched=true" >> "$GITHUB_OUTPUT"
-          elif [ -n "${RECOVERED_DIGEST}" ]; then
-            cp trivy-after-full.json trivy-full.json
-            echo "digest=${RECOVERED_DIGEST}" >> "$GITHUB_OUTPUT"
-            echo "ref=recovered:candidate" >> "$GITHUB_OUTPUT"
-            echo "patched=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "digest=${SELECTED_DIGEST}" >> "$GITHUB_OUTPUT"
-            echo "ref=${UPSTREAM_REF}" >> "$GITHUB_OUTPUT"
-            echo "patched=false" >> "$GITHUB_OUTPUT"
-            cp child-manifest.json candidate-manifest.json
-          fi
+        uses: ./.github/actions/candidate/select-final
+        with:
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          selected_digest: ${{ steps.child.outputs.digest }}
+          patched_digest: ${{ steps.patched.outputs.digest }}
+          resume_digest: ${{ steps.resume.outputs.candidate_digest }}
+          recovered_digest: ${{ steps.recovery.outputs.candidate_digest }}
 
       - name: Convert full report to CycloneDX with parity check
         id: convert
-        shell: bash
-        run: |
-          set -euo pipefail
-          trivy convert --format cyclonedx --scanners vuln --output trivy-full.cdx.json trivy-full.json
-          test -s trivy-full.json
-          test -s trivy-full.cdx.json
-          jq -e '.bomFormat == "CycloneDX" and (.components | type == "array") and ([.components[] | select(.type == "operating-system")] | length <= 1)' trivy-full.cdx.json > /dev/null
-          JSON_PACKAGES="$(jq -c '[((.Results // [])[] | .Packages[]?) | {name: .Name, purl: .Identifier.PURL}] | sort_by(.name, .purl)' trivy-full.json)"
-          CDX_PACKAGES="$(jq -c '[.components[] | select(.type == "library") | {name: (if ((.purl // "") | startswith("pkg:npm/")) and ((.group // "") | test("^@[^/]+$")) then .group + "/" + .name elif ((.purl // "") | startswith("pkg:maven/")) and ((.group // "") != "") then .group + ":" + .name else .name end), purl}] | sort_by(.name, .purl)' trivy-full.cdx.json)"
-          [ "${JSON_PACKAGES}" = "${CDX_PACKAGES}" ] || { echo "FATAL: CycloneDX library components differ from Trivy packages"; exit 1; }
-          JSON_FINDINGS="$(jq -c '[((.Results // [])[] | .Vulnerabilities[]?) | {purl: (.PkgIdentifier.PURL // .PkgID), id: .VulnerabilityID}] | unique_by([.purl, .id])' trivy-full.json)"
-          CDX_FINDINGS="$(jq -c '(.components | map(select(.type == "library") | {key: ."bom-ref", value: .purl}) | from_entries) as $packages | [.vulnerabilities[]? as $v | $v.affects[]? | {purl: ($packages[.ref] // error("unknown SBOM package reference")), id: $v.id}] | unique_by([.purl, .id])' trivy-full.cdx.json)"
-          [ "${JSON_FINDINGS}" = "${CDX_FINDINGS}" ] || { echo "FATAL: CycloneDX finding identities differ from Trivy findings"; exit 1; }
-          JSON_COUNT="$(jq 'length' <<< "${JSON_FINDINGS}")"
-          CDX_COUNT="$(jq 'length' <<< "${CDX_FINDINGS}")"
-          {
-            echo "cyclonedx findings in JSON report: ${JSON_COUNT}"
-            echo "cyclonedx findings in CDX file:   ${CDX_COUNT}"
-          } >> "$GITHUB_STEP_SUMMARY"
+        uses: ./.github/actions/cyclonedx-report
 
       - name: Write SecObserve manifest
-        shell: bash
-        env:
-          APP: ${{ steps.entry.outputs.app }}
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          UPSTREAM_TAG: ${{ steps.entry.outputs.upstream_tag }}
-        run: |
-          set -euo pipefail
-          printf '{"app":"%s","upstream_ref":"%s","upstream_tag":"%s"}\n' \
-            "${APP}" "${UPSTREAM_REF}" "${UPSTREAM_TAG}" > secobserve-upload.json
-
+        uses: ./.github/actions/candidate/write-secobserve-manifest
+        with:
+          app: ${{ steps.entry.outputs.app }}
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          upstream_tag: ${{ steps.entry.outputs.upstream_tag }}
 
       - name: Run validation
         id: runval
-        shell: bash
-        env:
-          APP: ${{ steps.entry.outputs.app }}
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
-          CANDIDATE_REF: ${{ steps.final.outputs.ref }}
-          CANDIDATE_DIGEST: ${{ steps.final.outputs.digest }}
-          LOCAL_IMAGE_ID: ${{ steps.patched.outputs.image_id || steps.resume_materialize.outputs.image_id || steps.recovery.outputs.image_id }}
-          PATCHED: ${{ steps.final.outputs.patched }}
-          VALIDATION_TYPE: ${{ steps.entry.outputs.validation_type }}
-          VALIDATION_PORT: ${{ steps.entry.outputs.validation_port }}
-          VALIDATION_PATH: ${{ steps.entry.outputs.validation_path }}
-          VALIDATION_EXPECT_STATUS: ${{ steps.entry.outputs.validation_expect_status }}
-          VALIDATION_DURATION_SECONDS: ${{ steps.entry.outputs.validation_duration_seconds }}
-          VALIDATION_TIMEOUT_SECONDS: ${{ steps.entry.outputs.validation_timeout_seconds }}
-          VALIDATION_EXPECTED_EXIT: ${{ steps.entry.outputs.validation_expected_exit }}
-          VALIDATION_COMMAND: ${{ steps.entry.outputs.validation_command }}
-          VALIDATION_EXPECTED_PLATFORMS: ${{ steps.entry.outputs.validation_expected_platforms }}
-          VALIDATION_ENV: ${{ steps.entry.outputs.validation_env }}
-        run: |
-          set -euo pipefail
-          # D-04: workflow-side defaults wherever the inventory entry carries no deviation.
-          ARGS=(
-            --app "${APP}"
-            --ref "${CANDIDATE_REF}"
-            --digest "${CANDIDATE_DIGEST}"
-            --baseline-ref "${UPSTREAM_REF}"
-            --baseline-digest "${SELECTED_DIGEST}"
-            --validation-type "${VALIDATION_TYPE}"
-            --index-file candidate-manifest.json
-            --evidence-out validation-evidence.json
-            --path "${VALIDATION_PATH:-/}"
-            --expect-status "${VALIDATION_EXPECT_STATUS:-200}"
-            --duration-seconds "${VALIDATION_DURATION_SECONDS:-30}"
-            --timeout-seconds "${VALIDATION_TIMEOUT_SECONDS:-60}"
-            --expected-exit "${VALIDATION_EXPECTED_EXIT:-0}"
-            --expected-platforms "${VALIDATION_EXPECTED_PLATFORMS:-linux/amd64}"
-            --command "${VALIDATION_COMMAND:-[]}"
-          )
-          [ "${PATCHED}" != true ] || ARGS+=(--local-image "${CANDIDATE_REF}" --local-image-id "${LOCAL_IMAGE_ID}")
-          if [ -n "${VALIDATION_PORT:-}" ]; then
-            ARGS+=(--port "${VALIDATION_PORT}")
-          fi
-          if [ -n "${VALIDATION_ENV:-}" ]; then
-            while IFS=$'\t' read -r KEY VALUE; do
-              ARGS+=("--env" "${KEY}=${VALUE}")
-            done < <(jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv' <<<"${VALIDATION_ENV}")
-          fi
-          python3 scripts/validate_image.py "${ARGS[@]}"
+        uses: ./.github/actions/candidate/run-validation
+        with:
+          requested_remediation: ${{ inputs.requested_remediation }}
+          app: ${{ steps.entry.outputs.app }}
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          selected_digest: ${{ steps.child.outputs.digest }}
+          candidate_ref: ${{ steps.final.outputs.ref }}
+          candidate_digest: ${{ steps.final.outputs.digest }}
+          local_image_id: ${{ steps.patched.outputs.image_id || steps.resume_materialize.outputs.image_id || steps.recovery.outputs.image_id }}
+          patched: ${{ steps.final.outputs.patched }}
+          validation_type: ${{ steps.entry.outputs.validation_type }}
+          validation_port: ${{ steps.entry.outputs.validation_port }}
+          validation_path: ${{ steps.entry.outputs.validation_path }}
+          validation_expect_status: ${{ steps.entry.outputs.validation_expect_status }}
+          validation_duration_seconds: ${{ steps.entry.outputs.validation_duration_seconds }}
+          validation_timeout_seconds: ${{ steps.entry.outputs.validation_timeout_seconds }}
+          validation_expected_exit: ${{ steps.entry.outputs.validation_expected_exit }}
+          validation_command: ${{ steps.entry.outputs.validation_command }}
+          validation_expected_platforms: ${{ steps.entry.outputs.validation_expected_platforms }}
+          validation_env: ${{ steps.entry.outputs.validation_env }}
 
       - name: Fetch CISA KEV catalog
-        shell: bash
-        run: |
-          set -euo pipefail
-          KEV_URL="https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
-          KEV_FETCHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          curl --fail --location --silent --show-error --max-time 30 "${KEV_URL}" > kev.json
-          printf '%s\n' "${KEV_FETCHED_AT}" > kev-fetched-at.txt
+        uses: ./.github/actions/candidate/fetch-kev
 
       - name: Resolve current KEV risk acceptance
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          APP: ${{ steps.entry.outputs.app }}
-        run: |
-          set -euo pipefail
-          rm -f acceptance.json github-evidence.json
-          python3 scripts/promote_acceptance_paths.py
-          if [ ! -s acceptance-matched.txt ]; then
-            echo "no KEV intersection; acceptance is not applicable"
-            exit 0
-          fi
-          RECORD_PATH="$(cat acceptance-path.txt)"
-          set +e
-          STATUS="$(curl --fail-with-body -sS \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            -o acceptance-content.json \
-            -w '%{http_code}' \
-            "https://api.github.com/repos/${REPO}/contents/${RECORD_PATH}?ref=main")"
-          CURL_STATUS=$?
-          set -e
-          if [ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]; then
-            echo "current main carries no acceptance for this exact candidate and KEV set"
-            exit 0
-          fi
-          if [ "${CURL_STATUS}" -ne 0 ] || [ "${STATUS}" != 200 ]; then
-            echo "FATAL: acceptance content lookup failed (status ${STATUS:-network error})"
-            exit 1
-          fi
-          python3 scripts/promote_acceptance_decode.py
-          gh api --method GET "repos/${REPO}/commits" \
-            -f path="${RECORD_PATH}" -F per_page=1 > acceptance-commits.json
-          COMMIT_SHA="$(jq -er '.[0].sha' acceptance-commits.json)"
-          gh api "repos/${REPO}/commits/${COMMIT_SHA}" > acceptance-commit.json
-          gh api "repos/${REPO}/commits/${COMMIT_SHA}/pulls" > acceptance-prs.json
-          PR_NUMBER="$(jq -er '[.[] | select(.merged == true and .base.repo.full_name == env.REPO and .base.ref == "main")][0].number' acceptance-prs.json)"
-          gh api "repos/${REPO}/pulls/${PR_NUMBER}" > acceptance-pr.json
-          ISSUE_NUMBER="$(jq -er .trackingIssue acceptance.json)"
-          gh api "repos/${REPO}/issues/${ISSUE_NUMBER}" > acceptance-issue.json
-          python3 scripts/promote_github_evidence.py "${RECORD_PATH}"
+        uses: ./.github/actions/candidate/resolve-kev-acceptance
+        with:
+          gh_token: ${{ github.token }}
+          repo: ${{ github.repository }}
+          app: ${{ steps.entry.outputs.app }}
 
       - name: Evaluate one promotion decision
         id: policy
         continue-on-error: true
-        shell: bash
-        env:
-          APP: ${{ steps.entry.outputs.app }}
-          REQUESTED_REMEDIATION: ${{ inputs.requested_remediation }}
-          SOURCE_SHA: ${{ github.sha }}
-          COPA_EXECUTED: ${{ steps.copa.outcome == 'success' }}
-          RUN_ID: ${{ github.run_id }}
-          RUN_ATTEMPT: ${{ github.run_attempt }}
-          INTERNAL_TAG: ${{ steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
-          UPSTREAM_INDEX_DIGEST: ${{ steps.entry.outputs.upstream_digest }}
-          CANDIDATE_DIGEST: ${{ steps.final.outputs.digest }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          RESUME_ORIGINAL_RUN_ID: ${{ steps.resume.outputs.original_run_id }}
-          RESUME_ORIGINAL_RUN_ATTEMPT: ${{ steps.resume.outputs.original_run_attempt }}
-          RESUME_ORIGINAL_SOURCE_SHA: ${{ steps.resume.outputs.original_source_sha }}
-          RESUME_ARTIFACT_ID: ${{ steps.resume.outputs.artifact_id }}
-          HIGHER_UPSTREAM: ${{ steps.tag.outputs.higher_upstream }}
-          ORIGINAL_CHILD_SELECTED: ${{ steps.tag.outputs.original_child_selected }}
-        run: |
-          set -euo pipefail
-          if [ "${COPA_EXECUTED}" = true ]; then
-            export COPA_EVIDENCE='{"mode":"comprehensive","release":"0.15.0","source_sha":"bce7b4305e378558f20420aa2ca48686cec850d0","runtime_digest":"sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b","limitation":null}'
-          elif [ -f original-candidate-decision.json ]; then
-            COPA_EVIDENCE="$(jq -c '.copa.evidence // empty' original-candidate-decision.json)"
-            export COPA_EVIDENCE
-          fi
-          python3 scripts/promote_candidate_decision.py
+        uses: ./.github/actions/candidate/evaluate-decision
+        with:
+          app: ${{ steps.entry.outputs.app }}
+          requested_remediation: ${{ inputs.requested_remediation }}
+          source_sha: ${{ github.sha }}
+          copa_executed: ${{ steps.copa.outcome == 'success' }}
+          run_id: ${{ github.run_id }}
+          run_attempt: ${{ github.run_attempt }}
+          internal_tag: ${{ steps.patchtag.outputs.internal_tag || steps.tag.outputs.internal_tag }}
+          upstream_index_digest: ${{ steps.entry.outputs.upstream_digest }}
+          candidate_digest: ${{ steps.final.outputs.digest }}
+          github_repository: ${{ github.repository }}
+          resume_original_run_id: ${{ steps.resume.outputs.original_run_id }}
+          resume_original_run_attempt: ${{ steps.resume.outputs.original_run_attempt }}
+          resume_original_source_sha: ${{ steps.resume.outputs.original_source_sha }}
+          resume_artifact_id: ${{ steps.resume.outputs.artifact_id }}
+          higher_upstream: ${{ steps.tag.outputs.higher_upstream }}
+          original_child_selected: ${{ steps.tag.outputs.original_child_selected }}
 
       - name: Decide whether publication is required
         id: publication
         if: steps.policy.outputs.eligible == 'true'
-        shell: bash
-        env:
-          APP: ${{ steps.entry.outputs.app }}
-          FORCE_REPROMOTE: ${{ inputs.force_repromote }}
-          RECOVER_TAG: ${{ inputs.recover_tag }}
-          ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
-          SKIP_COPY: ${{ steps.tag.outputs.skip_copy }}
-          INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
-          CANDIDATE_DIGEST: ${{ steps.final.outputs.digest }}
-        run: |
-          set -euo pipefail
-          if [ "${SKIP_COPY}" = true ] && [ "${FORCE_REPROMOTE}" != true ] && [ -z "${RECOVER_TAG}" ] && [ -z "${ACCEPTED_CANDIDATE_RUN_ID}" ]; then
-            RECORD="reuse-provenance.json"
-            git fetch origin main
-            python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > "${RECORD}"
-            jq -e --arg app "${APP}" --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '
-              .schema == "trusted-images.bocklabs.dev/provenance-v1" and .app == $app and
-              .internal.package == ("ghcr.io/bocklabs/" + $app) and .internal.tag == $tag and
-              .internal.digest == $digest and (.policy.eligible | type == "boolean") and
-              ((has("signing") | not) or ((.signing | type == "object") and
-                (.signing.result == "pass" or (.signing.result == "fail" and
-                  (.signing.failure | type == "string") and (.signing.failure | length > 0)))))
-            ' "${RECORD}" >/dev/null || { echo "FATAL: malformed or mismatched reuse provenance"; exit 1; }
-            if jq -e '.policy.eligible == false or (has("signing") | not) or .signing.result == "fail"' "${RECORD}" >/dev/null; then
-              NOTICE="No promotion performed; existing revision lacks eligible signing evidence and remains unchanged. Choose force_repromote=true for a new revision."
-              echo "::warning::${NOTICE}"
-              echo "${NOTICE}" >> "$GITHUB_STEP_SUMMARY"
-              echo "publication_required=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          fi
-          echo "publication_required=true" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/candidate/decide-publication
+        with:
+          app: ${{ steps.entry.outputs.app }}
+          force_repromote: ${{ inputs.force_repromote }}
+          recover_tag: ${{ inputs.recover_tag }}
+          accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}
+          skip_copy: ${{ steps.tag.outputs.skip_copy }}
+          internal_tag: ${{ steps.tag.outputs.internal_tag }}
+          candidate_digest: ${{ steps.final.outputs.digest }}
 
       - name: Export checksum-bound candidate artifact
         id: candidate
         if: always() && steps.policy.outputs.eligible != ''
-        shell: bash
-        env:
-          UPSTREAM_REF: ${{ steps.entry.outputs.upstream_ref }}
-          SELECTED_DIGEST: ${{ steps.child.outputs.digest }}
-          SOURCE_SHA: ${{ github.sha }}
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          RESUME_INTERNAL_TAG: ${{ steps.resume.outputs.internal_tag }}
-          RESUME_SKIP_COPY: ${{ steps.resume.outputs.skip_copy }}
-          PATCH_INTERNAL_TAG: ${{ steps.patchtag.outputs.internal_tag }}
-          PATCH_SKIP_COPY: ${{ steps.patchtag.outputs.skip_copy }}
-          TAG_INTERNAL_TAG: ${{ steps.tag.outputs.internal_tag }}
-          TAG_SKIP_COPY: ${{ steps.tag.outputs.skip_copy }}
-        run: |
-          set -euo pipefail
-          if [ ! -s candidate-decision.json ]; then
-            echo "FATAL: no candidate decision to export"
-            exit 1
-          fi
-          SKOPEO="${SKOPEO_IMAGE}"
-          CREDS=()
-          if [[ "${UPSTREAM_REF}" == docker.io/* ]]; then
-            CREDS=(--src-creds "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}")
-          fi
-          if [ ! -d candidate-oci ]; then
-            docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO" \
-              copy --preserve-digests --remove-signatures ${CREDS[@]+"${CREDS[@]}"} \
-              "docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" \
-              "oci:/workspace/candidate-oci:candidate"
-          fi
-          mkdir -p candidate-artifact
-          cp upstream-index.json child-manifest.json child-config.json candidate-manifest.json \
-            trivy-before-full.json trivy-full.json trivy-copa.json trivy-full.cdx.json secobserve-upload.json \
-            validation-evidence.json candidate-decision.json candidate-artifact/
-          cp trivy-db-meta-1.txt trivy-db-meta-2.txt kev.json kev-fetched-at.txt candidate-artifact/
-          for evidence in trivy-after-full.json scan-receipt.json trivy-db-meta-after.txt \
-            copa-diagnostics.txt copa-candidate-image-id.txt before-labels.json after-labels.json; do
-            [ ! -f "${evidence}" ] || cp "${evidence}" candidate-artifact/
-          done
-          for evidence in acceptance.json github-evidence.json original-candidate-decision.json \
-            resume-run.json resume-branch.json resume-artifacts.jsonl resume-artifact-id.txt \
-            resume-candidate-image-id.txt; do
-            [ ! -f "${evidence}" ] || cp "${evidence}" candidate-artifact/
-          done
-          for evidence in native-before native-after; do
-            [ ! -d "$evidence" ] || cp -r "$evidence" candidate-artifact/
-          done
-          cp validation-context/image.yaml candidate-artifact/inventory-image.yaml
-          cp -r validation-logs candidate-artifact/ 2> /dev/null || true
-          printf '%s\n' "${SOURCE_SHA}" > candidate-artifact/source.sha
-          rm -f candidate-final.tar resume-final.tar
-          mv candidate-oci candidate-artifact/candidate-oci
-          INTERNAL_TAG="${RESUME_INTERNAL_TAG:-${PATCH_INTERNAL_TAG:-${TAG_INTERNAL_TAG}}}"
-          SKIP_COPY="${RESUME_SKIP_COPY:-${PATCH_SKIP_COPY:-${TAG_SKIP_COPY}}}"
-          case "${SKIP_COPY}" in true|false) ;; *) echo "FATAL: invalid tag skip decision"; exit 1 ;; esac
-          jq -n --arg internal_tag "${INTERNAL_TAG}" \
-            --argjson skip_copy "${SKIP_COPY}" \
-            '{internal_tag:$internal_tag, skip_copy:$skip_copy}' > candidate-artifact/tag-decision.json
-          (
-            cd "$PWD"
-            find candidate-artifact -type f ! -name SHA256SUMS -print0 \
-              | sort -z | xargs -0 sha256sum > candidate-artifact/SHA256SUMS
-          )
-          SHA="$(sha256sum candidate-artifact/SHA256SUMS | awk '{print $1}')"
-          echo "manifest_sha256=${SHA}" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/candidate/export-artifact
+        with:
+          upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
+          selected_digest: ${{ steps.child.outputs.digest }}
+          source_sha: ${{ github.sha }}
+          dockerhub_username: ${{ vars.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          resume_internal_tag: ${{ steps.resume.outputs.internal_tag }}
+          resume_skip_copy: ${{ steps.resume.outputs.skip_copy }}
+          patch_internal_tag: ${{ steps.patchtag.outputs.internal_tag }}
+          patch_skip_copy: ${{ steps.patchtag.outputs.skip_copy }}
+          tag_internal_tag: ${{ steps.tag.outputs.internal_tag }}
+          tag_skip_copy: ${{ steps.tag.outputs.skip_copy }}
+          skopeo_image: ${{ env.SKOPEO_IMAGE }}
 
       - name: Upload candidate artifact
+        id: upload_candidate
         if: always() && steps.candidate.outcome == 'success'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
@@ -1254,10 +536,10 @@ jobs:
           # the evidence records the honest absence, the upload just warns.
           if-no-files-found: warn
 
+      - name: Candidate assessment summary
+        if: always()
+        uses: ./.github/actions/candidate/render-summary
+
       - name: Fail blocked candidate after preservation
-        if: always() && steps.policy.outputs.eligible != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "FATAL: candidate is blocked; exact bytes and decision were retained, publisher will not run"
-          exit 1
+        if: always() && steps.policy.outputs.eligible != 'true' && steps.policy.outputs.daily_hold != 'true'
+        uses: ./.github/actions/candidate/fail-blocked

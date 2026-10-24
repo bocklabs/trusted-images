@@ -13,6 +13,8 @@ from unittest import mock
 
 import yaml
 
+from tests.workflow_helpers import load_workflow, workflow_action_text
+
 ROOT = Path(__file__).resolve().parents[1]
 DIGEST = "sha256:" + "a" * 64
 IMAGE = f"ghcr.io/bocklabs/example@{DIGEST}"
@@ -119,7 +121,7 @@ else:
             "--identity-config", str(IDENTITY), "--sign-bundle", "sign-bundle.json",
             "--sbom-bundle", "sbom-bundle.json", "--predicate", "sbom.json",
             "--out", "signing-evidence.json",
-        ], cwd=self.dir, env=env, capture_output=True, text=True)
+        ], check=False, cwd=self.dir, env=env, capture_output=True, text=True)
 
     def test_success_records_digest_identity_and_attachments(self):
         result = self.run_gate()
@@ -161,9 +163,7 @@ else:
                 self.assertNotIn("signature", evidence)
                 if scenario == "malformed-download":
                     self.assertIn("not a DSSE envelope", evidence["reason"])
-                elif scenario == "wrong-download-digest":
-                    self.assertIn("differs from local bundle", evidence["reason"])
-                elif scenario == "detached-attachment":
+                elif scenario == "wrong-download-digest" or scenario == "detached-attachment":
                     self.assertIn("differs from local bundle", evidence["reason"])
 
     def test_bad_digest_or_bundle_fails(self):
@@ -186,7 +186,7 @@ else:
         return record
 
     def test_provenance_writeback_preserves_existing_main_record(self):
-        steps = yaml.safe_load((ROOT / ".github/workflows/promote-publish.yaml").read_text())["jobs"]["promote"]["steps"]
+        steps = load_workflow(ROOT / ".github/workflows/promote-publish.yaml")["jobs"]["promote"]["steps"]
         writeback = next(step["run"] for step in steps if step["name"] == "Open provenance PR for operator review")
         writeback = writeback.replace("${{ steps.app-token.outputs.token }}", "test-token")
         record = self.dir / "provenance/example/current.json"
@@ -208,7 +208,7 @@ else:
         for data, expected in ((history.read_text(), 0),):
             record.write_text(data)
             spool.write_text("")
-            result = subprocess.run(["bash", "-c", writeback], cwd=self.dir, env=env, capture_output=True, text=True)
+            result = subprocess.run(["bash", "-c", writeback], check=False, cwd=self.dir, env=env, capture_output=True, text=True)
             self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
             self.assertNotIn("push", spool.read_text().splitlines())
             self.assertNotIn("commit", spool.read_text().splitlines())
@@ -217,13 +217,13 @@ else:
         signing = next(step["run"] for step in steps if step["name"] == "Sign and attest published digest")
         gate = next(step["run"] for step in steps if step["name"] == "Verify signing evidence")
         for reuse, expected in (("true", 0), ("false", 1)):
-            result = subprocess.run(["bash", "-c", signing], cwd=self.dir,
+            result = subprocess.run(["bash", "-c", signing], check=False, cwd=self.dir,
                                     env={**env, "SKIP_COPY": reuse, "CANDIDATE_DIGEST": DIGEST},
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
             self.assertEqual(record.read_bytes(), history.read_bytes())
         for scenario, expected in (("success", 0), ("missing-signature", 1)):
-            result = subprocess.run(["bash", "-c", gate], cwd=self.dir,
+            result = subprocess.run(["bash", "-c", gate], check=False, cwd=self.dir,
                                     env={**env, "SCENARIO": scenario}, capture_output=True, text=True)
             self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
             self.assertEqual(json.loads((self.dir / "signing-evidence.json").read_text())["result"], "pass" if expected == 0 else "fail")
@@ -232,9 +232,9 @@ else:
     def test_workflow_contract(self):
         caller_text = (ROOT / ".github/workflows/promote.yaml").read_text()
         publisher_text = (ROOT / ".github/workflows/promote-publish.yaml").read_text()
-        candidate = yaml.safe_load((ROOT / ".github/workflows/promote-candidate.yaml").read_text())
+        candidate = load_workflow(ROOT / ".github/workflows/promote-candidate.yaml")
         caller = yaml.safe_load(caller_text)
-        publisher = yaml.safe_load(publisher_text)
+        publisher = load_workflow(ROOT / ".github/workflows/promote-publish.yaml")
         self.assertEqual(json.loads(IDENTITY.read_text()), {
             "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
             "certificate_oidc_issuer": "https://token.actions.githubusercontent.com",
@@ -270,8 +270,35 @@ else:
         self.assertRegex(publisher_text, r"sigstore/cosign-installer@[a-f0-9]{40}")
         self.assertRegex(COSIGN_RELEASE, r"^v\d+\.\d+\.\d+$")
 
+    def assert_changed_current_scenario(
+        self, scenario, record, pending, generated, writeback, auto_merge, env
+    ):
+        (self.dir / "generated-provenance.json").write_text(json.dumps(generated))
+        (self.dir / "pending.json").write_text(json.dumps(pending))
+        (self.dir / "calls").write_text("")
+        before = record.read_bytes()
+        if scenario == "stale":
+            newer = json.loads(json.dumps(pending))
+            newer["internal"]["tag"] = "v1-bocklabs.3"
+            newer["promoted_at"] = "2100-01-01T00:00:00Z"
+            (self.dir / "pending.json").write_text(json.dumps(newer))
+        result = subprocess.run(["bash", "-c", writeback], check=False, cwd=self.dir, env={**env, "FOREIGN": "1" if scenario == "foreign" else ""}, capture_output=True, text=True)
+        calls = [json.loads(line) for line in (self.dir / "calls").read_text().splitlines()]
+        if scenario != "owned":
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(any(c[:2] == ["git", "push"] for c in calls))
+            self.assertEqual(record.read_bytes(), before)
+            return
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(record.read_bytes()), pending)
+        self.assertTrue(any(c[:2] == ["git", "push"] and '--force-with-lease=refs/heads/provenance/current/example:' + '2'*40 in c for c in calls))
+        self.assertTrue(any(c[:3] == ["gh", "pr", "edit"] and "--title" in c for c in calls))
+        result = subprocess.run(["bash", "-c", auto_merge], check=False, cwd=self.dir, env={**env, "HEAD_SHA": "3" * 40, "PR_URL": "https://example.test/pull/1"}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(["gh", "pr", "merge", "--auto", "--merge", "--match-head-commit", "3" * 40, "https://example.test/pull/1"], [json.loads(line) for line in (self.dir / "calls").read_text().splitlines()])
+
     def test_changed_current_uses_owned_pr_lease_and_exact_auto_merge(self):
-        steps = yaml.safe_load((ROOT / ".github/workflows/promote-publish.yaml").read_text())["jobs"]["promote"]["steps"]
+        steps = load_workflow(ROOT / ".github/workflows/promote-publish.yaml")["jobs"]["promote"]["steps"]
         writeback = next(s["run"] for s in steps if s["name"] == "Open provenance PR for operator review").replace("${{ steps.app-token.outputs.token }}", "fixture-token")
         auto_merge = next(s["run"] for s in steps if s["name"] == "Auto-merge signed provenance PR")
         previous = self.example_record()
@@ -320,30 +347,11 @@ elif a[:2]==['pr','view']: print('true')
         pending = json.loads(json.dumps(generated))
         pending["pipeline"]["run_url"] = "https://example.test/original-publication"
         for scenario in ("owned", "foreign", "stale"):
-            (self.dir / "generated-provenance.json").write_text(json.dumps(generated))
-            (self.dir / "pending.json").write_text(json.dumps(pending))
-            (self.dir / "calls").write_text("")
-            before = record.read_bytes()
-            if scenario == "stale":
-                newer = json.loads(json.dumps(pending))
-                newer["internal"]["tag"] = "v1-bocklabs.3"
-                newer["promoted_at"] = "2100-01-01T00:00:00Z"
-                (self.dir / "pending.json").write_text(json.dumps(newer))
-            result = subprocess.run(["bash", "-c", writeback], cwd=self.dir, env={**env, "FOREIGN": "1" if scenario == "foreign" else ""}, capture_output=True, text=True)
-            calls = [json.loads(line) for line in (self.dir / "calls").read_text().splitlines()]
-            if scenario != "owned":
-                self.assertNotEqual(result.returncode, 0)
-                self.assertFalse(any(c[:2] == ["git", "push"] for c in calls))
-                self.assertEqual(record.read_bytes(), before)
-                continue
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertEqual(json.loads(record.read_bytes()), pending)
-            self.assertTrue(any(c[:2] == ["git", "push"] and '--force-with-lease=refs/heads/provenance/current/example:' + '2'*40 in c for c in calls))
-            self.assertTrue(any(c[:3] == ["gh", "pr", "edit"] and "--title" in c for c in calls))
-            result = subprocess.run(["bash", "-c", auto_merge], cwd=self.dir, env={**env, "HEAD_SHA": "3" * 40, "PR_URL": "https://example.test/pull/1"}, capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn(["gh", "pr", "merge", "--auto", "--merge", "--match-head-commit", "3" * 40, "https://example.test/pull/1"], [json.loads(line) for line in (self.dir / "calls").read_text().splitlines()])
+            self.assert_changed_current_scenario(
+                scenario, record, pending, generated, writeback, auto_merge, env
+            )
         publisher_text = (ROOT / ".github/workflows/promote-publish.yaml").read_text()
+        publisher_text += workflow_action_text(ROOT / ".github/workflows/promote-publish.yaml")
         self.assertIn("config/signing-identity.json", publisher_text)
         self.assertIn("--type cyclonedx", publisher_text)
         self.assertIn("@${CANDIDATE_DIGEST}", publisher_text)
@@ -354,7 +362,7 @@ elif a[:2]==['pr','view']: print('true')
         self.assertNotIn("https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main", publisher_text)
 
     def test_validation_reverifies_only_cosign_pin_changes(self):
-        workflow = yaml.safe_load((ROOT / ".github/workflows/validate.yaml").read_text())
+        workflow = load_workflow(ROOT / ".github/workflows/validate.yaml")
         self.assertNotIn("schedule", workflow.get("on", workflow.get(True, {})))
         self.assertNotIn("paths-ignore", (workflow.get("on", workflow.get(True))["pull_request"] or {}))
         self.assertIn("inventory", workflow["jobs"])
@@ -468,6 +476,7 @@ elif a[:2]==['pr','view']: print('true')
         sys.path.insert(0, str(ROOT / "scripts"))
         self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
         import reverify_signing
+
         from tests.test_refresh_current_provenance import CurrentRefreshTests, refresh
 
         identity = json.loads(IDENTITY.read_bytes())
@@ -489,7 +498,7 @@ elif a[:2]==['pr','view']: print('true')
         malformed["internal"] = []
         path, output = self.dir / "malformed.json", self.dir / "failed-signing.json"
         path.write_text(json.dumps(malformed))
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/reverify_signing.py"), "--record", str(path), "--out", str(output)],
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/reverify_signing.py"), "--record", str(path), "--out", str(output)], check=False,
                                 cwd=self.dir, capture_output=True, text=True)
         self.assertEqual(result.returncode, 1)
         self.assertNotIn("Traceback", result.stderr)
@@ -501,7 +510,7 @@ elif a[:2]==['pr','view']: print('true')
         with self.assertRaisesRegex(ValueError, "invalid quarantine record"):
             reverify_signing.verified_record(quarantine, "example", identity)
         path.write_text(json.dumps(quarantine))
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/reverify_signing.py"), "--compare", str(path)],
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/reverify_signing.py"), "--compare", str(path)], check=False,
                                 cwd=self.dir, capture_output=True, text=True)
         self.assertEqual(result.returncode, 1)
         self.assertIn("invalid quarantine record", result.stderr)

@@ -1,0 +1,37 @@
+name: gate-pre-patch-reports
+description: Preserve and gate the pre-patch reports
+inputs:
+  full_scan_outcome:
+    description: Workflow input.
+    required: false
+  fixable_scan_outcome:
+    description: Workflow input.
+    required: false
+outputs:
+  count:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.count }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        FULL_SCAN_OUTCOME: ${{ inputs.full_scan_outcome }}
+        FIXABLE_SCAN_OUTCOME: ${{ inputs.fixable_scan_outcome }}
+      run: |
+        set -euo pipefail
+        test -s trivy-full.json
+        test -s trivy-copa.json
+        cp trivy-full.json trivy-before-full.json
+        [ "${FULL_SCAN_OUTCOME}" = success ] && [ "${FIXABLE_SCAN_OUTCOME}" = success ] || {
+          echo "FATAL: pre-patch Trivy scan failed; reports retained"
+          exit 1
+        }
+        jq -e '.Metadata.OS.EOSL != true' trivy-full.json > /dev/null || {
+          echo "FATAL: Metadata.OS.EOSL blocked the pre-patch candidate"
+          exit 1
+        }
+        COUNT="$(jq '[((.Results // [])[] | .Vulnerabilities[]?)] | length' trivy-copa.json)"
+        echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
+        echo "fixable OS findings: ${COUNT}"

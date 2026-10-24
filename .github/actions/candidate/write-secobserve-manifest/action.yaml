@@ -1,0 +1,25 @@
+name: write-secobserve-manifest
+description: Write SecObserve manifest
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  upstream_tag:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        UPSTREAM_TAG: ${{ inputs.upstream_tag }}
+      run: |
+        set -euo pipefail
+        printf '{"app":"%s","upstream_ref":"%s","upstream_tag":"%s"}\n' \
+          "${APP}" "${UPSTREAM_REF}" "${UPSTREAM_TAG}" > secobserve-upload.json

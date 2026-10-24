@@ -1,0 +1,62 @@
+name: select-final
+description: Select the exact final candidate
+inputs:
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  selected_digest:
+    description: Workflow input.
+    required: false
+  patched_digest:
+    description: Workflow input.
+    required: false
+  resume_digest:
+    description: Workflow input.
+    required: false
+  recovered_digest:
+    description: Workflow input.
+    required: false
+outputs:
+  digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.digest }}
+  patched:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.patched }}
+  ref:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.ref }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        SELECTED_DIGEST: ${{ inputs.selected_digest }}
+        PATCHED_DIGEST: ${{ inputs.patched_digest }}
+        RESUME_DIGEST: ${{ inputs.resume_digest }}
+        RECOVERED_DIGEST: ${{ inputs.recovered_digest }}
+      run: |
+        set -euo pipefail
+        if [ -n "${PATCHED_DIGEST}" ]; then
+          cp trivy-after-full.json trivy-full.json
+          echo "digest=${PATCHED_DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "ref=copa:final" >> "$GITHUB_OUTPUT"
+          echo "patched=true" >> "$GITHUB_OUTPUT"
+        elif [ -n "${RESUME_DIGEST}" ]; then
+          cp trivy-after-full.json trivy-full.json
+          echo "digest=${RESUME_DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "ref=resume:candidate" >> "$GITHUB_OUTPUT"
+          echo "patched=true" >> "$GITHUB_OUTPUT"
+        elif [ -n "${RECOVERED_DIGEST}" ]; then
+          cp trivy-after-full.json trivy-full.json
+          echo "digest=${RECOVERED_DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "ref=recovered:candidate" >> "$GITHUB_OUTPUT"
+          echo "patched=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "digest=${SELECTED_DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "ref=${UPSTREAM_REF}" >> "$GITHUB_OUTPUT"
+          echo "patched=false" >> "$GITHUB_OUTPUT"
+          cp child-manifest.json candidate-manifest.json
+        fi

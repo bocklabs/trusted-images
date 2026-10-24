@@ -111,51 +111,88 @@ def reviewed_file_build(selection, report):
     return {**review, "review_sha256": hashlib.sha256(raw).hexdigest()}
 
 
+def versionless_go_replacement(result, package):
+    if ("Version" in package or "Relationship" in package or result.get("Class") != "lang-pkgs"
+            or result.get("Type") != "gobinary" or not isinstance(result.get("Target"), str)
+            or not result["Target"] or package.get("ID") != package["Name"]
+            or package.get("AnalyzedBy") != "gobinary"):
+        return False
+    name = package["Name"]
+    identifier = package.get("Identifier")
+    if not isinstance(identifier, dict) or not isinstance(identifier.get("UID"), str) or not identifier["UID"]:
+        return False
+    if re.fullmatch(r"\./[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", name):
+        return set(identifier) == {"UID"}
+    return (re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)+", name)
+            and isinstance(identifier.get("PURL"), str)
+            and identifier["PURL"].casefold() == ("pkg:golang/" + name).casefold())
+
+
+def go_root_package(result, package, file_build):
+    return (
+        "Version" not in package and result.get("Class") == "lang-pkgs"
+        and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
+        and bool(result["Target"]) and package.get("ID") == package["Name"]
+        and re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", package["Name"])
+        and package.get("AnalyzedBy") == "gobinary"
+        and (
+            package.get("Relationship") == "root"
+            or (
+                file_build is not None
+                and "Relationship" not in package
+                and (result["Target"], package["Name"], package.get("Layer"))
+                == (file_build["target"], file_build["module"], file_build["layer"])
+            )
+        )
+        and isinstance(package.get("Identifier"), dict)
+        and isinstance(package["Identifier"].get("PURL"), str)
+        and package["Identifier"]["PURL"].casefold() == ("pkg:golang/" + package["Name"]).casefold()
+    )
+
+
+def go_relative_root(result, package, packages):
+    return (
+        "Version" not in package and result.get("Class") == "lang-pkgs"
+        and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
+        and bool(result["Target"]) and package.get("ID") == package["Name"] == "../"
+        and package.get("AnalyzedBy") == "gobinary" and "Relationship" not in package
+        and isinstance(package.get("Identifier"), dict)
+        and set(package["Identifier"]) == {"UID"}
+        and isinstance(package["Identifier"]["UID"], str)
+        and any(
+            isinstance(root, dict) and root.get("Relationship") == "root"
+            and isinstance(root.get("Version"), str) and bool(root["Version"])
+            and isinstance(root.get("Identifier"), dict)
+            and str(root["Identifier"].get("PURL", "")).startswith("pkg:golang/")
+            and isinstance(root.get("DependsOn"), list) and "../" in root["DependsOn"]
+            for root in packages
+        )
+    )
+
+
 def package_coverage(results, file_build=None):
     covered = bool(results)
+    limitations = []
     for result in results:
         packages = result.get("Packages")
         covered = covered and result.get("Class") in ("os-pkgs", "lang-pkgs") and bool(result.get("Type")) and isinstance(packages, list) and bool(packages)
-        if packages is not None:
-            require(isinstance(packages, list), INVALID_PACKAGE_INVENTORY)
-            for package in packages:
-                require(isinstance(package, dict) and isinstance(package.get("Name"), str)
-                        and package["Name"], INVALID_PACKAGE_INVENTORY)
-                go_root = (
-                    "Version" not in package and result.get("Class") == "lang-pkgs"
-                    and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
-                    and bool(result["Target"]) and package.get("ID") == package["Name"]
-                    and re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", package["Name"])
-                    and package.get("AnalyzedBy") == "gobinary"
-                    and (package.get("Relationship") == "root" or (
-                        file_build is not None and "Relationship" not in package
-                        and (result["Target"], package["Name"], package.get("Layer"))
-                        == (file_build["target"], file_build["module"], file_build["layer"])))
-                    and isinstance(package.get("Identifier"), dict)
-                    and isinstance(package["Identifier"].get("PURL"), str)
-                    and package["Identifier"]["PURL"].casefold() == ("pkg:golang/" + package["Name"]).casefold()
-                )
-                go_relative_root = (
-                    "Version" not in package and result.get("Class") == "lang-pkgs"
-                    and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
-                    and bool(result["Target"]) and package.get("ID") == package["Name"] == "../"
-                    and package.get("AnalyzedBy") == "gobinary" and "Relationship" not in package
-                    and isinstance(package.get("Identifier"), dict)
-                    and set(package["Identifier"]) == {"UID"}
-                    and isinstance(package["Identifier"]["UID"], str)
-                    and any(
-                        isinstance(root, dict) and root.get("Relationship") == "root"
-                        and isinstance(root.get("Version"), str) and bool(root["Version"])
-                        and isinstance(root.get("Identifier"), dict)
-                        and str(root["Identifier"].get("PURL", "")).startswith("pkg:golang/")
-                        and isinstance(root.get("DependsOn"), list) and "../" in root["DependsOn"]
-                        for root in packages
-                    )
-                )
-                require(go_root or go_relative_root
-                        or (isinstance(package.get("Version"), str) and package["Version"]),
-                        INVALID_PACKAGE_INVENTORY)
-    return bool(covered)
+        if packages is None:
+            continue
+        require(isinstance(packages, list), INVALID_PACKAGE_INVENTORY)
+        for package in packages:
+            require(isinstance(package, dict) and isinstance(package.get("Name"), str)
+                    and package["Name"], INVALID_PACKAGE_INVENTORY)
+            go_root = go_root_package(result, package, file_build)
+            relative_root = go_relative_root(result, package, packages)
+            replacement = not (go_root or relative_root) and versionless_go_replacement(result, package)
+            require(go_root or relative_root or replacement
+                    or (isinstance(package.get("Version"), str) and package["Version"]),
+                    INVALID_PACKAGE_INVENTORY)
+            if replacement:
+                covered = False
+                limitations.append({"target": result["Target"], "module": package["Name"],
+                                     "version": "unknown", "reason": "Go local/workspace replacement has no version"})
+    return bool(covered), limitations
 
 
 def decide(selection, report, enabled):
@@ -165,7 +202,7 @@ def decide(selection, report, enabled):
     normalized = findings(report, "published full report")
     require(report.get("Metadata", {}).get("OS", {}).get("EOSL") is not True, "published image is end-of-life")
     file_build = reviewed_file_build(selection, report)
-    covered = package_coverage(results, file_build)
+    covered, limitations = package_coverage(results, file_build)
     spec = selection["spec"]
     changed_upstream = spec["upstream"] != {k: selection["published"]["upstream"][k] for k in ("ref", "tag", "digest")}
     requested = []
@@ -185,10 +222,12 @@ def decide(selection, report, enabled):
     value = {"app": selection["app"], "ref": selection["ref"], "proceed": False,
              "force_repromote": False, "findings": len(normalized), "no_fix": no_fix,
              "unsupported": unsupported, "actionable": len(requested), "package_coverage": bool(covered)}
+    if limitations:
+        value["coverage_limitations"] = limitations
     if file_build is not None:
-        value["coverage_limitations"] = [{"target": file_build["target"], "module": file_build["module"],
+        value.setdefault("coverage_limitations", []).extend([{"target": file_build["target"], "module": file_build["module"],
             "version": "unknown", "reason": "reviewed first-party Go file build has no module version",
-            "review_sha256": file_build["review_sha256"]}]
+            "review_sha256": file_build["review_sha256"]}])
     if not covered:
         value["reason"] = "unsupported scanner/package coverage; full report retained"
     elif not requested:

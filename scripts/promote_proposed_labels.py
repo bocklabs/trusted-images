@@ -4,7 +4,8 @@ import json
 import os
 import sys
 
-before = json.load(open(sys.argv[1])) or {}
+with open(sys.argv[1], encoding="utf-8") as stream:
+    before = json.load(stream) or {}
 labels = {
     "org.opencontainers.image.base.digest": os.environ["SELECTED_DIGEST"],
     "org.opencontainers.image.base.name": os.environ["UPSTREAM_REF"]

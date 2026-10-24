@@ -1,0 +1,25 @@
+name: reverify-provenance
+description: Reverify signed provenance history or a changed commit range.
+inputs:
+  base:
+    description: Base commit to inspect.
+    required: true
+  history_only:
+    description: Check history only instead of the base-to-head range.
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        BASE: ${{ inputs.base }}
+        HISTORY_ONLY: ${{ inputs.history_only }}
+      run: |
+        set -euo pipefail
+        if [ "${HISTORY_ONLY}" = true ]; then
+          python3 scripts/reverify_signing.py --history-only "${BASE}"
+        else
+          python3 scripts/reverify_signing.py --base "${BASE}"
+        fi

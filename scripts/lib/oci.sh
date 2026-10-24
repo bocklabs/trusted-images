@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Shared OCI helpers for local composite actions.
+
+source "$(dirname "${BASH_SOURCE[0]}")/registry.sh"
+
+load_oci_archive() {
+  local skopeo="$1" archive="$2" target="$3"
+  run_skopeo "$skopeo" \
+    copy --preserve-digests \
+    oci:/workspace/candidate-oci:candidate \
+    "docker-archive:/workspace/${archive}:${target}"
+  docker load --input "$archive"
+  docker image inspect "$target" --format '{{.Id}}'
+}

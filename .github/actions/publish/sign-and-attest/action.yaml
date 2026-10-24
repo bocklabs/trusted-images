@@ -1,0 +1,53 @@
+name: sign-and-attest
+description: Sign and attest published digest
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  skip_copy:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  gh_token:
+    description: Workflow input.
+    required: false
+  actor:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        SKIP_COPY: ${{ inputs.skip_copy }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        GH_TOKEN: ${{ inputs.gh_token }}
+        ACTOR: ${{ inputs.actor }}
+      run: |
+        set -euo pipefail
+        IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
+        RECORD="resolved-provenance.json"
+        git fetch origin main
+        if [ "${SKIP_COPY}" = true ]; then
+          source scripts/lib/provenance.sh
+          resolve_provenance "${RECORD}"
+          if git ls-tree --name-only origin/main -- "provenance/${APP}/current.json" | grep -q .; then
+            git show "origin/main:provenance/${APP}/current.json" > current-at-verification.json
+          fi
+          exit 0
+        fi
+        python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > existing-provenance.json
+        if jq -e 'type == "object"' existing-provenance.json > /dev/null; then
+          echo "FATAL: immutable image already has provenance; a fresh revision is required"; exit 1
+        fi
+        printf '%s' "${GH_TOKEN}" | cosign login ghcr.io --username "${ACTOR}" --password-stdin
+        cosign sign --yes --bundle sign-bundle.json "${IMAGE}"
+        cosign attest --yes --bundle sbom-bundle.json --predicate trivy-full.cdx.json --type cyclonedx "${IMAGE}"
