@@ -231,8 +231,14 @@ def validate_child_manifest(selected: dict, manifest_path: Path, config_path: Pa
         raise ValueError("child config platform disagrees with linux/amd64")
 
 
-def select_child(index: dict, manifest_path: Path, config_path: Path):
-    selected = select_amd64_child(index)
+def select_child(index_path: Path, manifest_path: Path, config_path: Path):
+    index = load_json(index_path, "upstream index")
+    if index.get("mediaType") in IMAGE_MANIFEST_TYPES:
+        require(index_path.read_bytes() == manifest_path.read_bytes(),
+                "child manifest differs from pinned upstream manifest bytes")
+        selected = {"digest": sha256_file(index_path), "size": index_path.stat().st_size}
+    else:
+        selected = select_amd64_child(index)
     validate_child_manifest(selected, manifest_path, config_path)
     return selected["digest"]
 
@@ -1505,11 +1511,10 @@ def validate_decision(decision):
 def run_resolve_only(args) -> int:
     if not args.selected_digest_out:
         raise ValueError("--resolve-only requires --selected-digest-out")
-    index = load_json(Path(args.index), "upstream index")
     if sha256_file(Path(args.index)) != args.upstream_index_digest:
         raise ValueError("upstream index bytes do not match the inventory digest")
     child_digest = select_child(
-        index, Path(args.child_manifest), Path(args.child_config)
+        Path(args.index), Path(args.child_manifest), Path(args.child_config)
     )
     out = Path(args.selected_digest_out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -1527,12 +1532,11 @@ def validate_candidate_inputs(args):
         or not args.proposed_tag.strip()
     ):
         raise ValueError("--run-id, --run-attempt, or --proposed-tag is invalid")
-    index = load_json(Path(args.index), "upstream index")
     index_digest = sha256_file(Path(args.index))
     if index_digest != args.upstream_index_digest:
         raise ValueError("upstream index bytes do not match the inventory digest")
     child_digest = select_child(
-        index, Path(args.child_manifest), Path(args.child_config)
+        Path(args.index), Path(args.child_manifest), Path(args.child_config)
     )
     candidate_digest = args.candidate_digest or child_digest
     if not DIGEST_RE.fullmatch(candidate_digest):

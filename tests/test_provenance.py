@@ -258,7 +258,7 @@ class ProvenanceTests(unittest.TestCase):
         argv = [sys.executable, str(GENERATOR)]
         for key, value in flags.items():
             argv += [key, value]
-        return subprocess.run(argv, capture_output=True, text=True)
+        return subprocess.run(argv, capture_output=True, text=True, check=False)
 
     def test_current_identity_preserves_bytes_across_daily_metadata_refresh(self):
         result = self.run_generator(self.flags())
@@ -289,6 +289,18 @@ class ProvenanceTests(unittest.TestCase):
         self.assertIn("[provenance]", result.stdout + result.stderr)
         self.assertIn(field, result.stdout + result.stderr)
         self.assertFalse(self.out.exists())
+
+    def test_single_manifest_preserves_equal_root_and_child_digests(self) -> None:
+        self.decision["upstream_index_digest"] = CHILD_DIGEST
+        self.decision_path.write_text(json.dumps(self.decision))
+        flags = self.flags()
+        flags["--upstream-digest"] = CHILD_DIGEST
+        flags["--media-type"] = "application/vnd.oci.image.manifest.v1+json"
+        result = self.run_generator(flags)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        upstream = json.loads(self.out.read_text())["upstream"]
+        self.assertEqual(upstream["index_digest"], CHILD_DIGEST)
+        self.assertEqual(upstream["selected_child_digest"], CHILD_DIGEST)
 
     def test_valid_record_persists_complete_policy_evidence(self) -> None:
         result = self.run_generator(self.flags())
@@ -470,8 +482,9 @@ class ProvenanceTests(unittest.TestCase):
         self.assert_fails_closed(self.run_generator(flags), "expired")
 
     def test_legacy_multi_platform_records_remain_readable(self) -> None:
-        import reverify_signing
         from unittest.mock import patch
+
+        import reverify_signing
 
         root = self.out.parents[2]
         current = json.loads((REPO_ROOT / "provenance/postgres-exporter/current.json").read_bytes())

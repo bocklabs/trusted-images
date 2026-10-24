@@ -122,6 +122,12 @@
       "matchPackageNames": ["mcr.microsoft.com/playwright"],
       "matchFileNames": ["inventory/playwright/image.yaml"],
       "automerge": false
+    },
+    {
+      "description": "Keep the project on the supported Python version.",
+      "matchManagers": ["pyenv"],
+      "matchFileNames": [".python-version"],
+      "enabled": false
     }
   ]
 }

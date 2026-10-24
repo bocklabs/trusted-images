@@ -48,6 +48,15 @@ class TagAllocationTests(unittest.TestCase):
             "platforms": list(platforms),
         }
 
+    def test_single_manifest_allocates_and_reuses_its_verified_identity(self) -> None:
+        for observations, expected in (
+            ([], ("v1.2.3-bocklabs.1", False, False, False)),
+            ([self.observation(1, index=DIGEST_A)],
+             ("v1.2.3-bocklabs.1", True, False, False)),
+        ):
+            with self.subTest(observations=observations):
+                self.assertEqual(self.select("v1.2.3", DIGEST_A, DIGEST_A, observations), expected)
+
     def test_normal_rerun_uses_newest_matching_revision(self) -> None:
         result = self.select(
             "v1.2.3",
@@ -1205,6 +1214,62 @@ class CleanChildTracerTests(unittest.TestCase):
         env["PATH"] = f"{self.bin}:{env['PATH']}"
         env["FAKE_SPOOL"] = str(self.spool)
         return subprocess.run(argv, capture_output=True, text=True, env=env, check=False)
+
+    def test_upstream_steps_resolve_a_pinned_single_manifest(self):
+        steps = yaml.safe_load(WORKFLOW.read_text())["jobs"]["validate"]["steps"]
+        selected = [next(s for s in steps if s["name"] == name) for name in
+                    ("Fetch upstream index", "Resolve the exact linux/amd64 child")]
+        manifest = json.loads(self.child.read_text())
+        manifest["layers"] = []
+        self.child.write_text(json.dumps(manifest))
+        digest = "sha256:" + hashlib.sha256(self.child.read_bytes()).hexdigest()
+        self.write_fake("docker", f"""
+import shutil, sys
+from pathlib import Path
+args = sys.argv[1:]
+if 'inspect' in args:
+    assert args[-1] == 'docker://registry.example/app@{digest}'
+    sys.stdout.buffer.write(Path({str(self.child)!r}).read_bytes())
+elif 'copy' in args:
+    assert args[-2:] == ['docker://registry.example/app@{digest}', 'oci:/workspace/upstream-oci:child']
+    blobs = Path('upstream-oci/blobs/sha256')
+    blobs.mkdir(parents=True)
+    shutil.copyfile({str(self.child)!r}, blobs / '{digest[7:]}')
+    config = Path({str(self.config)!r})
+    import hashlib
+    shutil.copyfile(config, blobs / hashlib.sha256(config.read_bytes()).hexdigest())
+else:
+    raise AssertionError(args)
+""")
+        (self.tmp / "scripts").symlink_to(SCRIPTS, target_is_directory=True)
+        env = {**os.environ, "PATH": f"{self.bin}:{Path(sys.executable).parent}:{os.environ['PATH']}",
+               "SKOPEO_IMAGE": "fixture", "UPSTREAM_REF": "registry.example/app",
+               "UPSTREAM_DIGEST": digest, "UPSTREAM_INDEX_DIGEST": digest,
+               "GITHUB_OUTPUT": str(self.tmp / "github-output")}
+        for step in selected:
+            result = subprocess.run(["bash", "-c", step["run"]], cwd=self.tmp, env=env,
+                                    capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.index.read_bytes(), self.child.read_bytes())
+        self.assertEqual((self.tmp / "selected-child.txt").read_text().strip(), digest)
+
+        with self.subTest(root="missing config"):
+            self.child.write_text(json.dumps({k: v for k, v in manifest.items() if k != "config"}))
+            result = subprocess.run(["bash", "-c", selected[0]["run"]], cwd=self.tmp, env=env,
+                                    capture_output=True, text=True, check=False)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("FATAL: upstream root", result.stdout + result.stderr)
+        self.child.write_text(json.dumps(manifest))
+        platform = {"os": "linux", "architecture": "amd64"}
+        entry = {"digest": digest, "platform": platform}
+        for entries in ([entry, entry], [{**entry, "platform": {**platform, "variant": "v8"}}]):
+            with self.subTest(entries=entries):
+                self.index.write_text(json.dumps({"mediaType": "application/vnd.oci.image.index.v1+json",
+                                                 "manifests": entries}))
+                result = subprocess.run(["bash", "-c", selected[1]["run"]], cwd=self.tmp, env=env,
+                                        capture_output=True, text=True, check=False)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("exactly one linux/amd64 child without a variant", result.stderr)
 
     def candidate_artifact(self, kev_cves=("CVE-2026-0001",)):
         from tests.test_policy import kev_feed, report, vuln, write_json

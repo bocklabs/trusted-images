@@ -32,10 +32,6 @@ def validate_inputs(
         raise ValueError(
             "upstream tag, index digest, and selected child digest must be valid"
         )
-    if upstream_digest == selected_child_digest:
-        raise ValueError(
-            "upstream index digest must differ from the selected child digest"
-        )
     if force_repromote and recover_tag:
         raise ValueError("force_repromote and recover_tag cannot be combined")
     if bool(recover_tag) != bool(recover_candidate_digest):
@@ -83,7 +79,7 @@ def validate_observation(item, pattern, upstream_tag):
 def validate_phase05_observation(tag, index, child, platforms):
     if not isinstance(index, str) or not DIGEST_RE.fullmatch(index):
         raise ValueError(f"Phase 05 observation lacks a valid index digest: {tag}")
-    if not isinstance(child, str) or not DIGEST_RE.fullmatch(child) or child == index:
+    if not isinstance(child, str) or not DIGEST_RE.fullmatch(child):
         raise ValueError(f"Phase 05 observation has an invalid child digest: {tag}")
     if platforms != ["linux/amd64"]:
         raise ValueError(f"Phase 05 observation is not linux/amd64-only: {tag}")
@@ -160,8 +156,8 @@ def select_internal_tag(
         recover_tag,
         recover_candidate_digest,
     )
-    if not isinstance(observations, list):
-        raise ValueError("observations must be a JSON array")
+    if not isinstance(observations, list) or not all(isinstance(item, dict) for item in observations):
+        raise ValueError("observations must be a JSON array of objects")
 
     pattern = re.compile(re.escape(upstream_tag) + r"-bocklabs\.([1-9][0-9]*)$")
     candidates: dict[str, dict] = {}
