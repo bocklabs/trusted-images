@@ -10,7 +10,10 @@ write_published_decision() {
     echo "FATAL: decision filter failed" >&2
     return 1
   fi
-  python3 scripts/promote_decision_integrity.py published candidate-decision.next.json || return
+  python3 scripts/promote_decision_integrity.py published candidate-decision.next.json || {
+    rm -f candidate-decision.next.json
+    return 1
+  }
   mv candidate-decision.next.json candidate-decision.json
   printf 'decision_sha256=%s\n' "$(sha256sum candidate-decision.json | awk '{print $1}')" >> "${GITHUB_OUTPUT:-/dev/null}"
   printf 'now=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT:-/dev/null}"

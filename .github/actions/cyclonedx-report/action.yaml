@@ -16,6 +16,7 @@ runs:
       run: |
         set -euo pipefail
         command -v trivy > /dev/null || { echo "FATAL: trivy is not available on PATH"; exit 1; }
+        command -v jq > /dev/null || { echo "FATAL: jq is not available on PATH"; exit 1; }
         trivy convert --format cyclonedx --scanners vuln --output trivy-full.cdx.json trivy-full.json
         test -s trivy-full.json
         test -s trivy-full.cdx.json

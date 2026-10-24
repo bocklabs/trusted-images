@@ -360,6 +360,7 @@ def probe_http(args, container_name, logs_path):
             f"http probe on {url} never returned {expect} within "
             f"{args.timeout_seconds}s (D-11); last status: {last_status}"
         ), 1 if last_status.isdigit() and int(last_status) >= 100 else 2
+    return f"http probe on {url} did not complete (D-11)", 2
 
 
 def profile_longrunning(

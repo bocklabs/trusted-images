@@ -11,5 +11,4 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        echo "changed=false" >> "$GITHUB_OUTPUT"
         python3 scripts/sync_dispatch_options.py

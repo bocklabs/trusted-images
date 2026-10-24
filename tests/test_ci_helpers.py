@@ -104,13 +104,19 @@ sys.exit(22)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.workspace(root)
-            dockerhub = self.run_bash(script, cwd=root, env={**env, "REF": "docker.io/library/alpine"})
-            self.assertEqual(
-                dockerhub.stdout.splitlines(),
-                ["--src-authfile", "/run/skopeo-auth.json", "user:secret"],
-            )
-            external = self.run_bash(script, cwd=root, env={**env, "REF": "quay.io/example/app"})
-            self.assertEqual(external.stdout, "")
+            for ref in ("docker.io/library/alpine", "alpine", "grafana/grafana"):
+                with self.subTest(ref=ref):
+                    dockerhub = self.run_bash(
+                        script, cwd=root, env={**env, "REF": ref}
+                    )
+                    self.assertEqual(
+                        dockerhub.stdout.splitlines(),
+                        ["--src-authfile", "/run/skopeo-auth.json", "user:secret"],
+                    )
+            for ref in ("quay.io/example/app", "ghcr.io/example/app", "localhost/app"):
+                with self.subTest(ref=ref):
+                    external = self.run_bash(script, cwd=root, env={**env, "REF": ref})
+                    self.assertEqual(external.stdout, "")
 
     def test_inventory_context_rejects_duplicate_output_keys(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

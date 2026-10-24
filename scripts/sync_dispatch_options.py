@@ -9,6 +9,12 @@ import sys
 WORKFLOW = pathlib.Path(".github/workflows/promote.yaml")
 
 
+def emit_changed(changed: bool) -> None:
+    if env_file := os.getenv("GITHUB_OUTPUT"):
+        with open(env_file, "a") as stream:
+            stream.write(f"changed={'true' if changed else 'false'}\n")
+
+
 def main() -> int:
     apps = sorted(p.parent.name for p in pathlib.Path("inventory").glob("*/image.yaml"))
     if not apps:
@@ -24,6 +30,7 @@ def main() -> int:
     current = re.findall(r"^\s+- (\S+)$", match.group(2), re.MULTILINE)
     if current == apps:
         print("options in sync")
+        emit_changed(False)
         return 0
 
     WORKFLOW.write_text(
@@ -35,10 +42,7 @@ def main() -> int:
     removed = [o for o in current if o not in apps]
     print(f"options updated: +{added} -{removed}")
 
-    env_file = os.getenv("GITHUB_OUTPUT")
-    if env_file:
-        with open(env_file, "a") as f:
-            f.write("changed=true\n")
+    emit_changed(True)
     return 0
 
 

@@ -2,7 +2,11 @@
 # Shared registry helpers for local composite actions.
 
 is_dockerhub_ref() {
-  [[ "$1" == docker.io/* ]]
+  local ref="${1#docker://}" first
+  first="${ref%%/*}"
+  [[ "$ref" != */* ]] ||
+    [[ "$first" != *.* && "$first" != *:* && "$first" != localhost ]] ||
+    [[ "$first" == docker.io || "$first" == index.docker.io || "$first" == registry-1.docker.io ]]
 }
 
 set_skopeo_auth() {

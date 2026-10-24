@@ -1297,8 +1297,17 @@ class SyncDispatchOptionsTests(unittest.TestCase):
         )
         (self.root / "inventory" / "app").mkdir(parents=True)
         (self.root / "inventory" / "app" / "image.yaml").touch()
-        result = self.run_sync()
+        output = self.root / "github-output"
+        result = subprocess.run(
+            [sys.executable, str(REPO_ROOT / "scripts/sync_dispatch_options.py")],
+            cwd=self.root,
+            env={**os.environ, "GITHUB_OUTPUT": str(output)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("changed=false", output.read_text(encoding="utf-8"))
         self.assertEqual(result.stdout, "options in sync\n")
 
     def test_empty_inventory_fails(self) -> None:

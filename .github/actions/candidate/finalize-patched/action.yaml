@@ -63,7 +63,10 @@ runs:
         FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
         [ "${FINAL_IMAGE_ID}" = "$(jq -er .config.digest candidate-manifest.json)" ]
         docker image inspect copa:final --format '{{json .Config.Labels}}' > reloaded-labels.json
-        cmp after-labels.json reloaded-labels.json || { echo "FATAL: reloaded candidate labels changed"; exit 1; }
+        [ "$(jq -S . after-labels.json)" = "$(jq -S . reloaded-labels.json)" ] || {
+          echo "FATAL: reloaded candidate labels changed"
+          exit 1
+        }
         sha256sum candidate-manifest.json | awk -v d="${CANDIDATE_MANIFEST_DIGEST}" '{ if ("sha256:" $1 != d) exit 1; print "digest=sha256:" $1 }' > candidate-digest.txt
         cat candidate-digest.txt >> "$GITHUB_OUTPUT"
         echo "image_id=${FINAL_IMAGE_ID}" >> "$GITHUB_OUTPUT"
