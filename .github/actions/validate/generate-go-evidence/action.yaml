@@ -1,0 +1,41 @@
+name: generate-go-evidence
+description: Generate reviewed Go file-build evidence from a published-image scan
+inputs:
+  app:
+    description: Inventory app name.
+    required: true
+  report:
+    description: Trivy JSON report path.
+    required: false
+    default: published-rescan/trivy-full.json
+  selection:
+    description: Published-image selection path.
+    required: false
+    default: published-rescan/selection.json
+  run_url:
+    description: Evidence run URL.
+    required: true
+outputs:
+  changed:
+    description: Whether evidence files changed.
+    value: ${{ steps.run.outputs.changed }}
+  structural_drift:
+    description: Whether reviewed targets, modules, or source repositories changed.
+    value: ${{ steps.run.outputs.structural_drift }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        REPORT: ${{ inputs.report }}
+        SELECTION: ${{ inputs.selection }}
+        RUN_URL: ${{ inputs.run_url }}
+      run: |
+        set -euo pipefail
+        python3 scripts/generate_go_file_build.py \
+          --app "${APP}" \
+          --report "${REPORT}" \
+          --selection "${SELECTION}" \
+          --run-url "${RUN_URL}"

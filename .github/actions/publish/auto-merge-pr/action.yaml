@@ -1,5 +1,5 @@
 name: auto-merge-pr
-description: Auto-merge signed provenance PR
+description: Auto-merge a reviewed pull request
 inputs:
   gh_token:
     description: Workflow input.

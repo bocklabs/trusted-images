@@ -1,0 +1,36 @@
+{
+  "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
+  "ref": "ghcr.io/bocklabs/grafana:13.2.4-bocklabs.1@sha256:e2ce9168b6f02a1b1ef39151562b88ad8817388d8ab98eb67ff3fb44bc15a607",
+  "config_digest": "sha256:a82c77b48f855ddfe9583b2c968e5218798dc3d9aa8c302d85c453327b0efbe2",
+  "upstream_child_digest": "sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b",
+  "target": "usr/share/grafana/data/plugins-bundled/prometheus/gpx_grafana-prometheus-datasource_linux_amd64",
+  "module": "./pkg/promlib",
+  "layer": {
+    "Digest": "sha256:769c05bb609d68b3cc67fb6dd664f81e42f4690f36163b321a1c23c6b694901f",
+    "DiffID": "sha256:5ed8daca7d5df36951edd502643150f1bac07fb9b85911a1ad4ae4d795644de5"
+  },
+  "binary_sha256": "ee2b4e699130b6a4c0382df20abd4b6e88580d81940150aedc45823a464d7966",
+  "source": {
+    "repository": "https://github.com/grafana/grafana-prometheus-datasource",
+    "revision": "6d21418acde6ce31c9f7a6418a88758842a881bb",
+    "tag": "v0.0.0-20260929115645-6d21418acde6",
+    "files": {
+      "go.mod": {
+        "url": "https://raw.githubusercontent.com/grafana/grafana-prometheus-datasource/6d21418acde6ce31c9f7a6418a88758842a881bb/go.mod",
+        "sha256": "fd23f133aec7529f83f1d867168777b9e5520f3ad37fe4c1da24465c681e83be"
+      }
+    }
+  },
+  "build_info": {
+    "program": "github.com/grafana/grafana-prometheus-datasource/pkg",
+    "main_module": "github.com/grafana/grafana-prometheus-datasource",
+    "module_version": "v0.0.0-20260929115645-6d21418acde6",
+    "go_version": "go1.27.1",
+    "sha256": "03d687caad9136e984ebd6a0a1a8b6df0977705505b27a6fcc94f4a3247f5d88",
+    "go_package_count": 110,
+    "versioned_go_package_count": 110,
+    "vcs_revision": "6d21418acde6ce31c9f7a6418a88758842a881bb"
+  },
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40111544136",
+  "limitation": "The reviewed Go package has no module version in the scanned binary. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
+}

@@ -1,0 +1,74 @@
+name: push-generated-pr
+description: Commit generated repository files and create or refresh their PR
+inputs:
+  gh_token:
+    description: GitHub token with contents and pull-request write access.
+    required: true
+  branch:
+    description: Branch to create or refresh.
+    required: true
+  commit_message:
+    description: Commit message.
+    required: true
+  pr_title:
+    description: Pull request title.
+    required: true
+  pr_body:
+    description: Pull request body.
+    required: true
+  paths:
+    description: Paths to stage from the generated checkout.
+    required: false
+    default: inventory
+outputs:
+  changed:
+    description: Whether the branch was updated.
+    value: ${{ steps.run.outputs.changed }}
+  head_sha:
+    description: Branch head after the push.
+    value: ${{ steps.run.outputs.head_sha }}
+  pr_url:
+    description: Pull request URL.
+    value: ${{ steps.run.outputs.pr_url }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+        BRANCH: ${{ inputs.branch }}
+        COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        PR_TITLE: ${{ inputs.pr_title }}
+        PR_BODY: ${{ inputs.pr_body }}
+        PATHS: ${{ inputs.paths }}
+      run: |
+        set -euo pipefail
+        [ -n "${GH_TOKEN}" ] || { echo "FATAL: generated PR token is empty"; exit 1; }
+        [ -n "${PATHS}" ] || { echo "FATAL: generated PR paths are empty"; exit 1; }
+        echo "changed=false" >> "$GITHUB_OUTPUT"
+        git config user.name "bocklabs-release[bot]"
+        git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
+        git fetch origin main:refs/remotes/origin/main
+        git checkout -B "$BRANCH" origin/main
+        git add -A -- ${PATHS}
+        if git diff --cached --quiet; then
+          echo "generated files already synchronized"
+          exit 0
+        fi
+        git commit -m "$COMMIT_MESSAGE"
+        REMOTE_SHA="$(git ls-remote origin "refs/heads/${BRANCH}" | awk '{print $1}')"
+        if [ -n "${REMOTE_SHA}" ]; then
+          git push --force-with-lease="refs/heads/${BRANCH}:${REMOTE_SHA}" origin "$BRANCH"
+        else
+          git push origin "$BRANCH"
+        fi
+        PR_URL="$(gh pr list --head "$BRANCH" --base main --state open --json url --jq '.[0].url // ""')"
+        if [ -z "${PR_URL}" ]; then
+          PR_URL="$(gh pr create --head "$BRANCH" --base main --title "$PR_TITLE" --body "$PR_BODY")"
+        else
+          gh pr edit "$PR_URL" --title "$PR_TITLE" --body "$PR_BODY"
+        fi
+        echo "changed=true" >> "$GITHUB_OUTPUT"
+        echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"

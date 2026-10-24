@@ -485,6 +485,7 @@ case "$1 $2" in
     [ "$MODE" != create-error ] || exit 7
     echo https://github.com/example/repo/pull/1
     ;;
+  "pr edit") exit 0 ;;
   "pr merge") exit 0 ;;
   *) exit 9 ;;
 esac
@@ -494,8 +495,19 @@ esac
             for mode, expected in (("existing", 0), ("missing", 0), ("create-error", 7), ("list-error", 7)):
                 with self.subTest(mode=mode):
                     trace.write_text("")
-                    env = {**os.environ, "PATH": f"{root}:{os.environ['PATH']}",
-                           "MODE": mode, "TRACE": str(trace), "GH_TOKEN": "test-token"}
+                    env = {
+                        **os.environ,
+                        "PATH": f"{root}:{os.environ['PATH']}",
+                        "MODE": mode,
+                        "TRACE": str(trace),
+                        "GH_TOKEN": "test-token",
+                        "BRANCH": "chore/sync-dispatch-options",
+                        "COMMIT_MESSAGE": "chore: sync promote dispatch options with inventory",
+                        "PR_TITLE": "chore: sync promote dispatch options with inventory",
+                        "PR_BODY": "Auto-generated from inventory/.",
+                        "PATHS": ".github/workflows/promote.yaml",
+                        "GITHUB_OUTPUT": str(root / "output"),
+                    }
                     result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True, check=False)
                     self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
                     if mode == "existing":

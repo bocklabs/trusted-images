@@ -117,7 +117,21 @@ jobs:
         uses: ./.github/actions/validate/sync-dispatch-options
 
       - name: Push options PR
+        id: options
         if: steps.sync.outputs.changed == 'true'
-        uses: ./.github/actions/validate/push-options-pr
+        uses: ./.github/actions/validate/push-generated-pr
         with:
           gh_token: ${{ steps.app-token.outputs.token }}
+          branch: chore/sync-dispatch-options
+          commit_message: "chore: sync promote dispatch options with inventory"
+          pr_title: "chore: sync promote dispatch options with inventory"
+          pr_body: Auto-generated from inventory/.
+          paths: .github/workflows/promote.yaml
+
+      - name: Auto-merge options PR
+        if: steps.options.outputs.changed == 'true'
+        uses: ./.github/actions/publish/auto-merge-pr
+        with:
+          gh_token: ${{ steps.app-token.outputs.token }}
+          pr_url: ${{ steps.options.outputs.pr_url }}
+          head_sha: ${{ steps.options.outputs.head_sha }}
