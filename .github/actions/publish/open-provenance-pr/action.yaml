@@ -59,7 +59,7 @@ runs:
         GIT_ASKPASS="$(mktemp)"
         GENERATED="$(mktemp)"
         trap 'rm -f "${GIT_ASKPASS}" "${GENERATED}"' EXIT
-        printf '#!/bin/sh\ncase "$1" in *Username*) echo x-access-token ;; *Password*) echo "$GH_TOKEN" ;; *) exit 1 ;; esac\n' > "${GIT_ASKPASS}"
+        printf '#!/bin/sh\ncase "$1" in *[Uu]sername*) echo x-access-token ;; *[Pp]assword*) echo "$GH_TOKEN" ;; *) exit 1 ;; esac\n' > "${GIT_ASKPASS}"
         chmod 700 "${GIT_ASKPASS}"
         export GIT_ASKPASS GIT_ASKPASS_REQUIRE=force GIT_TERMINAL_PROMPT=0
         REMOTE="https://github.com/${REPO}.git"

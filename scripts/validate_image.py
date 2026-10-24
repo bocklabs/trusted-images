@@ -1,53 +1,3 @@
-#!/usr/bin/env python3
-"""Validate one promoted candidate image: static checks + runtime profile.
-
-Invoked by the promote workflow's validate job with the resolved inventory
-entry (schema v2 spec.validation plus the workflow-side D-04 defaults).
-Order of operations:
-
-  1. Static checks (VAL-01/D-20/D-14): --index-file is the exact candidate
-     image manifest (indexes are rejected), its runtime architecture must be
-     exactly linux/amd64, and the candidate config must preserve the selected
-     upstream child config except for additions to the four permitted OCI
-     provenance labels. Manifest annotations are recorded separately.
-  2. Runtime profile (VAL-02), selected by --validation-type:
-       http      candidate runs detached under --network none (D-07); a
-                 digest-pinned curl sidecar joins the candidate netns via
-                 --network container:<name> and polls the port until
-                 --expect-status within --timeout-seconds (2s interval);
-                 then the D-11 post-probe liveness check applies.
-       process   candidate runs detached under --network none and must
-                 still be running when --duration-seconds elapses (D-11).
-       oneshot   candidate runs blocking under the coreutils timeout
-                 wrapper (--timeout-seconds) and must exit with a code
-                 exactly equal to --expected-exit (D-11); the command argv
-                 is appended after the image ref.
-       Both long-running profiles (http, process) enforce the D-10 health
-       gate: when the image defines a HEALTHCHECK the container must reach
-       healthy within the stay-running window; unhealthy observed at any
-       poll, or starting never reaching healthy by the deadline, fails.
-       With no HEALTHCHECK defined the profile check is the sole gate and
-       the evidence records none-defined — no health expectation is
-       invented.
-   3. Evidence: validation-evidence.json (--evidence-out) is written on
-      EVERY exit path; a failed check writes result=fail evidence first,
-      then prints a FATAL line naming the failed invariant, then exits 1
-       (usage/config errors exit 2).
-
-
-Docker container logs are appended incrementally to
-<evidence-dir>/validation-logs/<app>.log on every poll iteration. Detached
-candidates remain available after exit until the profile captures their logs
-and removes them in its finally block.
-
-Untrusted-image execution happens only inside the ephemeral validate job on
-a GitHub-hosted runner (ADR-004). Every docker interaction routes through a
-single subprocess call site (docker() below) so the test suite can stub the
-docker binary via PATH.
-
-stdlib only.
-"""
-
 import argparse
 import copy
 import hashlib
@@ -281,16 +231,6 @@ def wait_for_healthy(
     logs_path: Path,
     health: dict,
 ) -> tuple[str | None, int]:
-    """D-10 gate, shared by both long-running profiles.
-
-    Polls .State.Health.Status on the named container only when the image
-    config defines a Healthcheck: unhealthy (or gone) fails immediately;
-    starting that has not reached healthy by the deadline fails with the
-    stuck state named; healthy lands in evidence as final_status healthy.
-    With no Healthcheck defined the profile check is the sole gate and
-    evidence records none-defined (D-10 — no expectation invented).
-    None on pass, FATAL reason on failure.
-    """
     if not healthcheck_defined:
         health["final_status"] = "none-defined"
         return None, 0
@@ -360,7 +300,7 @@ def probe_http(args, container_name, logs_path):
             f"http probe on {url} never returned {expect} within "
             f"{args.timeout_seconds}s (D-11); last status: {last_status}"
         ), 1 if last_status.isdigit() and int(last_status) >= 100 else 2
-    return f"http probe on {url} did not complete (D-11)", 2
+    raise RuntimeError(f"http probe on {url} exited without a result")
 
 
 def profile_longrunning(
@@ -374,14 +314,6 @@ def profile_longrunning(
     logs_path: Path,
     health: dict,
 ) -> tuple[str | None, int]:
-    """D-07/D-08/D-10/D-11 http and process profiles.
-
-    Both run the candidate detached under --network none and share the
-    D-10 health gate, the stay-running window, and the D-11 liveness
-    assert; the http profile additionally probes the port with a
-    digest-pinned curl sidecar joined via --network container:<name>
-    before the health gate applies. None on pass, FATAL reason on failure.
-    """
     ok, out = docker(
         *docker_run_args(True, container_name, ref_digest, command, env_map)
     )

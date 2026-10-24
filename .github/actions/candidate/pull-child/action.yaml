@@ -27,10 +27,10 @@ runs:
         set -euo pipefail
         source scripts/lib/registry.sh
         if is_dockerhub_ref "${UPSTREAM_REF}"; then
-          [ -n "${DOCKERHUB_USERNAME}" ] && [ -n "${DOCKERHUB_TOKEN}" ] || {
-            echo "FATAL: Docker Hub credentials are empty"
+          if [ -z "${DOCKERHUB_USERNAME}" ] || [ -z "${DOCKERHUB_TOKEN}" ]; then
+            echo "FATAL: Docker Hub credentials are empty" >&2
             exit 1
-          }
+          fi
           trap 'docker logout docker.io > /dev/null 2>&1 || true' EXIT
           printf '%s' "${DOCKERHUB_TOKEN}" | docker login docker.io --username "${DOCKERHUB_USERNAME}" --password-stdin
         fi

@@ -8,13 +8,19 @@ load_oci_archive() {
   run_skopeo "$skopeo" \
     copy --preserve-digests \
     oci:/workspace/candidate-oci:candidate \
-    "docker-archive:/workspace/${archive}:${target}"
-  docker load --input "$archive" || { echo "FATAL: docker load failed" >&2; return 1; }
-  local image_id
-  image_id="$(docker image inspect "$target" --format '{{.Id}}')" || {
-    echo "FATAL: loaded image is missing" >&2
+    "docker-archive:/workspace/${archive}:${target}" || {
+    echo "FATAL: OCI archive copy failed for ${archive}" >&2
     return 1
   }
-  [ -n "${image_id}" ] || { echo "FATAL: loaded image has no ID" >&2; return 1; }
+  docker load --input "$archive" || {
+    echo "FATAL: docker load failed for ${archive}" >&2
+    return 1
+  }
+  local image_id
+  image_id="$(docker image inspect "$target" --format '{{.Id}}')" || {
+    echo "FATAL: loaded image is missing: ${target}" >&2
+    return 1
+  }
+  [ -n "${image_id}" ] || { echo "FATAL: loaded image has no ID (target=${target})" >&2; return 1; }
   printf '%s\n' "${image_id}"
 }

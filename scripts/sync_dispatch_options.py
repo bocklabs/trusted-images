@@ -11,7 +11,7 @@ WORKFLOW = pathlib.Path(".github/workflows/promote.yaml")
 
 def emit_changed(changed: bool) -> None:
     if env_file := os.getenv("GITHUB_OUTPUT"):
-        with open(env_file, "a") as stream:
+        with open(env_file, "a", encoding="utf-8") as stream:
             stream.write(f"changed={'true' if changed else 'false'}\n")
 
 
