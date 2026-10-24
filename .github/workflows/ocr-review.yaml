@@ -12,10 +12,6 @@ permissions:
   contents: read
   pull-requests: write
 
-env:
-  OCR_VERSION: '1.12.11'
-  OCR_NO_UPDATE: '1'
-
 jobs:
   code-review:
     runs-on: ubuntu-latest
@@ -35,7 +31,6 @@ jobs:
           llm_model: ${{ secrets.OCR_LLM_MODEL }}
           llm_use_anthropic: 'false'
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          ocr_version: ${{ env.OCR_VERSION }}
           sticky_summary: 'true'
           llm_reasoning_effort: max
           effort: high
