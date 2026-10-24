@@ -93,20 +93,47 @@ sys.exit(22)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("not readable", result.stderr)
 
-    def test_skopeo_credentials_follow_registry_reference(self) -> None:
+    def test_skopeo_authfile_follows_registry_reference(self) -> None:
         script = (
             "source scripts/lib/registry.sh; "
-            'set_skopeo_credentials "$REF" --creds; '
-            'if [ "${#SKOPEO_CREDS[@]}" -gt 0 ]; then printf "%s\\n" "${SKOPEO_CREDS[@]}"; fi'
+            'set_skopeo_auth "$REF"; '
+            'if [ "${#SKOPEO_AUTH[@]}" -gt 0 ]; then printf "%s\\n" "${SKOPEO_AUTH[@]}"; '
+            'jq -r .auths[].auth "$SKOPEO_AUTHFILE" | base64 -d; fi'
         )
         env = {"DOCKERHUB_USERNAME": "user", "DOCKERHUB_TOKEN": "secret"}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.workspace(root)
             dockerhub = self.run_bash(script, cwd=root, env={**env, "REF": "docker.io/library/alpine"})
-            self.assertEqual(dockerhub.stdout.splitlines(), ["--creds", "user:secret"])
+            self.assertEqual(
+                dockerhub.stdout.splitlines(),
+                ["--src-authfile", "/run/skopeo-auth.json", "user:secret"],
+            )
             external = self.run_bash(script, cwd=root, env={**env, "REF": "quay.io/example/app"})
             self.assertEqual(external.stdout, "")
+
+    def test_inventory_context_rejects_duplicate_output_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.workspace(root)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            python = bin_dir / "python3"
+            python.write_text("#!/bin/sh\nprintf 'upstream_ref=a\\nupstream_ref=b\\n'\n")
+            python.chmod(0o755)
+            output = root / "github-output"
+            output.write_text("")
+            result = self.run_bash(
+                "source scripts/lib/inventory.sh; emit_inventory_context candidate image app",
+                cwd=root,
+                env={
+                    "PATH": f"{bin_dir}:{os.environ['PATH']}",
+                    "GITHUB_OUTPUT": str(output),
+                },
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("FATAL: duplicate inventory output key", result.stderr)
+            self.assertEqual(output.read_text(), "")
 
     def test_app_name_allowlist_rejects_paths_and_shell_metacharacters(self) -> None:
         script = 'source scripts/lib/validate.sh; require_app_name "$APP"'

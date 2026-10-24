@@ -31,9 +31,9 @@ runs:
         set -euo pipefail
         source scripts/lib/registry.sh
         SKOPEO="${SKOPEO_IMAGE}"
-        set_skopeo_credentials "${UPSTREAM_REF}" --creds
+        set_skopeo_auth "${UPSTREAM_REF}" --authfile
         run_skopeo "$SKOPEO" \
-          inspect --retry-times 3 --raw ${SKOPEO_CREDS[@]+"${SKOPEO_CREDS[@]}"} \
+          inspect --retry-times 3 --raw ${SKOPEO_AUTH[@]+"${SKOPEO_AUTH[@]}"} \
           "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
         jq -e '
           if .mediaType == "application/vnd.oci.image.index.v1+json"

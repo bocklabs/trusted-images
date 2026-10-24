@@ -17,6 +17,7 @@ runs:
           echo "FATAL: original candidate reference is invalid"
           exit 1
         }
+        docker rm -f copa-action > /dev/null 2>&1 || true
         docker run --net=host \
           --mount="type=bind,source=${PWD},target=/data" \
           --mount=type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
@@ -25,6 +26,7 @@ runs:
           -ec '
             copa --version > /data/copa-version-before.txt
             grep -Eq "^copa version v?0\\.15\\.0$" /data/copa-version-before.txt
+            docker buildx rm copa-action > /dev/null 2>&1 || true
             docker buildx create --name=copa-action
             docker buildx use --default copa-action
             set +e

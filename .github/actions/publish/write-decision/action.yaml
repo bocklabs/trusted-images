@@ -1,5 +1,5 @@
 name: write-decision
-description: Write the verified publication digest into the decision
+description: Write the publication decision and its verified digest
 inputs:
   app:
     description: Workflow input.

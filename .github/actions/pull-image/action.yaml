@@ -17,6 +17,6 @@ runs:
         set -euo pipefail
         for attempt in 1 2 3; do
           if docker pull "${IMAGE}"; then break; fi
-          [ "${attempt}" -lt 3 ] || exit 1
+          [ "${attempt}" -lt 3 ] || { echo "FATAL: failed to pull ${IMAGE} after ${attempt} attempts"; exit 1; }
           sleep "$((attempt * 2))"
         done

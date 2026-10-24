@@ -4,6 +4,7 @@ inputs:
   npm_config_loglevel:
     description: Workflow input.
     required: false
+    default: error
 runs:
   using: composite
   steps:

@@ -135,6 +135,7 @@ runs:
             exit 1
           }
           RECORDED_URL="$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${PROVENANCE}")"
+          RECORDED_URL="${RECORDED_URL%/}"
           ORIGINAL_RUN_ID="${RECORDED_URL##*/}"
           if [ -n "${RECOVERY_RUN_ID}" ] && [ "${RECOVERY_RUN_ID}" != "${ORIGINAL_RUN_ID}" ]; then
             echo "FATAL: recovery_run_id does not match the existing provenance record"

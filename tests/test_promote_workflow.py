@@ -495,7 +495,7 @@ esac
                 with self.subTest(mode=mode):
                     trace.write_text("")
                     env = {**os.environ, "PATH": f"{root}:{os.environ['PATH']}",
-                           "MODE": mode, "TRACE": str(trace)}
+                           "MODE": mode, "TRACE": str(trace), "GH_TOKEN": "test-token"}
                     result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True, check=False)
                     self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
                     if mode == "existing":
@@ -726,8 +726,8 @@ esac
             fetch,
         )
         self.assertNotIn("copy --all", fetch)
-        self.assertIn('set_skopeo_credentials "${UPSTREAM_REF}" --creds', fetch)
-        self.assertNotIn("--src-creds", fetch)
+        self.assertIn('set_skopeo_auth "${UPSTREAM_REF}" --authfile', fetch)
+        self.assertNotIn("--creds", fetch)
         registry = (REPO_ROOT / "scripts/lib/registry.sh").read_text(encoding="utf-8")
         self.assertIn("copy --retry-times 3 --preserve-digests --remove-signatures", registry)
         self.assertIn('"docker://${1}@${2}" "oci:/workspace/${3}"', registry)
@@ -753,10 +753,9 @@ esac
 
     def test_skopeo_copy_writes_workspace_files_as_runner(self) -> None:
         registry = (REPO_ROOT / "scripts/lib/registry.sh").read_text(encoding="utf-8")
-        self.assertIn(
-            'docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$@"',
-            registry,
-        )
+        self.assertIn('docker run --rm --user "$(id -u):$(id -g)"', registry)
+        self.assertIn('-v "$PWD":/workspace "$@"', registry)
+        self.assertIn(":/run/skopeo-auth.json:ro", registry)
         self.assertIn('run_skopeo "$SKOPEO"', self.workflow)
 
     def test_recovery_uses_original_inventory_as_data(self) -> None:
@@ -961,8 +960,8 @@ elif args[0] == 'run':
             docker.write_text(
                 "#!/usr/bin/env python3\nimport json, os, subprocess, sys\n"
                 "args = sys.argv[1:]\n"
-                "with open('docker-calls', 'a') as out: out.write(json.dumps(args) + '\\n')\n"
                 "if args[0] == 'run':\n"
+                "    with open('docker-calls', 'a') as out: out.write(json.dumps(args) + '\\n')\n"
                 "    index = args.index('-ec')\n"
                 "    sys.exit(subprocess.call(['sh', '-ec', args[index + 1].replace('/data/', './'), *args[index + 2:]]))\n"
             )

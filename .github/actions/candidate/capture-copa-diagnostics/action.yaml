@@ -18,6 +18,7 @@ runs:
           -e 's/(Bearer )[A-Za-z0-9._~+\/-]+/\1[redacted]/gI' \
           -e 's/((token|password|secret|authorization)[=:][[:space:]]*)[^[:space:]&]+/\1[redacted]/gI' \
           > copa-diagnostics.txt
+        docker rm -f copa-action > /dev/null 2>&1 || true
         docker image inspect ghcr.io/project-copacetic/copa-action:v0.15.0 --format '{{.Id}}' > copa-action-image-id-after.txt
         classification=succeeded
         if [ "${COPA_OUTCOME}" != success ]; then

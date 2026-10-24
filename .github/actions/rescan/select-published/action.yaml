@@ -4,9 +4,10 @@ inputs:
   automatic_rescan:
     description: Workflow input.
     required: false
+    default: 'false'
   input_app:
     description: Workflow input.
-    required: false
+    required: true
   input_force_repromote:
     description: Workflow input.
     required: false

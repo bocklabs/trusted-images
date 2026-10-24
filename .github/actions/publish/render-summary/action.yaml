@@ -105,14 +105,16 @@ runs:
 
         # D-14.2: the panel displays what the validate job recorded in the
         # evidence artifact — never recomputes or overrides the result.
-        if [ -f validation-evidence.json ]; then
-          V_RESULT="$(jq -r '.validation.result // "unknown"' validation-evidence.json)"
-          V_TYPE="$(jq -r '.validation.type // "?"' validation-evidence.json)"
-          V_PARAMS="$(jq -c '.validation.params // {}' validation-evidence.json)"
-          V_HSTATUS="$(jq -r '.validation.health.final_status // "?"' validation-evidence.json)"
-          V_TIMINGS="$(jq -r '.validation.timings // {} | "\(.started_at // "?") → \(.finished_at // "?") (\(.duration_seconds // "?")s)"' validation-evidence.json)"
-          V_RUNNER="$(jq -r '.validation.runner // "?"' validation-evidence.json)"
-          V_BASELINE="$(jq -c '{entrypoint: .validation.baseline.entrypoint, cmd: .validation.baseline.cmd, env: .validation.baseline.env}' validation-evidence.json)"
+        EVIDENCE=validation-evidence.json
+        [ -s "$EVIDENCE" ] || EVIDENCE=candidate-artifact/validation-evidence.json
+        if [ -f "$EVIDENCE" ]; then
+          V_RESULT="$(jq -r '.validation.result // "unknown"' "$EVIDENCE")"
+          V_TYPE="$(jq -r '.validation.type // "?"' "$EVIDENCE")"
+          V_PARAMS="$(jq -c '.validation.params // {}' "$EVIDENCE")"
+          V_HSTATUS="$(jq -r '.validation.health.final_status // "?"' "$EVIDENCE")"
+          V_TIMINGS="$(jq -r '.validation.timings // {} | "\(.started_at // "?") → \(.finished_at // "?") (\(.duration_seconds // "?")s)"' "$EVIDENCE")"
+          V_RUNNER="$(jq -r '.validation.runner // "?"' "$EVIDENCE")"
+          V_BASELINE="$(jq -c '{entrypoint: .validation.baseline.entrypoint, cmd: .validation.baseline.cmd, env: .validation.baseline.env}' "$EVIDENCE")"
           VALID_RESULT_LINE="N/A — result '${V_RESULT}' not recorded"
           if [ "${V_RESULT}" = "pass" ]; then
             VALID_RESULT_LINE="PASS — validation recorded pass"
@@ -150,7 +152,7 @@ runs:
           echo
           echo "| Fact | Result |"
           echo "| --- | --- |"
-          if [ -f validation-evidence.json ]; then
+          if [ -f "$EVIDENCE" ]; then
             echo "| Profile + params | ${V_TYPE} — ${V_PARAMS} |"
             echo "| Validation result | ${VALID_RESULT_LINE} |"
             echo "| Health (D-10) | ${HEALTH_LINE} |"

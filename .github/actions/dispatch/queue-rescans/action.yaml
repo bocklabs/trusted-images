@@ -6,7 +6,7 @@ inputs:
     required: false
   repo:
     description: Workflow input.
-    required: false
+    required: true
 runs:
   using: composite
   steps:

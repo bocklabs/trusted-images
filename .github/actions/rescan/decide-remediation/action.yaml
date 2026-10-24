@@ -4,6 +4,7 @@ inputs:
   remediation_enabled:
     description: Workflow input.
     required: false
+    default: 'false'
 outputs:
   force_repromote:
     description: Workflow output.

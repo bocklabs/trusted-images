@@ -21,5 +21,5 @@ runs:
         UPSTREAM_TAG: ${{ inputs.upstream_tag }}
       run: |
         set -euo pipefail
-        printf '{"app":"%s","upstream_ref":"%s","upstream_tag":"%s"}\n' \
-          "${APP}" "${UPSTREAM_REF}" "${UPSTREAM_TAG}" > secobserve-upload.json
+        jq -n --arg app "${APP}" --arg upstream_ref "${UPSTREAM_REF}" --arg upstream_tag "${UPSTREAM_TAG}" \
+          '{app:$app,upstream_ref:$upstream_ref,upstream_tag:$upstream_tag}' > secobserve-upload.json
