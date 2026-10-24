@@ -62,7 +62,7 @@ for (const rel of entries) {
   console.log(`match: ${rel} -> ${match.groups.depName} @ ${match.groups.currentValue} ${digestShort}`);
 }
 
-// D-05 negative fixture: nothing may sit between the ref/tag/digest lines the
+// Negative fixture: nothing may sit between the ref/tag/digest lines the
 // custom manager binds — an inserted field breaks extraction AND Renovate's
 // auto-replace would destroy the insertion on the next upstream bump. The
 // fixture is v2-shaped with a field between tag: and digest:; asserted to be

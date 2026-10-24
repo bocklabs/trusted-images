@@ -29,7 +29,7 @@ runs:
         [[ "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "FATAL: destination tag has no valid digest"; exit 1; }
         printf '%s\n' "${PUSHED}" > pushed-digest.txt
         [ "${PUSHED}" = "${CANDIDATE_DIGEST}" ] || {
-          echo "FATAL: digest divergence (PROMO-01/D-22): pushed=${PUSHED} candidate=${CANDIDATE_DIGEST}"
+          echo "FATAL: digest divergence: pushed=${PUSHED} candidate=${CANDIDATE_DIGEST}"
           exit 1
         }
         echo "digest equality: PASS (${PUSHED})"

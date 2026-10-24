@@ -131,7 +131,7 @@ runs:
             (.upstream.selected_child_digest | type == "string") and
             (.internal.digest | type == "string")
           ' "${PROVENANCE}" > /dev/null || {
-            echo "FATAL: recovery provenance is not a Phase 05 single-platform record"
+            echo "FATAL: recovery provenance is not a single-platform record"
             exit 1
           }
           RECORDED_URL="$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${PROVENANCE}")"

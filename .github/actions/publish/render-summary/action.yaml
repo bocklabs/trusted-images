@@ -103,8 +103,8 @@ runs:
           SIGNING_LINE="PASS — signature and CycloneDX attestation verified"
         fi
 
-        # D-14.2: the panel displays what the validate job recorded in the
-        # evidence artifact — never recomputes or overrides the result.
+        # The panel displays what the validate job recorded in the evidence
+        # artifact. It never recomputes or overrides the result.
         EVIDENCE=validation-evidence.json
         [ -s "$EVIDENCE" ] || EVIDENCE=candidate-artifact/validation-evidence.json
         if [ -f "$EVIDENCE" ]; then
@@ -123,15 +123,15 @@ runs:
           fi
           HEALTH_LINE="N/A — HEALTHCHECK status '${V_HSTATUS}' not mapped"
           if [ "${V_HSTATUS}" = "healthy" ]; then
-            HEALTH_LINE="PASS — HEALTHCHECK reached healthy (D-10)"
+            HEALTH_LINE="PASS — HEALTHCHECK reached healthy"
           elif [ "${V_HSTATUS}" = "none-defined" ]; then
-            HEALTH_LINE="PASS — no HEALTHCHECK defined; profile check is the gate (D-10)"
+            HEALTH_LINE="PASS — no HEALTHCHECK defined; profile check is the gate"
           elif [ "${V_HSTATUS}" = "not-applicable" ]; then
             HEALTH_LINE="N/A — oneshot profile: container exits by design"
           elif [ "${V_HSTATUS}" = "unhealthy" ] || [ "${V_HSTATUS}" = "gone" ]; then
-            HEALTH_LINE="FAIL — HEALTHCHECK status '${V_HSTATUS}' (D-10)"
+            HEALTH_LINE="FAIL — HEALTHCHECK status '${V_HSTATUS}'"
           elif [ "${V_HSTATUS}" = "starting" ]; then
-            HEALTH_LINE="FAIL — HEALTHCHECK stuck in 'starting' at the deadline (D-10)"
+            HEALTH_LINE="FAIL — HEALTHCHECK stuck in 'starting' at the deadline"
           fi
         fi
 
@@ -155,7 +155,7 @@ runs:
           if [ -f "$EVIDENCE" ]; then
             echo "| Profile + params | ${V_TYPE} — ${V_PARAMS} |"
             echo "| Validation result | ${VALID_RESULT_LINE} |"
-            echo "| Health (D-10) | ${HEALTH_LINE} |"
+            echo "| Health | ${HEALTH_LINE} |"
             echo "| Timings | ${V_TIMINGS} |"
             echo "| Runner | ${V_RUNNER} |"
             echo "| Baseline (entrypoint/cmd/env) | ${V_BASELINE} |"

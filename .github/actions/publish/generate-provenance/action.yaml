@@ -118,11 +118,11 @@ runs:
         echo "now=${NOW}" >> "$GITHUB_OUTPUT"
         # The actual pushed digest; upstream digest when nothing was pushed now (idempotent skip).
         INTERNAL_DIGEST="${CANDIDATE_DIGEST}"
-        # D-14: the validation block comes verbatim from the validate job's
-        # evidence artifact, never hand-typed; result must be pass (fail-closed).
+        # The validation block comes verbatim from the validate job's evidence
+        # artifact, never hand-typed. The result must be pass.
         VALIDATION_RESULT="$(jq -r '.validation.result' validation-evidence.json)"
         if [ "${VALIDATION_RESULT}" != "pass" ]; then
-          echo "FATAL: validation evidence result is '${VALIDATION_RESULT}', not 'pass' — refusing to write provenance (D-12/D-14)"
+          echo "FATAL: validation evidence result is '${VALIDATION_RESULT}', not 'pass' — refusing to write provenance"
           exit 1
         fi
         VALIDATION_TYPE="$(jq -r '.validation.type' validation-evidence.json)"

@@ -81,7 +81,7 @@ runs:
         VALIDATION_ENV: ${{ inputs.validation_env }}
       run: |
         set -euo pipefail
-        # D-04: workflow-side defaults wherever the inventory entry carries no deviation.
+        # Workflow defaults apply wherever the inventory entry does not override them.
         ARGS=(
           --app "${APP}"
           --ref "${CANDIDATE_REF}"

@@ -1,3 +1,43 @@
+#!/usr/bin/env python3
+"""Validate one promoted candidate image with static checks and a runtime profile.
+
+The validate job supplies the resolved inventory validation settings and the
+workflow defaults.
+
+1. Static checks: --index-file must be an exact image manifest, not an index.
+   Its runtime platform must be linux/amd64. Its config must preserve the
+   selected upstream child config except for additions to the four permitted
+   OCI provenance labels. Manifest annotations are recorded separately.
+2. Runtime profiles, selected by --validation-type:
+   http: run detached with --network none. A digest-pinned curl sidecar joins
+         the candidate network namespace and polls the port until
+         --expect-status within --timeout-seconds. The container must still
+         run when --duration-seconds elapses.
+   process: run detached with --network none and require it to stay running
+         through --duration-seconds.
+   oneshot: run blocking under the coreutils timeout wrapper and require the
+         exit code to equal --expected-exit.
+   Long-running profiles enforce the health gate: if a HEALTHCHECK exists, the
+   container must become healthy within the stay-running window. Unhealthy,
+   gone, or still starting at the deadline fails. If no HEALTHCHECK exists,
+   the profile check is the gate and evidence records none-defined.
+3. Evidence: validation-evidence.json is written on every exit path. A failed
+   check writes result=fail evidence, prints a FATAL line naming the failed
+   invariant, and exits 1. Usage and configuration errors exit 2.
+
+Docker container logs are appended incrementally to
+<evidence-dir>/validation-logs/<app>.log on every poll iteration. Detached
+candidates remain available after exit until the profile captures their logs
+and removes them in its finally block.
+
+Untrusted-image execution happens only inside the ephemeral validate job on a
+GitHub-hosted runner (ADR-004). Every docker interaction routes through a
+single subprocess call site (docker() below) so the test suite can stub the
+docker binary via PATH.
+
+stdlib only.
+"""
+
 import argparse
 import copy
 import hashlib
@@ -45,37 +85,35 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--port", type=int, default=None, help="http: port (required for http)"
     )
-    parser.add_argument(
-        "--path", default="/", help="http: request path (D-04 default /)"
-    )
+    parser.add_argument("--path", default="/", help="http: request path")
     parser.add_argument(
         "--expect-status",
         type=int,
         default=200,
-        help="http: expected status (D-04 default 200)",
+        help="http: expected status",
     )
     parser.add_argument(
         "--duration-seconds",
         type=int,
         default=30,
-        help="stay-running window (D-04 default 30)",
+        help="stay-running window",
     )
     parser.add_argument(
         "--timeout-seconds",
         type=int,
         default=60,
-        help="probe deadline (D-04 default 60)",
+        help="probe deadline",
     )
     parser.add_argument(
         "--expected-exit",
         type=int,
         default=0,
-        help="oneshot: expected exit code (D-04 default 0)",
+        help="oneshot: expected exit code",
     )
     parser.add_argument(
         "--expected-platforms",
         default="linux/amd64",
-        help="comma list; each must be present in the index (D-04 default linux/amd64)",
+        help="comma list; each must be present in the index",
     )
     parser.add_argument(
         "--command",
@@ -220,7 +258,7 @@ def health_result(status: object) -> tuple[str | None, int, str | None]:
     if status == "healthy":
         return "healthy", 0, None
     if status in ("unhealthy", "gone"):
-        return status, 1 if status == "unhealthy" else 2, f"health gate failed: status '{status}' (D-10)"
+        return status, 1 if status == "unhealthy" else 2, f"health gate failed: status '{status}'"
     return None, 0, None
 
 
@@ -231,6 +269,14 @@ def wait_for_healthy(
     logs_path: Path,
     health: dict,
 ) -> tuple[str | None, int]:
+    """Wait for an image-defined HEALTHCHECK to become healthy.
+
+    Polls .State.Health.Status only when the image config defines a
+    Healthcheck. Unhealthy or gone fails immediately. Starting that does not
+    reach healthy by the deadline fails with the stuck state named. Healthy is
+    recorded as final_status healthy. With no Healthcheck defined, the profile
+    check is the sole gate and evidence records none-defined.
+    """
     if not healthcheck_defined:
         health["final_status"] = "none-defined"
         return None, 0
@@ -246,7 +292,7 @@ def wait_for_healthy(
             health["final_status"] = status if isinstance(status, str) else "unknown"
             return (
                 f"health gate failed: stuck in '{status}' at the "
-                f"durationSeconds deadline (D-10)"
+                "durationSeconds deadline"
             ), 1 if status == "starting" else 2
         sleep_until(deadline)
 
@@ -298,7 +344,7 @@ def probe_http(args, container_name, logs_path):
     if last_status != expect:
         return (
             f"http probe on {url} never returned {expect} within "
-            f"{args.timeout_seconds}s (D-11); last status: {last_status}"
+            f"{args.timeout_seconds}s; last status: {last_status}"
         ), 1 if last_status.isdigit() and int(last_status) >= 100 else 2
     raise RuntimeError(f"http probe on {url} exited without a result")
 
@@ -314,6 +360,13 @@ def profile_longrunning(
     logs_path: Path,
     health: dict,
 ) -> tuple[str | None, int]:
+    """Run the http or process profile.
+
+    Both run the candidate detached under --network none and share the health
+    gate, stay-running window, and liveness assertion. The http profile
+    additionally probes the port with a digest-pinned curl sidecar joined to
+    the candidate network namespace before the health gate applies.
+    """
     ok, out = docker(
         *docker_run_args(True, container_name, ref_digest, command, env_map)
     )
@@ -337,7 +390,7 @@ def profile_longrunning(
         ok, out = docker("inspect", container_name)
         running = inspect_value(out, ("State", "Running")) if ok else None
         if running is not True:
-            return "container not running when durationSeconds elapsed (D-11)", 1 if running is False else 2
+            return "container not running when durationSeconds elapsed", 1 if running is False else 2
         return None, 0
     finally:
         docker("rm", "-f", container_name)
@@ -351,12 +404,11 @@ def profile_oneshot(
     env_map: dict[str, str],
     logs_path: Path,
 ) -> tuple[str | None, int]:
-    """D-08/D-11 oneshot profile. None on pass, FATAL reason on failure.
+    """Run the oneshot profile.
 
-    Runs blocking under the coreutils timeout wrapper (D-08 runaway
-    backstop — timeout kills the docker client; the job-level rm below and
-    the VM teardown cover the container) and asserts exact exit-code
-    equality with expectedExit (D-11 — no range, no tolerance).
+    Runs blocking under the coreutils timeout wrapper. Timeout kills the docker
+    client; the job-level rm below and the VM teardown cover the container.
+    The exit code must exactly equal expectedExit.
     """
     run_args = docker_run_args(False, container_name, ref_digest, command, env_map)
     try:
@@ -374,7 +426,7 @@ def profile_oneshot(
     if actual in {124, 125, 126, 127}:
         return f"oneshot execution failed with status {actual}", 2
     if actual != args.expected_exit:
-        return f"oneshot exit code {actual} != expectedExit {args.expected_exit} (D-11)", 1
+        return f"oneshot exit code {actual} != expectedExit {args.expected_exit}", 1
     return None, 0
 
 
@@ -383,7 +435,7 @@ def runtime_inputs(args: argparse.Namespace) -> tuple[list[str], dict[str, str]]
         p.strip() for p in args.expected_platforms.split(",") if p.strip()
     ]
     if expected_platforms != ["linux/amd64"]:
-        raise ValueError("new candidates must validate exactly linux/amd64 (D-20)")
+        raise ValueError("new candidates must validate exactly linux/amd64")
     try:
         command = json.loads(args.command)
     except json.JSONDecodeError as exc:
@@ -411,15 +463,11 @@ def load_manifest(path: Path) -> dict:
     except json.JSONDecodeError as exc:
         raise ValueError(f"index file is not valid JSON ({exc})") from exc
     if not isinstance(index, dict) or not index:
-        raise ValueError("candidate manifest is not an object (D-20)")
+        raise ValueError("candidate manifest is not an object")
     if "manifests" in index:
-        raise ValueError(
-            "candidate manifest is an index; indexes cannot be published (D-20)"
-        )
+        raise ValueError("candidate manifest is an index; indexes cannot be published")
     if index.get("mediaType") not in IMAGE_MANIFEST_TYPES:
-        raise ValueError(
-            "candidate manifest is not an OCI/Docker image manifest (D-20)"
-        )
+        raise ValueError("candidate manifest is not an OCI/Docker image manifest")
     return index
 
 
@@ -433,7 +481,7 @@ def inspected_image(ref: str, parse_label: str) -> dict:
         if not isinstance(config, dict):
             raise TypeError("Config is not an object")
     except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
-        raise ValueError(f"{parse_label} (VAL-01): {exc}") from exc
+        raise ValueError(f"{parse_label}: {exc}") from exc
     return inspected
 
 
@@ -516,7 +564,7 @@ def candidate_runtime_binding(
     if inspected.get("Os") != "linux" or inspected.get("Architecture") != "amd64":
         return (
             (
-                "candidate platform mismatch (D-20): expected linux/amd64, "
+                "candidate platform mismatch: expected linux/amd64, "
                 f"got {inspected.get('Os')}/{inspected.get('Architecture')}"
             ),
             None,
@@ -531,7 +579,7 @@ def candidate_runtime_binding(
             args.local_image is not None,
         )
         if drift:
-            return "runtime configuration drift (D-14): " + "; ".join(drift), None, None
+            return "runtime configuration drift: " + "; ".join(drift), None, None
         ev["validation"]["baseline"]["config"] = baseline_config
         ev["validation"]["candidate_config"] = config
         ev["validation"]["config_drift"] = drift

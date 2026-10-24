@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stubbed-docker negative + happy suite for scripts/validate_image.py (D-15 layer 1).
+"""Stubbed-docker negative and happy suite for scripts/validate_image.py.
 
 Runs the validation CLI as a subprocess with a fake `docker` shim prepended
 to PATH: the shim records every argv to a spool file, emits canned
@@ -293,7 +293,7 @@ class ValidateImageTests(unittest.TestCase):
     def assert_container_removed(self) -> None:
         self.assertTrue(any(e[:2] == ["rm", "-f"] for e in self.spool_entries()))
 
-    # --- negative cases (D-15 layer 1) ---
+    # --- negative cases ---
 
     def test_wrong_port_fails(self) -> None:
         self.write_scenario(
@@ -306,7 +306,7 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         output = result.stdout + result.stderr
         self.assertIn("FATAL", output)
-        self.assertIn("D-11", output)
+        self.assertIn("never returned", output)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "fail")
         self.assert_common_evidence(ev)
@@ -336,7 +336,7 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
         self.assertIn("FATAL", output)
-        self.assertIn("D-11", output)
+        self.assertIn("expectedExit", output)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "fail")
         self.assert_common_evidence(ev)
@@ -353,7 +353,7 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
         self.assertIn("FATAL", output)
-        self.assertIn("D-11", output)
+        self.assertIn("not running when durationSeconds elapsed", output)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "fail")
         self.assert_common_evidence(ev)
@@ -381,7 +381,7 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
         self.assertIn("FATAL", output)
-        self.assertIn("D-11", output)
+        self.assertIn("not running when durationSeconds elapsed", output)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "fail")
         self.assert_common_evidence(ev)
@@ -401,7 +401,8 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
         self.assertIn("FATAL", output)
-        self.assertIn("D-10", output)
+        self.assertIn("health gate failed", output)
+        self.assertIn("stuck in 'starting'", output)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "fail")
         self.assertTrue(ev["validation"]["health"]["defined"])
@@ -418,7 +419,8 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         output = result.stdout + result.stderr
         self.assertIn("FATAL", output)
-        self.assertIn("D-10", output)
+        self.assertIn("health gate failed", output)
+        self.assertIn("unhealthy", output)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "fail")
         self.assertEqual(ev["validation"]["health"]["final_status"], "unhealthy")
@@ -514,7 +516,7 @@ class ValidateImageTests(unittest.TestCase):
         self.assert_common_evidence(ev)
         self.assert_network_isolated()
 
-    # --- D-14/D-20 static candidate contracts ---
+    # --- static candidate contracts ---
 
     def baseline_args(self) -> tuple:
         return (
@@ -697,7 +699,7 @@ class ValidateImageTests(unittest.TestCase):
             "process", (*self.baseline_args(), "--duration-seconds", "0")
         )
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        self.assertIn("D-14", result.stdout + result.stderr)
+        self.assertIn("runtime configuration drift", result.stdout + result.stderr)
 
     def test_added_null_runtime_field_is_drift(self) -> None:
         self.write_scenario(
@@ -730,7 +732,7 @@ class ValidateImageTests(unittest.TestCase):
             (*self.patched_args(), "--duration-seconds", "0"),
         )
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        self.assertIn("D-14", result.stdout + result.stderr)
+        self.assertIn("runtime configuration drift", result.stdout + result.stderr)
         self.assertIn("runtime config changed", result.stdout + result.stderr)
         self.assertIn("config field 'Env'", result.stdout + result.stderr)
         self.assertEqual(self.load_evidence()["validation"]["result"], "fail")
@@ -769,7 +771,7 @@ class ValidateImageTests(unittest.TestCase):
         self.write_scenario({"image_inspect": image_inspect(architecture="arm64")})
         result = self.run_cli("process", ("--duration-seconds", "0"))
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        self.assertIn("D-20", result.stdout + result.stderr)
+        self.assertIn("candidate platform mismatch", result.stdout + result.stderr)
 
         self.index.write_text(
             json.dumps(

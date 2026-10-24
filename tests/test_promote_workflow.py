@@ -152,7 +152,7 @@ class TagAllocationTests(unittest.TestCase):
         observation = self.observation(
             2, child=None, index="", platforms=("linux/amd64", "linux/arm64")
         )
-        with self.assertRaisesRegex(ValueError, "Phase 05"):
+        with self.assertRaisesRegex(ValueError, "single-platform"):
             self.select(
                 "v1.2.3",
                 DIGEST_C,

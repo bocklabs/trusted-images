@@ -649,7 +649,9 @@ class RegistryTests(PromotionScriptTestCase):
             ],
         )
 
-    def test_registry_observations_keep_legacy_digest_out_of_phase05_index(self) -> None:
+    def test_registry_observations_keep_legacy_digest_out_of_single_platform_index(
+        self,
+    ) -> None:
         provenance = self.tmp / "provenance" / APP
         provenance.mkdir(parents=True)
         tag = "v1.2.3-bocklabs.1"
