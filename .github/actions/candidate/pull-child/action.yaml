@@ -28,5 +28,6 @@ runs:
         source scripts/lib/registry.sh
         if is_dockerhub_ref "${UPSTREAM_REF}"; then
           echo "${DOCKERHUB_TOKEN}" | docker login docker.io --username "${DOCKERHUB_USERNAME}" --password-stdin
+          trap 'docker logout docker.io > /dev/null 2>&1 || true' EXIT
         fi
         docker pull "${UPSTREAM_REF}@${SELECTED_DIGEST}"

@@ -18,6 +18,8 @@ runs:
         HISTORY_ONLY: ${{ inputs.history_only }}
       run: |
         set -euo pipefail
+        [ -n "${BASE}" ] || { echo "FATAL: provenance base is empty"; exit 1; }
+        case "${HISTORY_ONLY}" in true|false) ;; *) echo "FATAL: history_only must be true or false"; exit 1 ;; esac
         if [ "${HISTORY_ONLY}" = true ]; then
           python3 scripts/reverify_signing.py --history-only "${BASE}"
         else

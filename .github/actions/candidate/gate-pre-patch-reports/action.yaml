@@ -21,13 +21,13 @@ runs:
         FIXABLE_SCAN_OUTCOME: ${{ inputs.fixable_scan_outcome }}
       run: |
         set -euo pipefail
-        test -s trivy-full.json
-        test -s trivy-copa.json
-        cp trivy-full.json trivy-before-full.json
         [ "${FULL_SCAN_OUTCOME}" = success ] && [ "${FIXABLE_SCAN_OUTCOME}" = success ] || {
           echo "FATAL: pre-patch Trivy scan failed; reports retained"
           exit 1
         }
+        [ -s trivy-full.json ] || { echo "FATAL: full pre-patch report is missing"; exit 1; }
+        [ -s trivy-copa.json ] || { echo "FATAL: fixable pre-patch report is missing"; exit 1; }
+        cp trivy-full.json trivy-before-full.json
         jq -e '.Metadata.OS.EOSL != true' trivy-full.json > /dev/null || {
           echo "FATAL: Metadata.OS.EOSL blocked the pre-patch candidate"
           exit 1

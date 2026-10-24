@@ -50,6 +50,7 @@ runs:
         python3 scripts/promote_label_changes.py before-labels.json after-labels.json
         docker save copa:final --output candidate-final.tar
         SKOPEO="${SKOPEO_IMAGE}"
+        rm -rf candidate-oci
         run_skopeo "$SKOPEO" copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
         python3 scripts/finalize_candidate_config.py candidate-oci child-config.json
         CANDIDATE_MANIFEST_DIGEST="$(jq -er '.manifests[0].digest' candidate-oci/index.json)"
@@ -61,6 +62,8 @@ runs:
         docker load --input candidate-final.tar
         FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
         [ "${FINAL_IMAGE_ID}" = "$(jq -er .config.digest candidate-manifest.json)" ]
+        docker image inspect copa:final --format '{{json .Config.Labels}}' > reloaded-labels.json
+        cmp after-labels.json reloaded-labels.json || { echo "FATAL: reloaded candidate labels changed"; exit 1; }
         sha256sum candidate-manifest.json | awk -v d="${CANDIDATE_MANIFEST_DIGEST}" '{ if ("sha256:" $1 != d) exit 1; print "digest=sha256:" $1 }' > candidate-digest.txt
         cat candidate-digest.txt >> "$GITHUB_OUTPUT"
         echo "image_id=${FINAL_IMAGE_ID}" >> "$GITHUB_OUTPUT"

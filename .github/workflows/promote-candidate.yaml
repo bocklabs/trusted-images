@@ -187,8 +187,6 @@ jobs:
         uses: ./.github/actions/candidate/registry-credentials
         with:
           upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
-          dockerhub_username: ${{ vars.DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Trivy full scan
         id: scanbefore
@@ -197,8 +195,8 @@ jobs:
         env:
           TRIVY_EXIT_ON_EOL: '1'
           TRIVY_IMAGE_SRC: remote
-          TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
-          TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
+          TRIVY_USERNAME: ${{ steps.creds.outputs.is_dockerhub == 'true' && vars.DOCKERHUB_USERNAME || '' }}
+          TRIVY_PASSWORD: ${{ steps.creds.outputs.is_dockerhub == 'true' && secrets.DOCKERHUB_TOKEN || '' }}
         with:
           version: v0.76.1
           image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
@@ -225,8 +223,8 @@ jobs:
         env:
           TRIVY_EXIT_ON_EOL: '1'
           TRIVY_IMAGE_SRC: remote
-          TRIVY_USERNAME: ${{ steps.creds.outputs.user }}
-          TRIVY_PASSWORD: ${{ steps.creds.outputs.pass }}
+          TRIVY_USERNAME: ${{ steps.creds.outputs.is_dockerhub == 'true' && vars.DOCKERHUB_USERNAME || '' }}
+          TRIVY_PASSWORD: ${{ steps.creds.outputs.is_dockerhub == 'true' && secrets.DOCKERHUB_TOKEN || '' }}
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true' # no action input exists — env pass-through; reuse scan 1's DB
         with:

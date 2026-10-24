@@ -92,12 +92,12 @@ runs:
             registry-page.json > /dev/null || { echo "FATAL: malformed registry tag page"; exit 1; }
         jq -r '.tags // [] | .[]' registry-page.json >> registry-tags.txt
         URL="$(python3 scripts/promote_registry_next_link.py)"
-          PREFIX="https://ghcr.io/v2/bocklabs/${APP}/tags/list"
-          if [ -n "${URL}" ] && [[ "${URL}" != "${PREFIX}" && "${URL}" != "${PREFIX}?"* ]]; then
-            echo "FATAL: registry pagination left the expected package URL"
-            exit 1
-          fi
-          FIRST_PAGE=false
+        PREFIX="https://ghcr.io/v2/bocklabs/${APP}/tags/list"
+        if [ -n "${URL}" ] && [[ "${URL}" != "${PREFIX}" && "${URL}" != "${PREFIX}?"* ]]; then
+          echo "FATAL: registry pagination left the expected package URL"
+          exit 1
+        fi
+        FIRST_PAGE=false
         done
 
         python3 scripts/promote_registry_candidates.py "${UPSTREAM_TAG}" registry-tags.txt > registry-candidates.txt

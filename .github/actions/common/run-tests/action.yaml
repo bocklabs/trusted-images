@@ -20,5 +20,5 @@ runs:
           uv run --locked coverage report --fail-under=80
           uv run --locked coverage xml
         else
-          python -m unittest discover -s tests -v
+          uv run --locked python -m unittest discover -s tests -v
         fi
