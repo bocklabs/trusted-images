@@ -4,7 +4,7 @@
 emit_inventory_context() {
   local stage="$1" image="$2" app="$3" tag="${4:-}" out key
   local -A seen=()
-  out="$(python3 scripts/promote_inventory.py "$stage" "$image" "$app" "$tag")" || return
+  out="$(python3 scripts/promote_inventory.py "$stage" "$image" "$app" "$tag")" || return $?
   while IFS= read -r line; do
     key="${line%%=*}"
     [ -z "${seen[$key]+x}" ] || { echo "FATAL: duplicate inventory output key" >&2; return 1; }

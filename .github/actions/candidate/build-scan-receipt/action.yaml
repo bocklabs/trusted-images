@@ -40,6 +40,7 @@ runs:
           exit 1
         }
         trivy --cache-dir "$TRIVY_CACHE_DIR" --version > trivy-db-meta-after.txt
+        [ -s trivy-db-meta-1.txt ] || { echo "FATAL: first Trivy DB metadata is missing"; exit 1; }
         diff -u trivy-db-meta-1.txt trivy-db-meta-after.txt
         BEFORE_SHA="$(sha256sum trivy-before-full.json | awk '{print $1}')"
         AFTER_SHA="$(sha256sum trivy-after-full.json | awk '{print $1}')"

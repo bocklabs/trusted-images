@@ -56,8 +56,12 @@ runs:
         git config user.name "bocklabs-release[bot]"
         git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
         [ -n "${GH_TOKEN}" ] || { echo "FATAL: provenance token is empty"; exit 1; }
-        APP_TOKEN="${GH_TOKEN}"
-        REMOTE="https://x-access-token:${APP_TOKEN}@github.com/${REPO}.git"
+        GIT_ASKPASS="$(mktemp)"
+        trap 'rm -f "${GIT_ASKPASS}"' EXIT
+        printf '#!/bin/sh\ncase "$1" in *Username*) echo x-access-token ;; *) echo "$GH_TOKEN" ;; esac\n' > "${GIT_ASKPASS}"
+        chmod 700 "${GIT_ASKPASS}"
+        export GIT_ASKPASS GIT_TERMINAL_PROMPT=0
+        REMOTE="https://github.com/${REPO}.git"
         GENERATED="$(mktemp)"
         cp generated-provenance.json "${GENERATED}"
         git fetch origin main

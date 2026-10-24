@@ -211,6 +211,31 @@ esac
             self.assertRegex(output.read_text(), r"decision_sha256=[a-f0-9]{64}")
             self.assertRegex(output.read_text(), r"(?m)^now=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
+    def test_write_published_decision_preserves_original_on_integrity_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.workspace(root)
+            artifact = root / "candidate-artifact"
+            artifact.mkdir()
+            original = {"published": {}, "provenance": {"merged": False}}
+            (artifact / "candidate-decision.json").write_text(json.dumps(original))
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            python = bin_dir / "python3"
+            python.write_text("#!/bin/sh\nexit 1\n")
+            python.chmod(0o755)
+            result = self.run_bash(
+                "source scripts/lib/decision.sh; "
+                "write_published_decision '.published.digest = $digest' --arg digest sha256:abc",
+                cwd=root,
+                env={"PATH": f"{bin_dir}:{os.environ['PATH']}", "GITHUB_OUTPUT": str(root / "output")},
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(
+                json.loads((root / "candidate-decision.json").read_text()),
+                original,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

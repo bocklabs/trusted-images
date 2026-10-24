@@ -324,6 +324,9 @@ class ValidateImageTests(unittest.TestCase):
         self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 125})
         result = self.run_cli("oneshot", ("--expected-exit", "0"))
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 130})
+        result = self.run_cli("oneshot", ("--expected-exit", "0"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
 
     def test_oneshot_wrong_exit_fails(self) -> None:
         self.write_scenario({"image_inspect": image_inspect(), "oneshot_exit": 1})

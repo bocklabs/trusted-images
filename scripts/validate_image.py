@@ -439,7 +439,7 @@ def profile_oneshot(
     logs_path.parent.mkdir(parents=True, exist_ok=True)
     logs_path.write_text(proc.stdout + proc.stderr, encoding="utf-8")
     actual = proc.returncode
-    if not 0 <= actual < 124:
+    if actual in {124, 125, 126, 127}:
         return f"oneshot execution failed with status {actual}", 2
     if actual != args.expected_exit:
         return f"oneshot exit code {actual} != expectedExit {args.expected_exit} (D-11)", 1
