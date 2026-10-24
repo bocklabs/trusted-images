@@ -1,0 +1,55 @@
+name: restore-reused
+description: Restore the exact reused candidate
+inputs:
+  gh_token:
+    description: Workflow input.
+    required: false
+  repo:
+    description: Workflow input.
+    required: false
+  app:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  reuse_candidate_digest:
+    description: Workflow input.
+    required: false
+  reuse_run_url:
+    description: Workflow input.
+    required: false
+outputs:
+  candidate_digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.candidate_digest }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ inputs.repo }}
+        APP: ${{ inputs.app }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        REUSE_CANDIDATE_DIGEST: ${{ inputs.reuse_candidate_digest }}
+        REUSE_RUN_URL: ${{ inputs.reuse_run_url }}
+      run: |
+        set -euo pipefail
+        REUSE_RUN_ID="${REUSE_RUN_URL##*/}"
+        [[ "${REUSE_RUN_ID}" =~ ^[1-9][0-9]*$ ]] || { echo "FATAL: reused provenance has no run ID"; exit 1; }
+        gh api "repos/${REPO}/actions/runs/${REUSE_RUN_ID}" > reuse-run.json
+        jq -e --arg repo "${REPO}" '
+          .repository.full_name == $repo and
+          .path == ".github/workflows/promote.yaml" and
+          .status == "completed" and .conclusion == "success"
+        ' reuse-run.json > /dev/null
+        rm -rf reused-candidate
+        gh run download "${REUSE_RUN_ID}" --repo "${REPO}" --name candidate --dir reused-candidate
+        python3 scripts/promote_reused_candidate.py "${REUSE_CANDIDATE_DIGEST}" reused-candidate
+        cp reused-candidate/candidate-manifest.json candidate-manifest.json
+        cp reused-candidate/candidate-decision.json original-candidate-decision.json
+        rm -rf candidate-oci
+        cp -a reused-candidate/candidate-oci candidate-oci
+        echo "candidate_digest=${REUSE_CANDIDATE_DIGEST}" >> "$GITHUB_OUTPUT"

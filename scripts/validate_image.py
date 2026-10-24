@@ -1,47 +1,37 @@
 #!/usr/bin/env python3
-"""Validate one promoted candidate image: static checks + runtime profile.
+"""Validate one promoted candidate image with static checks and a runtime profile.
 
-Invoked by the promote workflow's validate job with the resolved inventory
-entry (schema v2 spec.validation plus the workflow-side D-04 defaults).
-Order of operations:
+The validate job supplies the resolved inventory validation settings and the
+workflow defaults.
 
-  1. Static checks (VAL-01/D-20/D-14): --index-file is the exact candidate
-     image manifest (indexes are rejected), its runtime architecture must be
-     exactly linux/amd64, and the candidate config must preserve the selected
-     upstream child config except for additions to the four permitted OCI
-     provenance labels. Manifest annotations are recorded separately.
-  2. Runtime profile (VAL-02), selected by --validation-type:
-       http      candidate runs detached under --network none (D-07); a
-                 digest-pinned curl sidecar joins the candidate netns via
-                 --network container:<name> and polls the port until
-                 --expect-status within --timeout-seconds (2s interval);
-                 then the D-11 post-probe liveness check applies.
-       process   candidate runs detached under --network none and must
-                 still be running when --duration-seconds elapses (D-11).
-       oneshot   candidate runs blocking under the coreutils timeout
-                 wrapper (--timeout-seconds) and must exit with a code
-                 exactly equal to --expected-exit (D-11); the command argv
-                 is appended after the image ref.
-       Both long-running profiles (http, process) enforce the D-10 health
-       gate: when the image defines a HEALTHCHECK the container must reach
-       healthy within the stay-running window; unhealthy observed at any
-       poll, or starting never reaching healthy by the deadline, fails.
-       With no HEALTHCHECK defined the profile check is the sole gate and
-       the evidence records none-defined — no health expectation is
-       invented.
-   3. Evidence: validation-evidence.json (--evidence-out) is written on
-      EVERY exit path; a failed check writes result=fail evidence first,
-      then prints a FATAL line naming the failed invariant, then exits 1
-       (usage/config errors exit 2).
-
+1. Static checks: --index-file must be an exact image manifest, not an index.
+   Its runtime platform must be linux/amd64. Its config must preserve the
+   selected upstream child config except for additions to the four permitted
+   OCI provenance labels. Manifest annotations are recorded separately.
+2. Runtime profiles, selected by --validation-type:
+   http: run detached with --network none. A digest-pinned curl sidecar joins
+         the candidate network namespace and polls the port until
+         --expect-status within --timeout-seconds. The container must still
+         run when --duration-seconds elapses.
+   process: run detached with --network none and require it to stay running
+         through --duration-seconds.
+   oneshot: run blocking under the coreutils timeout wrapper and require the
+         exit code to equal --expected-exit.
+   Long-running profiles enforce the health gate: if a HEALTHCHECK exists, the
+   container must become healthy within the stay-running window. Unhealthy,
+   gone, or still starting at the deadline fails. If no HEALTHCHECK exists,
+   the profile check is the gate and evidence records none-defined.
+3. Evidence: validation-evidence.json is written on every exit path. A failed
+   check writes result=fail evidence, prints a FATAL line naming the failed
+   invariant, and exits 1. Usage and configuration errors exit 2.
 
 Docker container logs are appended incrementally to
 <evidence-dir>/validation-logs/<app>.log on every poll iteration. Detached
 candidates remain available after exit until the profile captures their logs
 and removes them in its finally block.
 
-Untrusted-image execution happens only inside the ephemeral validate job on
-a GitHub-hosted runner (ADR-004). Every docker interaction routes through a
+Untrusted-image execution happens only inside the ephemeral validate job on a
+GitHub-hosted runner (ADR-004). Every docker interaction routes through a
 single subprocess call site (docker() below) so the test suite can stub the
 docker binary via PATH.
 
@@ -64,13 +54,6 @@ CURL_IMAGE = "curlimages/curl:v8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb
 PROFILES = ("http", "process", "oneshot")
 POLL_INTERVAL_SECONDS = 2
 LOGS_DIRNAME = "validation-logs"
-# Pitfall 6: a oneshot container exits under --rm before any incremental
-# docker logs capture can run — record the honest absence in the evidence
-# instead of pretending a log artifact exists.
-ONESHOT_LOG_NOTE = (
-    "no incremental log capture: the oneshot container exits under --rm "
-    "before docker logs can run; container output streams in the job log"
-)
 SHA256_DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
 
 
@@ -102,37 +85,35 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--port", type=int, default=None, help="http: port (required for http)"
     )
-    parser.add_argument(
-        "--path", default="/", help="http: request path (D-04 default /)"
-    )
+    parser.add_argument("--path", default="/", help="http: request path")
     parser.add_argument(
         "--expect-status",
         type=int,
         default=200,
-        help="http: expected status (D-04 default 200)",
+        help="http: expected status",
     )
     parser.add_argument(
         "--duration-seconds",
         type=int,
         default=30,
-        help="stay-running window (D-04 default 30)",
+        help="stay-running window",
     )
     parser.add_argument(
         "--timeout-seconds",
         type=int,
         default=60,
-        help="probe deadline (D-04 default 60)",
+        help="probe deadline",
     )
     parser.add_argument(
         "--expected-exit",
         type=int,
         default=0,
-        help="oneshot: expected exit code (D-04 default 0)",
+        help="oneshot: expected exit code",
     )
     parser.add_argument(
         "--expected-platforms",
         default="linux/amd64",
-        help="comma list; each must be present in the index (D-04 default linux/amd64)",
+        help="comma list; each must be present in the index",
     )
     parser.add_argument(
         "--command",
@@ -273,42 +254,46 @@ def sleep_until(deadline: float) -> None:
         time.sleep(min(POLL_INTERVAL_SECONDS, remaining))
 
 
+def health_result(status: object) -> tuple[str | None, int, str | None]:
+    if status == "healthy":
+        return "healthy", 0, None
+    if status in ("unhealthy", "gone"):
+        return status, 1 if status == "unhealthy" else 2, f"health gate failed: status '{status}'"
+    return None, 0, None
+
+
 def wait_for_healthy(
     container_name: str,
     healthcheck_defined: bool,
     deadline: float,
     logs_path: Path,
     health: dict,
-) -> str | None:
-    """D-10 gate, shared by both long-running profiles.
+) -> tuple[str | None, int]:
+    """Wait for an image-defined HEALTHCHECK to become healthy.
 
-    Polls .State.Health.Status on the named container only when the image
-    config defines a Healthcheck: unhealthy (or gone) fails immediately;
-    starting that has not reached healthy by the deadline fails with the
-    stuck state named; healthy lands in evidence as final_status healthy.
-    With no Healthcheck defined the profile check is the sole gate and
-    evidence records none-defined (D-10 — no expectation invented).
-    None on pass, FATAL reason on failure.
+    Polls .State.Health.Status only when the image config defines a
+    Healthcheck. Unhealthy or gone fails immediately. Starting that does not
+    reach healthy by the deadline fails with the stuck state named. Healthy is
+    recorded as final_status healthy. With no Healthcheck defined, the profile
+    check is the sole gate and evidence records none-defined.
     """
     if not healthcheck_defined:
         health["final_status"] = "none-defined"
-        return None
+        return None, 0
     while True:
         append_logs(logs_path, container_name)
         ok, out = docker("inspect", container_name)
         status = inspect_value(out, ("State", "Health", "Status")) if ok else "gone"
-        if status == "healthy":
-            health["final_status"] = "healthy"
-            return None
-        if status in ("unhealthy", "gone"):
-            health["final_status"] = status
-            return f"health gate failed: status '{status}' (D-10)"
+        final_status, code, reason = health_result(status)
+        if final_status is not None:
+            health["final_status"] = final_status
+            return reason, code
         if time.monotonic() >= deadline:
             health["final_status"] = status if isinstance(status, str) else "unknown"
             return (
                 f"health gate failed: stuck in '{status}' at the "
-                f"durationSeconds deadline (D-10)"
-            )
+                "durationSeconds deadline"
+            ), 1 if status == "starting" else 2
         sleep_until(deadline)
 
 
@@ -353,15 +338,15 @@ def probe_http(args, container_name, logs_path):
         )
         last_status = out.strip() if ok else "sidecar-error"
         if last_status == expect:
-            return None
+            return None, 0
         sleep_until(probe_deadline)
     append_logs(logs_path, container_name)
     if last_status != expect:
         return (
             f"http probe on {url} never returned {expect} within "
-            f"{args.timeout_seconds}s (D-11); last status: {last_status}"
-        )
-    return None
+            f"{args.timeout_seconds}s; last status: {last_status}"
+        ), 1 if last_status.isdigit() and int(last_status) >= 100 else 2
+    raise RuntimeError(f"http probe on {url} exited without a result")
 
 
 def profile_longrunning(
@@ -374,31 +359,30 @@ def profile_longrunning(
     started_mono: float,
     logs_path: Path,
     health: dict,
-) -> str | None:
-    """D-07/D-08/D-10/D-11 http and process profiles.
+) -> tuple[str | None, int]:
+    """Run the http or process profile.
 
-    Both run the candidate detached under --network none and share the
-    D-10 health gate, the stay-running window, and the D-11 liveness
-    assert; the http profile additionally probes the port with a
-    digest-pinned curl sidecar joined via --network container:<name>
-    before the health gate applies. None on pass, FATAL reason on failure.
+    Both run the candidate detached under --network none and share the health
+    gate, stay-running window, and liveness assertion. The http profile
+    additionally probes the port with a digest-pinned curl sidecar joined to
+    the candidate network namespace before the health gate applies.
     """
     ok, out = docker(
         *docker_run_args(True, container_name, ref_digest, command, env_map)
     )
     if not ok:
-        return f"candidate failed to start under --network none: {out}"
+        return f"candidate failed to start under --network none: {out}", 2
     try:
         if args.validation_type == "http":
-            reason = probe_http(args, container_name, logs_path)
+            reason, status = probe_http(args, container_name, logs_path)
             if reason is not None:
-                return reason
+                return reason, status
         deadline = started_mono + args.duration_seconds
-        reason = wait_for_healthy(
+        reason, status = wait_for_healthy(
             container_name, healthcheck_defined, deadline, logs_path, health
         )
         if reason is not None:
-            return reason
+            return reason, status
         remaining = deadline - time.monotonic()
         if remaining > 0:
             time.sleep(remaining)
@@ -406,8 +390,8 @@ def profile_longrunning(
         ok, out = docker("inspect", container_name)
         running = inspect_value(out, ("State", "Running")) if ok else None
         if running is not True:
-            return "container not running when durationSeconds elapsed (D-11)"
-        return None
+            return "container not running when durationSeconds elapsed", 1 if running is False else 2
+        return None, 0
     finally:
         docker("rm", "-f", container_name)
 
@@ -418,13 +402,13 @@ def profile_oneshot(
     ref_digest: str,
     command: list[str],
     env_map: dict[str, str],
-) -> str | None:
-    """D-08/D-11 oneshot profile. None on pass, FATAL reason on failure.
+    logs_path: Path,
+) -> tuple[str | None, int]:
+    """Run the oneshot profile.
 
-    Runs blocking under the coreutils timeout wrapper (D-08 runaway
-    backstop — timeout kills the docker client; the job-level rm below and
-    the VM teardown cover the container) and asserts exact exit-code
-    equality with expectedExit (D-11 — no range, no tolerance).
+    Runs blocking under the coreutils timeout wrapper. Timeout kills the docker
+    client; the job-level rm below and the VM teardown cover the container.
+    The exit code must exactly equal expectedExit.
     """
     run_args = docker_run_args(False, container_name, ref_digest, command, env_map)
     try:
@@ -436,10 +420,14 @@ def profile_oneshot(
         )
     finally:
         docker("rm", "-f", container_name)
+    logs_path.parent.mkdir(parents=True, exist_ok=True)
+    logs_path.write_text(proc.stdout + proc.stderr, encoding="utf-8")
     actual = proc.returncode
+    if actual in {124, 125, 126, 127}:
+        return f"oneshot execution failed with status {actual}", 2
     if actual != args.expected_exit:
-        return f"oneshot exit code {actual} != expectedExit {args.expected_exit} (D-11)"
-    return None
+        return f"oneshot exit code {actual} != expectedExit {args.expected_exit}", 1
+    return None, 0
 
 
 def runtime_inputs(args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
@@ -447,7 +435,7 @@ def runtime_inputs(args: argparse.Namespace) -> tuple[list[str], dict[str, str]]
         p.strip() for p in args.expected_platforms.split(",") if p.strip()
     ]
     if expected_platforms != ["linux/amd64"]:
-        raise ValueError("new candidates must validate exactly linux/amd64 (D-20)")
+        raise ValueError("new candidates must validate exactly linux/amd64")
     try:
         command = json.loads(args.command)
     except json.JSONDecodeError as exc:
@@ -475,15 +463,11 @@ def load_manifest(path: Path) -> dict:
     except json.JSONDecodeError as exc:
         raise ValueError(f"index file is not valid JSON ({exc})") from exc
     if not isinstance(index, dict) or not index:
-        raise ValueError("candidate manifest is not an object (D-20)")
+        raise ValueError("candidate manifest is not an object")
     if "manifests" in index:
-        raise ValueError(
-            "candidate manifest is an index; indexes cannot be published (D-20)"
-        )
+        raise ValueError("candidate manifest is an index; indexes cannot be published")
     if index.get("mediaType") not in IMAGE_MANIFEST_TYPES:
-        raise ValueError(
-            "candidate manifest is not an OCI/Docker image manifest (D-20)"
-        )
+        raise ValueError("candidate manifest is not an OCI/Docker image manifest")
     return index
 
 
@@ -497,7 +481,7 @@ def inspected_image(ref: str, parse_label: str) -> dict:
         if not isinstance(config, dict):
             raise TypeError("Config is not an object")
     except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
-        raise ValueError(f"{parse_label} (VAL-01): {exc}") from exc
+        raise ValueError(f"{parse_label}: {exc}") from exc
     return inspected
 
 
@@ -580,7 +564,7 @@ def candidate_runtime_binding(
     if inspected.get("Os") != "linux" or inspected.get("Architecture") != "amd64":
         return (
             (
-                "candidate platform mismatch (D-20): expected linux/amd64, "
+                "candidate platform mismatch: expected linux/amd64, "
                 f"got {inspected.get('Os')}/{inspected.get('Architecture')}"
             ),
             None,
@@ -595,7 +579,7 @@ def candidate_runtime_binding(
             args.local_image is not None,
         )
         if drift:
-            return "runtime configuration drift (D-14): " + "; ".join(drift), None, None
+            return "runtime configuration drift: " + "; ".join(drift), None, None
         ev["validation"]["baseline"]["config"] = baseline_config
         ev["validation"]["candidate_config"] = config
         ev["validation"]["config_drift"] = drift
@@ -628,9 +612,8 @@ def validation_profile_reason(
     logs_path,
 ):
     if args.validation_type == "oneshot":
-        ev["validation"]["logs_note"] = ONESHOT_LOG_NOTE
         ev["validation"]["health"]["final_status"] = "not-applicable"
-        return profile_oneshot(args, container_name, ref_digest, command, env_map)
+        return profile_oneshot(args, container_name, ref_digest, command, env_map, logs_path)
     return profile_longrunning(
         args,
         container_name,
@@ -671,7 +654,7 @@ def main() -> int:
         evidence_out.write_text(json.dumps(ev, indent=2) + "\n", encoding="utf-8")
         print(evidence_out)
 
-    def fail(reason: str, code: int = 1) -> int:
+    def fail(reason: str, code: int = 2) -> int:
         ev["validation"]["result"] = "fail"
         finish()
         print(f"FATAL: {reason}")
@@ -711,7 +694,7 @@ def main() -> int:
 
     healthcheck_defined = record_baseline_contract(ev, config, inspected)
     container_name = f"val-{args.app}-{os.environ.get('GITHUB_RUN_ID') or os.getpid()}"
-    reason = validation_profile_reason(
+    reason, status = validation_profile_reason(
         args,
         ev,
         ref_digest,
@@ -723,10 +706,14 @@ def main() -> int:
         logs_path,
     )
     if reason is not None:
-        return fail(reason)
+        return fail(reason, status)
     finish()
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"FATAL: validation execution failed: {exc}")
+        sys.exit(2)

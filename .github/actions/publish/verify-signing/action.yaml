@@ -1,0 +1,54 @@
+name: verify-signing
+description: Verify signing evidence
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  skip_copy:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  trivy_version:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        SKIP_COPY: ${{ inputs.skip_copy }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        TRIVY_VERSION: ${{ inputs.trivy_version }}
+      run: |
+        set -euo pipefail
+        IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
+        if [ "${SKIP_COPY}" = true ]; then
+          RECORD="resolved-provenance.json"
+          jq -e 'type == "object"' "${RECORD}" > /dev/null || {
+            echo "FATAL: reused provenance record is missing"
+            exit 1
+          }
+          jq -e --arg app "${APP}" --arg tag "${INTERNAL_TAG}" --arg digest "${CANDIDATE_DIGEST}" '.app == $app and .internal.tag == $tag and .internal.digest == $digest and .policy.eligible == true and .signing.result == "pass"' "${RECORD}" >/dev/null || {
+            echo "FATAL: reused revision lacks eligible signing evidence; force_repromote=true is required"
+            exit 1
+          }
+          python3 scripts/reverify_signing.py --record "${RECORD}" --out signing-evidence.json
+          exit 0
+        fi
+        python3 scripts/promote_signing_gate.py \
+          --image "${IMAGE}" \
+          --identity-config config/signing-identity.json \
+          --sign-bundle sign-bundle.json \
+          --sbom-bundle sbom-bundle.json \
+          --predicate trivy-full.cdx.json \
+          --out signing-evidence.json
+        jq --arg trivy "${TRIVY_VERSION}" '. + {trivy_version: $trivy}' signing-evidence.json > signing-evidence.next.json
+        mv signing-evidence.next.json signing-evidence.json

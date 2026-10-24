@@ -1,0 +1,42 @@
+name: allocate-patched-tag
+description: Allocate the immutable patched revision before metadata
+inputs:
+  upstream_tag:
+    description: Workflow input.
+    required: false
+  upstream_index_digest:
+    description: Workflow input.
+    required: false
+  selected_digest:
+    description: Workflow input.
+    required: false
+  recover_tag:
+    description: Workflow input.
+    required: false
+outputs:
+  internal_tag:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.internal_tag }}
+  skip_copy:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.skip_copy }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        UPSTREAM_TAG: ${{ inputs.upstream_tag }}
+        UPSTREAM_INDEX_DIGEST: ${{ inputs.upstream_index_digest }}
+        SELECTED_DIGEST: ${{ inputs.selected_digest }}
+        RECOVER_TAG: ${{ inputs.recover_tag }}
+      run: |
+        set -euo pipefail
+        [ -z "${RECOVER_TAG}" ] || { echo "FATAL: original-child patching cannot recover an immutable published revision"; exit 1; }
+        RESULT="$(python3 scripts/resolve_internal_tag.py \
+          --upstream-tag "${UPSTREAM_TAG}" \
+          --upstream-digest "${UPSTREAM_INDEX_DIGEST}" \
+          --selected-child-digest "${SELECTED_DIGEST}" \
+          --observations registry-observations.json --force-repromote)"
+        echo "internal_tag=$(jq -er .internal_tag <<<"${RESULT}")" >> "$GITHUB_OUTPUT"
+        echo "skip_copy=false" >> "$GITHUB_OUTPUT"

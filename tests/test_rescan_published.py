@@ -13,6 +13,8 @@ from unittest.mock import patch
 
 import yaml
 
+from tests.workflow_helpers import load_workflow
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 rescan = importlib.import_module("rescan_published")
@@ -42,6 +44,24 @@ class PublishedRescanTests(unittest.TestCase):
                                     "Packages": [{"Name": "openssl", "Version": "1"}],
                                     "Vulnerabilities": [{"VulnerabilityID": "CVE-2026-1234", "PkgName": "openssl",
                                                          "InstalledVersion": "1", "FixedVersion": "2", "Severity": "LOW"}]}]}
+
+    def test_go_workspace_replacements_remain_monitor_only_without_losing_findings(self):
+        self.report["Results"].append({"Class": "lang-pkgs", "Type": "gobinary", "Target": "usr/bin/grafana",
+            "Packages": [{"Name": "github.com/grafana/grafana/apps/advisor", "ID": "github.com/grafana/grafana/apps/advisor",
+                          "AnalyzedBy": "gobinary", "Identifier": {"PURL": "pkg:golang/github.com/grafana/grafana/apps/advisor", "UID": "7ccbd862aac21869"}},
+                         {"Name": "./pkg/promlib", "ID": "./pkg/promlib", "AnalyzedBy": "gobinary",
+                          "Identifier": {"UID": "f32a500d384c5d70"}}]})
+        original = copy.deepcopy(self.report)
+        value = rescan.decide(self.selection, self.report, True)
+        self.assertFalse(value["package_coverage"])
+        self.assertFalse(value["proceed"])
+        self.assertEqual(value["findings"], 1)
+        self.assertEqual({x["module"] for x in value["coverage_limitations"]},
+                         {"github.com/grafana/grafana/apps/advisor", "./pkg/promlib"})
+        self.assertEqual(self.report, original)
+        self.report["Results"][-1]["Packages"][0]["Version"] = 7
+        with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
+            rescan.decide(self.selection, self.report, True)
 
     def test_fixable_os_enters_existing_policy_with_canonical_need(self):
         value = rescan.decide(self.selection, self.report, True)
@@ -243,13 +263,13 @@ class PublishedRescanTests(unittest.TestCase):
             rescan.select()
 
     def test_schedule_dispatch_scope_and_immutable_scan_contract(self):
-        daily = yaml.safe_load((ROOT / ".github/workflows/daily-rescan.yaml").read_text())
+        daily = load_workflow(ROOT / ".github/workflows/daily-rescan.yaml")
         self.assertIn("schedule", daily.get("on", daily.get(True)))
         steps = daily["jobs"]["dispatch"]["steps"]
         token = next(s for s in steps if s.get("id") == "token")["with"]
         self.assertEqual(token["permission-actions"], "write")
         self.assertEqual(token["repositories"], "${{ github.event.repository.name }}")
-        root = yaml.safe_load((ROOT / ".github/workflows/promote.yaml").read_text())
+        root = load_workflow(ROOT / ".github/workflows/promote.yaml")
         self.assertEqual(root["concurrency"]["group"], "promote-${{ inputs.app }}")
         scan = next(s for s in root["jobs"]["rescan"]["steps"] if s.get("id") == "scan")
         self.assertEqual(scan["with"]["ignore-unfixed"], "false")

@@ -1,0 +1,89 @@
+name: evaluate-decision
+description: Evaluate one promotion decision
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  requested_remediation:
+    description: Workflow input.
+    required: false
+  source_sha:
+    description: Workflow input.
+    required: false
+  copa_executed:
+    description: Workflow input.
+    required: false
+  run_id:
+    description: Workflow input.
+    required: false
+  run_attempt:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  upstream_index_digest:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  github_repository:
+    description: Workflow input.
+    required: false
+  resume_original_run_id:
+    description: Workflow input.
+    required: false
+  resume_original_run_attempt:
+    description: Workflow input.
+    required: false
+  resume_original_source_sha:
+    description: Workflow input.
+    required: false
+  resume_artifact_id:
+    description: Workflow input.
+    required: false
+  higher_upstream:
+    description: Workflow input.
+    required: false
+  original_child_selected:
+    description: Workflow input.
+    required: false
+outputs:
+  daily_hold:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.daily_hold }}
+  eligible:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.eligible }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        REQUESTED_REMEDIATION: ${{ inputs.requested_remediation }}
+        SOURCE_SHA: ${{ inputs.source_sha }}
+        COPA_EXECUTED: ${{ inputs.copa_executed }}
+        RUN_ID: ${{ inputs.run_id }}
+        RUN_ATTEMPT: ${{ inputs.run_attempt }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        UPSTREAM_INDEX_DIGEST: ${{ inputs.upstream_index_digest }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        GITHUB_REPOSITORY: ${{ inputs.github_repository }}
+        RESUME_ORIGINAL_RUN_ID: ${{ inputs.resume_original_run_id }}
+        RESUME_ORIGINAL_RUN_ATTEMPT: ${{ inputs.resume_original_run_attempt }}
+        RESUME_ORIGINAL_SOURCE_SHA: ${{ inputs.resume_original_source_sha }}
+        RESUME_ARTIFACT_ID: ${{ inputs.resume_artifact_id }}
+        HIGHER_UPSTREAM: ${{ inputs.higher_upstream }}
+        ORIGINAL_CHILD_SELECTED: ${{ inputs.original_child_selected }}
+      run: |
+        set -euo pipefail
+        if [ "${COPA_EXECUTED}" = true ]; then
+          export COPA_EVIDENCE='{"mode":"comprehensive","release":"0.15.0","source_sha":"bce7b4305e378558f20420aa2ca48686cec850d0","runtime_digest":"sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b","limitation":null}'
+        elif [ -f original-candidate-decision.json ]; then
+          COPA_EVIDENCE="$(jq -c '.copa.evidence // empty' original-candidate-decision.json)"
+          export COPA_EVIDENCE
+        fi
+        python3 scripts/promote_candidate_decision.py

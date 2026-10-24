@@ -1,0 +1,25 @@
+name: registry-credentials
+description: Resolve source registry credentials
+inputs:
+  upstream_ref:
+    description: Workflow input.
+    required: false
+outputs:
+  is_dockerhub:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.is_dockerhub }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/registry.sh
+        if is_dockerhub_ref "${UPSTREAM_REF}"; then
+          echo "is_dockerhub=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "is_dockerhub=false" >> "$GITHUB_OUTPUT"
+        fi

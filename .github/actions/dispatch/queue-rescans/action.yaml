@@ -1,0 +1,28 @@
+name: queue-rescans
+description: Queue each inventory app under its promotion lock
+inputs:
+  gh_token:
+    description: Workflow input.
+    required: false
+  repo:
+    description: Workflow input.
+    required: true
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ inputs.repo }}
+      run: |
+        set -euo pipefail
+        for entry in inventory/*/image.yaml; do
+          app="${entry#inventory/}"
+          app="${app%/image.yaml}"
+            [[ "$app" =~ ^[a-z0-9][a-z0-9-]{0,79}$ ]] || {
+              echo "FATAL: invalid inventory app name: ${app}"
+              exit 1
+            }
+          gh workflow run promote.yaml --repo "$REPO" --ref main -f app="$app" -F automatic_rescan=true
+        done

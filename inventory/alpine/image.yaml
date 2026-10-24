@@ -16,7 +16,7 @@ spec:
     command:
     - /bin/sh
     - -ec
-    - /sbin/apk --version; test "$(cat /etc/alpine-release)" = 3.24.2
+    - /sbin/apk --version; release=$(cat /etc/alpine-release); printf '%s\n' "$release" | grep -Eq '^3\.24\.[0-9]+$'; case "$(/sbin/apk version -t "$release" 3.24.2)" in '='|'>') ;; *) exit 1 ;; esac
     expectedExit: 0
     timeoutSeconds: 30
     expectedPlatforms:

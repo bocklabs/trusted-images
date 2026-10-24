@@ -32,3 +32,6 @@ jobs:
           config.max_model_tokens: '1000000'
           config.max_output_tokens: '128000'
           config.propagate_tool_errors: 'true'
+          github_action_config.auto_review: 'false'
+          github_action_config.auto_describe: 'true'
+          github_action_config.auto_improve: 'false'

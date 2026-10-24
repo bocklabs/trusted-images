@@ -1,0 +1,56 @@
+name: assert-occupancy
+description: Assert destination tag is absent or byte-identical
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+outputs:
+  skip_copy:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.skip_copy }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/ghcr.sh
+        TOKEN="$(ghcr_pull_token "${APP}" occupancy-token.json)"
+        if [ -z "${TOKEN}" ]; then
+          echo "destination package does not exist yet"
+          echo "skip_copy=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        set +e
+        STATUS="$(curl --fail-with-body -sS -I \
+          -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${GHCR_MANIFEST_ACCEPT}" \
+          -D occupancy.headers -o /dev/null -w '%{http_code}' \
+          "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}")"
+        CURL_STATUS=$?
+        set -e
+        if [ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]; then
+          echo "skip_copy=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if [ "${CURL_STATUS}" -ne 0 ] || [ "${STATUS}" != 200 ]; then
+          echo "FATAL: destination occupancy lookup failed (${INTERNAL_TAG}, status ${STATUS:-network error})"
+          exit 1
+        fi
+        PUSHED="$(tr -d '\r' < occupancy.headers \
+          | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+        if [[ ! "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || [ "${PUSHED}" != "${CANDIDATE_DIGEST}" ]; then
+          echo "FATAL: conflicting occupied tag (${INTERNAL_TAG}, got ${PUSHED:-none}, want ${CANDIDATE_DIGEST})"
+          exit 1
+        fi
+        echo "skip_copy=true" >> "$GITHUB_OUTPUT"

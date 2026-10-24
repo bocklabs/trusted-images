@@ -2,6 +2,7 @@ name: validate
 
 on:
   pull_request:
+
   push:
     branches:
       - main
@@ -22,89 +23,41 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
-        with:
-          enable-cache: true
-
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version-file: .python-version
-
-      - name: Sync Python dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          uv sync --locked
-          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: Set up Python environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Run test suite
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m unittest discover -s tests -v
+        uses: ./.github/actions/common/run-tests
+        with:
+          coverage: 'false'
 
       - name: Check Python types
-        run: uv run --locked pre-commit run mypy --all-files
+        uses: ./.github/actions/common/check-types
 
       - name: Validate inventory
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/validate_inventory.py
+        uses: ./.github/actions/common/validate-inventory
 
       - name: Validate Renovate config
-        shell: bash
-        env:
-          NPM_CONFIG_LOGLEVEL: error
-        run: |
-          set -euo pipefail
-          npx --yes --package renovate -- renovate-config-validator --strict
+        uses: ./.github/actions/common/validate-renovate-config
+        with:
+          npm_config_loglevel: error
 
       - name: Run Renovate drift guard
-        shell: bash
-        run: |
-          set -euo pipefail
-          node tests/renovate-manager-match.mjs
+        uses: ./.github/actions/common/renovate-drift-guard
 
       - name: Detect Cosign verifier pin change
         id: cosign-pin
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_REF: ${{ github.base_ref }}
-          BEFORE: ${{ github.event.before }}
-        run: |
-          set -euo pipefail
-          if [[ "${EVENT_NAME}" == pull_request ]]; then
-            BASE="$(git merge-base HEAD "origin/${BASE_REF}")"
-          else
-            BASE="${BEFORE}"
-          fi
-          git rev-parse --verify "${BASE}^{commit}" > /dev/null
-          echo "base=${BASE}" >> "$GITHUB_OUTPUT"
-          mapfile -t VERSIONS < <(sed -nE 's/^[[:space:]]+cosign-release: (v[0-9]+\.[0-9]+\.[0-9]+)$/\1/p' .github/workflows/promote-publish.yaml)
-          if [[ "${#VERSIONS[@]}" -ne 1 ]]; then
-            echo 'FATAL: expected one checked-out Cosign release pin' >&2
-            exit 1
-          fi
-          echo "version=${VERSIONS[0]}" >> "$GITHUB_OUTPUT"
-          if git diff --unified=0 "${BASE}" HEAD -- .github/workflows/promote-publish.yaml .github/workflows/validate.yaml |
-            grep -Eq '^[+-][[:space:]]*([u]ses:[[:space:]]+sigstore/cosign-installer@[a-f0-9]{40}|cosign-release:[[:space:]]+v[0-9]+\.[0-9]+\.[0-9]+)'; then
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
-          fi
-          if git diff --name-only "${BASE}" HEAD -- provenance | grep -q .; then
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
-          fi
+        uses: ./.github/actions/common/detect-cosign-pin
+        with:
+          event_name: ${{ github.event_name }}
+          base_ref: ${{ github.base_ref }}
+          before: ${{ github.event.before }}
 
       - name: Check historical provenance
-        shell: bash
-        env:
-          BASE: ${{ steps.cosign-pin.outputs.base }}
-        run: |
-          set -euo pipefail
-          python3 scripts/reverify_signing.py --history-only "${BASE}"
+        uses: ./.github/actions/common/reverify-provenance
+        with:
+          base: ${{ steps.cosign-pin.outputs.base }}
+          history_only: 'true'
 
       - name: Install candidate Cosign
         if: steps.cosign-pin.outputs.changed == 'true'
@@ -114,12 +67,10 @@ jobs:
 
       - name: Reverify signed provenance
         if: steps.cosign-pin.outputs.changed == 'true'
-        shell: bash
-        env:
-          BASE: ${{ steps.cosign-pin.outputs.base }}
-        run: |
-          set -euo pipefail
-          python3 scripts/reverify_signing.py --base "${BASE}"
+        uses: ./.github/actions/common/reverify-provenance
+        with:
+          base: ${{ steps.cosign-pin.outputs.base }}
+          history_only: 'false'
 
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
@@ -134,13 +85,9 @@ jobs:
 
       - name: Refresh armed current provenance PRs
         if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ steps.current-token.outputs.token }}
-        run: |
-          set -euo pipefail
-          git fetch origin main
-          python3 scripts/refresh_current_provenance.py
+        uses: ./.github/actions/common/refresh-current-provenance
+        with:
+          gh_token: ${{ steps.current-token.outputs.token }}
 
   sync-dispatch-options:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -167,29 +114,10 @@ jobs:
 
       - name: Sync promote dispatch options with inventory
         id: sync
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/sync_dispatch_options.py
+        uses: ./.github/actions/validate/sync-dispatch-options
 
       - name: Push options PR
         if: steps.sync.outputs.changed == 'true'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          set -euo pipefail
-          BRANCH="chore/sync-dispatch-options"
-          git config user.name "bocklabs-release[bot]"
-          git config user.email "bocklabs-release[bot]@users.noreply.github.com"
-          git checkout -b "$BRANCH"
-          git add .github/workflows/promote.yaml
-          git commit -m "chore: sync promote dispatch options with inventory"
-          git push --force origin "$BRANCH"
-          PR_URL="$(gh pr list --head "$BRANCH" --base main --state open --json url --jq '.[0].url // ""')"
-          if [ -z "${PR_URL}" ]; then
-            PR_URL="$(gh pr create --title "chore: sync promote dispatch options" --body "Auto-generated from inventory/." --base main)"
-          fi
-          if [ -n "${PR_URL}" ]; then
-            gh pr merge --auto --merge "$PR_URL"
-          fi
+        uses: ./.github/actions/validate/push-options-pr
+        with:
+          gh_token: ${{ steps.app-token.outputs.token }}

@@ -1,0 +1,11 @@
+name: fail-blocked
+description: Fail blocked candidate after preservation
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "FATAL: candidate is blocked; exact bytes and decision were retained, publisher will not run"
+        exit 1

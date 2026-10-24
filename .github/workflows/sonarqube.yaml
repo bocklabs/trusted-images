@@ -3,6 +3,7 @@ name: SonarQube
 on:
   push:
     branches: [main]
+
   workflow_dispatch:
 
 permissions:
@@ -26,27 +27,13 @@ jobs:
           key: ${{ runner.os }}-sonar-${{ hashFiles('.github/workflows/sonarqube.yaml') }}
           restore-keys: ${{ runner.os }}-sonar-
 
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version-file: .python-version
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
-        with:
-          enable-cache: true
-
-      - name: Sync Python dependencies
-        run: uv sync --locked
+      - name: Set up Python environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Run test suite with coverage
-        shell: bash
-        run: |
-          set -euo pipefail
-          uv run --locked coverage run --branch -m unittest discover -s tests
-          uv run --locked coverage combine --quiet
-          uv run --locked coverage report --fail-under=80
-          uv run --locked coverage xml
+        uses: ./.github/actions/common/run-tests
+        with:
+          coverage: 'true'
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0

@@ -1,0 +1,58 @@
+name: resolve-kev-acceptance
+description: Resolve current KEV risk acceptance
+inputs:
+  gh_token:
+    description: Workflow input.
+    required: false
+  repo:
+    description: Workflow input.
+    required: false
+  app:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ inputs.repo }}
+        APP: ${{ inputs.app }}
+      run: |
+        set -euo pipefail
+        rm -f acceptance.json github-evidence.json
+        python3 scripts/promote_acceptance_paths.py
+        if [ ! -s acceptance-matched.txt ]; then
+          echo "no KEV intersection; acceptance is not applicable"
+          exit 0
+        fi
+        RECORD_PATH="$(cat acceptance-path.txt)"
+        set +e
+        STATUS="$(curl --fail-with-body -sS \
+          -H "Authorization: Bearer ${GH_TOKEN}" \
+          -H "Accept: application/vnd.github+json" \
+          -o acceptance-content.json \
+          -w '%{http_code}' \
+          "https://api.github.com/repos/${REPO}/contents/${RECORD_PATH}?ref=main")"
+        CURL_STATUS=$?
+        set -e
+        if [ "${CURL_STATUS}" -eq 22 ] && [ "${STATUS}" = 404 ]; then
+          echo "current main carries no acceptance for this exact candidate and KEV set"
+          exit 0
+        fi
+        if [ "${CURL_STATUS}" -ne 0 ] || [ "${STATUS}" != 200 ]; then
+          echo "FATAL: acceptance content lookup failed (status ${STATUS:-network error})"
+          exit 1
+        fi
+        python3 scripts/promote_acceptance_decode.py
+        gh api --method GET "repos/${REPO}/commits" \
+          -f path="${RECORD_PATH}" -F per_page=1 > acceptance-commits.json
+        COMMIT_SHA="$(jq -er '.[0].sha' acceptance-commits.json)"
+        gh api "repos/${REPO}/commits/${COMMIT_SHA}" > acceptance-commit.json
+        gh api "repos/${REPO}/commits/${COMMIT_SHA}/pulls" > acceptance-prs.json
+        PR_NUMBER="$(jq -er '[.[] | select(.merged == true and .base.repo.full_name == env.REPO and .base.ref == "main")][0].number' acceptance-prs.json)"
+        gh api "repos/${REPO}/pulls/${PR_NUMBER}" > acceptance-pr.json
+        ISSUE_NUMBER="$(jq -er .trackingIssue acceptance.json)"
+        gh api "repos/${REPO}/issues/${ISSUE_NUMBER}" > acceptance-issue.json
+        python3 scripts/promote_github_evidence.py "${RECORD_PATH}"

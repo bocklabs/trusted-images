@@ -1,0 +1,40 @@
+name: push-options-pr
+description: Push options PR
+inputs:
+  gh_token:
+    description: Workflow input.
+    required: true
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+      run: |
+        set -euo pipefail
+        [ -n "${GH_TOKEN}" ] || { echo "FATAL: options PR token is empty"; exit 1; }
+        BRANCH="chore/sync-dispatch-options"
+        git config user.name "bocklabs-release[bot]"
+        git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
+        git fetch origin main:refs/remotes/origin/main
+        git checkout -B "$BRANCH" origin/main
+        git add .github/workflows/promote.yaml
+        if git diff --cached --quiet; then
+          echo "dispatch options already synchronized"
+          exit 0
+        fi
+        git commit -m "chore: sync promote dispatch options with inventory"
+        REMOTE_SHA="$(git ls-remote origin "refs/heads/${BRANCH}" | awk '{print $1}')"
+        if [ -n "${REMOTE_SHA}" ]; then
+          git push --force-with-lease="refs/heads/${BRANCH}:${REMOTE_SHA}" origin "$BRANCH"
+        else
+          git push origin "$BRANCH"
+        fi
+        PR_URL="$(gh pr list --head "$BRANCH" --base main --state open --json url --jq '.[0].url // ""')"
+        if [ -z "${PR_URL}" ]; then
+          PR_URL="$(gh pr create --head "$BRANCH" --title "chore: sync promote dispatch options" --body "Auto-generated from inventory/." --base main)"
+        fi
+        if [ -n "${PR_URL}" ]; then
+          gh pr merge --auto --merge "$PR_URL"
+        fi

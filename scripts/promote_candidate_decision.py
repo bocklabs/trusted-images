@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from evaluate_promotion import requested_remediation, validate_decision
+
 DECISION_PATH = Path("candidate-decision.json")
 
 policy = json.loads(Path("validation-context/patch-policy.json").read_text())
@@ -40,7 +42,7 @@ args = [
     "--kev-fetched-at",
     Path("kev-fetched-at.txt").read_text().strip(),
     "--now",
-    datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "--validation-result",
     json.loads(Path("validation-evidence.json").read_text())["validation"]["result"],
     "--patch-policy",
@@ -93,11 +95,32 @@ if os.environ.get("RESUME_ORIGINAL_RUN_ID"):
         "--resume-artifact-id",
         os.environ["RESUME_ARTIFACT_ID"],
     ]
-result = subprocess.run(args)
+DECISION_PATH.unlink(missing_ok=True)
+result = subprocess.run(args, check=False)
+if result.returncode not in (0, 1):
+    raise SystemExit(result.returncode)
 if result.returncode:
     print("Candidate retained for operator review; publisher will not run.")
-if DECISION_PATH.is_file():
+if not DECISION_PATH.is_file():
+    raise SystemExit(2)
+try:
     decision = json.loads(DECISION_PATH.read_text())
+    validate_decision(decision)
+    raw_request = os.environ.get("REQUESTED_REMEDIATION", "")
+    request = requested_remediation(json.loads(raw_request), os.environ["APP"]) if raw_request else None
+    expected = {"app": os.environ["APP"], "source_sha": os.environ["SOURCE_SHA"],
+                "run_id": os.environ["RUN_ID"], "run_attempt": int(os.environ["RUN_ATTEMPT"]),
+                "upstream_index_digest": os.environ["UPSTREAM_INDEX_DIGEST"],
+                "proposed_tag": os.environ["INTERNAL_TAG"]}
+    if (any(decision[key] != value for key, value in expected.items())
+            or result.returncode != int(not decision["eligible"])
+            or decision["candidate"]["digest"] != os.environ["CANDIDATE_DIGEST"]
+            or decision.get("remediation") != request):
+        raise ValueError("fresh candidate decision does not match this evaluation")
+except (ValueError, KeyError, TypeError) as exc:
+    print(f"FATAL: invalid candidate assessment: {exc}")
+    raise SystemExit(2) from exc
+if decision:
     decision["supersedes"] = {
         "higher_upstream": os.environ.get("HIGHER_UPSTREAM") == "true",
         "original_child_selected": os.environ.get("ORIGINAL_CHILD_SELECTED") == "true",
@@ -106,4 +129,6 @@ if DECISION_PATH.is_file():
     eligible = decision["eligible"]
     with Path(os.environ.get("GITHUB_OUTPUT", "/dev/null")).open("a") as output:
         output.write(f"eligible={str(eligible).lower()}\n")
-raise SystemExit(result.returncode)
+        if request is not None and not eligible:
+            output.write("daily_hold=true\n")
+raise SystemExit(0 if request is not None and not eligible else result.returncode)

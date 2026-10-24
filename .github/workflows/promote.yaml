@@ -92,7 +92,6 @@ concurrency:
   cancel-in-progress: false
   queue: max
 
-
 jobs:
   rescan:
     runs-on: ubuntu-latest
@@ -108,39 +107,25 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
-      - name: Set up uv
+
+      - name: Set up Python environment
         if: inputs.automatic_rescan
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
-      - name: Set up Python
-        if: inputs.automatic_rescan
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-        with:
-          python-version-file: .python-version
-      - name: Sync Python dependencies
-        if: inputs.automatic_rescan
-        shell: bash
-        run: |
-          uv sync --locked
-          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+        uses: ./.github/actions/setup-python-env
+
       - name: Select latest merged published image under app lock
         id: entry
-        env:
-          AUTOMATIC_RESCAN: ${{ inputs.automatic_rescan }}
-          INPUT_APP: ${{ inputs.app }}
-          INPUT_FORCE_REPROMOTE: ${{ inputs.force_repromote }}
-          INPUT_RECOVER_TAG: ${{ inputs.recover_tag }}
-          INPUT_RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
-          INPUT_ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
-        run: |
-          set -euo pipefail
-          if [ "$AUTOMATIC_RESCAN" = true ]; then
-            git fetch origin main
-            python3 scripts/rescan_published.py select
-          else
-            echo 'proceed=true' >> "$GITHUB_OUTPUT"
-          fi
+        uses: ./.github/actions/rescan/select-published
+        with:
+          automatic_rescan: ${{ inputs.automatic_rescan }}
+          input_app: ${{ inputs.app }}
+          input_force_repromote: ${{ inputs.force_repromote }}
+          input_recover_tag: ${{ inputs.recover_tag }}
+          input_recovery_run_id: ${{ inputs.recovery_run_id }}
+          input_accepted_candidate_run_id: ${{ inputs.accepted_candidate_run_id }}
+
       - name: Scan full published image
         id: scan
         if: steps.entry.outputs.ref != ''
@@ -159,37 +144,21 @@ jobs:
           list-all-pkgs: 'true'
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           timeout: 30m0s
+
       - name: Convert published full report to CycloneDX with parity check
         id: convert
         if: steps.scan.outcome == 'success'
-        working-directory: published-rescan
-        shell: bash
-        run: |
-          set -euo pipefail
-          trivy convert --format cyclonedx --scanners vuln --output trivy-full.cdx.json trivy-full.json
-          test -s trivy-full.json
-          test -s trivy-full.cdx.json
-          jq -e '.bomFormat == "CycloneDX" and (.components | type == "array") and ([.components[] | select(.type == "operating-system")] | length <= 1)' trivy-full.cdx.json > /dev/null
-          JSON_PACKAGES="$(jq -c '[((.Results // [])[] | .Packages[]?) | {name: .Name, purl: .Identifier.PURL}] | sort_by(.name, .purl)' trivy-full.json)"
-          CDX_PACKAGES="$(jq -c '[.components[] | select(.type == "library") | {name: (if ((.purl // "") | startswith("pkg:npm/")) and ((.group // "") | test("^@[^/]+$")) then .group + "/" + .name elif ((.purl // "") | startswith("pkg:maven/")) and ((.group // "") != "") then .group + ":" + .name else .name end), purl}] | sort_by(.name, .purl)' trivy-full.cdx.json)"
-          [ "${JSON_PACKAGES}" = "${CDX_PACKAGES}" ] || { echo "FATAL: CycloneDX library components differ from Trivy packages"; exit 1; }
-          JSON_FINDINGS="$(jq -c '[((.Results // [])[] | .Vulnerabilities[]?) | {purl: (.PkgIdentifier.PURL // .PkgID), id: .VulnerabilityID}] | unique_by([.purl, .id])' trivy-full.json)"
-          CDX_FINDINGS="$(jq -c '(.components | map(select(.type == "library") | {key: ."bom-ref", value: .purl}) | from_entries) as $packages | [.vulnerabilities[]? as $v | $v.affects[]? | {purl: ($packages[.ref] // error("unknown SBOM package reference")), id: $v.id}] | unique_by([.purl, .id])' trivy-full.cdx.json)"
-          [ "${JSON_FINDINGS}" = "${CDX_FINDINGS}" ] || { echo "FATAL: CycloneDX finding identities differ from Trivy findings"; exit 1; }
-          JSON_COUNT="$(jq 'length' <<< "${JSON_FINDINGS}")"
-          CDX_COUNT="$(jq 'length' <<< "${CDX_FINDINGS}")"
-          {
-            echo "cyclonedx findings in JSON report: ${JSON_COUNT}"
-            echo "cyclonedx findings in CDX file:   ${CDX_COUNT}"
-          } >> "$GITHUB_STEP_SUMMARY"
-
+        uses: ./.github/actions/cyclonedx-report
+        with:
+          workdir: published-rescan
 
       - name: Decide producer remediation need
         id: decision
         if: steps.convert.outcome == 'success'
-        env:
-          REMEDIATION_ENABLED: ${{ vars.REMEDIATION_ENABLED }}
-        run: python3 scripts/rescan_published.py decide
+        uses: ./.github/actions/rescan/decide-remediation
+        with:
+          remediation_enabled: ${{ vars.REMEDIATION_ENABLED }}
+
       - name: Retain monitoring report for generic findings import
         if: steps.convert.outcome == 'success' && steps.decision.outputs.proceed != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -202,6 +171,7 @@ jobs:
           if-no-files-found: error
           overwrite: false
           retention-days: 30
+
       - name: Retain immutable published-image scan
         if: always() && inputs.automatic_rescan
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -231,6 +201,8 @@ jobs:
     uses: ./.github/workflows/promote-publish.yaml
     with:
       app: ${{ inputs.app }}
+      candidate_run_attempt: ${{ needs.candidate.outputs.candidate_run_attempt }}
+      candidate_artifact_id: ${{ needs.candidate.outputs.candidate_artifact_id }}
       candidate_manifest_sha256: ${{ needs.candidate.outputs.candidate_manifest_sha256 }}
       db_digest: ${{ needs.candidate.outputs.db_digest }}
       db_updated: ${{ needs.candidate.outputs.db_updated }}

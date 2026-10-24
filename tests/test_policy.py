@@ -12,14 +12,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import yaml
+from tests.workflow_helpers import load_workflow
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EVALUATOR = REPO_ROOT / "scripts" / "evaluate_promotion.py"
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-TRIVY_SCAN = next(step for step in yaml.safe_load(
-    (REPO_ROOT / ".github/workflows/promote-candidate.yaml").read_text()
+TRIVY_SCAN = next(step for step in load_workflow(
+    REPO_ROOT / ".github/workflows/promote-candidate.yaml"
 )["jobs"]["validate"]["steps"] if step.get("id") == "scanbefore")
 TRIVY_VERSION = TRIVY_SCAN["with"]["version"].removeprefix("v")
 

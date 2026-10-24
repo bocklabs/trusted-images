@@ -1,0 +1,76 @@
+name: restore-accepted
+description: Restore the exact accepted candidate
+inputs:
+  accepted_candidate_run_id:
+    description: Workflow input.
+    required: false
+  gh_token:
+    description: Workflow input.
+    required: false
+  repo:
+    description: Workflow input.
+    required: false
+  app:
+    description: Workflow input.
+    required: false
+  github_repository:
+    description: Workflow input.
+    required: false
+outputs:
+  artifact_id:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.artifact_id }}
+  candidate_digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.candidate_digest }}
+  internal_tag:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.internal_tag }}
+  original_run_attempt:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.original_run_attempt }}
+  original_run_id:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.original_run_id }}
+  original_source_sha:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.original_source_sha }}
+  skip_copy:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.skip_copy }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        ACCEPTED_CANDIDATE_RUN_ID: ${{ inputs.accepted_candidate_run_id }}
+        GH_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ inputs.repo }}
+        APP: ${{ inputs.app }}
+        GITHUB_REPOSITORY: ${{ inputs.github_repository }}
+      run: |
+        set -euo pipefail
+        rm -rf resume-download candidate-oci resume-run.json resume-branch.json resume-artifacts.jsonl
+        gh api "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}" > resume-run.json
+        gh api "repos/${REPO}/branches/main" > resume-branch.json
+        jq -e --arg repo "${REPO}" --arg run_id "${ACCEPTED_CANDIDATE_RUN_ID}" '
+          .id == ($run_id | tonumber) and .repository.full_name == $repo and
+          .path == ".github/workflows/promote.yaml" and .event == "workflow_dispatch" and
+          .head_branch == "main" and (.head_sha | test("^[a-f0-9]{40}$")) and
+          (.run_attempt | type == "number" and . > 0) and .status == "completed"
+        ' resume-run.json > /dev/null || {
+          echo "FATAL: accepted candidate is the wrong run or was not dispatched from protected main"
+          exit 1
+        }
+        jq -e '.name == "main" and .protected == true' resume-branch.json > /dev/null || {
+          echo "FATAL: repository main is not protected"
+          exit 1
+        }
+        gh api --paginate "repos/${REPO}/actions/runs/${ACCEPTED_CANDIDATE_RUN_ID}/artifacts?per_page=100" \
+          --jq '.artifacts[] | select(.name == "candidate")' > resume-artifacts.jsonl
+        ARTIFACT_ID="$(python3 scripts/promote_resume_artifact_id.py "${ACCEPTED_CANDIDATE_RUN_ID}")"
+        printf '%s\n' "${ARTIFACT_ID}" > resume-artifact-id.txt
+        gh run download "${ACCEPTED_CANDIDATE_RUN_ID}" --repo "${REPO}" \
+          --name candidate --dir resume-download
+        python3 scripts/promote_resume_candidate.py "${ACCEPTED_CANDIDATE_RUN_ID}" "${ARTIFACT_ID}"

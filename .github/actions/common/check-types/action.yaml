@@ -1,0 +1,9 @@
+name: check-types
+description: Check Python types
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        uv run --locked pre-commit run mypy --all-files
