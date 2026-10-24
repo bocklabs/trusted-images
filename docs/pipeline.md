@@ -350,6 +350,12 @@ summary; no findings-service credential is used by this workflow.
 
 ## Python tooling
 
+`.python-version` pins the repository tooling interpreter to Python 3.14.
+The `pyenv` Renovate rule disables interpreter updates to preserve Python 3.14.
+`inventory/python/image.yaml` independently pins the Python 3.14 Alpine image and
+its native version check. Signed provenance describes the image actually published
+and changes only through promotion, not when the tooling interpreter changes.
+
 `pyproject.toml` declares runtime and development dependencies; `uv.lock` pins
 resolved versions. Run `uv sync --locked`, then `uv run --locked pre-commit run
 --all-files`. CI uses the same environment. Renovate updates project dependencies

@@ -41,7 +41,7 @@ def validate_inputs(
 
 
 def validate_observation(item, pattern, upstream_tag):
-    if set(item) != OBSERVATION_FIELDS:
+    if not isinstance(item, dict) or set(item) != OBSERVATION_FIELDS:
         raise ValueError(
             "each observation must contain exactly the verified identity fields"
         )

@@ -1219,6 +1219,9 @@ class CleanChildTracerTests(unittest.TestCase):
         steps = yaml.safe_load(WORKFLOW.read_text())["jobs"]["validate"]["steps"]
         selected = [next(s for s in steps if s["name"] == name) for name in
                     ("Fetch upstream index", "Resolve the exact linux/amd64 child")]
+        manifest = json.loads(self.child.read_text())
+        manifest["layers"] = []
+        self.child.write_text(json.dumps(manifest))
         digest = "sha256:" + hashlib.sha256(self.child.read_bytes()).hexdigest()
         self.write_fake("docker", f"""
 import shutil, sys
@@ -1249,6 +1252,24 @@ else:
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.index.read_bytes(), self.child.read_bytes())
         self.assertEqual((self.tmp / "selected-child.txt").read_text().strip(), digest)
+
+        with self.subTest(root="missing config"):
+            self.child.write_text(json.dumps({k: v for k, v in manifest.items() if k != "config"}))
+            result = subprocess.run(["bash", "-c", selected[0]["run"]], cwd=self.tmp, env=env,
+                                    capture_output=True, text=True, check=False)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("FATAL: upstream root", result.stdout + result.stderr)
+        self.child.write_text(json.dumps(manifest))
+        platform = {"os": "linux", "architecture": "amd64"}
+        entry = {"digest": digest, "platform": platform}
+        for entries in ([entry, entry], [{**entry, "platform": {**platform, "variant": "v8"}}]):
+            with self.subTest(entries=entries):
+                self.index.write_text(json.dumps({"mediaType": "application/vnd.oci.image.index.v1+json",
+                                                 "manifests": entries}))
+                result = subprocess.run(["bash", "-c", selected[1]["run"]], cwd=self.tmp, env=env,
+                                        capture_output=True, text=True, check=False)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("exactly one linux/amd64 child without a variant", result.stderr)
 
     def candidate_artifact(self, kev_cves=("CVE-2026-0001",)):
         from tests.test_policy import kev_feed, report, vuln, write_json
