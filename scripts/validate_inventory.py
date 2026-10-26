@@ -361,6 +361,9 @@ def parse_go_file_build(raw: bytes, path: Path) -> dict:
         require(present and isinstance(value, str) and value, f"{path}: invalid Go file-build evidence: {field}")
     require(re.fullmatch(r"[0-9a-f]{64}", review["binary_sha256"]),
             f"{path}: invalid Go file-build evidence: binary_sha256")
+    if "tag" in review["source"]:
+        require(isinstance(review["source"]["tag"], str) and review["source"]["tag"],
+                f"{path}: invalid Go file-build evidence: source.tag")
     for value, prefix, allowed in (
         (review, "", {"schema", "ref", "config_digest", "upstream_child_digest", "target", "module", "layer",
                       "binary_sha256", "source", "build_info", "evidence_run", "limitation"}),

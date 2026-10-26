@@ -1,6 +1,7 @@
 """Producer-owned daily monitoring and remediation contracts."""
 
 import copy
+import hashlib
 import importlib
 import json
 import os
@@ -182,6 +183,9 @@ class PublishedRescanTests(unittest.TestCase):
             path.write_text(json.dumps({**review, "ref": self.ref + "-stale"}))
             with self.assertRaisesRegex(ValueError, "stale"):
                 rescan.decide(self.selection, self.report, True)
+            path.write_text(json.dumps({**review, "source": {**source, "tag": 123}}))
+            with self.assertRaisesRegex(ValueError, "source.tag"):
+                rescan.decide(self.selection, self.report, True)
             path.write_text(json.dumps(review))
             for field, value in (("ImageConfig", None), ("ImageConfig", {"config": None}),
                                  ("ImageConfig", {"config": {"Labels": None}}), ("DiffIDs", None)):
@@ -296,7 +300,7 @@ class PublishedRescanTests(unittest.TestCase):
                 "repository": "https://github.com/grafana/grafana-prometheus-datasource",
                 "revision": "d" * 40,
             },
-            "build_info": {"vcs_revision": "d" * 40},
+            "build_info": {"vcs_revision": "d" * 40, "module_version": "v1.0.0"},
         }
         with tempfile.TemporaryDirectory() as directory, patch.object(
             rescan, "INVENTORY", Path(directory)
@@ -306,9 +310,23 @@ class PublishedRescanTests(unittest.TestCase):
             (path / "go-file-build.json").write_text(json.dumps(main))
             (path / "go-file-build-prometheus.json").write_text(json.dumps(plugin))
             value = rescan.decide(self.selection, self.report, True)
+            expected_hashes = [hashlib.sha256(json.dumps(review).encode()).hexdigest() for review in (main, plugin)]
+            plugin["build_info"].pop("vcs_revision")
+            (path / "go-file-build-prometheus.json").write_text(json.dumps(plugin))
+            with self.assertRaisesRegex(ValueError, "differs from scanned image"):
+                rescan.decide(self.selection, self.report, True)
         self.assertTrue(value["package_coverage"])
         self.assertFalse(value["proceed"])
-        self.assertEqual(len(value["coverage_limitations"]), 2)
+        self.assertEqual(len(value["coverage_limitations"]), 1)
+        self.assertCountEqual(value["reviewed_file_builds"], expected_hashes)
+
+    def test_reviewed_go_evidence_does_not_cover_other_scanner_classes(self):
+        layer = {"Digest": "sha256:" + "b" * 64, "DiffID": "sha256:" + "c" * 64}
+        package = {"Name": "example/app", "Layer": layer, "AnalyzedBy": "gobinary"}
+        review = {"target": "app", "module": "example/app", "layer": layer}
+        result = {"Target": "app", "Class": "os-pkgs", "Type": "alpine", "Packages": [package]}
+        with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
+            rescan.package_coverage([result], [review])
 
     def test_monitoring_disabled_clean_and_no_fix_do_not_mutate(self):
         value = rescan.decide(self.selection, self.report, False)

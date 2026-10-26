@@ -108,6 +108,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
 
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard
@@ -129,7 +130,7 @@ jobs:
           paths: .github/workflows/promote.yaml
 
       - name: Auto-merge options PR
-        if: steps.options.outputs.changed == 'true'
+        if: steps.options.outputs.pr_url != '' && steps.options.outputs.head_sha != '' && steps.sync.outputs.removed != 'true'
         uses: ./.github/actions/publish/auto-merge-pr
         with:
           gh_token: ${{ steps.app-token.outputs.token }}

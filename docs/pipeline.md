@@ -55,8 +55,8 @@ Go packages in one or more binaries. Each record binds one binary target and
 layer to the recorded published tag/digest, image config, upstream child,
 source repository and revision. A record's module also covers packages below
 that module path, which handles first-party subpackages in one binary.
-Bundled binaries may use a separate source repository and revision; when the
-binary records a VCS revision, it must match the reviewed source revision.
+Bundled binaries may use a separate source repository only when their embedded
+VCS revision matches the reviewed source revision.
 If the image has no revision label, the reviewed source tag must match the
 image version or upstream base tag.
 
@@ -73,9 +73,11 @@ Other versionless dependencies still fail coverage. A changed image requires
 new reviews. This exception proves inventory coverage for the reviewed builds,
 not vulnerability coverage for the unversioned packages.
 
-The existing daily promotion workflow regenerates this evidence from each
-automatic published-image scan. It opens a scoped evidence PR. If the reviewed
-targets, modules, source repositories, and main modules are unchanged, the PR
+The existing daily promotion workflow generates evidence once per automatic
+published-image scan. It retains a checksummed patch for a scoped evidence PR
+against the same source commit. A changed main branch stops the write-back.
+If the reviewed targets, modules, source repositories, and main modules are
+unchanged, the PR
 auto-merges through the normal required checks. Any structural change stays
 open for manual review.
 

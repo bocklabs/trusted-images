@@ -2,6 +2,7 @@
 """Tests for the Go file-build evidence generator."""
 
 import importlib
+import json
 import sys
 import tempfile
 import unittest
@@ -101,21 +102,30 @@ class GenerateGoFileBuildTests(unittest.TestCase):
             inventory = Path(directory)
             app = inventory / "example"
             app.mkdir()
-            changed, structural = generator.write_records(inventory, "example", [record], {})
-            self.assertTrue(changed)
-            self.assertTrue(structural)
+            self.assertEqual(generator.write_records(inventory, "example", [record], {}), (True, True))
             existing = generator.load_existing(inventory, "example")
-            changed, structural = generator.write_records(
-                inventory, "example", [record], existing
-            )
-            self.assertFalse(changed)
-            self.assertFalse(structural)
+            self.assertEqual(generator.write_records(inventory, "example", [record], existing), (False, False))
             moved = {**record, "target": "other"}
-            changed, structural = generator.write_records(
-                inventory, "example", [moved], existing
+            self.assertEqual(generator.write_records(inventory, "example", [moved], existing), (True, True))
+            self.assertEqual(
+                [json.loads(path.read_text())["target"] for path in app.glob("*.json")],
+                ["other"],
             )
-            self.assertTrue(changed)
-            self.assertTrue(structural)
+
+    def test_write_records_keeps_colliding_module_names(self):
+        records = [
+            {"target": "app", "module": module, "source": {"repository": "example"}}
+            for module in ("example/first", "example/Bar", "example/bar", "other/bar", "example/!!!")
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            inventory = Path(directory)
+            app = inventory / "example"
+            app.mkdir()
+            generator.write_records(inventory, "example", records, {})
+            existing = generator.load_existing(inventory, "example")
+            self.assertEqual(len(existing), len(records))
+            self.assertEqual(len(list(app.glob("*.json"))), len(records))
+            self.assertFalse(generator.write_records(inventory, "example", records, existing)[0])
 
     def test_write_records_preserves_evidence_run_when_unchanged(self):
         record = {
@@ -145,14 +155,15 @@ class GenerateGoFileBuildTests(unittest.TestCase):
         )
         job = workflow["jobs"]["go-evidence"]
         uses = [step.get("uses") for step in job["steps"]]
-        self.assertIn("./.github/actions/validate/generate-go-evidence", uses)
         self.assertIn("./.github/actions/validate/push-generated-pr", uses)
         merge = next(
             step
             for step in job["steps"]
             if step.get("uses") == "./.github/actions/publish/auto-merge-pr"
         )
-        self.assertIn("structural_drift != 'true'", merge["if"])
+        self.assertIn("evidence_structural_drift == 'false'", merge["if"])
+        self.assertIn("steps.evidence.outputs.pr_url != ''", merge["if"])
+        self.assertIn("steps.evidence.outputs.head_sha != ''", merge["if"])
 
     def test_rescan_refreshes_evidence_before_remediation_decision(self):
         workflow = yaml.safe_load(

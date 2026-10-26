@@ -103,6 +103,8 @@ jobs:
       force_repromote: ${{ steps.decision.outputs.force_repromote }}
       requested_remediation: ${{ steps.decision.outputs.requested_remediation }}
       ref: ${{ steps.entry.outputs.ref }}
+      evidence_changed: ${{ steps.go-build.outputs.changed }}
+      evidence_structural_drift: ${{ steps.go-build.outputs.structural_drift }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -154,6 +156,7 @@ jobs:
           workdir: published-rescan
 
       - name: Generate Go file-build evidence for this scan
+        id: go-build
         if: steps.convert.outcome == 'success'
         uses: ./.github/actions/validate/generate-go-evidence
         with:
@@ -194,7 +197,7 @@ jobs:
 
   go-evidence:
     needs: rescan
-    if: ${{ success() && inputs.automatic_rescan && needs.rescan.outputs.ref != '' }}
+    if: ${{ success() && inputs.automatic_rescan && needs.rescan.outputs.evidence_changed == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -213,6 +216,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ steps.app-token.outputs.token }}
+          ref: ${{ github.sha }}
+          fetch-depth: 0
 
       - name: Download published-image scan
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -220,32 +225,26 @@ jobs:
           name: published-rescan-${{ inputs.app }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: published-rescan
 
-      - name: Generate Go file-build evidence
-        id: generate
-        uses: ./.github/actions/validate/generate-go-evidence
-        with:
-          app: ${{ inputs.app }}
-          report: published-rescan/trivy-full.json
-          selection: published-rescan/selection.json
-          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Apply retained Go file-build evidence
+        uses: ./.github/actions/validate/apply-go-evidence
 
       - name: Push generated evidence PR
         id: evidence
-        if: steps.generate.outputs.changed == 'true'
         uses: ./.github/actions/validate/push-generated-pr
         with:
           gh_token: ${{ steps.app-token.outputs.token }}
           branch: chore/go-file-build-${{ inputs.app }}
+          paths: inventory/${{ inputs.app }}
           commit_message: "chore(evidence): refresh Go file-build evidence for ${{ inputs.app }}"
           pr_title: "chore(evidence): refresh Go file-build evidence for ${{ inputs.app }}"
           pr_body: |
             Generated from the published-image scan for `${{ inputs.app }}`.
 
-            Structural drift: `${{ steps.generate.outputs.structural_drift }}`
+            Structural drift: `${{ needs.rescan.outputs.evidence_structural_drift }}`
             Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Auto-merge generated evidence without structural drift
-        if: steps.generate.outputs.changed == 'true' && steps.generate.outputs.structural_drift != 'true'
+        if: steps.evidence.outputs.pr_url != '' && steps.evidence.outputs.head_sha != '' && needs.rescan.outputs.evidence_structural_drift == 'false'
         uses: ./.github/actions/publish/auto-merge-pr
         with:
           gh_token: ${{ steps.app-token.outputs.token }}

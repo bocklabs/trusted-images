@@ -34,8 +34,11 @@ runs:
         RUN_URL: ${{ inputs.run_url }}
       run: |
         set -euo pipefail
+        [ -f "${REPORT}" ] && [ -f "${SELECTION}" ] || { echo "FATAL: Go evidence requires report and selection files"; exit 1; }
         python3 scripts/generate_go_file_build.py \
           --app "${APP}" \
           --report "${REPORT}" \
           --selection "${SELECTION}" \
           --run-url "${RUN_URL}"
+        git add -A -- "inventory/${APP}"
+        git diff --cached --binary -- "inventory/${APP}" > published-rescan/go-evidence.patch

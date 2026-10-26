@@ -1,0 +1,11 @@
+name: apply-go-evidence
+description: Verify and apply the retained Go evidence patch at its source commit
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        (cd published-rescan && sha256sum --check SHA256SUMS)
+        jq -e --arg sha "$GITHUB_SHA" '.source_sha == $sha' published-rescan/selection.json >/dev/null
+        git apply --index published-rescan/go-evidence.patch

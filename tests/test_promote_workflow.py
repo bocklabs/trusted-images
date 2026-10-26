@@ -486,6 +486,7 @@ case "$1 $2" in
     echo https://github.com/example/repo/pull/1
     ;;
   "pr edit") exit 0 ;;
+  "pr view") echo true ;;
   "pr merge") exit 0 ;;
   *) exit 9 ;;
 esac

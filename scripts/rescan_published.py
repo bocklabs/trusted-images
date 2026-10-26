@@ -91,7 +91,8 @@ def select():
 def review_source_matches_labels(review, labels):
     source = review["source"]
     if source["repository"] != labels.get("org.opencontainers.image.source"):
-        return True
+        build = review.get("build_info") or {}
+        return bool(build.get("vcs_revision")) and build["vcs_revision"] == source["revision"]
     revision = labels.get("org.opencontainers.image.revision")
     if revision:
         return source["revision"] == revision
@@ -201,6 +202,9 @@ def go_relative_root(result, package, packages):
 
 
 def reviewed_go_package(result, package, file_builds):
+    if (result.get("Class") != "lang-pkgs" or result.get("Type") != "gobinary"
+            or package.get("AnalyzedBy") != "gobinary"):
+        return False
     for review in file_builds:
         if result.get("Target") != review["target"] or package.get("Layer") != review["layer"]:
             continue
@@ -221,6 +225,7 @@ def review_limitations(file_builds):
             "review_sha256": review["review_sha256"],
         }
         for review in file_builds
+        if review.get("build_info", {}).get("module_version", "(devel)") == "(devel)"
     ]
 
 
@@ -307,6 +312,7 @@ def decide(selection, report, enabled):
     value = {"app": selection["app"], "ref": selection["ref"], "proceed": False,
              "force_repromote": False, "findings": len(normalized), "no_fix": no_fix,
              "unsupported": unsupported, "actionable": len(requested), "package_coverage": bool(covered)}
+    value["reviewed_file_builds"] = [review["review_sha256"] for review in file_builds]
     if limitations:
         value["coverage_limitations"] = limitations
     proceed, reason = decision_outcome(

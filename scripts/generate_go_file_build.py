@@ -26,7 +26,7 @@ def require(value, message):
 
 
 def run(*args):
-    return subprocess.run(args, check=True, capture_output=True, text=True).stdout
+    return subprocess.run(args, check=True, capture_output=True, text=True, timeout=120).stdout
 
 
 def docker(*args):
@@ -198,10 +198,10 @@ def record(selection, report, ref, target, packages, run_url):
                 "sha256": info["sha256"],
                 "go_package_count": info["go_package_count"],
                 "versioned_go_package_count": info["versioned_go_package_count"],
-                **({"vcs_revision": info["build"][VCS_REVISION]} if VCS_REVISION in info["build"] else {}),
+                **({"vcs_revision": info["build"][VCS_REVISION]} if info["build"].get(VCS_REVISION) else {}),
             },
             "evidence_run": run_url,
-            "limitation": "The reviewed Go package has no module version in the scanned binary. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package.",
+            "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package.",
         })
     return records
 
@@ -218,7 +218,9 @@ def record_key(item):
 def load_existing(inventory, app):
     existing = {}
     for path in sorted((inventory / app).glob("go-file-build*.json")):
+        require(path.is_file() and not path.is_symlink(), f"{path}: unsafe Go file-build evidence")
         value = json.loads(path.read_text())
+        require(isinstance(value, dict), f"{path}: invalid Go file-build evidence")
         existing[record_key(value)] = (path, value)
     return existing
 
@@ -230,9 +232,14 @@ def write_one(inventory, app, value, previous, used):
             "go-file-build"
             if "go-file-build.json" not in used
             else "go-file-build-"
-            + re.sub(r"[^a-z0-9]+", "-", value["module"].rsplit("/", 1)[-1]).strip("-")
+            + (re.sub(r"[^a-z0-9]+", "-", value["module"].rsplit("/", 1)[-1].lower()).strip("-") or "module")
         )
-        path = inventory / app / f"{stem}.json"
+        suffix = 1
+        name = stem
+        while f"{name}.json" in used:
+            suffix += 1
+            name = f"{stem}-{suffix}"
+        path = inventory / app / f"{name}.json"
     used.add(path.name)
     candidate = value
     if previous and "evidence_run" in value:
@@ -251,7 +258,7 @@ def write_records(inventory, app, records, existing):
     generated = {record_key(item): item for item in records}
     structural = set(generated) != set(existing)
     changed = structural
-    used: set[str] = set()
+    used = {path.name for path, _ in existing.values()}
     for key, value in generated.items():
         changed = write_one(inventory, app, value, existing.get(key), used) or changed
     for key, (path, _) in existing.items():
@@ -269,6 +276,7 @@ def main():
     parser.add_argument("--inventory", type=Path, default=INVENTORY)
     parser.add_argument("--run-url", default=os.getenv("GITHUB_RUN_URL", ""))
     args = parser.parse_args()
+    require(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", args.app), "invalid inventory app")
     report = json.loads(Path(args.report).read_text())
     selection = json.loads(Path(args.selection).read_text())
     ref = selection["ref"]
