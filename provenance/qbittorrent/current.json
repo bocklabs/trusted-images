@@ -12,16 +12,16 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/qbittorrent",
-    "tag": "5.3.0-bocklabs.1",
-    "digest": "sha256:d71068cf0c90a934638d230fd5eee3da3658a46d181ab5c697dd4e229a43fbce",
+    "tag": "5.3.0-bocklabs.2",
+    "digest": "sha256:a8f16d5ef0ec9d2ad5f682ab120c5e2a0b1bec4776c6c7438e7fec4a1f2e8ca0",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39869797027",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40298951635",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
     "trivy": "0.76.1",
@@ -32,16 +32,16 @@
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:e417537406128bd80426f6cd3b9a1e45f9c64f490793b71941dc630b41f10654",
-      "updated_at": "2026-10-22 01:15:55.263770788 +0000 UTC"
+      "check_bundle_digest": "sha256:96ee978993524fa2026071c61b8641e2034b8208322fab672b2b814666ffbc83",
+      "updated_at": "2026-10-26 07:15:18.945937093 +0000 UTC"
     },
-    "full_report_sha256": "46154e63bb3ea2d6e6c3a10dea18eec99acb0d0ae2ad6d6f860d498762aa1755",
-    "copa_report_sha256": "674ac7c3c25fd67ef0f8514cfd6a4b8d90445dee0db53b91b7d0f2fe76d0e4a4",
-    "decision_sha256": "16405f73ea79bc662dc275e9857cd41ffdf26bc046cd3346e863525d64b591b3",
+    "full_report_sha256": "0c87aa8684ab120bf2553afdbf49963bca376e63141935bac1f19de6bf7620dc",
+    "copa_report_sha256": "92b102b32fc844331c23db3b43a7e9c5d15245dcace0b7a957fff4540ecbf57f",
+    "decision_sha256": "717d7a7e16b52b768b2914e46611e77747d28f384b70e65e8ef89b4f054845b4",
     "reports": {
-      "before_sha256": "1faf209a15875fb330bcbb52b6c27de7f5f612f5887c170e52ee40dbe5f008f7",
-      "final_sha256": "46154e63bb3ea2d6e6c3a10dea18eec99acb0d0ae2ad6d6f860d498762aa1755",
-      "fixable_sha256": "674ac7c3c25fd67ef0f8514cfd6a4b8d90445dee0db53b91b7d0f2fe76d0e4a4"
+      "before_sha256": "4b508f6b1cde8508d6c8b8deea640c6eb77547cf99f4fef4f4f03a76d715121b",
+      "final_sha256": "0c87aa8684ab120bf2553afdbf49963bca376e63141935bac1f19de6bf7620dc",
+      "fixable_sha256": "92b102b32fc844331c23db3b43a7e9c5d15245dcace0b7a957fff4540ecbf57f"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
-        "fetched_at": "2026-10-22T23:10:19Z",
-        "catalogVersion": "2026.10.21",
-        "dateReleased": "2026-10-21T14:04:39.8983Z"
+        "sha256": "97a6e54bc74c651ab3c55657191db9adec6c63b05ca54e4205327cfd97a8fb70",
+        "fetched_at": "2026-10-26T09:24:25Z",
+        "catalogVersion": "2026.10.23",
+        "dateReleased": "2026-10-23T19:30:18.9209Z"
       }
     },
     "acceptance": null,
@@ -72,6 +72,9 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
+    "remediation": {
+      "need_sha256": "61c71aa2cf3f768655261035635021a1fb31c816c7ff8cee4616068abfef5369"
+    },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
@@ -82,6 +85,643 @@
   },
   "cves": {
     "before": [
+      {
+        "identity": "linux/amd64|brotli-libs|CVE-2026-111497",
+        "platform": "linux/amd64",
+        "package": "brotli-libs",
+        "cve": "CVE-2026-111497",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "1.2.0-r1",
+        "fixed_version": "1.2.1-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-107928",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-107928",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-107929",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-107929",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86409",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86409",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86410",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86410",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86411",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86411",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86412",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86412",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86413",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86413",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86414",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86414",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86415",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86415",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87861",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87861",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87862",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87862",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87863",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87863",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87864",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87864",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87865",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87865",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87866",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87866",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92386",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92386",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92387",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92387",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92388",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92388",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92389",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92389",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92390",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92390",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92391",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92391",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92392",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92392",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-94265",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-94265",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-94266",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-94266",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-107928",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-107928",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-107929",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-107929",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86409",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86409",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86410",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86410",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86411",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86411",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86412",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86412",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86413",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86413",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86414",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86414",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86415",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86415",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87861",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87861",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87862",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87862",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87863",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87863",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87864",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87864",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87865",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87865",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87866",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87866",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92386",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92386",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92387",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92387",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92388",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92388",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92389",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92389",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92390",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92390",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92391",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92391",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92392",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92392",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-94265",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-94265",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-94266",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-94266",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
       {
         "identity": "linux/amd64|musl-utils|CVE-2026-107891",
         "platform": "linux/amd64",
@@ -112,7 +752,32 @@
     "final": [],
     "summary": {
       "resolved": [
-        "CVE-2026-107891"
+        "CVE-2026-107891",
+        "CVE-2026-107928",
+        "CVE-2026-107929",
+        "CVE-2026-111497",
+        "CVE-2026-86409",
+        "CVE-2026-86410",
+        "CVE-2026-86411",
+        "CVE-2026-86412",
+        "CVE-2026-86413",
+        "CVE-2026-86414",
+        "CVE-2026-86415",
+        "CVE-2026-87861",
+        "CVE-2026-87862",
+        "CVE-2026-87863",
+        "CVE-2026-87864",
+        "CVE-2026-87865",
+        "CVE-2026-87866",
+        "CVE-2026-92386",
+        "CVE-2026-92387",
+        "CVE-2026-92388",
+        "CVE-2026-92389",
+        "CVE-2026-92390",
+        "CVE-2026-92391",
+        "CVE-2026-92392",
+        "CVE-2026-94265",
+        "CVE-2026-94266"
       ],
       "remaining": [],
       "introduced": [],
@@ -158,6 +823,20 @@
       },
       {
         "ecosystem": "alpine",
+        "name": "curl",
+        "change": "upgraded",
+        "before": "8.22.0-r0",
+        "after": "8.23.0-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libcurl",
+        "change": "upgraded",
+        "before": "8.22.0-r0",
+        "after": "8.23.0-r0"
+      },
+      {
+        "ecosystem": "alpine",
         "name": "musl",
         "change": "upgraded",
         "before": "1.2.6-r2",
@@ -195,15 +874,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-22T23:10:11Z",
-      "finished_at": "2026-10-22T23:10:19Z",
-      "duration_seconds": 8.6
+      "started_at": "2026-10-26T09:24:17Z",
+      "finished_at": "2026-10-26T09:24:25Z",
+      "duration_seconds": 8.5
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000014028",
+    "runner": "GitHub Actions 1000014952",
     "baseline": {
       "entrypoint": [
         "/init"
@@ -224,34 +903,34 @@
       ]
     }
   },
-  "promoted_at": "2026-10-22T23:11:58Z",
+  "promoted_at": "2026-10-26T09:25:38Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "43b7a40fd82e3903859a3a6242ddec20317bc18a93f365a94ccd266ba325612e",
-      "attachment_sha256": "61d4aa0e8d27393e97f72216deb345c4acda69a5c317629f08ebd19a4b3c8bdc",
+      "bundle_sha256": "f851b5c72b03ac0e510a2c96dc53a4dd9b5f3cdf2e67646a27d550088bc2a574",
+      "attachment_sha256": "2026cf93ee98c13e8b55563ec96517cf847a175fe68bd1ee69d00cd825f05db9",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "9e1030be28346150227bff15b622793f184a7fe5d17a26b69fe343fef5dabc78",
-      "bundle_sha256": "220911541f82c2495cf5f6b5e32a1858ef75c7f70bde35d6676aed7f723636bc",
-      "attachment_sha256": "efce3de427e94bfca6f381986be33d3e39267ad59a50b08bfe0237248733225c"
+      "predicate_sha256": "14eb53406534a7c2b8c9f9b6db3545dcbdd60e9233732f99d40b1ff4d8d8b358",
+      "bundle_sha256": "11a3d1350857eddf1b2215c63398c11ee69d04a77acbec5482052140ec7cedef",
+      "attachment_sha256": "2211405151d4395c80e64d05f460156bcab42bd4e3e7728a15ee684008491f46"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "pCfWdin5A3IRRw5vmDgwSHB9uLiOhrWye+M2O0mnk90=",
+        "inclusion_root_hash": "fwLqwUCiwHejHvUx8iv3VRFymCnnZRR8wnFVlSstC30=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3403882037,
-        "signed_entry_timestamp": "MEUCIA/9aUCZO0ltrYjBv2+RsMm8BmYKeDBY3eRC18awGFcGAiEAky+XvPP+s8lp/IVsk1nHDmt0kTF4+AdGkwjoDnE565A="
+        "log_index": 3482990604,
+        "signed_entry_timestamp": "MEUCIDodLDzFk399d7HtEmSvsOxpkIiMvTwaom/qEjtvoe5MAiEAuemono1PMQyy3CViOjloslOKER8t9gzkRlOEh9Ju9X4="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "GtHURU75LRZ3iFmuzUuiokJdO09dsavSUpDMnixsKyc=",
+        "inclusion_root_hash": "XZwxxSuhq3mznJ8pVUn+7qZa0QjneRXpuvO7L9M19hM=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3403885359,
-        "signed_entry_timestamp": "MEYCIQDbK9ic3dk69+WTZ592TGHNHGJcAgs52uIf698m6RDUjgIhAKC22Sw9vkmoC9E3YzIczsgb9rzCIXQgRNyLWsl9MOUh"
+        "log_index": 3482991771,
+        "signed_entry_timestamp": "MEUCIE+AcKPabHonLFP0s7Va+fWtI1MipzR8UOK+WGOXeITYAiEAkyaP0Pj5rtL31t3Xg27aAZueXBXQK8g4zqdsxeQB9f8="
       }
     },
     "tools": {
