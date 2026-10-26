@@ -7,7 +7,7 @@ repos:
   # Python scripts/tests, GitHub Actions + inventory YAML, renovate.json, Markdown.
 
   - repo: https://github.com/rohaquinlop/complexipy-pre-commit
-    rev: v8.1.0
+    rev: v8.2.0
     hooks:
       - id: complexipy
 
