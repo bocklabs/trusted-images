@@ -1,0 +1,39 @@
+{
+  "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
+  "ref": "ghcr.io/bocklabs/grafana:13.2.4-bocklabs.1@sha256:e2ce9168b6f02a1b1ef39151562b88ad8817388d8ab98eb67ff3fb44bc15a607",
+  "config_digest": "sha256:a82c77b48f855ddfe9583b2c968e5218798dc3d9aa8c302d85c453327b0efbe2",
+  "upstream_child_digest": "sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b",
+  "target": "usr/share/grafana/bin/grafana",
+  "module": "github.com/grafana/grafana",
+  "layer": {
+    "Digest": "sha256:2d817bad23d91eca22daa638d1cbde50bf081ff23932bd8e50c45eee8e2dac16",
+    "DiffID": "sha256:04dcdc387f96971ff1a29027d3f468073938ab31e93bb308b83b13e600ad28e5"
+  },
+  "binary_sha256": "91040ca83733197346a586b79b102a408b269d0d63af72fb78f6f5055ea0df15",
+  "source": {
+    "repository": "https://github.com/grafana/grafana",
+    "revision": "af4a33e3786594ad72f72d97e6744010330c2977",
+    "tag": "v13.2.4",
+    "files": {
+      "Dockerfile": {
+        "url": "https://raw.githubusercontent.com/grafana/grafana/af4a33e3786594ad72f72d97e6744010330c2977/Dockerfile",
+        "sha256": "bbe2b7a5db1ebc3137f5bb659af82b51a21bc2aa992b4b0d84799d8fe6125614"
+      },
+      "go.mod": {
+        "url": "https://raw.githubusercontent.com/grafana/grafana/af4a33e3786594ad72f72d97e6744010330c2977/go.mod",
+        "sha256": "949a6c3fcf5b862bd782a490dd1df75da9d3eb9d77a8c1caf97659fc071a3035"
+      }
+    }
+  },
+  "build_info": {
+    "program": "github.com/grafana/grafana/pkg/cmd/grafana",
+    "main_module": "github.com/grafana/grafana",
+    "module_version": "(devel)",
+    "go_version": "go1.26.9",
+    "sha256": "4982453b02e4556494fbfabedb791aee5421e20e5addc3f9fed8fbf0c794f0fa",
+    "go_package_count": 521,
+    "versioned_go_package_count": 494
+  },
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40111544136",
+  "limitation": "The reviewed Go package has no module version in the scanned binary. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
+}

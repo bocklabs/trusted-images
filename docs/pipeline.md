@@ -50,21 +50,36 @@ leave that artifact name to the existing publisher, avoiding an artifact collisi
 Missing scanner/package coverage is unsupported, never evidence of a clean image.
 No-fix and unsupported findings stay visible without attempting publication.
 
-A reviewed `inventory/<app>/go-file-build.json` can identify the first-party
-module of an application built from a single Go file. It applies only to the
-recorded published tag/digest, image config, upstream child, source revision,
-binary target and layer. The review records the binary hash and embedded build
-metadata as audit evidence. Trivy JSON provides no binary hash for a direct
-comparison. Runtime matching uses the immutable image/config identity and the
-package's `Layer.Digest` and `Layer.DiffID`, plus the reviewed target and module.
+Reviewed `inventory/<app>/go-file-build*.json` records can identify versionless
+Go packages in one or more binaries. Each record binds one binary target and
+layer to the recorded published tag/digest, image config, upstream child,
+source repository and revision. A record's module also covers packages below
+that module path, which handles first-party subpackages in one binary.
+Bundled binaries may use a separate source repository only when their embedded
+VCS revision matches the reviewed source revision.
+If the image has no revision label, the reviewed source tag must match the
+image version or upstream base tag.
+
+The review records the binary hash and embedded build metadata as audit
+evidence. Trivy JSON provides no binary hash for a direct comparison. Runtime
+matching uses the immutable image/config identity and the package's
+`Layer.Digest` and `Layer.DiffID`, plus the reviewed target and module.
 Malformed or stale evidence fails with an explicit validation error.
 Inventory CI and rescans use the same parser for required binding fields.
-Inventory CI also rejects invalid JSON and unknown top-level, layer or source keys.
-The rescan decision retains the review hash and an explicit unknown
+Inventory CI also rejects invalid JSON and unknown top-level, layer or source
+keys. The rescan decision retains every review hash and an explicit unknown
 application-version limitation. Raw scan rows and findings remain unchanged.
-Other versionless dependencies still fail coverage. A changed image requires a
-new review. This exception proves inventory coverage for the reviewed build,
-not vulnerability coverage for the unversioned application module.
+Other versionless dependencies still fail coverage. A changed image requires
+new reviews. This exception proves inventory coverage for the reviewed builds,
+not vulnerability coverage for the unversioned packages.
+
+The existing daily promotion workflow generates evidence once per automatic
+published-image scan. It retains a checksummed patch for a scoped evidence PR
+against the same source commit. A changed main branch stops the write-back.
+If the reviewed targets, modules, source repositories, and main modules are
+unchanged, the PR
+auto-merges through the normal required checks. Any structural change stays
+open for manual review.
 
 Monitoring always runs; automatic remediation requires repository variable
 `REMEDIATION_ENABLED=true` and defaults to disabled. Enabled patch policy permits

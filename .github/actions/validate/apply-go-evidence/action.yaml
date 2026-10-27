@@ -1,0 +1,30 @@
+name: apply-go-evidence
+description: Verify and apply the retained Go evidence patch at its source commit
+inputs:
+  app:
+    description: Inventory app whose Go evidence may change.
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        APP: ${{ inputs.app }}
+      run: |
+        set -euo pipefail
+        [[ "$APP" =~ ^[a-z0-9][a-z0-9-]{0,79}$ ]] || { echo "FATAL: invalid inventory app"; exit 1; }
+        (cd published-rescan && sha256sum --check SHA256SUMS)
+        jq -e --arg sha "$GITHUB_SHA" '.source_sha == $sha' published-rescan/selection.json >/dev/null
+        INDEX="$(mktemp)"
+        PATHS_FILE="$(mktemp)"
+        trap 'rm -f "$INDEX" "$PATHS_FILE"' EXIT
+        cp "$(git rev-parse --git-path index)" "$INDEX"
+        GIT_INDEX_FILE="$INDEX" git apply --cached published-rescan/go-evidence.patch
+        GIT_INDEX_FILE="$INDEX" git diff --cached --name-only --no-renames -z > "$PATHS_FILE"
+        while IFS= read -r -d '' path; do
+          [[ "$path" =~ ^inventory/${APP}/go-file-build(-[a-z0-9-]+)?\.json$ ]] || {
+            echo "FATAL: retained Go evidence patch changes an unexpected path: $path"
+            exit 1
+          }
+        done < "$PATHS_FILE"
+        git apply --index published-rescan/go-evidence.patch

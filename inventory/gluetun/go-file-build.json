@@ -13,6 +13,7 @@
   "source": {
     "repository": "https://github.com/passteque/gluetun",
     "revision": "3d1e20c5551e9cae1f9d938dc7b7214a6987f27e",
+    "tag": "v3.41.3",
     "files": {
       "Dockerfile": {
         "url": "https://raw.githubusercontent.com/passteque/gluetun/3d1e20c5551e9cae1f9d938dc7b7214a6987f27e/Dockerfile",
@@ -29,10 +30,10 @@
     "main_module": null,
     "module_version": "(devel)",
     "go_version": "go1.25.11",
-    "sha256": "22160a40150579e3d45e117a7d836ab2d55e5e2109f65970a84f0f01bb93cffa",
-    "go_package_count": 53,
-    "versioned_go_package_count": 52
+    "sha256": "52f3294633b2d2d8c4216e0908080f717d7444f021b443bb993e9e0de066a70b",
+    "go_package_count": 52,
+    "versioned_go_package_count": 51
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/39985094446",
-  "limitation": "The first-party module version is unknown. Its vulnerability coverage is not established."
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40111542235",
+  "limitation": "The reviewed Go package has no module version in the scanned binary. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }

@@ -9,10 +9,11 @@ import sys
 WORKFLOW = pathlib.Path(".github/workflows/promote.yaml")
 
 
-def emit_changed(changed: bool) -> None:
+def emit_changed(changed: bool, removed: bool = False) -> None:
     if env_file := os.getenv("GITHUB_OUTPUT"):
         with open(env_file, "a", encoding="utf-8") as stream:
             stream.write(f"changed={'true' if changed else 'false'}\n")
+            stream.write(f"removed={'true' if removed else 'false'}\n")
 
 
 def main() -> int:
@@ -42,7 +43,7 @@ def main() -> int:
     removed = [o for o in current if o not in apps]
     print(f"options updated: +{added} -{removed}")
 
-    emit_changed(True)
+    emit_changed(True, bool(removed))
     return 0
 
 

@@ -1,6 +1,9 @@
 name: sync-dispatch-options
 description: Sync promote dispatch options with inventory
 outputs:
+  removed:
+    description: Whether existing dispatch options were removed.
+    value: ${{ steps.run.outputs.removed }}
   changed:
     description: Workflow output.
     value: ${{ steps.run.outputs.changed }}

@@ -1,6 +1,7 @@
 """Producer-owned daily monitoring and remediation contracts."""
 
 import copy
+import hashlib
 import importlib
 import json
 import os
@@ -182,6 +183,9 @@ class PublishedRescanTests(unittest.TestCase):
             path.write_text(json.dumps({**review, "ref": self.ref + "-stale"}))
             with self.assertRaisesRegex(ValueError, "stale"):
                 rescan.decide(self.selection, self.report, True)
+            path.write_text(json.dumps({**review, "source": {**source, "tag": 123}}))
+            with self.assertRaisesRegex(ValueError, "source.tag"):
+                rescan.decide(self.selection, self.report, True)
             path.write_text(json.dumps(review))
             for field, value in (("ImageConfig", None), ("ImageConfig", {"config": None}),
                                  ("ImageConfig", {"config": {"Labels": None}}), ("DiffIDs", None)):
@@ -204,6 +208,126 @@ class PublishedRescanTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "differs from scanned image"):
                 rescan.decide(self.selection, self.report, True)
 
+    def test_reviewed_file_builds_cover_multiple_binaries_and_module_prefixes(
+        self,
+    ) -> None:
+        main_layer = {"Digest": "sha256:" + "1" * 64, "DiffID": "sha256:" + "2" * 64}
+        plugin_layer = {
+            "Digest": "sha256:" + "3" * 64,
+            "DiffID": "sha256:" + "4" * 64,
+        }
+        main_packages = [
+            {
+                "Name": f"github.com/grafana/grafana/pkg/module{i}",
+                "ID": f"github.com/grafana/grafana/pkg/module{i}",
+                "AnalyzedBy": "gobinary",
+                "Layer": main_layer,
+                "Identifier": {
+                    "PURL": f"pkg:golang/github.com/grafana/grafana/pkg/module{i}"
+                },
+            }
+            for i in range(2)
+        ]
+        plugin_package = {
+            "Name": "./pkg/promlib",
+            "ID": "./pkg/promlib",
+            "AnalyzedBy": "gobinary",
+            "Layer": plugin_layer,
+            "Identifier": {"UID": "promlib"},
+        }
+        self.report["Results"] = [
+            {
+                "Class": "os-pkgs",
+                "Type": "alpine",
+                "Target": self.ref,
+                "Packages": [{"Name": "musl", "Version": "1"}],
+                "Vulnerabilities": [],
+            },
+            {
+                "Class": "lang-pkgs",
+                "Type": "gobinary",
+                "Target": "grafana",
+                "Packages": main_packages,
+                "Vulnerabilities": [],
+            },
+            {
+                "Class": "lang-pkgs",
+                "Type": "gobinary",
+                "Target": "prometheus",
+                "Packages": [plugin_package],
+                "Vulnerabilities": [],
+            },
+        ]
+        self.report["Metadata"] = {
+            "OS": {"EOSL": False},
+            "ImageID": "sha256:" + "a" * 64,
+            "DiffIDs": [main_layer["DiffID"], plugin_layer["DiffID"]],
+            "ImageConfig": {
+                "config": {
+                    "Labels": {
+                        "org.opencontainers.image.source": "https://github.com/grafana/grafana",
+                        "org.opencontainers.image.version": "13.2.4-bocklabs.1",
+                        "org.opencontainers.image.base.name": "grafana/grafana:13.2.4",
+                    }
+                }
+            },
+        }
+        base = {
+            "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
+            "ref": self.ref,
+            "config_digest": self.report["Metadata"]["ImageID"],
+            "upstream_child_digest": self.record["upstream"]["selected_child_digest"],
+            "source": {
+                "repository": "https://github.com/grafana/grafana",
+                "revision": "c" * 40,
+                "tag": "v13.2.4",
+            },
+        }
+        main = {
+            **base,
+            "target": "grafana",
+            "module": "github.com/grafana/grafana",
+            "layer": main_layer,
+            "binary_sha256": "1" * 64,
+        }
+        plugin = {
+            **base,
+            "target": "prometheus",
+            "module": "./pkg/promlib",
+            "layer": plugin_layer,
+            "binary_sha256": "2" * 64,
+            "source": {
+                "repository": "https://github.com/grafana/grafana-prometheus-datasource",
+                "revision": "d" * 40,
+            },
+            "build_info": {"vcs_revision": "d" * 40, "module_version": "v1.0.0"},
+        }
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            rescan, "INVENTORY", Path(directory)
+        ):
+            path = Path(directory) / "postgres-exporter"
+            path.mkdir()
+            (path / "go-file-build.json").write_text(json.dumps(main))
+            (path / "go-file-build-prometheus.json").write_text(json.dumps(plugin))
+            value = rescan.decide(self.selection, self.report, True)
+            expected_hashes = [hashlib.sha256(json.dumps(review).encode()).hexdigest() for review in (main, plugin)]
+            plugin["build_info"].pop("vcs_revision")
+            (path / "go-file-build-prometheus.json").write_text(json.dumps(plugin))
+            with self.assertRaisesRegex(ValueError, "differs from scanned image"):
+                rescan.decide(self.selection, self.report, True)
+        self.assertTrue(value["package_coverage"])
+        self.assertFalse(value["proceed"])
+        self.assertEqual(len(value["coverage_limitations"]), 1)
+        self.assertCountEqual(value["reviewed_file_builds"], expected_hashes)
+
+    def test_reviewed_go_evidence_does_not_cover_other_scanner_classes(self):
+        layer = {"Digest": "sha256:" + "b" * 64, "DiffID": "sha256:" + "c" * 64}
+        package = {"Name": "example/app", "Layer": layer, "AnalyzedBy": "gobinary"}
+        review = {"target": "app", "module": "example/app", "layer": layer}
+        result = {"Target": "app", "Class": "os-pkgs", "Type": "alpine", "Packages": [package]}
+        with self.assertRaisesRegex(ValueError, "invalid scanned package inventory"):
+            rescan.package_coverage([result], [review])
+
     def test_monitoring_disabled_clean_and_no_fix_do_not_mutate(self):
         value = rescan.decide(self.selection, self.report, False)
         self.assertFalse(value["proceed"])
@@ -223,6 +347,15 @@ class PublishedRescanTests(unittest.TestCase):
         self.assertFalse(rescan.decide(self.selection, self.report, True)["proceed"])
         self.spec["upstream"]["digest"] = "sha256:" + "a" * 64
         self.assertTrue(rescan.decide(self.selection, self.report, True)["proceed"])
+
+    def test_inventory_upstream_tag_change_does_not_request_automatic_remediation(
+        self,
+    ) -> None:
+        self.spec["upstream"]["tag"] = "v0.20.2"
+        value = rescan.decide(self.selection, self.report, True)
+        self.assertFalse(value["proceed"])
+        self.assertEqual(value["unsupported"], 1)
+        self.assertIn("inventory upstream tag differs", value["reason"])
 
     def test_incomplete_coverage_wrong_reference_and_eol_fail_closed(self):
         incomplete: tuple[None | list[dict[str, str]], ...] = (None, [])

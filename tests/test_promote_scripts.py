@@ -1286,6 +1286,7 @@ class SyncDispatchOptionsTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("options updated: +['app-a', 'app-b'] -['old']", result.stdout)
         self.assertIn("changed=true", output.read_text(encoding="utf-8"))
+        self.assertIn("removed=true", output.read_text(encoding="utf-8"))
         self.assertIn(
             "          - app-a\n          - app-b", workflow.read_text(encoding="utf-8")
         )

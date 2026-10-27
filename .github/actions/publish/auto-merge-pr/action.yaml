@@ -1,15 +1,15 @@
 name: auto-merge-pr
-description: Auto-merge signed provenance PR
+description: Auto-merge a reviewed pull request
 inputs:
   gh_token:
-    description: Workflow input.
-    required: false
+    description: GitHub token with pull-request write access.
+    required: true
   pr_url:
-    description: Workflow input.
-    required: false
+    description: URL of the reviewed pull request.
+    required: true
   head_sha:
-    description: Workflow input.
-    required: false
+    description: Exact reviewed head commit.
+    required: true
 runs:
   using: composite
   steps:
