@@ -12,19 +12,19 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/grafana",
-    "tag": "13.2.4-bocklabs.1",
-    "digest": "sha256:e2ce9168b6f02a1b1ef39151562b88ad8817388d8ab98eb67ff3fb44bc15a607",
+    "tag": "13.2.4-bocklabs.2",
+    "digest": "sha256:f82096e412ba5e9c6966660318c82c2850c18ed6e208f73f395dcc2cad18a6c8",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39301069307",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40459746026",
     "workflow": "promote",
     "dispatched_by": "nitish-raj"
   },
   "tools": {
-    "trivy": "0.76.0",
+    "trivy": "0.76.1",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
     "skopeo": "v1.22.2",
@@ -32,16 +32,16 @@
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:1b00055b9b8eb61ac08165f731d89c5c66eb953ac2aefff1dff295bc70eddaad",
-      "updated_at": "2026-10-19 07:19:54.308593453 +0000 UTC"
+      "check_bundle_digest": "sha256:e5aeec6e7dc9bc535095c51138de88a242763ed0d547bcef82c19261a9daf518",
+      "updated_at": "2026-10-26 07:15:18.945937093 +0000 UTC"
     },
-    "full_report_sha256": "17f8e9b29d1aa2efee07fb75eb0c47f263dd3ef4aa9f63e6f8c41e0879939e14",
-    "copa_report_sha256": "f7ac18827f9728e3e33a18b29644663b3f87181ed5e488cb1ff080e698353dbb",
-    "decision_sha256": "f668c861a9b528609915bc2afe3295e5b201f970f6a4f25823be2896eb7f1db0",
+    "full_report_sha256": "f810ca457cfac841f63a09c79264f152cacc1e271bad48c4a27291bb4667b4db",
+    "copa_report_sha256": "8370981f5d82f0058d21ba2c2e9549bcd92ba71e7fa828215c9345264ca25698",
+    "decision_sha256": "2c8f1f519afd6fd54fb67f20030d8a2c696d9cafdb3761df939179ff4ff5061a",
     "reports": {
-      "before_sha256": "34f69d91626802310e0c0cad221195d7117f1de818ca55cbfc644a3830236ec1",
-      "final_sha256": "17f8e9b29d1aa2efee07fb75eb0c47f263dd3ef4aa9f63e6f8c41e0879939e14",
-      "fixable_sha256": "f7ac18827f9728e3e33a18b29644663b3f87181ed5e488cb1ff080e698353dbb"
+      "before_sha256": "6031dae9fda93b8b85482a4febddbe5d802e2b1c9368c285950224e70b940f82",
+      "final_sha256": "f810ca457cfac841f63a09c79264f152cacc1e271bad48c4a27291bb4667b4db",
+      "fixable_sha256": "8370981f5d82f0058d21ba2c2e9549bcd92ba71e7fa828215c9345264ca25698"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "b6e27975f6635ecfc546fbd4fd6e444ba63a07ab2abc8876229d77fe083d357d",
-        "fetched_at": "2026-10-19T18:18:48Z",
-        "catalogVersion": "2026.10.16",
-        "dateReleased": "2026-10-16T17:15:48.8752Z"
+        "sha256": "653c72ea869cbca7a9198b5e17b97bef516b67494e89bb919a9639d4eedbfa13",
+        "fetched_at": "2026-10-27T06:16:25Z",
+        "catalogVersion": "2026.10.26",
+        "dateReleased": "2026-10-26T22:24:24.6101Z"
       }
     },
     "acceptance": null,
@@ -72,11 +72,14 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
+    "remediation": {
+      "need_sha256": "43d4e28d7f5aa72350bff7ca77060a4532c7acc1815e66dc4838871749c06c3b"
+    },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-100347:MEDIUM:ghsa,CVE-2026-100348:MEDIUM:ghsa,CVE-2026-100349:HIGH:ghsa,CVE-2026-100351:HIGH:ghsa,CVE-2026-100352:HIGH:ghsa,CVE-2026-100353:HIGH:ghsa,CVE-2026-100354:HIGH:ghsa,GO-2026-5932:UNKNOWN:,GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56855:MEDIUM:,CVE-2026-78662:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-84303:MEDIUM:ghsa,CVE-2026-84304:HIGH:ghsa,CVE-2026-84445:HIGH:ghsa,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-21728:HIGH:ghsa,CVE-2026-28377:HIGH:ghsa,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:",
+    "outcome": "eligible with no-fix warnings: CVE-2026-100347:MEDIUM:ghsa,CVE-2026-100348:MEDIUM:ghsa,CVE-2026-100349:HIGH:ghsa,CVE-2026-100351:HIGH:ghsa,CVE-2026-100352:HIGH:ghsa,CVE-2026-100353:HIGH:ghsa,CVE-2026-100354:HIGH:ghsa,GO-2026-5932:UNKNOWN:,CVE-2026-111943:HIGH:,GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-56855:MEDIUM:,CVE-2026-78662:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-84303:MEDIUM:ghsa,CVE-2026-84304:HIGH:ghsa,CVE-2026-84445:HIGH:ghsa,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-21728:HIGH:ghsa,CVE-2026-28377:HIGH:ghsa,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-111943:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:",
     "eligible": true,
     "warnings": [
       {
@@ -193,6 +196,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fbin%2Fgrafana:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/bin/grafana",
+        "installed_version": "v1.26.9",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Felasticsearch%2Fgpx_grafana_elasticsearch_datasource_linux_amd64:golang.org%2Fx%2Fcrypto|GO-2026-5932",
         "platform": "linux/amd64",
         "package": "golang.org/x/crypto",
@@ -273,6 +290,20 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Felasticsearch%2Fgpx_grafana_elasticsearch_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/elasticsearch/gpx_grafana_elasticsearch_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -529,6 +560,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-postgresql-datasource%2Fgpx_grafana_postgresql_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/grafana-postgresql-datasource/gpx_grafana_postgresql_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-postgresql-datasource%2Fgpx_grafana_postgresql_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -777,6 +822,20 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-pyroscope-datasource%2Fgpx_grafana-pyroscope-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/grafana-pyroscope-datasource/gpx_grafana-pyroscope-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -1033,6 +1092,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Finfluxdb%2Fgpx_grafana_influxdb_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/influxdb/gpx_grafana_influxdb_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Finfluxdb%2Fgpx_grafana_influxdb_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -1281,6 +1354,20 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fjaeger%2Fgpx_grafana-jaeger-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/jaeger/gpx_grafana-jaeger-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -1551,6 +1638,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Floki%2Fgpx_grafana-loki-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/loki/gpx_grafana-loki-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Floki%2Fgpx_grafana-loki-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -1817,6 +1918,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmssql%2Fgpx_grafana-mssql-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/mssql/gpx_grafana-mssql-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmssql%2Fgpx_grafana-mssql-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -2065,6 +2180,20 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmysql%2Fgpx_grafana-mysql-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/mysql/gpx_grafana-mysql-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -2321,6 +2450,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fopentsdb%2Fgpx_grafana-opentsdb-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/opentsdb/gpx_grafana-opentsdb-datasource_linux_amd64",
+        "installed_version": "v1.26.6",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fopentsdb%2Fgpx_grafana-opentsdb-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -2569,6 +2712,20 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fprometheus%2Fgpx_grafana-prometheus-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/prometheus/gpx_grafana-prometheus-datasource_linux_amd64",
+        "installed_version": "v1.27.1",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -2909,6 +3066,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fstackdriver%2Fgpx_grafana_cloudmonitoring_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/stackdriver/gpx_grafana_cloudmonitoring_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fstackdriver%2Fgpx_grafana_cloudmonitoring_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -3189,6 +3360,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Ftempo%2Fgpx_grafana-tempo-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/tempo/gpx_grafana-tempo-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Ftempo%2Fgpx_grafana-tempo-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -3437,6 +3622,20 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fzipkin%2Fgpx_grafana-zipkin-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/zipkin/gpx_grafana-zipkin-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -3626,6 +3825,331 @@
   "cves": {
     "before": [
       {
+        "identity": "linux/amd64|brotli-libs|CVE-2026-111497",
+        "platform": "linux/amd64",
+        "package": "brotli-libs",
+        "cve": "CVE-2026-111497",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "1.2.0-r1",
+        "fixed_version": "1.2.1-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-107928",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-107928",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-107929",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-107929",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86409",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86409",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86410",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86410",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86411",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86411",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86412",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86412",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86413",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86413",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86414",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86414",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86415",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86415",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87861",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87861",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87862",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87862",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87863",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87863",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87864",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87864",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87865",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87865",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87866",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87866",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92386",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92386",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92387",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92387",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92388",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92388",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92389",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92389",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92390",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92390",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92391",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92391",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92392",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92392",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-94265",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-94265",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-94266",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-94266",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fbin%2Fgrafana:github.com%2Fgetkin%2Fkin-openapi|CVE-2026-100347",
         "platform": "linux/amd64",
         "package": "github.com/getkin/kin-openapi",
@@ -3730,6 +4254,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fbin%2Fgrafana:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/bin/grafana",
+        "installed_version": "v1.26.9",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Felasticsearch%2Fgpx_grafana_elasticsearch_datasource_linux_amd64:golang.org%2Fx%2Fcrypto|GO-2026-5932",
         "platform": "linux/amd64",
         "package": "golang.org/x/crypto",
@@ -3805,6 +4342,19 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Felasticsearch%2Fgpx_grafana_elasticsearch_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/elasticsearch/gpx_grafana_elasticsearch_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -4042,6 +4592,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-postgresql-datasource%2Fgpx_grafana_postgresql_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/grafana-postgresql-datasource/gpx_grafana_postgresql_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-postgresql-datasource%2Fgpx_grafana_postgresql_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -4273,6 +4836,19 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-pyroscope-datasource%2Fgpx_grafana-pyroscope-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/grafana-pyroscope-datasource/gpx_grafana-pyroscope-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -4510,6 +5086,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Finfluxdb%2Fgpx_grafana_influxdb_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/influxdb/gpx_grafana_influxdb_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Finfluxdb%2Fgpx_grafana_influxdb_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -4741,6 +5330,19 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fjaeger%2Fgpx_grafana-jaeger-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/jaeger/gpx_grafana-jaeger-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -4991,6 +5593,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Floki%2Fgpx_grafana-loki-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/loki/gpx_grafana-loki-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Floki%2Fgpx_grafana-loki-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -5238,6 +5853,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmssql%2Fgpx_grafana-mssql-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/mssql/gpx_grafana-mssql-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmssql%2Fgpx_grafana-mssql-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -5469,6 +6097,19 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmysql%2Fgpx_grafana-mysql-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/mysql/gpx_grafana-mysql-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -5706,6 +6347,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fopentsdb%2Fgpx_grafana-opentsdb-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/opentsdb/gpx_grafana-opentsdb-datasource_linux_amd64",
+        "installed_version": "v1.26.6",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fopentsdb%2Fgpx_grafana-opentsdb-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -5937,6 +6591,19 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fprometheus%2Fgpx_grafana-prometheus-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/prometheus/gpx_grafana-prometheus-datasource_linux_amd64",
+        "installed_version": "v1.27.1",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -6252,6 +6919,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fstackdriver%2Fgpx_grafana_cloudmonitoring_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/stackdriver/gpx_grafana_cloudmonitoring_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fstackdriver%2Fgpx_grafana_cloudmonitoring_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -6512,6 +7192,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Ftempo%2Fgpx_grafana-tempo-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/tempo/gpx_grafana-tempo-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Ftempo%2Fgpx_grafana-tempo-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -6743,6 +7436,19 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fzipkin%2Fgpx_grafana-zipkin-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/zipkin/gpx_grafana-zipkin-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -6915,6 +7621,344 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|libcurl|CVE-2026-107928",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-107928",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-107929",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-107929",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86409",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86409",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86410",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86410",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86411",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86411",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86412",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86412",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86413",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86413",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86414",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86414",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86415",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86415",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87861",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87861",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87862",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87862",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87863",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87863",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87864",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87864",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87865",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87865",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87866",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87866",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92386",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92386",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92387",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92387",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92388",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92388",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92389",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92389",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92390",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92390",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92391",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92391",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92392",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92392",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-94265",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-94265",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-94266",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-94266",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|musl-utils|CVE-2026-107891",
+        "platform": "linux/amd64",
+        "package": "musl-utils",
+        "cve": "CVE-2026-107891",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "1.2.6-r2",
+        "fixed_version": "1.2.6-r3",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|musl|CVE-2026-107891",
+        "platform": "linux/amd64",
+        "package": "musl",
+        "cve": "CVE-2026-107891",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "grafana/grafana@sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b (alpine 3.24.2)",
+        "installed_version": "1.2.6-r2",
+        "fixed_version": "1.2.6-r3",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|zlib|CVE-2026-85091",
         "platform": "linux/amd64",
         "package": "zlib",
@@ -7034,6 +8078,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fbin%2Fgrafana:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/bin/grafana",
+        "installed_version": "v1.26.9",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Felasticsearch%2Fgpx_grafana_elasticsearch_datasource_linux_amd64:golang.org%2Fx%2Fcrypto|GO-2026-5932",
         "platform": "linux/amd64",
         "package": "golang.org/x/crypto",
@@ -7109,6 +8166,19 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Felasticsearch%2Fgpx_grafana_elasticsearch_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/elasticsearch/gpx_grafana_elasticsearch_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -7346,6 +8416,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-postgresql-datasource%2Fgpx_grafana_postgresql_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/grafana-postgresql-datasource/gpx_grafana_postgresql_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-postgresql-datasource%2Fgpx_grafana_postgresql_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -7577,6 +8660,19 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fgrafana-pyroscope-datasource%2Fgpx_grafana-pyroscope-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/grafana-pyroscope-datasource/gpx_grafana-pyroscope-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -7814,6 +8910,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Finfluxdb%2Fgpx_grafana_influxdb_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/influxdb/gpx_grafana_influxdb_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Finfluxdb%2Fgpx_grafana_influxdb_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -8045,6 +9154,19 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fjaeger%2Fgpx_grafana-jaeger-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/jaeger/gpx_grafana-jaeger-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -8295,6 +9417,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Floki%2Fgpx_grafana-loki-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/loki/gpx_grafana-loki-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Floki%2Fgpx_grafana-loki-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -8542,6 +9677,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmssql%2Fgpx_grafana-mssql-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/mssql/gpx_grafana-mssql-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmssql%2Fgpx_grafana-mssql-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -8773,6 +9921,19 @@
         "installed_version": "v0.58.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fmysql%2Fgpx_grafana-mysql-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/mysql/gpx_grafana-mysql-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -9010,6 +10171,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fopentsdb%2Fgpx_grafana-opentsdb-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/opentsdb/gpx_grafana-opentsdb-datasource_linux_amd64",
+        "installed_version": "v1.26.6",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fopentsdb%2Fgpx_grafana-opentsdb-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -9241,6 +10415,19 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fprometheus%2Fgpx_grafana-prometheus-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/prometheus/gpx_grafana-prometheus-datasource_linux_amd64",
+        "installed_version": "v1.27.1",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -9556,6 +10743,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fstackdriver%2Fgpx_grafana_cloudmonitoring_datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/stackdriver/gpx_grafana_cloudmonitoring_datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fstackdriver%2Fgpx_grafana_cloudmonitoring_datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -9816,6 +11016,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Ftempo%2Fgpx_grafana-tempo-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/tempo/gpx_grafana-tempo-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Ftempo%2Fgpx_grafana-tempo-datasource_linux_amd64:stdlib|CVE-2026-56857",
         "platform": "linux/amd64",
         "package": "stdlib",
@@ -10047,6 +11260,19 @@
         "installed_version": "v0.59.0",
         "fixed_version": "0.60.0",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fshare%2Fgrafana%2Fdata%2Fplugins-bundled%2Fzipkin%2Fgpx_grafana-zipkin-datasource_linux_amd64:stdlib|CVE-2026-111943",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-111943",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/share/grafana/data/plugins-bundled/zipkin/gpx_grafana-zipkin-datasource_linux_amd64",
+        "installed_version": "v1.26.7",
+        "fixed_version": "1.26.10, 1.27.3",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -10221,7 +11447,33 @@
     ],
     "summary": {
       "resolved": [
-        "CVE-2026-85091"
+        "CVE-2026-107891",
+        "CVE-2026-107928",
+        "CVE-2026-107929",
+        "CVE-2026-111497",
+        "CVE-2026-85091",
+        "CVE-2026-86409",
+        "CVE-2026-86410",
+        "CVE-2026-86411",
+        "CVE-2026-86412",
+        "CVE-2026-86413",
+        "CVE-2026-86414",
+        "CVE-2026-86415",
+        "CVE-2026-87861",
+        "CVE-2026-87862",
+        "CVE-2026-87863",
+        "CVE-2026-87864",
+        "CVE-2026-87865",
+        "CVE-2026-87866",
+        "CVE-2026-92386",
+        "CVE-2026-92387",
+        "CVE-2026-92388",
+        "CVE-2026-92389",
+        "CVE-2026-92390",
+        "CVE-2026-92391",
+        "CVE-2026-92392",
+        "CVE-2026-94265",
+        "CVE-2026-94266"
       ],
       "remaining": [
         "CVE-2026-100347",
@@ -10231,6 +11483,7 @@
         "CVE-2026-100352",
         "CVE-2026-100353",
         "CVE-2026-100354",
+        "CVE-2026-111943",
         "CVE-2026-21728",
         "CVE-2026-28377",
         "CVE-2026-56855",
@@ -10261,6 +11514,48 @@
     "changes": [
       {
         "ecosystem": "alpine",
+        "name": "alpine-release",
+        "change": "upgraded",
+        "before": "3.24.2-r0",
+        "after": "3.24.3-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "brotli-libs",
+        "change": "upgraded",
+        "before": "1.2.0-r1",
+        "after": "1.2.1-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "c-ares",
+        "change": "upgraded",
+        "before": "1.34.8-r0",
+        "after": "1.34.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "ca-certificates",
+        "change": "upgraded",
+        "before": "20260909-r0",
+        "after": "20261020-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "ca-certificates-bundle",
+        "change": "upgraded",
+        "before": "20260909-r0",
+        "after": "20261020-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "curl",
+        "change": "upgraded",
+        "before": "8.22.0-r0",
+        "after": "8.23.0-r0"
+      },
+      {
+        "ecosystem": "alpine",
         "name": "libcrypto3",
         "change": "upgraded",
         "before": "3.5.8-r0",
@@ -10268,10 +11563,31 @@
       },
       {
         "ecosystem": "alpine",
+        "name": "libcurl",
+        "change": "upgraded",
+        "before": "8.22.0-r0",
+        "after": "8.23.0-r0"
+      },
+      {
+        "ecosystem": "alpine",
         "name": "libssl3",
         "change": "upgraded",
         "before": "3.5.8-r0",
         "after": "3.5.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "musl",
+        "change": "upgraded",
+        "before": "1.2.6-r2",
+        "after": "1.2.6-r3"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "musl-utils",
+        "change": "upgraded",
+        "before": "1.2.6-r2",
+        "after": "1.2.6-r3"
       },
       {
         "ecosystem": "alpine",
@@ -10304,15 +11620,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-19T18:18:47Z",
-      "finished_at": "2026-10-19T18:18:48Z",
+      "started_at": "2026-10-27T06:16:25Z",
+      "finished_at": "2026-10-27T06:16:25Z",
       "duration_seconds": 0.3
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000012814",
+    "runner": "GitHub Actions 1000015104",
     "baseline": {
       "entrypoint": [
         "/run.sh"
@@ -10329,39 +11645,39 @@
       ]
     }
   },
-  "promoted_at": "2026-10-19T18:21:00Z",
+  "promoted_at": "2026-10-27T06:18:04Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "02edfbfd1e2c7d09df8a89c8e289186e6fae4efae946a7fd0cbf27e21af77ca6",
-      "attachment_sha256": "a358b5ede0f63532214ac2fe7dfeb2f83a2ec0cb7c1b73aada39018f9e81e2e7",
+      "bundle_sha256": "6c82344501da4414813faf4954e6e861e64d4fc5e9fd670a9137af244292d5aa",
+      "attachment_sha256": "4034f2b89763c67f574c175b0c2117c26e868d14ca060474b3757ce058ce397f",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "5a8f677610db6275c1fc32b961282b85a8d00be90fa27ac454da810cab71314e",
-      "bundle_sha256": "98d9a2777f616081518611ce0ff3e684f0f4943e4808b2b50fc67a5e48867d28",
-      "attachment_sha256": "7745f16ba54d71bd2f8957b9c741d23747b5efc8e7d7416540d4a0f8ced99d65"
+      "predicate_sha256": "40f36f7cc98c97f407258edbbd1327507f9d465b37002cb490c874eb4b8550e2",
+      "bundle_sha256": "a5431e7bd8144315b8286afb778def11f00dabe31c6d86fa05173ba99bb14f9d",
+      "attachment_sha256": "a1376c646ede4a092d7e0e7e311810602cc8afda312b632aee6d736bb01ba570"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "/2IbTBu2k3p1QczFIqqDVoBcv5JcaMZxwE4t/6EBwzc=",
+        "inclusion_root_hash": "enkDajdstPlr/uqQ5AsdOy3c+l6H/sDE/Ey6lHBUUgQ=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3324835484,
-        "signed_entry_timestamp": "MEUCIQDLJNEKUHNWPrqEvgHfMoNpdK4bHCelfjSPDBzW62os0AIgDrwKPq6Gdr7fhgUSpxLezrgwB5bfbagm4yfIwMjYWt0="
+        "log_index": 3507894099,
+        "signed_entry_timestamp": "MEYCIQDsik3AnTarqEEb3OzmNMoe4xM9uWOAecbDZh9G/YPR4QIhANiH598MIxEYd5NKswEQ1tGLuwlUKbWcKD7BPOqRVodq"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "EgSSxr949jScTPJXFIYkuCvTN4da+IqCVT0DCTG7wdA=",
+        "inclusion_root_hash": "Uydmj95lvJHYFfJ6JGWe5JLZ5hGgtfYu0fHosm5fQ2c=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3324836945,
-        "signed_entry_timestamp": "MEUCIBIL8Ky8Udw5Z6LN8w8UxsTztPwE+GMp6inKEApBq5lSAiEAjEIg55f+ML4XhJEL5nWs7mrLErNXWL+SZ+TZ19FV+Iw="
+        "log_index": 3507897064,
+        "signed_entry_timestamp": "MEUCIQCYtVR09MxTliUfJ6r5XZGA/4ZVkm/i1gPBR3/2Opi71QIgBu9+0gI8/ib+jm0lcLyrxN4UWhNKDbpaNRujjD+OZj8="
       }
     },
     "tools": {
-      "cosign": "v3.1.3",
-      "trivy": "0.76.0"
+      "cosign": "v3.1.4",
+      "trivy": "0.76.1"
     }
   }
 }
