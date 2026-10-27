@@ -21,7 +21,7 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.type != 'Bot'
     steps:
       - name: PR Agent /describe
-        uses: the-pr-agent/pr-agent@981344be2755e303df501e18e3f60b848a188a80 # v0.48.0
+        uses: the-pr-agent/pr-agent@efdde4afe14aa401a3889012c7f3e9ef3081a430 # v0.49.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           config.model: ${{ vars.PR_AGENT_LLM_MODEL }}
@@ -32,3 +32,6 @@ jobs:
           config.max_model_tokens: '1000000'
           config.max_output_tokens: '128000'
           config.propagate_tool_errors: 'true'
+          github_action_config.auto_review: 'false'
+          github_action_config.auto_describe: 'true'
+          github_action_config.auto_improve: 'false'

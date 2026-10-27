@@ -1,0 +1,10 @@
+name: validate-inventory
+description: Validate inventory
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        uv run --locked python scripts/validate_inventory.py

@@ -1,0 +1,35 @@
+name: assert-digest
+description: Assert digest equality
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/ghcr.sh
+        TOKEN="$(ghcr_require_pull_token "${APP}" assert-digest-token.json)"
+        PUSHED="$(curl --fail-with-body -sSI -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${GHCR_MANIFEST_ACCEPT}" \
+          "https://ghcr.io/v2/bocklabs/${APP}/manifests/${INTERNAL_TAG}" \
+          | tr -d '\r' | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+        [[ "${PUSHED}" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "FATAL: destination tag has no valid digest"; exit 1; }
+        printf '%s\n' "${PUSHED}" > pushed-digest.txt
+        [ "${PUSHED}" = "${CANDIDATE_DIGEST}" ] || {
+          echo "FATAL: digest divergence: pushed=${PUSHED} candidate=${CANDIDATE_DIGEST}"
+          exit 1
+        }
+        echo "digest equality: PASS (${PUSHED})"

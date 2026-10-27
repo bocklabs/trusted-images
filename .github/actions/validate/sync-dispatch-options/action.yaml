@@ -1,0 +1,17 @@
+name: sync-dispatch-options
+description: Sync promote dispatch options with inventory
+outputs:
+  removed:
+    description: Whether existing dispatch options were removed.
+    value: ${{ steps.run.outputs.removed }}
+  changed:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.changed }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 scripts/sync_dispatch_options.py

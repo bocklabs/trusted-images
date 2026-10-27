@@ -68,21 +68,21 @@ def validate_observation(item, pattern, upstream_tag):
             f"observation tag does not match {upstream_tag}-bocklabs.N: {tag}"
         )
     if child is not None:
-        validate_phase05_observation(tag, index, child, platforms)
+        validate_single_platform_observation(tag, index, child, platforms)
     elif index not in ("", None):
         raise ValueError(
-            f"historical observation cannot carry a Phase 05 index digest: {tag}"
+            f"historical observation cannot carry an upstream index digest: {tag}"
         )
     return tag, match
 
 
-def validate_phase05_observation(tag, index, child, platforms):
+def validate_single_platform_observation(tag, index, child, platforms):
     if not isinstance(index, str) or not DIGEST_RE.fullmatch(index):
-        raise ValueError(f"Phase 05 observation lacks a valid index digest: {tag}")
+        raise ValueError(f"single-platform observation lacks a valid index digest: {tag}")
     if not isinstance(child, str) or not DIGEST_RE.fullmatch(child):
-        raise ValueError(f"Phase 05 observation has an invalid child digest: {tag}")
+        raise ValueError(f"single-platform observation has an invalid child digest: {tag}")
     if platforms != ["linux/amd64"]:
-        raise ValueError(f"Phase 05 observation is not linux/amd64-only: {tag}")
+        raise ValueError(f"single-platform observation is not linux/amd64-only: {tag}")
 
 
 def recovered_revision(
@@ -92,7 +92,7 @@ def recovered_revision(
         raise ValueError(f"recover_tag is not published: {recover_tag}")
     observed = candidates[recover_tag]
     if observed["selected_child_digest"] is None:
-        raise ValueError("recover_tag is not a Phase 05 single-platform revision")
+        raise ValueError("recover_tag is not a single-platform revision")
     if observed["selected_child_digest"] != selected_child_digest:
         raise ValueError("recover_tag selected child digest does not match this run")
     if observed["digest"] != recover_candidate_digest:
@@ -104,11 +104,13 @@ def recovered_revision(
 def allocated_revision(
     upstream_tag, ordered, upstream_digest, selected_child_digest, force_repromote
 ):
-    phase05 = [item for item in ordered if item["selected_child_digest"] is not None]
+    single_platform = [
+        item for item in ordered if item["selected_child_digest"] is not None
+    ]
     if not force_repromote:
         matching = [
             item
-            for item in phase05
+            for item in single_platform
             if item["selected_child_digest"] == selected_child_digest
         ]
         if matching:
@@ -121,7 +123,7 @@ def allocated_revision(
             )
 
     next_revision = ordered[0]["revision"] + 1 if ordered else 1
-    comparison = phase05[0] if phase05 else None
+    comparison = single_platform[0] if single_platform else None
     higher_upstream = (
         comparison is not None
         and comparison["upstream_index_digest"] != upstream_digest

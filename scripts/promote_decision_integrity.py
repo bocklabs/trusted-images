@@ -8,8 +8,14 @@ from types import SimpleNamespace
 
 import evaluate_promotion as module
 
+
+def read_json(path):
+    with open(path, encoding="utf-8") as stream:
+        return json.load(stream)
+
+
 stage, path = sys.argv[1:3]
-decision = json.load(open(path))
+decision = read_json(path)
 module.validate_decision(decision)
 if stage == "published":
     if (
@@ -39,7 +45,7 @@ mismatches = [
     for key, value in expected.items()
     if decision.get(key) != value
 ]
-if decision.get("run_attempt") != int(os.environ["RUN_ATTEMPT"]):
+if decision.get("run_attempt") != int(os.environ["CANDIDATE_RUN_ATTEMPT"]):
     mismatches.append(f"run_attempt={decision.get('run_attempt')!r}")
 if (
     not decision.get("eligible")
@@ -56,7 +62,7 @@ if accepted_run:
     }
     if decision.get("resume") != expected_resume:
         mismatches.append(f"resume={decision.get('resume')!r}")
-    original = json.load(open("candidate-artifact/original-candidate-decision.json"))
+    original = read_json("candidate-artifact/original-candidate-decision.json")
     module.validate_decision(original)
     if (
         original.get("run_id") != accepted_run
@@ -64,8 +70,8 @@ if accepted_run:
         or original.get("reason") != "missing_kev_acceptance"
     ):
         mismatches.append("original_decision")
-    api_run = json.load(open("publisher-resume-run.json"))
-    api_artifact = json.load(open("publisher-resume-artifact.json"))
+    api_run = read_json("publisher-resume-run.json")
+    api_artifact = read_json("publisher-resume-artifact.json")
     if (
         api_run.get("id") != int(accepted_run)
         or api_run.get("repository", {}).get("full_name") != os.environ["REPO"]
@@ -93,7 +99,7 @@ if decision.get("policy", {}).get("acceptance") is not None:
         github_repository=os.environ["REPO"],
         app=os.environ["APP"],
     )
-    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     acceptance = module.acceptance_evidence(
         proof_args,
         decision["candidate"]["digest"],

@@ -1,0 +1,49 @@
+name: fetch-upstream-index
+description: Fetch upstream index
+inputs:
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  upstream_digest:
+    description: Workflow input.
+    required: false
+  dockerhub_username:
+    description: Workflow input.
+    required: false
+  dockerhub_token:
+    description: Workflow input.
+    required: false
+  skopeo_image:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        UPSTREAM_DIGEST: ${{ inputs.upstream_digest }}
+        DOCKERHUB_USERNAME: ${{ inputs.dockerhub_username }}
+        DOCKERHUB_TOKEN: ${{ inputs.dockerhub_token }}
+        SKOPEO_IMAGE: ${{ inputs.skopeo_image }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/registry.sh
+        SKOPEO="${SKOPEO_IMAGE}"
+        set_skopeo_auth "${UPSTREAM_REF}" --authfile
+        run_skopeo "$SKOPEO" \
+          inspect --retry-times 3 --raw ${SKOPEO_AUTH[@]+"${SKOPEO_AUTH[@]}"} \
+          "docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json
+        jq -e '
+          if .mediaType == "application/vnd.oci.image.index.v1+json"
+             or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"
+          then (.manifests | type == "array" and length > 0)
+          else (.mediaType == "application/vnd.oci.image.manifest.v1+json"
+                or .mediaType == "application/vnd.docker.distribution.manifest.v2+json")
+               and (has("manifests") | not)
+               and (.config.digest | type == "string")
+               and (.layers | type == "array")
+          end' upstream-index.json > /dev/null \
+          || { echo "FATAL: upstream root is not a supported image manifest or nonempty index"; exit 1; }
+        echo "upstream index bytes: $(wc -c < upstream-index.json)"

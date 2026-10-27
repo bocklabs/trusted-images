@@ -51,7 +51,7 @@ def read_bundle(path, content_key):
         raise ValueError(f"{path.name} lacks {content_key}")
     material = value.get("verificationMaterial", {})
     if not isinstance(material, dict):
-        raise ValueError(f"{path.name} has malformed verification material")
+        raise TypeError(f"{path.name} has malformed verification material")
     if not material.get("certificate") and not material.get("x509CertificateChain"):
         raise ValueError(f"{path.name} lacks certificate")
     entries = material.get("tlogEntries") or []
@@ -79,7 +79,7 @@ def statement_from_verified(data, expected):
             raise ValueError("verified attestation has no payload")
         statement = json.loads(base64.b64decode(payload, validate=True))
         if not isinstance(statement, dict):
-            raise ValueError("verified attestation payload is not a statement")
+            raise TypeError("verified attestation payload is not a statement")
         if statement == expected:
             return statement
     raise ValueError("verified attestation differs from local bundle")
@@ -182,7 +182,7 @@ def main():
     except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as error:
         if isinstance(error, subprocess.CalledProcessError):
             reason = error.cmd[1]
-        elif isinstance(error, ValueError):
+        elif isinstance(error, (ValueError, TypeError)):
             reason = str(error)
         else:
             reason = type(error).__name__

@@ -1,0 +1,89 @@
+name: push-generated-pr
+description: Commit generated repository files and create or refresh their PR
+inputs:
+  gh_token:
+    description: GitHub token with contents and pull-request write access.
+    required: true
+  branch:
+    description: Branch to create or refresh.
+    required: true
+  commit_message:
+    description: Commit message.
+    required: true
+  pr_title:
+    description: Pull request title.
+    required: true
+  pr_body:
+    description: Pull request body.
+    required: true
+  paths:
+    description: Whitespace-separated paths to stage. Shell globs are not expanded.
+    required: false
+    default: inventory
+outputs:
+  changed:
+    description: Whether the branch was updated.
+    value: ${{ steps.run.outputs.changed }}
+  head_sha:
+    description: Branch head after the push.
+    value: ${{ steps.run.outputs.head_sha }}
+  pr_url:
+    description: Pull request URL.
+    value: ${{ steps.run.outputs.pr_url }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+        BRANCH: ${{ inputs.branch }}
+        COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        PR_TITLE: ${{ inputs.pr_title }}
+        PR_BODY: ${{ inputs.pr_body }}
+        PATHS: ${{ inputs.paths }}
+      run: |
+        set -euo pipefail
+        [ -n "${GH_TOKEN}" ] || { echo "FATAL: generated PR token is empty"; exit 1; }
+        git check-ref-format --branch "$BRANCH" >/dev/null
+        [ "$BRANCH" != main ] || { echo "FATAL: generated PR branch must differ from main"; exit 1; }
+        [ -n "${PATHS}" ] || { echo "FATAL: generated PR paths are empty"; exit 1; }
+        read -r -a PATH_LIST <<< "$PATHS"
+        echo "changed=false" >> "$GITHUB_OUTPUT"
+        git config user.name "bocklabs-release[bot]"
+        git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
+        git fetch origin main:refs/remotes/origin/main
+        MAIN_SHA="$(git rev-parse origin/main)"
+        [ "$(git rev-parse HEAD)" = "$MAIN_SHA" ] || { echo "FATAL: generated files use stale main"; exit 1; }
+        REMOTE_SHA="$(git ls-remote origin "refs/heads/${BRANCH}" | awk '{print $1}')"
+        if [ -n "${REMOTE_SHA}" ]; then
+          git fetch origin "refs/heads/${BRANCH}"
+          [ "$(git rev-parse FETCH_HEAD)" = "$REMOTE_SHA" ] || { echo "FATAL: generated branch changed during fetch"; exit 1; }
+          OTHER_AUTHORS="$(git log origin/main..FETCH_HEAD --format=%ae | grep -vxF '302587774+bocklabs-release[bot]@users.noreply.github.com' || true)"
+          [ -z "$OTHER_AUTHORS" ] || { echo "FATAL: generated branch contains human commits"; exit 1; }
+          git diff --quiet origin/main...FETCH_HEAD -- . "${PATH_LIST[@]/#/:(exclude)}" || { echo "FATAL: generated branch changes other paths"; exit 1; }
+        fi
+        PR_URL="$(gh pr list --head "$BRANCH" --base main --state open --json url --jq '.[0].url // ""')"
+        if [ -n "${PR_URL}" ]; then
+          gh pr view "$PR_URL" --json author,headRefName,baseRefName,isCrossRepository \
+            --jq '.author.login == "bocklabs-release[bot]" and .headRefName == env.BRANCH and .baseRefName == "main" and .isCrossRepository == false' | grep -qx true
+        fi
+        git checkout -B "$BRANCH" origin/main
+        git add -A -- "${PATH_LIST[@]}"
+        if git diff --cached --quiet; then
+          echo "generated files already synchronized"
+          exit 0
+        fi
+        git commit -m "$COMMIT_MESSAGE"
+        git fetch origin main:refs/remotes/origin/main
+        [ "$(git rev-parse origin/main)" = "$MAIN_SHA" ] || { echo "FATAL: main changed before generated PR push"; exit 1; }
+        git push --force-with-lease="refs/heads/${BRANCH}:${REMOTE_SHA}" origin "HEAD:${BRANCH}"
+        if [ -z "${PR_URL}" ]; then
+          PR_URL="$(gh pr create --head "$BRANCH" --base main --title "$PR_TITLE" --body "$PR_BODY")"
+        else
+          gh pr edit "$PR_URL" --title "$PR_TITLE" --body "$PR_BODY"
+        fi
+        [[ "$PR_URL" =~ ^https://github.com/[^/]+/[^/]+/pull/[0-9]+$ ]] || { echo "FATAL: invalid generated PR URL"; exit 1; }
+        echo "changed=true" >> "$GITHUB_OUTPUT"
+        echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"

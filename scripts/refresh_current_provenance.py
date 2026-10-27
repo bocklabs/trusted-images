@@ -7,7 +7,14 @@ import subprocess
 import sys
 
 from promote_signing_gate import load_identity
-from reverify_signing import ROOT, git, git_record, load_current, merged_commit, replacement
+from reverify_signing import (
+    ROOT,
+    git,
+    git_record,
+    load_current,
+    merged_commit,
+    replacement,
+)
 
 
 def gh(*args):

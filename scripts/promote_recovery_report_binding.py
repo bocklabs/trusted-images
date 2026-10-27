@@ -2,10 +2,13 @@
 
 import json
 import sys
+
 import yaml
 
-spec = yaml.safe_load(open(sys.argv[1]))["spec"]
-manifest = json.load(open(sys.argv[2]))
+with open(sys.argv[1], encoding="utf-8") as stream:
+    spec = yaml.safe_load(stream)["spec"]
+with open(sys.argv[2], encoding="utf-8") as stream:
+    manifest = json.load(stream)
 expected = {
     "app": sys.argv[3],
     "upstream_ref": spec["upstream"]["ref"],

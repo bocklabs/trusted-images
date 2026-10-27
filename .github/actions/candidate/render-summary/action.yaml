@@ -1,0 +1,15 @@
+name: render-summary
+description: Candidate assessment summary
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        source scripts/lib/summary.sh
+        if [ -s candidate-decision.json ]; then
+          append_promotion_summary || echo 'Summary rendering failed; see retained artifacts.' >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo 'Assessment incomplete; publication withheld. See failed steps and retained artifacts.' >> "$GITHUB_STEP_SUMMARY"
+        fi

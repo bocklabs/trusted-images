@@ -1,0 +1,72 @@
+name: finalize-patched
+description: Add only provenance labels and export final bytes
+inputs:
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  upstream_tag:
+    description: Workflow input.
+    required: false
+  selected_digest:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  skopeo_image:
+    description: Workflow input.
+    required: false
+outputs:
+  digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.digest }}
+  image_id:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.image_id }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        UPSTREAM_TAG: ${{ inputs.upstream_tag }}
+        SELECTED_DIGEST: ${{ inputs.selected_digest }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        SKOPEO_IMAGE: ${{ inputs.skopeo_image }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/registry.sh
+        docker image inspect copa:candidate --format '{{json .Config.Labels}}' > before-labels.json
+        python3 scripts/promote_proposed_labels.py before-labels.json > label-changes.json
+        CHANGES=()
+        while IFS= read -r CHANGE; do
+          CHANGES+=(--change "${CHANGE}")
+        done < <(jq -r '.[]' label-changes.json)
+        CONTAINER="$(docker create copa:candidate)"
+        trap 'docker rm "${CONTAINER}" > /dev/null' EXIT
+        docker commit ${CHANGES[@]+"${CHANGES[@]}"} "${CONTAINER}" copa:final > /dev/null
+        docker image inspect copa:final --format '{{json .Config.Labels}}' > after-labels.json
+        python3 scripts/promote_label_changes.py before-labels.json after-labels.json
+        docker save copa:final --output candidate-final.tar
+        SKOPEO="${SKOPEO_IMAGE}"
+        rm -rf candidate-oci
+        run_skopeo "$SKOPEO" copy docker-archive:/workspace/candidate-final.tar:copa:final oci:/workspace/candidate-oci:candidate
+        python3 scripts/finalize_candidate_config.py candidate-oci child-config.json
+        CANDIDATE_MANIFEST_DIGEST="$(jq -er '.manifests[0].digest' candidate-oci/index.json)"
+        cp "candidate-oci/blobs/sha256/${CANDIDATE_MANIFEST_DIGEST#sha256:}" candidate-manifest.json
+        rm candidate-final.tar
+        run_skopeo "$SKOPEO" \
+          copy --format v2s2 oci:/workspace/candidate-oci:candidate \
+          docker-archive:/workspace/candidate-final.tar:copa:final
+        docker load --input candidate-final.tar
+        FINAL_IMAGE_ID="$(docker image inspect copa:final --format '{{.Id}}')"
+        [ "${FINAL_IMAGE_ID}" = "$(jq -er .config.digest candidate-manifest.json)" ]
+        docker image inspect copa:final --format '{{json .Config.Labels}}' > reloaded-labels.json
+        [ "$(jq -S . after-labels.json)" = "$(jq -S . reloaded-labels.json)" ] || {
+          echo "FATAL: reloaded candidate labels changed"
+          exit 1
+        }
+        sha256sum candidate-manifest.json | awk -v d="${CANDIDATE_MANIFEST_DIGEST}" '{ if ("sha256:" $1 != d) exit 1; print "digest=sha256:" $1 }' > candidate-digest.txt
+        cat candidate-digest.txt >> "$GITHUB_OUTPUT"
+        echo "image_id=${FINAL_IMAGE_ID}" >> "$GITHUB_OUTPUT"

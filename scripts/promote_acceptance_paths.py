@@ -1,7 +1,7 @@
 """Resolve the KEV acceptance path and matched CVEs."""
 
-import importlib.util
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 

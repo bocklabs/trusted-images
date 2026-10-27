@@ -11,10 +11,10 @@ import unittest
 from pathlib import Path
 from typing import ClassVar
 
-import yaml
-
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from resolve_internal_tag import select_internal_tag
+
+from tests.workflow_helpers import action_text, load_workflow, workflow_action_text
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ORCHESTRATOR_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "promote.yaml"
@@ -27,6 +27,12 @@ DIGEST_A = "sha256:" + "a" * 64
 DIGEST_B = "sha256:" + "b" * 64
 DIGEST_C = "sha256:" + "c" * 64
 DIGEST_D = "sha256:" + "d" * 64
+
+
+def step_run(step: dict) -> str:
+    if "run" in step:
+        return step["run"]
+    return action_text(step)
 
 
 class TagAllocationTests(unittest.TestCase):
@@ -146,7 +152,7 @@ class TagAllocationTests(unittest.TestCase):
         observation = self.observation(
             2, child=None, index="", platforms=("linux/amd64", "linux/arm64")
         )
-        with self.assertRaisesRegex(ValueError, "Phase 05"):
+        with self.assertRaisesRegex(ValueError, "single-platform"):
             self.select(
                 "v1.2.3",
                 DIGEST_C,
@@ -211,13 +217,15 @@ class PromoteWorkflowTests(unittest.TestCase):
     orchestrator: ClassVar[str]
     candidate_workflow: ClassVar[str]
     publisher_workflow: ClassVar[str]
+    candidate_text: ClassVar[str]
+    publisher_text: ClassVar[str]
     workflow: ClassVar[str]
 
     def test_provenance_handoff_enables_guarded_auto_merge_without_waiting(self):
         self.assertNotIn("sleep 10", self.publisher_workflow)
         self.assertNotIn("/check-runs", self.publisher_workflow)
-        self.assertIn("provenance merge pending", self.publisher_workflow)
-        steps = yaml.safe_load(self.publisher_workflow)["jobs"]["promote"]["steps"]
+        self.assertIn("provenance merge pending", self.publisher_text)
+        steps = load_workflow(PUBLISHER_WORKFLOW)["jobs"]["promote"]["steps"]
         auto_merge = next(step for step in steps if step["name"] == "Auto-merge signed provenance PR")
         self.assertEqual(auto_merge["if"], "${{ success() && steps.signing-gate.outcome == 'success' && steps.pr.outputs.pr_url != '' }}")
         self.assertEqual(auto_merge["env"]["GH_TOKEN"], "${{ steps.app-token.outputs.token }}")
@@ -229,7 +237,8 @@ class PromoteWorkflowTests(unittest.TestCase):
             command.chmod(0o755)
             arguments = root / "arguments"
             env = {**os.environ, "PATH": str(root) + os.pathsep + os.environ["PATH"],
-                   "ARGUMENTS": str(arguments), "HEAD_SHA": "abc123", "PR_URL": "https://example.invalid/pull/1"}
+                   "ARGUMENTS": str(arguments), "GH_TOKEN": "test-token",
+                   "HEAD_SHA": "abc123", "PR_URL": "https://example.invalid/pull/1"}
             result = subprocess.run(["bash", "-c", auto_merge["run"]], env=env, capture_output=True, text=True, check=False)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(arguments.read_text().splitlines(),
@@ -252,7 +261,7 @@ class PromoteWorkflowTests(unittest.TestCase):
             self.assertIn("Ineligible for consumption", summary.read_text())
 
     def test_scanned_need_has_no_dispatch_input_and_reaches_final_evaluator(self):
-        root = yaml.safe_load(self.orchestrator)
+        root = load_workflow(ORCHESTRATOR_WORKFLOW)
         dispatch = root.get("on", root.get(True))["workflow_dispatch"]["inputs"]
         self.assertNotIn("requested_remediation", dispatch)
         need = next(step for step in root["jobs"]["rescan"]["steps"] if step.get("id") == "decision")
@@ -260,7 +269,7 @@ class PromoteWorkflowTests(unittest.TestCase):
         self.assertIn("scripts/rescan_published.py decide", need["run"])
         self.assertEqual(root["jobs"]["candidate"]["with"]["requested_remediation"],
                          "${{ needs.rescan.outputs.requested_remediation }}")
-        candidate = yaml.safe_load(self.candidate_workflow)["jobs"]["validate"]["steps"]
+        candidate = load_workflow(CANDIDATE_WORKFLOW)["jobs"]["validate"]["steps"]
         policy = next(step for step in candidate if step.get("id") == "policy")
         self.assertEqual(policy["env"]["REQUESTED_REMEDIATION"], "${{ inputs.requested_remediation }}")
 
@@ -269,11 +278,13 @@ class PromoteWorkflowTests(unittest.TestCase):
         cls.orchestrator = ORCHESTRATOR_WORKFLOW.read_text(encoding="utf-8")
         cls.candidate_workflow = CANDIDATE_WORKFLOW.read_text(encoding="utf-8")
         cls.publisher_workflow = PUBLISHER_WORKFLOW.read_text(encoding="utf-8")
-        cls.workflow = cls.candidate_workflow + "\n" + cls.publisher_workflow
+        cls.candidate_text = cls.candidate_workflow + workflow_action_text(CANDIDATE_WORKFLOW)
+        cls.publisher_text = cls.publisher_workflow + workflow_action_text(PUBLISHER_WORKFLOW)
+        cls.workflow = cls.candidate_text + "\n" + cls.publisher_text
 
     def loaded_workflow(self):
-        candidate = yaml.safe_load(self.candidate_workflow)
-        publisher = yaml.safe_load(self.publisher_workflow)
+        candidate = load_workflow(CANDIDATE_WORKFLOW)
+        publisher = load_workflow(PUBLISHER_WORKFLOW)
         return {
             "jobs": {
                 "validate": candidate["jobs"]["validate"],
@@ -285,7 +296,7 @@ class PromoteWorkflowTests(unittest.TestCase):
         steps = self.loaded_workflow()["jobs"]["validate"]["steps"]
         names = [step["name"] for step in steps]
         select = steps[names.index("Select the exact final candidate")]["run"]
-        convert = steps[names.index("Convert full report to CycloneDX with parity check")]["run"]
+        convert = step_run(steps[names.index("Convert full report to CycloneDX with parity check")])
         export = steps[names.index("Export checksum-bound candidate artifact")]["run"]
         for digest in ("PATCHED_DIGEST", "RESUME_DIGEST", "RECOVERED_DIGEST"):
             self.assertIn(digest, select)
@@ -341,10 +352,10 @@ class PromoteWorkflowTests(unittest.TestCase):
                        GITHUB_OUTPUT=str(root / "output"), GITHUB_STEP_SUMMARY=str(root / "summary"))
             select = subprocess.run(["bash", "-c", by_name["Select the exact final candidate"]["run"]], cwd=root, env=env, capture_output=True, text=True, check=False)
             self.assertEqual(select.returncode, 0, select.stdout + select.stderr)
-            published = yaml.safe_load(self.orchestrator)["jobs"]["rescan"]["steps"]
+            published = load_workflow(ORCHESTRATOR_WORKFLOW)["jobs"]["rescan"]["steps"]
             conversions = {
-                "candidate": by_name["Convert full report to CycloneDX with parity check"]["run"],
-                "published": next(step["run"] for step in published if step.get("id") == "convert"),
+                "candidate": step_run(by_name["Convert full report to CycloneDX with parity check"]),
+                "published": step_run(next(step for step in published if step.get("id") == "convert")),
             }
             original = json.loads(cdx.read_text())
             for caller, convert in conversions.items():
@@ -383,11 +394,12 @@ class PromoteWorkflowTests(unittest.TestCase):
 
     def test_trivy_result_counts_treat_null_as_empty(self) -> None:
         self.assertEqual(
-            self.workflow.count("((.Results // [])[] | .Vulnerabilities[]?)"), 3
+            self.workflow.count("((.Results // [])[] | .Vulnerabilities[]?)"),
+            3,
         )
 
     def test_normal_unpromotable_reuse_warns_and_skips_publication(self):
-        candidate = yaml.safe_load(self.candidate_workflow)
+        candidate = load_workflow(CANDIDATE_WORKFLOW)
         call = candidate.get("on", candidate.get(True, {}))["workflow_call"]
         self.assertIn("publication_required", call["outputs"])
         job = candidate["jobs"]["validate"]
@@ -401,7 +413,7 @@ class PromoteWorkflowTests(unittest.TestCase):
         publication = next(step for step in job["steps"] if step.get("id") == "publication")
         self.assertEqual(publication["if"], "steps.policy.outputs.eligible == 'true'")
         run = publication["run"]
-        caller = yaml.safe_load(self.orchestrator)
+        caller = load_workflow(ORCHESTRATOR_WORKFLOW)
         self.assertEqual(caller["jobs"]["publish"]["if"],
                          "${{ needs.candidate.outputs.publication_required == 'true' }}")
         with tempfile.TemporaryDirectory() as directory:
@@ -428,6 +440,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                     value["policy"]["eligible"] = eligible
                     value.update(fields)
                     record.write_text(json.dumps(value))
+                    (root / "reuse-provenance.json").write_text(record.read_text())
                     original_record = record.read_bytes()
                     output, summary = root / "output", root / "summary"
                     output.write_text("")
@@ -452,12 +465,14 @@ class PromoteWorkflowTests(unittest.TestCase):
                     self.assertEqual(record.read_bytes(), original_record)
 
     def test_dispatch_options_reuses_open_pr_and_keeps_api_failures_red(self):
-        workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/validate.yaml").read_text())
+        workflow = load_workflow(REPO_ROOT / ".github/workflows/validate.yaml")
         run = next(step["run"] for step in workflow["jobs"]["sync-dispatch-options"]["steps"]
                    if step["name"] == "Push options PR")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "git").write_text("#!/bin/sh\nexit 0\n")
+            (root / "git").write_text(
+                '#!/bin/sh\ncase "$*" in "diff --cached --quiet") exit 1;; *) exit 0;; esac\n'
+            )
             (root / "git").chmod(0o755)
             (root / "gh").write_text("""#!/bin/sh
 echo "$1 $2" >> "$TRACE"
@@ -470,6 +485,8 @@ case "$1 $2" in
     [ "$MODE" != create-error ] || exit 7
     echo https://github.com/example/repo/pull/1
     ;;
+  "pr edit") exit 0 ;;
+  "pr view") echo true ;;
   "pr merge") exit 0 ;;
   *) exit 9 ;;
 esac
@@ -479,8 +496,19 @@ esac
             for mode, expected in (("existing", 0), ("missing", 0), ("create-error", 7), ("list-error", 7)):
                 with self.subTest(mode=mode):
                     trace.write_text("")
-                    env = {**os.environ, "PATH": f"{root}:{os.environ['PATH']}",
-                           "MODE": mode, "TRACE": str(trace)}
+                    env = {
+                        **os.environ,
+                        "PATH": f"{root}:{os.environ['PATH']}",
+                        "MODE": mode,
+                        "TRACE": str(trace),
+                        "GH_TOKEN": "test-token",
+                        "BRANCH": "chore/sync-dispatch-options",
+                        "COMMIT_MESSAGE": "chore: sync promote dispatch options with inventory",
+                        "PR_TITLE": "chore: sync promote dispatch options with inventory",
+                        "PR_BODY": "Auto-generated from inventory/.",
+                        "PATHS": ".github/workflows/promote.yaml",
+                        "GITHUB_OUTPUT": str(root / "output"),
+                    }
                     result = subprocess.run(["bash", "-c", run], cwd=root, env=env, capture_output=True, text=True, check=False)
                     self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
                     if mode == "existing":
@@ -611,6 +639,7 @@ esac
         occupancy = by_name["Assert destination tag is absent or byte-identical"]
         copy = by_name["Digest-preserving copy to GHCR"]
         verify = by_name["Verify candidate artifact"]
+        ghcr = (REPO_ROOT / "scripts/lib/ghcr.sh").read_text(encoding="utf-8")
         for key in (
             "RESUME_ORIGINAL_RUN_ATTEMPT",
             "RESUME_ORIGINAL_SOURCE_SHA",
@@ -629,8 +658,8 @@ esac
             integrity,
         )
         self.assertIn('"${STATUS}" = 404', occupancy["run"])
-        self.assertIn('[ "${TOKEN_STATUS}" = "403" ]', occupancy["run"])
-        self.assertIn('any(.code == "DENIED")', occupancy["run"])
+        self.assertIn('[ "${TOKEN_STATUS}" = "403" ]', ghcr)
+        self.assertIn('any(.code == "DENIED")', ghcr)
         self.assertIn("destination package does not exist yet", occupancy["run"])
         self.assertIn('echo "skip_copy=false" >> "$GITHUB_OUTPUT"', occupancy["run"])
         self.assertIn('"${PUSHED}" != "${CANDIDATE_DIGEST}"', occupancy["run"])
@@ -642,7 +671,7 @@ esac
         self.assertNotIn("python3 - <<", self.workflow)
 
     def test_validation_still_gates_promotion(self) -> None:
-        workflow = yaml.safe_load(self.orchestrator)
+        workflow = load_workflow(ORCHESTRATOR_WORKFLOW)
         candidate = workflow["jobs"]["candidate"]
         self.assertEqual(candidate["uses"], "./.github/workflows/promote-candidate.yaml")
         self.assertEqual(candidate["needs"], "rescan")
@@ -669,24 +698,29 @@ esac
         self.assertNotIn("tags/list?n=1000", self.workflow)
 
     def test_absent_destination_package_is_an_explicit_first_run_case(self) -> None:
-        workflow = yaml.safe_load(self.candidate_workflow)
+        workflow = load_workflow(CANDIDATE_WORKFLOW)
         tag_step = next(
             step
             for step in workflow["jobs"]["validate"]["steps"]
             if step["name"] == "Compute internal tag and detect skip"
         )
         run = tag_step["run"]
+        ghcr = (REPO_ROOT / "scripts/lib/ghcr.sh").read_text(encoding="utf-8")
         for text in (
-            '[ "${TOKEN_STATUS}" = "403" ]',
-            'any(.code == "DENIED")',
             "GHCR package is not created yet",
             'if [ -z "${TOKEN}" ]; then',
             'URL=""',
-            "FATAL: GHCR token request failed",
             '${AUTH[@]+"${AUTH[@]}"}',
         ):
             with self.subTest(text=text):
                 self.assertIn(text, run)
+        for text in (
+            '[ "${TOKEN_STATUS}" = "403" ]',
+            'any(.code == "DENIED")',
+            "FATAL: GHCR token request failed",
+        ):
+            with self.subTest(text=text):
+                self.assertIn(text, ghcr)
 
     def test_registry_artifacts_come_from_verbatim_oci_blobs(self) -> None:
         workflow = self.loaded_workflow()
@@ -699,21 +733,23 @@ esac
             for step in steps
             if step["name"] == "Resolve the exact linux/amd64 child"
         )["run"]
-        self.assertIn("inspect --raw", fetch)
+        self.assertIn("inspect --retry-times 3 --raw", fetch)
         self.assertIn(
             '"docker://${UPSTREAM_REF}@${UPSTREAM_DIGEST}" > upstream-index.json',
             fetch,
         )
         self.assertNotIn("copy --all", fetch)
-        self.assertIn("CREDS=(--creds", fetch)
-        self.assertNotIn("--src-creds", fetch)
-        self.assertIn("copy --preserve-digests", resolve)
+        self.assertIn('set_skopeo_auth "${UPSTREAM_REF}" --authfile', fetch)
+        self.assertNotIn("--creds", fetch)
+        registry = (REPO_ROOT / "scripts/lib/registry.sh").read_text(encoding="utf-8")
+        self.assertIn("copy --retry-times 3 --preserve-digests --remove-signatures", registry)
+        self.assertIn('"docker://${1}@${2}" "oci:/workspace/${3}"', registry)
         self.assertIn(
-            '"docker://${UPSTREAM_REF}@${SELECTED_DIGEST}" "oci:/workspace/upstream-oci:child"',
+            'copy_source_oci "${UPSTREAM_REF}" "${SELECTED_DIGEST}" "upstream-oci:child"',
             resolve,
         )
         self.assertLess(
-            resolve.index("copy --preserve-digests"),
+            resolve.index("copy_source_oci"),
             resolve.index('cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json'),
         )
         self.assertIn(
@@ -729,10 +765,11 @@ esac
         self.assertNotIn("'.Metadata.OS.EOSL == false'", self.workflow)
 
     def test_skopeo_copy_writes_workspace_files_as_runner(self) -> None:
-        self.assertIn(
-            'docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/workspace "$SKOPEO"',
-            self.workflow,
-        )
+        registry = (REPO_ROOT / "scripts/lib/registry.sh").read_text(encoding="utf-8")
+        self.assertIn('docker run --rm --user "$(id -u):$(id -g)"', registry)
+        self.assertIn('-v "$PWD":/workspace "$@"', registry)
+        self.assertIn(":/run/skopeo-auth.json:ro", registry)
+        self.assertIn('run_skopeo "$SKOPEO"', self.workflow)
 
     def test_recovery_uses_original_inventory_as_data(self) -> None:
         for text in (
@@ -752,21 +789,19 @@ esac
         self.assertNotIn("skip_copy != 'true'", platform_step)
 
     def test_candidate_job_is_read_only_and_drives_publisher(self) -> None:
-        caller = yaml.safe_load(self.orchestrator)
+        caller = load_workflow(ORCHESTRATOR_WORKFLOW)
         rank = {"read": 0, "write": 1}
         for workflow in (
-            yaml.safe_load(self.candidate_workflow),
-            yaml.safe_load(self.publisher_workflow),
+            load_workflow(CANDIDATE_WORKFLOW),
+            load_workflow(PUBLISHER_WORKFLOW),
         ):
             for scope, level in workflow["permissions"].items():
                 self.assertIn(scope, caller["permissions"])
                 self.assertLessEqual(
                     rank[level], rank[caller["permissions"][scope]]
                 )
-        candidate = self.workflow.split("  validate:\n", 1)[1].split(
-            "\n  promote:\n", 1
-        )[0]
-        publisher = self.workflow.split("\n  promote:\n", 1)[1]
+        candidate = self.candidate_text
+        publisher = self.publisher_text
         self.assertIn("packages: read", candidate)
         self.assertIn("packages: write", publisher)
         self.assertIn("publish:\n    needs: candidate", self.orchestrator)
@@ -848,7 +883,7 @@ esac
         )
 
     def test_patched_metadata_uses_a_stopped_container_and_emits_digest(self):
-        workflow = yaml.safe_load(self.candidate_workflow)
+        workflow = load_workflow(CANDIDATE_WORKFLOW)
         steps = workflow["jobs"]["validate"]["steps"]
         step = next(
             step
@@ -938,8 +973,8 @@ elif args[0] == 'run':
             docker.write_text(
                 "#!/usr/bin/env python3\nimport json, os, subprocess, sys\n"
                 "args = sys.argv[1:]\n"
-                "with open('docker-calls', 'a') as out: out.write(json.dumps(args) + '\\n')\n"
                 "if args[0] == 'run':\n"
+                "    with open('docker-calls', 'a') as out: out.write(json.dumps(args) + '\\n')\n"
                 "    index = args.index('-ec')\n"
                 "    sys.exit(subprocess.call(['sh', '-ec', args[index + 1].replace('/data/', './'), *args[index + 2:]]))\n"
             )
@@ -1032,7 +1067,7 @@ elif args[0] == 'run':
 
     def test_provenance_writeback_is_scoped_and_reusable(self) -> None:
         for text in (
-            "MEDIA_TYPE: application/vnd.oci.image.index.v1+json",
+            "media_type: application/vnd.oci.image.index.v1+json",
             '--upstream-child-digest "${SELECTED_CHILD_DIGEST}"',
             'git add "${RECORD}"',
             "git diff --cached --quiet",
@@ -1082,6 +1117,29 @@ elif args[0] == 'run':
             self.workflow[self.workflow.index("Digest-preserving copy to GHCR") :],
         )
 
+    def test_resume_and_occupancy_use_the_authoritative_tag_state(self) -> None:
+        candidate = load_workflow(CANDIDATE_WORKFLOW)["jobs"]["validate"]["steps"]
+        candidate_by_name = {step["name"]: step for step in candidate}
+        policy = candidate_by_name["Evaluate one promotion decision"]["with"]["internal_tag"]
+        self.assertIn("steps.resume.outputs.internal_tag", policy)
+        publication = candidate_by_name["Decide whether publication is required"]["with"]
+        self.assertIn("steps.resume.outputs.skip_copy", publication["skip_copy"])
+        self.assertIn("steps.resume.outputs.internal_tag", publication["internal_tag"])
+
+        publisher = load_workflow(PUBLISHER_WORKFLOW)["jobs"]["promote"]["steps"]
+        for name in (
+            "Sign and attest published digest",
+            "Verify signing evidence",
+            "Record quarantined publication after failed verification",
+            "Job summary evidence panel",
+            "Generate provenance record",
+            "Open provenance PR for operator review",
+        ):
+            step = next(item for item in publisher if item["name"] == name)
+            value = step.get("with", {}).get("skip_copy", step.get("if", ""))
+            with self.subTest(step=name):
+                self.assertIn("steps.occupancy.outputs.skip_copy", value)
+
     def test_decision_writers_and_evidence_rendering_are_bounded(self) -> None:
         workflow = self.loaded_workflow()
         steps = workflow["jobs"]["promote"]["steps"]
@@ -1093,7 +1151,9 @@ elif args[0] == 'run':
         steps_text = next(
             step for step in steps if step["name"] == "Job summary evidence panel"
         )["run"]
-        self.assertIn("python3 scripts/promote_summary.py", steps_text)
+        summary_helper = (REPO_ROOT / "scripts/lib/summary.sh").read_text(encoding="utf-8")
+        self.assertIn("python3 scripts/promote_summary.py", summary_helper)
+        self.assertIn("append_promotion_summary", steps_text)
         for text in (
             "Before/final CVE evidence",
             "Package changes",
@@ -1216,7 +1276,7 @@ class CleanChildTracerTests(unittest.TestCase):
         return subprocess.run(argv, capture_output=True, text=True, env=env, check=False)
 
     def test_upstream_steps_resolve_a_pinned_single_manifest(self):
-        steps = yaml.safe_load(WORKFLOW.read_text())["jobs"]["validate"]["steps"]
+        steps = load_workflow(WORKFLOW)["jobs"]["validate"]["steps"]
         selected = [next(s for s in steps if s["name"] == name) for name in
                     ("Fetch upstream index", "Resolve the exact linux/amd64 child")]
         manifest = json.loads(self.child.read_text())
@@ -1398,7 +1458,7 @@ elif args[:2] == ['run', 'download']:
         )
 
     def test_blocked_candidate_resume_command_exact_tampered_and_wrong_run(self):
-        steps = yaml.safe_load(WORKFLOW.read_text())["jobs"]["validate"]["steps"]
+        steps = load_workflow(WORKFLOW)["jobs"]["validate"]["steps"]
         step = next(
             step
             for step in steps
@@ -1512,7 +1572,7 @@ elif args[:2] == ['run', 'download']:
         self.assertFalse((self.tmp / "wrong-run-output").exists())
 
     def test_publisher_uses_checksum_bound_candidate_scanner_version(self):
-        steps = yaml.safe_load(PUBLISHER_WORKFLOW.read_text())["jobs"]["promote"]["steps"]
+        steps = load_workflow(PUBLISHER_WORKFLOW)["jobs"]["promote"]["steps"]
         verify = next(step for step in steps if step["name"] == "Verify candidate artifact")
         fixture = self.candidate_artifact(())
         artifact = self.tmp / "candidate-artifact"
@@ -1521,7 +1581,7 @@ elif args[:2] == ['run', 'download']:
         (self.tmp / "inventory/app").mkdir(parents=True)
         shutil.copyfile(artifact / "inventory-image.yaml", self.tmp / "inventory/app/image.yaml")
         env = {**os.environ, **{key: "" for key in verify["env"]},
-               "APP": "app", "SOURCE_SHA": "a" * 40, "RUN_ID": "123", "RUN_ATTEMPT": "1",
+               "APP": "app", "SOURCE_SHA": "a" * 40, "RUN_ID": "123", "CANDIDATE_RUN_ATTEMPT": "1",
                "UPSTREAM_INDEX_DIGEST": self.index_digest, "GITHUB_OUTPUT": str(self.tmp / "version-output")}
         env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
         for version in ("0.74.0", "0.75.0"):
@@ -1541,7 +1601,7 @@ elif args[:2] == ['run', 'download']:
     def test_failed_patched_runtime_validation_never_executes_publication(self):
         from tests.test_validate_image import FAKE_DOCKER
 
-        steps = yaml.safe_load(WORKFLOW.read_text())["jobs"]["validate"]["steps"]
+        steps = load_workflow(WORKFLOW)["jobs"]["validate"]["steps"]
         step = next(step for step in steps if step["name"] == "Run validation")
         self.assertNotIn("continue-on-error", step)
         self.write_fake("docker", FAKE_DOCKER.split("\n", 1)[1])

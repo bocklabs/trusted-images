@@ -1,0 +1,116 @@
+name: run-validation
+description: Run validation
+inputs:
+  requested_remediation:
+    description: Workflow input.
+    required: false
+  app:
+    description: Workflow input.
+    required: false
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  selected_digest:
+    description: Workflow input.
+    required: false
+  candidate_ref:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  local_image_id:
+    description: Workflow input.
+    required: false
+  patched:
+    description: Workflow input.
+    required: false
+  validation_type:
+    description: Workflow input.
+    required: false
+  validation_port:
+    description: Workflow input.
+    required: false
+  validation_path:
+    description: Workflow input.
+    required: false
+  validation_expect_status:
+    description: Workflow input.
+    required: false
+  validation_duration_seconds:
+    description: Workflow input.
+    required: false
+  validation_timeout_seconds:
+    description: Workflow input.
+    required: false
+  validation_expected_exit:
+    description: Workflow input.
+    required: false
+  validation_command:
+    description: Workflow input.
+    required: false
+  validation_expected_platforms:
+    description: Workflow input.
+    required: false
+  validation_env:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        REQUESTED_REMEDIATION: ${{ inputs.requested_remediation }}
+        APP: ${{ inputs.app }}
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        SELECTED_DIGEST: ${{ inputs.selected_digest }}
+        CANDIDATE_REF: ${{ inputs.candidate_ref }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        LOCAL_IMAGE_ID: ${{ inputs.local_image_id }}
+        PATCHED: ${{ inputs.patched }}
+        VALIDATION_TYPE: ${{ inputs.validation_type }}
+        VALIDATION_PORT: ${{ inputs.validation_port }}
+        VALIDATION_PATH: ${{ inputs.validation_path }}
+        VALIDATION_EXPECT_STATUS: ${{ inputs.validation_expect_status }}
+        VALIDATION_DURATION_SECONDS: ${{ inputs.validation_duration_seconds }}
+        VALIDATION_TIMEOUT_SECONDS: ${{ inputs.validation_timeout_seconds }}
+        VALIDATION_EXPECTED_EXIT: ${{ inputs.validation_expected_exit }}
+        VALIDATION_COMMAND: ${{ inputs.validation_command }}
+        VALIDATION_EXPECTED_PLATFORMS: ${{ inputs.validation_expected_platforms }}
+        VALIDATION_ENV: ${{ inputs.validation_env }}
+      run: |
+        set -euo pipefail
+        # Workflow defaults apply wherever the inventory entry does not override them.
+        ARGS=(
+          --app "${APP}"
+          --ref "${CANDIDATE_REF}"
+          --digest "${CANDIDATE_DIGEST}"
+          --baseline-ref "${UPSTREAM_REF}"
+          --baseline-digest "${SELECTED_DIGEST}"
+          --validation-type "${VALIDATION_TYPE}"
+          --index-file candidate-manifest.json
+          --evidence-out validation-evidence.json
+          --path "${VALIDATION_PATH:-/}"
+          --expect-status "${VALIDATION_EXPECT_STATUS:-200}"
+          --duration-seconds "${VALIDATION_DURATION_SECONDS:-30}"
+          --timeout-seconds "${VALIDATION_TIMEOUT_SECONDS:-60}"
+          --expected-exit "${VALIDATION_EXPECTED_EXIT:-0}"
+          --expected-platforms "${VALIDATION_EXPECTED_PLATFORMS:-linux/amd64}"
+          --command "${VALIDATION_COMMAND:-[]}"
+        )
+        [ "${PATCHED}" != true ] || ARGS+=(--local-image "${CANDIDATE_REF}" --local-image-id "${LOCAL_IMAGE_ID}")
+        if [ -n "${VALIDATION_PORT:-}" ]; then
+          ARGS+=(--port "${VALIDATION_PORT}")
+        fi
+        if [ -n "${VALIDATION_ENV:-}" ]; then
+          while IFS=$'\t' read -r KEY VALUE; do
+            ARGS+=("--env" "${KEY}=${VALUE}")
+          done < <(jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv' <<<"${VALIDATION_ENV}")
+        fi
+        STATUS=0
+        python3 scripts/validate_image.py "${ARGS[@]}" || STATUS=$?
+        if [ "$STATUS" -ne 0 ]; then
+          [ "$STATUS" -eq 1 ] && [ -n "$REQUESTED_REMEDIATION" ] || exit "$STATUS"
+          jq -e '.validation.result == "fail"' validation-evidence.json > /dev/null
+        fi

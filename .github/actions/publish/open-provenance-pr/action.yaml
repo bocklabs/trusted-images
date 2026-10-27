@@ -1,0 +1,144 @@
+name: open-provenance-pr
+description: Open provenance PR for operator review
+inputs:
+  gh_token:
+    description: Workflow input.
+    required: false
+  repo:
+    description: Workflow input.
+    required: false
+  app:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  run_url:
+    description: Workflow input.
+    required: false
+  skip_copy:
+    description: Workflow input.
+    required: false
+  recover_tag:
+    description: Workflow input.
+    required: false
+outputs:
+  head_sha:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.head_sha }}
+  pr_url:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.pr_url }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ inputs.repo }}
+        APP: ${{ inputs.app }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        RUN_URL: ${{ inputs.run_url }}
+        SKIP_COPY: ${{ inputs.skip_copy }}
+        RECOVER_TAG: ${{ inputs.recover_tag }}
+      run: |
+        set -euo pipefail
+        BRANCH="provenance/current/${APP}"
+        RECORD="provenance/${APP}/current.json"
+        if [ "${SKIP_COPY}" = true ] || [ -n "${RECOVER_TAG}" ]; then
+          echo "pr_url=" >> "$GITHUB_OUTPUT"; echo "head_sha=" >> "$GITHUB_OUTPUT"; exit 0
+        fi
+        git config user.name "bocklabs-release[bot]"
+        git config user.email "302587774+bocklabs-release[bot]@users.noreply.github.com"
+        [ -n "${GH_TOKEN}" ] || { echo "FATAL: provenance token is empty"; exit 1; }
+        GIT_ASKPASS="$(mktemp)"
+        GENERATED="$(mktemp)"
+        trap 'rm -f "${GIT_ASKPASS}" "${GENERATED}"' EXIT
+        printf '#!/bin/sh\ncase "$1" in *[Uu]sername*) echo x-access-token ;; *[Pp]assword*) echo "$GH_TOKEN" ;; *) exit 1 ;; esac\n' > "${GIT_ASKPASS}"
+        chmod 700 "${GIT_ASKPASS}"
+        export GIT_ASKPASS GIT_ASKPASS_REQUIRE=force GIT_TERMINAL_PROMPT=0
+        REMOTE="https://github.com/${REPO}.git"
+        cp generated-provenance.json "${GENERATED}"
+        git fetch origin main
+        MAIN_SHA="$(git rev-parse origin/main)"
+        python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" --commit "${MAIN_SHA}" > matched-provenance.json
+        if jq -e --arg digest "${CANDIDATE_DIGEST}" '.internal.digest == $digest' matched-provenance.json >/dev/null; then
+          echo "pr_url=" >> "$GITHUB_OUTPUT"
+          echo "head_sha=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if git ls-tree --name-only "${MAIN_SHA}" -- "${RECORD}" | grep -q .; then
+          git show "${MAIN_SHA}:${RECORD}" > main-provenance.json
+        else
+          rm -f main-provenance.json
+        fi
+        python3 scripts/reverify_signing.py --compare "${GENERATED}" --previous main-provenance.json
+        REMOTE_SHA="$(git ls-remote "${REMOTE}" "refs/heads/${BRANCH}" | awk '{print $1}')"
+        if [ -n "${REMOTE_SHA}" ]; then
+          git fetch origin "refs/heads/${BRANCH}"
+          AUTHOR="$(git log -1 --format=%ae FETCH_HEAD)"
+          [ "${AUTHOR}" = "302587774+bocklabs-release[bot]@users.noreply.github.com" ] || {
+            echo "FATAL: existing provenance branch is not owned by the release App"
+            exit 1
+          }
+          git diff --name-only origin/main...FETCH_HEAD > pending-files.txt
+          OTHER="$(grep -vxF "${RECORD}" pending-files.txt || true)"
+          [ -z "${OTHER}" ] || {
+            echo "FATAL: existing provenance branch changes files outside ${RECORD}"
+            exit 1
+          }
+          git show "FETCH_HEAD:${RECORD}" > pending-provenance.json
+          PENDING_ACTION="$(python3 scripts/reverify_signing.py --compare "${GENERATED}" --previous pending-provenance.json)"
+          if [ "${PENDING_ACTION}" = unchanged ]; then
+            cp pending-provenance.json "${GENERATED}"
+            cp pending-provenance.json generated-provenance.json
+          fi
+        fi
+        PR_URL="$(gh pr list --head "${BRANCH}" --base main --state open --json url,author,headRepositoryOwner \
+          --jq '.[0].url // ""')"
+        if [ -n "${PR_URL}" ]; then
+          gh pr view "${PR_URL}" --json author,headRefName,baseRefName,isCrossRepository,headRepositoryOwner \
+            --jq '.author.login == "bocklabs-release[bot]" and .headRefName == "provenance/current/'"${APP}"'" and .baseRefName == "main" and .isCrossRepository == false and .headRepositoryOwner.login == "bocklabs"' | grep -qx true
+        fi
+        git checkout -B "${BRANCH}" origin/main
+        mkdir -p "$(dirname "${RECORD}")"
+        cp "${GENERATED}" "${RECORD}"
+        git add "${RECORD}"
+        if git diff --cached --quiet; then
+          echo "Provenance record already merged; no write-back needed" >> "$GITHUB_STEP_SUMMARY"
+          echo "pr_url=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        git commit -m "chore(proven): promote ${APP} ${INTERNAL_TAG}"
+        git fetch origin main
+        [ "$(git rev-parse origin/main)" = "${MAIN_SHA}" ] || { echo 'FATAL: merged main changed before provenance push'; exit 1; }
+        LATEST_REMOTE_SHA="$(git ls-remote "${REMOTE}" "refs/heads/${BRANCH}" | awk '{print $1}')"
+        [ "${LATEST_REMOTE_SHA}" = "${REMOTE_SHA}" ] || { echo 'FATAL: pending provenance head changed'; exit 1; }
+        if [ -n "${REMOTE_SHA}" ]; then
+          git push --force-with-lease=refs/heads/${BRANCH}:${REMOTE_SHA} "${REMOTE}" "HEAD:${BRANCH}"
+        else
+          git push "${REMOTE}" "HEAD:${BRANCH}"
+        fi
+
+        python3 scripts/promote_provenance_body.py "${RUN_URL}" "${CANDIDATE_DIGEST}" "${INTERNAL_TAG}" > provenance-body.md
+        if [ -z "${PR_URL}" ]; then
+          PR_URL="$(gh pr create \
+            --head "${BRANCH}" \
+            --base main \
+            --title "provenance: ${APP} ${INTERNAL_TAG}" \
+            --body-file provenance-body.md)"
+        else
+          gh pr edit "${PR_URL}" --title "provenance: ${APP} ${INTERNAL_TAG}" --body-file provenance-body.md
+        fi
+        echo "Provenance PR: ${PR_URL}" >> "$GITHUB_STEP_SUMMARY"
+        # The required check's actual payload, re-run against the branch tree.
+        python3 scripts/validate_inventory.py
+        HEAD_SHA="$(git rev-parse HEAD)"
+
+        echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
+        echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"

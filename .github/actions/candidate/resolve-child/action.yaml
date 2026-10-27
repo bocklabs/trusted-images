@@ -1,0 +1,66 @@
+name: resolve-child
+description: Resolve the exact linux/amd64 child
+inputs:
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  upstream_index_digest:
+    description: Workflow input.
+    required: false
+  dockerhub_username:
+    description: Workflow input.
+    required: false
+  dockerhub_token:
+    description: Workflow input.
+    required: false
+  skopeo_image:
+    description: Workflow input.
+    required: false
+outputs:
+  digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.digest }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        UPSTREAM_INDEX_DIGEST: ${{ inputs.upstream_index_digest }}
+        DOCKERHUB_USERNAME: ${{ inputs.dockerhub_username }}
+        DOCKERHUB_TOKEN: ${{ inputs.dockerhub_token }}
+        SKOPEO_IMAGE: ${{ inputs.skopeo_image }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/registry.sh
+        [ -n "${UPSTREAM_REF}" ] || { echo "FATAL: upstream reference is empty"; exit 1; }
+        [[ "${UPSTREAM_INDEX_DIGEST}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
+          echo "FATAL: upstream index digest is invalid"
+          exit 1
+        }
+        SELECTED_DIGEST="${UPSTREAM_INDEX_DIGEST}"
+        if jq -e '.mediaType == "application/vnd.oci.image.index.v1+json" or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"' upstream-index.json > /dev/null; then
+          SELECTED_DIGEST="$(jq -er '
+            [.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64")]
+            | if length == 1 and (.[0].platform.variant == null or .[0].platform.variant == "")
+              then .[0].digest
+              else error("upstream index must contain exactly one linux/amd64 child without a variant")
+              end' upstream-index.json)"
+        fi
+        [[ "${SELECTED_DIGEST}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
+          echo "FATAL: selected child digest is invalid"
+          exit 1
+        }
+        copy_source_oci "${UPSTREAM_REF}" "${SELECTED_DIGEST}" "upstream-oci:child"
+        cp "upstream-oci/blobs/sha256/${SELECTED_DIGEST#sha256:}" child-manifest.json
+        CONFIG_DIGEST="$(jq -er .config.digest child-manifest.json)"
+        cp "upstream-oci/blobs/sha256/${CONFIG_DIGEST#sha256:}" child-config.json
+        SELECTED_DIGEST="$(python3 scripts/evaluate_promotion.py --resolve-only \
+          --index upstream-index.json \
+          --upstream-index-digest "${UPSTREAM_INDEX_DIGEST}" \
+          --child-manifest child-manifest.json \
+          --child-config child-config.json \
+          --selected-digest-out selected-child.txt)"
+        echo "digest=${SELECTED_DIGEST}" >> "$GITHUB_OUTPUT"
+        echo "selected linux/amd64 child: ${SELECTED_DIGEST}"

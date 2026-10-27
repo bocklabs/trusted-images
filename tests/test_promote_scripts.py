@@ -391,7 +391,7 @@ class RecoveryTests(PromotionScriptTestCase):
         )
 
     def test_recovery_candidate_rejects_mismatched_provenance(self) -> None:
-        root, record = self.write_recovery_tree()
+        _root, record = self.write_recovery_tree()
         record["internal"]["digest"] = DIGEST_B
         provenance = self.tmp / "provenance.json"
         write_json(provenance, record)
@@ -469,6 +469,14 @@ class RecoveryTests(PromotionScriptTestCase):
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("FATAL: recover_tag does not match", result.stderr)
+
+    def test_candidate_context_emits_validation_without_recovery_tag(self) -> None:
+        image = self.tmp / "image.yaml"
+        image.write_text(yaml.safe_dump(inventory()), encoding="utf-8")
+        result = self.run_script("promote_inventory.py", "candidate", str(image), APP)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("validation_type=http", result.stdout.splitlines())
+        self.assertIn("validation_port=8080", result.stdout.splitlines())
 
 
 class ResumeTests(PromotionScriptTestCase):
@@ -641,7 +649,9 @@ class RegistryTests(PromotionScriptTestCase):
             ],
         )
 
-    def test_registry_observations_keep_legacy_digest_out_of_phase05_index(self) -> None:
+    def test_registry_observations_keep_legacy_digest_out_of_single_platform_index(
+        self,
+    ) -> None:
         provenance = self.tmp / "provenance" / APP
         provenance.mkdir(parents=True)
         tag = "v1.2.3-bocklabs.1"
@@ -875,7 +885,7 @@ class DecisionTests(PromotionScriptTestCase):
             self.tmp / "trivy-copa.json", report() if fixable is None else fixable
         )
         write_json(self.tmp / "kev.json", kev_feed(()))
-        now = datetime.datetime.now(datetime.timezone.utc).strftime(
+        now = datetime.datetime.now(datetime.UTC).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
         (self.tmp / "kev-fetched-at.txt").write_text(now + "\n", encoding="utf-8")
@@ -887,6 +897,32 @@ class DecisionTests(PromotionScriptTestCase):
         write_json(
             self.tmp / "validation-evidence.json", {"validation": {"result": "pass"}}
         )
+
+    def test_daily_functional_hold_preserves_rejection_and_invalid_evidence_fails(self):
+        self.policy_inputs()
+        write_json(self.tmp / "validation-evidence.json", {"validation": {"result": "fail"}})
+        findings = [{"id": "CVE-2026-1234", "package": "libexample", "installed": "1.0",
+                     "class": "os-pkgs", "type": "debian", "target": "root"}]
+        request = {"app": APP, "ref": f"ghcr.io/bocklabs/{APP}:v1@{DIGEST_A}",
+                   "findings": findings, "need_sha256": hashlib.sha256(
+                       json.dumps(findings, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}
+        output = self.tmp / "output"
+        env = {"APP": APP, "SOURCE_SHA": SOURCE_SHA, "RUN_ID": RUN_ID, "RUN_ATTEMPT": "1",
+               "INTERNAL_TAG": INTERNAL_TAG, "UPSTREAM_INDEX_DIGEST": digest(index()),
+               "CANDIDATE_DIGEST": digest(child_manifest()), "GITHUB_OUTPUT": str(output),
+               "GITHUB_REPOSITORY": "bocklabs/trusted-images"}
+        manual = self.run_script("promote_candidate_decision.py", env=env)
+        self.assertEqual(manual.returncode, 1, manual.stdout + manual.stderr)
+        daily = self.run_script("promote_candidate_decision.py", env={**env, "REQUESTED_REMEDIATION": json.dumps(request)})
+        self.assertEqual(daily.returncode, 0, daily.stdout + daily.stderr)
+        retained = json.loads((self.tmp / "candidate-decision.json").read_text())
+        self.assertFalse(retained["eligible"])
+        self.assertEqual(retained["validation"]["result"], "fail")
+        self.assertIn("daily_hold=true", output.read_text())
+        write_json(self.tmp / "child-config.json", {"architecture": "arm64", "os": "linux"})
+        invalid = self.run_script("promote_candidate_decision.py", env={**env, "REQUESTED_REMEDIATION": json.dumps(request)})
+        self.assertEqual(invalid.returncode, 2, invalid.stdout + invalid.stderr)
+        self.assertFalse((self.tmp / "candidate-decision.json").exists())
 
     def test_candidate_decision_exports_eligible_policy_and_supersede_outputs(
         self,
@@ -902,7 +938,7 @@ class DecisionTests(PromotionScriptTestCase):
                 "RUN_ATTEMPT": "1",
                 "INTERNAL_TAG": INTERNAL_TAG,
                 "UPSTREAM_INDEX_DIGEST": digest(index()),
-                "CANDIDATE_DIGEST": DIGEST_A,
+                "CANDIDATE_DIGEST": digest(child_manifest()),
                 "GITHUB_REPOSITORY": "bocklabs/trusted-images",
                 "GITHUB_OUTPUT": str(output),
             },
@@ -916,7 +952,7 @@ class DecisionTests(PromotionScriptTestCase):
     def test_candidate_decision_retains_the_candidate_when_evaluation_fails(
         self,
     ) -> None:
-        self.policy_inputs(fixable=report([vuln()]))
+        self.policy_inputs(full=report([vuln()]), fixable=report([vuln()]))
         result = self.run_script(
             "promote_candidate_decision.py",
             env={
@@ -926,7 +962,7 @@ class DecisionTests(PromotionScriptTestCase):
                 "RUN_ATTEMPT": "1",
                 "INTERNAL_TAG": INTERNAL_TAG,
                 "UPSTREAM_INDEX_DIGEST": digest(index()),
-                "CANDIDATE_DIGEST": DIGEST_A,
+                "CANDIDATE_DIGEST": digest(child_manifest()),
                 "GITHUB_REPOSITORY": "bocklabs/trusted-images",
                 "GITHUB_OUTPUT": "/dev/null",
             },
@@ -997,7 +1033,8 @@ class DecisionTests(PromotionScriptTestCase):
                 "APP": APP,
                 "SOURCE_SHA": SOURCE_SHA,
                 "RUN_ID": RUN_ID,
-                "RUN_ATTEMPT": "1",
+                "RUN_ATTEMPT": "2",
+                "CANDIDATE_RUN_ATTEMPT": "1",
                 "UPSTREAM_INDEX_DIGEST": digest(index()),
                 "REPO": "bocklabs/trusted-images",
             },
@@ -1015,6 +1052,7 @@ class DecisionTests(PromotionScriptTestCase):
                 "SOURCE_SHA": SOURCE_SHA,
                 "RUN_ID": RUN_ID,
                 "RUN_ATTEMPT": "1",
+                "CANDIDATE_RUN_ATTEMPT": "1",
                 "UPSTREAM_INDEX_DIGEST": digest(index()),
                 "REPO": "bocklabs/trusted-images",
             },
@@ -1220,6 +1258,7 @@ class SyncDispatchOptionsTests(unittest.TestCase):
             cwd=self.root,
             capture_output=True,
             text=True,
+            check=False,
         )
 
     def test_syncs_apps_and_reports_changed_output(self) -> None:
@@ -1242,10 +1281,12 @@ class SyncDispatchOptionsTests(unittest.TestCase):
             env={**os.environ, "GITHUB_OUTPUT": str(output)},
             capture_output=True,
             text=True,
+            check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("options updated: +['app-a', 'app-b'] -['old']", result.stdout)
         self.assertIn("changed=true", output.read_text(encoding="utf-8"))
+        self.assertIn("removed=true", output.read_text(encoding="utf-8"))
         self.assertIn(
             "          - app-a\n          - app-b", workflow.read_text(encoding="utf-8")
         )
@@ -1259,8 +1300,17 @@ class SyncDispatchOptionsTests(unittest.TestCase):
         )
         (self.root / "inventory" / "app").mkdir(parents=True)
         (self.root / "inventory" / "app" / "image.yaml").touch()
-        result = self.run_sync()
+        output = self.root / "github-output"
+        result = subprocess.run(
+            [sys.executable, str(REPO_ROOT / "scripts/sync_dispatch_options.py")],
+            cwd=self.root,
+            env={**os.environ, "GITHUB_OUTPUT": str(output)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("changed=false", output.read_text(encoding="utf-8"))
         self.assertEqual(result.stdout, "options in sync\n")
 
     def test_empty_inventory_fails(self) -> None:

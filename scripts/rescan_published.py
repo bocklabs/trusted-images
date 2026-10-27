@@ -23,6 +23,7 @@ INVENTORY = Path(__file__).resolve().parents[1] / "inventory"
 ARTIFACT = Path("published-rescan")
 SELECTION_FILE = "selection.json"
 INVALID_PACKAGE_INVENTORY = "invalid scanned package inventory"
+GO_PURL_PREFIX = "pkg:golang/"
 
 
 def git(*args):
@@ -87,75 +88,190 @@ def select():
     output({"ref": ref, "proceed": False})
 
 
-def reviewed_file_build(selection, report):
+def review_source_matches_labels(review, labels):
+    source = review["source"]
+    if source["repository"] != labels.get("org.opencontainers.image.source"):
+        build = review.get("build_info") or {}
+        return bool(build.get("vcs_revision")) and build["vcs_revision"] == source["revision"]
+    revision = labels.get("org.opencontainers.image.revision")
+    if revision:
+        return source["revision"] == revision
+    version = labels.get("org.opencontainers.image.version", "")
+    base_tag = labels.get("org.opencontainers.image.base.name", "").rsplit(":", 1)[-1]
+    tags = {tag.split("-", 1)[0].removeprefix("v") for tag in (version, base_tag) if tag}
+    return source.get("tag", "").removeprefix("v") in tags
+
+
+def review_matches_image(review, selection, metadata, labels, diff_ids):
+    build_info = review.get("build_info")
+    build_revision_ok = (
+        not isinstance(build_info, dict)
+        or not build_info.get("vcs_revision")
+        or build_info["vcs_revision"] == review["source"]["revision"]
+    )
+    return (
+        review["ref"] == selection["ref"]
+        and review["config_digest"] == metadata.get("ImageID")
+        and review["upstream_child_digest"]
+        == dig(selection, "published.upstream.selected_child_digest")[1]
+        and review["layer"]["DiffID"] in diff_ids
+        and review_source_matches_labels(review, labels)
+        and build_revision_ok
+    )
+
+
+def reviewed_file_builds(selection, report):
     app = selection["app"]
     require(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", app), "invalid inventory app")
-    path = INVENTORY / app / "go-file-build.json"
-    if not path.exists():
-        return None
-    require(path.is_file() and not path.is_symlink(), "unsafe Go file-build evidence")
-    raw = path.read_bytes()
-    review = parse_go_file_build(raw, path)
-    require(review["ref"] == selection["ref"], "Go file-build evidence is stale for the selected published image")
+    paths = sorted((INVENTORY / app).glob("go-file-build*.json"))
+    if not paths:
+        return []
     metadata = report.get("Metadata", {})
     require(isinstance(metadata, dict), "Go file-build scan Metadata must be an object")
     _, labels = dig(report, "Metadata.ImageConfig.config.Labels")
     diff_ids = metadata.get("DiffIDs")
     require(isinstance(diff_ids, list), "Go file-build scan DiffIDs must be a list")
-    require(isinstance(labels, dict) and review["config_digest"] == metadata.get("ImageID")
-            and review["upstream_child_digest"] == dig(selection, "published.upstream.selected_child_digest")[1]
-            and review["layer"]["DiffID"] in diff_ids
-            and review["source"]["repository"] == labels.get("org.opencontainers.image.source")
-            and review["source"]["revision"] == labels.get("org.opencontainers.image.revision"),
-            "Go file-build scan evidence differs from scanned image")
-    return {**review, "review_sha256": hashlib.sha256(raw).hexdigest()}
+    require(isinstance(labels, dict), "Go file-build scan labels must be an object")
+    reviews = []
+    for path in paths:
+        require(path.is_file() and not path.is_symlink(), "unsafe Go file-build evidence")
+        raw = path.read_bytes()
+        review = parse_go_file_build(raw, path)
+        require(
+            review["ref"] == selection["ref"],
+            "Go file-build evidence is stale for the selected published image",
+        )
+        require(
+            review_matches_image(review, selection, metadata, labels, diff_ids),
+            "Go file-build scan evidence differs from scanned image",
+        )
+        reviews.append({**review, "review_sha256": hashlib.sha256(raw).hexdigest()})
+    return reviews
 
 
-def package_coverage(results, file_build=None):
+def versionless_go_replacement(result, package):
+    if ("Version" in package or "Relationship" in package or result.get("Class") != "lang-pkgs"
+            or result.get("Type") != "gobinary" or not isinstance(result.get("Target"), str)
+            or not result["Target"] or package.get("ID") != package["Name"]
+            or package.get("AnalyzedBy") != "gobinary"):
+        return False
+    name = package["Name"]
+    identifier = package.get("Identifier")
+    if not isinstance(identifier, dict) or not isinstance(identifier.get("UID"), str) or not identifier["UID"]:
+        return False
+    if re.fullmatch(r"\./[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", name):
+        return set(identifier) == {"UID"}
+    return (re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)+", name)
+            and isinstance(identifier.get("PURL"), str)
+            and identifier["PURL"].casefold() == (GO_PURL_PREFIX + name).casefold())
+
+
+def go_root_package(result, package):
+    return (
+        "Version" not in package and result.get("Class") == "lang-pkgs"
+        and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
+        and bool(result["Target"]) and package.get("ID") == package["Name"]
+        and re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", package["Name"])
+        and package.get("AnalyzedBy") == "gobinary"
+        and package.get("Relationship") == "root"
+        and isinstance(package.get("Identifier"), dict)
+        and isinstance(package["Identifier"].get("PURL"), str)
+        and package["Identifier"]["PURL"].casefold()
+        == (GO_PURL_PREFIX + package["Name"]).casefold()
+    )
+
+
+def go_relative_root(result, package, packages):
+    return (
+        "Version" not in package and result.get("Class") == "lang-pkgs"
+        and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
+        and bool(result["Target"]) and package.get("ID") == package["Name"] == "../"
+        and package.get("AnalyzedBy") == "gobinary" and "Relationship" not in package
+        and isinstance(package.get("Identifier"), dict)
+        and set(package["Identifier"]) == {"UID"}
+        and isinstance(package["Identifier"]["UID"], str)
+        and any(
+            isinstance(root, dict) and root.get("Relationship") == "root"
+            and isinstance(root.get("Version"), str) and bool(root["Version"])
+            and isinstance(root.get("Identifier"), dict)
+            and str(root["Identifier"].get("PURL", "")).startswith(GO_PURL_PREFIX)
+            and isinstance(root.get("DependsOn"), list) and "../" in root["DependsOn"]
+            for root in packages
+        )
+    )
+
+
+def reviewed_go_package(result, package, file_builds):
+    if (result.get("Class") != "lang-pkgs" or result.get("Type") != "gobinary"
+            or package.get("AnalyzedBy") != "gobinary"):
+        return False
+    for review in file_builds:
+        if result.get("Target") != review["target"] or package.get("Layer") != review["layer"]:
+            continue
+        name = package["Name"]
+        module = review["module"]
+        if name == module or name.startswith(module + "/"):
+            return True
+    return False
+
+
+def review_limitations(file_builds):
+    return [
+        {
+            "target": review["target"],
+            "module": review["module"],
+            "version": "unknown",
+            "reason": "reviewed first-party Go file build has no module version",
+            "review_sha256": review["review_sha256"],
+        }
+        for review in file_builds
+        if review.get("build_info", {}).get("module_version", "(devel)") == "(devel)"
+    ]
+
+
+def package_coverage(results, file_builds=None):
+    file_builds = file_builds or []
     covered = bool(results)
+    limitations = []
     for result in results:
         packages = result.get("Packages")
         covered = covered and result.get("Class") in ("os-pkgs", "lang-pkgs") and bool(result.get("Type")) and isinstance(packages, list) and bool(packages)
-        if packages is not None:
-            require(isinstance(packages, list), INVALID_PACKAGE_INVENTORY)
-            for package in packages:
-                require(isinstance(package, dict) and isinstance(package.get("Name"), str)
-                        and package["Name"], INVALID_PACKAGE_INVENTORY)
-                go_root = (
-                    "Version" not in package and result.get("Class") == "lang-pkgs"
-                    and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
-                    and bool(result["Target"]) and package.get("ID") == package["Name"]
-                    and re.fullmatch(r"[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*", package["Name"])
-                    and package.get("AnalyzedBy") == "gobinary"
-                    and (package.get("Relationship") == "root" or (
-                        file_build is not None and "Relationship" not in package
-                        and (result["Target"], package["Name"], package.get("Layer"))
-                        == (file_build["target"], file_build["module"], file_build["layer"])))
-                    and isinstance(package.get("Identifier"), dict)
-                    and isinstance(package["Identifier"].get("PURL"), str)
-                    and package["Identifier"]["PURL"].casefold() == ("pkg:golang/" + package["Name"]).casefold()
-                )
-                go_relative_root = (
-                    "Version" not in package and result.get("Class") == "lang-pkgs"
-                    and result.get("Type") == "gobinary" and isinstance(result.get("Target"), str)
-                    and bool(result["Target"]) and package.get("ID") == package["Name"] == "../"
-                    and package.get("AnalyzedBy") == "gobinary" and "Relationship" not in package
-                    and isinstance(package.get("Identifier"), dict)
-                    and set(package["Identifier"]) == {"UID"}
-                    and isinstance(package["Identifier"]["UID"], str)
-                    and any(
-                        isinstance(root, dict) and root.get("Relationship") == "root"
-                        and isinstance(root.get("Version"), str) and bool(root["Version"])
-                        and isinstance(root.get("Identifier"), dict)
-                        and str(root["Identifier"].get("PURL", "")).startswith("pkg:golang/")
-                        and isinstance(root.get("DependsOn"), list) and "../" in root["DependsOn"]
-                        for root in packages
-                    )
-                )
-                require(go_root or go_relative_root
-                        or (isinstance(package.get("Version"), str) and package["Version"]),
-                        INVALID_PACKAGE_INVENTORY)
-    return bool(covered)
+        if packages is None:
+            continue
+        require(isinstance(packages, list), INVALID_PACKAGE_INVENTORY)
+        for package in packages:
+            require(isinstance(package, dict) and isinstance(package.get("Name"), str)
+                    and package["Name"], INVALID_PACKAGE_INVENTORY)
+            go_root = go_root_package(result, package)
+            relative_root = go_relative_root(result, package, packages)
+            reviewed = reviewed_go_package(result, package, file_builds)
+            replacement = not (go_root or relative_root or reviewed) and versionless_go_replacement(result, package)
+            require(go_root or relative_root or reviewed or replacement
+                    or (isinstance(package.get("Version"), str) and package["Version"]),
+                    INVALID_PACKAGE_INVENTORY)
+            if replacement:
+                covered = False
+                limitations.append({"target": result["Target"], "module": package["Name"],
+                                     "version": "unknown", "reason": "Go local/workspace replacement has no version"})
+    return bool(covered), limitations
+
+
+def decision_outcome(covered, same_upstream_tag, requested, enabled):
+    if not covered:
+        return False, "package coverage incomplete; full report retained"
+    if not same_upstream_tag:
+        return (
+            False,
+            (
+                "inventory upstream tag differs from the published image; "
+                "publish the inventory update separately"
+            ),
+        )
+    if not requested:
+        return False, "no actionable fix; full findings retained"
+    if not enabled:
+        return False, "automatic remediation disabled; full findings retained"
+    return True, "actionable producer remediation"
 
 
 def decide(selection, report, enabled):
@@ -164,17 +280,28 @@ def decide(selection, report, enabled):
     results = validate_report_results(report, "published full report", False)
     normalized = findings(report, "published full report")
     require(report.get("Metadata", {}).get("OS", {}).get("EOSL") is not True, "published image is end-of-life")
-    file_build = reviewed_file_build(selection, report)
-    covered = package_coverage(results, file_build)
+    file_builds = reviewed_file_builds(selection, report)
+    covered, limitations = package_coverage(results, file_builds)
+    limitations.extend(review_limitations(file_builds))
     spec = selection["spec"]
-    changed_upstream = spec["upstream"] != {k: selection["published"]["upstream"][k] for k in ("ref", "tag", "digest")}
+    published_upstream = selection["published"]["upstream"]
+    same_upstream_tag = (
+        spec["upstream"]["ref"] == published_upstream["ref"]
+        and spec["upstream"]["tag"] == published_upstream["tag"]
+    )
+    changed_upstream = spec["upstream"] != {
+        k: published_upstream[k] for k in ("ref", "tag", "digest")
+    }
     requested = []
     no_fix = unsupported = 0
     for key, item in normalized.items():
         if not item["fixed_version"]:
             no_fix += 1
             continue
-        actionable = (item["class"] == "os-pkgs" and spec["patchPolicy"] == "enabled") or (item["class"] == "lang-pkgs" and changed_upstream)
+        actionable = same_upstream_tag and (
+            (item["class"] == "os-pkgs" and spec["patchPolicy"] == "enabled")
+            or (item["class"] == "lang-pkgs" and changed_upstream)
+        )
         if not actionable:
             unsupported += 1
             continue
@@ -185,20 +312,24 @@ def decide(selection, report, enabled):
     value = {"app": selection["app"], "ref": selection["ref"], "proceed": False,
              "force_repromote": False, "findings": len(normalized), "no_fix": no_fix,
              "unsupported": unsupported, "actionable": len(requested), "package_coverage": bool(covered)}
-    if file_build is not None:
-        value["coverage_limitations"] = [{"target": file_build["target"], "module": file_build["module"],
-            "version": "unknown", "reason": "reviewed first-party Go file build has no module version",
-            "review_sha256": file_build["review_sha256"]}]
-    if not covered:
-        value["reason"] = "unsupported scanner/package coverage; full report retained"
-    elif not requested:
-        value["reason"] = "no actionable fix; full findings retained"
-    elif not enabled:
-        value["reason"] = "automatic remediation disabled; full findings retained"
-    else:
-        value.update(proceed=True, force_repromote=True, reason="actionable producer remediation",
-                     requested_remediation={"app": selection["app"], "ref": selection["ref"],
-                                            "findings": requested, "need_sha256": findings_hash(requested)})
+    value["reviewed_file_builds"] = [review["review_sha256"] for review in file_builds]
+    if limitations:
+        value["coverage_limitations"] = limitations
+    proceed, reason = decision_outcome(
+        covered, same_upstream_tag, requested, enabled
+    )
+    value["reason"] = reason
+    if proceed:
+        value.update(
+            proceed=True,
+            force_repromote=True,
+            requested_remediation={
+                "app": selection["app"],
+                "ref": selection["ref"],
+                "findings": requested,
+                "need_sha256": findings_hash(requested),
+            },
+        )
     return value
 
 

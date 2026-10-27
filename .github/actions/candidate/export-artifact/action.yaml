@@ -1,0 +1,110 @@
+name: export-artifact
+description: Export checksum-bound candidate artifact
+inputs:
+  upstream_ref:
+    description: Workflow input.
+    required: false
+  selected_digest:
+    description: Workflow input.
+    required: false
+  source_sha:
+    description: Workflow input.
+    required: false
+  dockerhub_username:
+    description: Workflow input.
+    required: false
+  dockerhub_token:
+    description: Workflow input.
+    required: false
+  resume_internal_tag:
+    description: Workflow input.
+    required: false
+  resume_skip_copy:
+    description: Workflow input.
+    required: false
+  patch_internal_tag:
+    description: Workflow input.
+    required: false
+  patch_skip_copy:
+    description: Workflow input.
+    required: false
+  tag_internal_tag:
+    description: Workflow input.
+    required: false
+  tag_skip_copy:
+    description: Workflow input.
+    required: false
+  skopeo_image:
+    description: Workflow input.
+    required: false
+outputs:
+  manifest_sha256:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.manifest_sha256 }}
+  run_attempt:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.run_attempt }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        SELECTED_DIGEST: ${{ inputs.selected_digest }}
+        SOURCE_SHA: ${{ inputs.source_sha }}
+        DOCKERHUB_USERNAME: ${{ inputs.dockerhub_username }}
+        DOCKERHUB_TOKEN: ${{ inputs.dockerhub_token }}
+        RESUME_INTERNAL_TAG: ${{ inputs.resume_internal_tag }}
+        RESUME_SKIP_COPY: ${{ inputs.resume_skip_copy }}
+        PATCH_INTERNAL_TAG: ${{ inputs.patch_internal_tag }}
+        PATCH_SKIP_COPY: ${{ inputs.patch_skip_copy }}
+        TAG_INTERNAL_TAG: ${{ inputs.tag_internal_tag }}
+        TAG_SKIP_COPY: ${{ inputs.tag_skip_copy }}
+        SKOPEO_IMAGE: ${{ inputs.skopeo_image }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/registry.sh
+        if [ ! -s candidate-decision.json ]; then
+          echo "FATAL: no candidate decision to export"
+          exit 1
+        fi
+        if [ ! -d candidate-oci ]; then
+          copy_source_oci "${UPSTREAM_REF}" "${SELECTED_DIGEST}" "candidate-oci:candidate"
+        fi
+        mkdir -p candidate-artifact
+        cp upstream-index.json child-manifest.json child-config.json candidate-manifest.json \
+          trivy-before-full.json trivy-full.json trivy-copa.json trivy-full.cdx.json secobserve-upload.json \
+          validation-evidence.json candidate-decision.json candidate-artifact/
+        cp trivy-db-meta-1.txt trivy-db-meta-2.txt kev.json kev-fetched-at.txt candidate-artifact/
+        for evidence in trivy-after-full.json scan-receipt.json trivy-db-meta-after.txt \
+          copa-diagnostics.txt copa-candidate-image-id.txt before-labels.json after-labels.json; do
+          [ ! -f "${evidence}" ] || cp "${evidence}" candidate-artifact/
+        done
+        for evidence in acceptance.json github-evidence.json original-candidate-decision.json \
+          resume-run.json resume-branch.json resume-artifacts.jsonl resume-artifact-id.txt \
+          resume-candidate-image-id.txt; do
+          [ ! -f "${evidence}" ] || cp "${evidence}" candidate-artifact/
+        done
+        for evidence in native-before native-after; do
+          [ ! -d "$evidence" ] || cp -r "$evidence" candidate-artifact/
+        done
+        cp validation-context/image.yaml candidate-artifact/inventory-image.yaml
+        cp -r validation-logs candidate-artifact/ 2> /dev/null || true
+        printf '%s\n' "${SOURCE_SHA}" > candidate-artifact/source.sha
+        rm -f candidate-final.tar resume-final.tar
+        [ -d candidate-oci ] || { echo "FATAL: candidate OCI layout is missing"; exit 1; }
+        mv candidate-oci candidate-artifact/candidate-oci
+        INTERNAL_TAG="${RESUME_INTERNAL_TAG:-${PATCH_INTERNAL_TAG:-${TAG_INTERNAL_TAG}}}"
+        SKIP_COPY="${RESUME_SKIP_COPY:-${PATCH_SKIP_COPY:-${TAG_SKIP_COPY}}}"
+        [ -n "${INTERNAL_TAG}" ] || echo "WARNING: no internal tag allocated; artifact is review-only" >&2
+        case "${SKIP_COPY}" in true|false) ;; *) echo "FATAL: invalid tag skip decision"; exit 1 ;; esac
+        jq -n --arg internal_tag "${INTERNAL_TAG}" \
+          --argjson skip_copy "${SKIP_COPY}" \
+          '{internal_tag:$internal_tag, skip_copy:$skip_copy}' > candidate-artifact/tag-decision.json
+        find candidate-artifact -type f ! -name SHA256SUMS -print0 \
+          | sort -z | xargs -0 sha256sum > candidate-artifact/SHA256SUMS
+        SHA="$(sha256sum candidate-artifact/SHA256SUMS | awk '{print $1}')"
+        [[ "${GITHUB_RUN_ATTEMPT}" =~ ^[1-9][0-9]*$ ]] || { echo "FATAL: run attempt is invalid"; exit 1; }
+        echo "manifest_sha256=${SHA}" >> "$GITHUB_OUTPUT"
+        echo "run_attempt=${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"

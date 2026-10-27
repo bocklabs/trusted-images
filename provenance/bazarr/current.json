@@ -12,14 +12,14 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/bazarr",
-    "tag": "1.6.2-bocklabs.2",
-    "digest": "sha256:02e609febb95c1e2b9f0647e1f6ef56e8d446d9368e0640dff02a26b27abc40e",
+    "tag": "1.6.2-bocklabs.3",
+    "digest": "sha256:62b188ed7ca0a72b08bcc8880ece71150e6afb93c13284374db0b65e6abfd701",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40077832216",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40298838760",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
@@ -32,16 +32,16 @@
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:37fd6d795e264343f874626baeb0d43b06ad8018d9d0d3a466b366942ced3f2f",
-      "updated_at": "2026-10-24 07:11:13.37117014 +0000 UTC"
+      "check_bundle_digest": "sha256:96ee978993524fa2026071c61b8641e2034b8208322fab672b2b814666ffbc83",
+      "updated_at": "2026-10-26 07:15:18.945937093 +0000 UTC"
     },
-    "full_report_sha256": "c5bc8444f6cb5e6c6eb4019dd7dd4bd8fdd74e7f9acb785aceba8f3ec54ac699",
-    "copa_report_sha256": "152a58992073c0b2de046c52aa0976947fc8fe72d8634490b219a06a7f4615a5",
-    "decision_sha256": "1b87d9d426e0e2743b6721513e05ae7d5c0f6edef24765248e56124ea69bd79e",
+    "full_report_sha256": "7399bddeaa4d7e29029cc0b364352ad14da823596fe46cf2659a1000aa4d1def",
+    "copa_report_sha256": "5ebc4bf5ae086e373f4095327c9e90ca2189f4da97f13e440e1e23278301a6cc",
+    "decision_sha256": "5ae1c7e16d33982ad3a5e9207cdb711608f292897ecd1310db1e935f05243d8d",
     "reports": {
-      "before_sha256": "8bab396796cd8d0df037adc401be74bf645449f8271aae204b481d12de57eb49",
-      "final_sha256": "c5bc8444f6cb5e6c6eb4019dd7dd4bd8fdd74e7f9acb785aceba8f3ec54ac699",
-      "fixable_sha256": "152a58992073c0b2de046c52aa0976947fc8fe72d8634490b219a06a7f4615a5"
+      "before_sha256": "5b2193839ae3eb780822d584216e513bd53de53f05c37b73c2f4ab0899cbfe94",
+      "final_sha256": "7399bddeaa4d7e29029cc0b364352ad14da823596fe46cf2659a1000aa4d1def",
+      "fixable_sha256": "5ebc4bf5ae086e373f4095327c9e90ca2189f4da97f13e440e1e23278301a6cc"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -54,7 +54,7 @@
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
         "sha256": "97a6e54bc74c651ab3c55657191db9adec6c63b05ca54e4205327cfd97a8fb70",
-        "fetched_at": "2026-10-24T08:27:00Z",
+        "fetched_at": "2026-10-26T09:24:02Z",
         "catalogVersion": "2026.10.23",
         "dateReleased": "2026-10-23T19:30:18.9209Z"
       }
@@ -73,7 +73,7 @@
       "limitation": null
     },
     "remediation": {
-      "need_sha256": "69953cc2ee1ab7b88bf248d43976ca1f422cd83540ecc698fd64da2fb614fb6d"
+      "need_sha256": "cea8c92d8c27dac2bec1c54339974a78f552e6781e51672798f44b9d597ee04f"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -954,6 +954,318 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|curl|CVE-2026-107928",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-107928",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-107929",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-107929",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86409",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86409",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86410",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86410",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86411",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86411",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86412",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86412",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86413",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86413",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86414",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86414",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-86415",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-86415",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87861",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87861",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87862",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87862",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87863",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87863",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87864",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87864",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87865",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87865",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-87866",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-87866",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92386",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92386",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92387",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92387",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92388",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92388",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92389",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92389",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92390",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92390",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92391",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92391",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-92392",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-92392",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-94265",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-94265",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|curl|CVE-2026-94266",
+        "platform": "linux/amd64",
+        "package": "curl",
+        "cve": "CVE-2026-94266",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:python-pkg:Python:Js2Py:app%2Fbazarr%2Fbin%2Flibs%2FJs2Py-0.74.dist-info%2FMETADATA|CVE-2024-28397",
         "platform": "linux/amd64",
         "package": "Js2Py",
@@ -1745,6 +2057,318 @@
         "fixed_version": "2.8.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-107928",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-107928",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-107929",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-107929",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86409",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86409",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86410",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86410",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86411",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86411",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86412",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86412",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86413",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86413",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86414",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86414",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-86415",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-86415",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87861",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87861",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87862",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87862",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87863",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87863",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87864",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87864",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87865",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87865",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-87866",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-87866",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92386",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92386",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92387",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92387",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92388",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92388",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92389",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92389",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92390",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92390",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92391",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92391",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-92392",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-92392",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-94265",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-94265",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcurl|CVE-2026-94266",
+        "platform": "linux/amd64",
+        "package": "libcurl",
+        "cve": "CVE-2026-94266",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/bazarr@sha256:e3313a245b92d7c055e2a8e370b54bc1aeb4b3b4c36420ce18809a6e87c687b2 (alpine 3.23.6)",
+        "installed_version": "8.22.0-r0",
+        "fixed_version": "8.23.0-r0",
+        "severity": "LOW",
+        "severity_source": ""
       },
       {
         "identity": "linux/amd64|libexpat|CVE-2026-102633",
@@ -2598,8 +3222,32 @@
       "resolved": [
         "CVE-2026-102633",
         "CVE-2026-107891",
+        "CVE-2026-107928",
+        "CVE-2026-107929",
         "CVE-2026-111497",
-        "CVE-2026-77214"
+        "CVE-2026-77214",
+        "CVE-2026-86409",
+        "CVE-2026-86410",
+        "CVE-2026-86411",
+        "CVE-2026-86412",
+        "CVE-2026-86413",
+        "CVE-2026-86414",
+        "CVE-2026-86415",
+        "CVE-2026-87861",
+        "CVE-2026-87862",
+        "CVE-2026-87863",
+        "CVE-2026-87864",
+        "CVE-2026-87865",
+        "CVE-2026-87866",
+        "CVE-2026-92386",
+        "CVE-2026-92387",
+        "CVE-2026-92388",
+        "CVE-2026-92389",
+        "CVE-2026-92390",
+        "CVE-2026-92391",
+        "CVE-2026-92392",
+        "CVE-2026-94265",
+        "CVE-2026-94266"
       ],
       "remaining": [
         "CVE-2024-28397",
@@ -2702,6 +3350,20 @@
       },
       {
         "ecosystem": "alpine",
+        "name": "curl",
+        "change": "upgraded",
+        "before": "8.22.0-r0",
+        "after": "8.23.0-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libcurl",
+        "change": "upgraded",
+        "before": "8.22.0-r0",
+        "after": "8.23.0-r0"
+      },
+      {
+        "ecosystem": "alpine",
         "name": "libexpat",
         "change": "upgraded",
         "before": "2.8.5-r0",
@@ -2747,15 +3409,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-24T08:26:24Z",
-      "finished_at": "2026-10-24T08:27:00Z",
-      "duration_seconds": 36.1
+      "started_at": "2026-10-26T09:23:25Z",
+      "finished_at": "2026-10-26T09:24:02Z",
+      "duration_seconds": 37.0
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000014329",
+    "runner": "GitHub Actions 1000014930",
     "baseline": {
       "entrypoint": [
         "/init"
@@ -2775,34 +3437,34 @@
       ]
     }
   },
-  "promoted_at": "2026-10-24T08:28:13Z",
+  "promoted_at": "2026-10-26T09:25:13Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "31285696f669dc81bf6b1e120606c209efc898325c73feefc85e144c3c31156b",
-      "attachment_sha256": "69cdfd02880e8fc6dc5bfba6d5a5aa7e1b66249045e90fed0e805e9504234828",
+      "bundle_sha256": "1ab4adf72cab36263caafd82d1f4049e3f11fe26a1ce57f9c8628a101ba768d9",
+      "attachment_sha256": "b1bb9cc313462b46417bd2f2dab0faec767f80da41dfaaf5b7079b5cf0b1f707",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "f2a5cf1fea4bd64c429f3cb2af1dca0dd6fb8b2f73a4c3f720913a9298274465",
-      "bundle_sha256": "5a001b2a412f0dede16cf94228eeb2dee34e9ebf5d7532a9317bacf067bc7a41",
-      "attachment_sha256": "7b96e94aa2cd816e7dc99f49baeb324f93683809c52329f3f451ebb8a092693e"
+      "predicate_sha256": "555be4bbf3735e4dcf3dcfa86b36ebdb8c1abc19e60c242529f72f0bc6e22805",
+      "bundle_sha256": "9d62b360fd889ed4a9dfd1c0e974db106edc625d6630fcd2881ea5f5325fc791",
+      "attachment_sha256": "3f325fc13523d781718f1fc32e57c7fc464673d6ead57f7f7144189d7530ee4f"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "DAq6mcphfzCwDjoa6GdXh4la0mr3W/TakkrV9ypzCGs=",
+        "inclusion_root_hash": "HdPBVbVPzKvnvJjKRWVz9+6a3c5JRYAMn1IffKDhF0g=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3438523005,
-        "signed_entry_timestamp": "MEQCIECK7Vyp+gQMZZcxj1Ca6xr01Bwe3NkiKncPBYArNJBPAiAmtN3KjJ4vrDJzQpk8dsc+d52bSvCrE2F9MdkFWtQqbQ=="
+        "log_index": 3482980618,
+        "signed_entry_timestamp": "MEUCIFBw0Bya6SRbCE/81CxPu93qAHQHxz3LkRp9qIBOXfTqAiEApS28YZA23INZbPjT++hx60GgQt1xdjC4Z+lWDYwHyNA="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "LePSLETaWv4Cs700O/6qfF2vcy/o9r44fIWztpGKeIU=",
+        "inclusion_root_hash": "TU6eKevSqkQIaIr2i6MqeV/lKAeOmBFLXBkzUIyFsAs=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3438523118,
-        "signed_entry_timestamp": "MEUCIQCAiFtTbEJYE9hgqlMa7Z+iVWV6wB+B+u89MtCYbJH66wIgfqKM1MGGHgMVmCBCUDYtkRveZBeUBPT/r+KzAqZvvOY="
+        "log_index": 3482982736,
+        "signed_entry_timestamp": "MEUCIQCvZcEHKHgFGf8qTJpBdn0qCnoMFaq7jjBkP0+R9b7x1gIgX7OMWKyy0XnH3jk0P3Ql2UjPGqHbcgrjMREaG79x758="
       }
     },
     "tools": {

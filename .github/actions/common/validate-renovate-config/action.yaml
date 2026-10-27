@@ -1,0 +1,17 @@
+name: validate-renovate-config
+description: Validate Renovate config
+inputs:
+  npm_config_loglevel:
+    description: Workflow input.
+    required: false
+    default: error
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        NPM_CONFIG_LOGLEVEL: ${{ inputs.npm_config_loglevel }}
+      run: |
+        set -euo pipefail
+        npx --yes --package renovate -- renovate-config-validator --strict

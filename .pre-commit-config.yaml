@@ -7,7 +7,7 @@ repos:
   # Python scripts/tests, GitHub Actions + inventory YAML, renovate.json, Markdown.
 
   - repo: https://github.com/rohaquinlop/complexipy-pre-commit
-    rev: v8.1.0
+    rev: v8.3.0
     hooks:
       - id: complexipy
 
@@ -30,7 +30,7 @@ repos:
 
   # Lint the stdlib-only Python (scripts/ + tests/).
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.2
+    rev: v0.17.3
     hooks:
       - id: ruff-check
         args: [--fix]

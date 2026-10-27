@@ -3,8 +3,10 @@
 import json
 import sys
 
-before = json.load(open(sys.argv[1])) or {}
-after = json.load(open(sys.argv[2])) or {}
+with open(sys.argv[1], encoding="utf-8") as stream:
+    before = json.load(stream) or {}
+with open(sys.argv[2], encoding="utf-8") as stream:
+    after = json.load(stream) or {}
 allowed = {
     "org.opencontainers.image.base.digest",
     "org.opencontainers.image.base.name",

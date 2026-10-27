@@ -1,0 +1,207 @@
+name: render-summary
+description: Job summary evidence panel
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  candidate_digest:
+    description: Workflow input.
+    required: false
+  internal_tag:
+    description: Workflow input.
+    required: false
+  skip_copy:
+    description: Workflow input.
+    required: false
+  fallback_used:
+    description: Workflow input.
+    required: false
+  divergence_note:
+    description: Workflow input.
+    required: false
+  probe_result:
+    description: Workflow input.
+    required: false
+  signing_result:
+    description: Workflow input.
+    required: false
+  signing_gate_result:
+    description: Workflow input.
+    required: false
+  platform_result:
+    description: Workflow input.
+    required: false
+  secobserve_api_base_url:
+    description: Workflow input.
+    required: false
+  run_url:
+    description: Workflow input.
+    required: false
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
+        INTERNAL_TAG: ${{ inputs.internal_tag }}
+        SKIP_COPY: ${{ inputs.skip_copy }}
+        FALLBACK_USED: ${{ inputs.fallback_used }}
+        DIVERGENCE_NOTE: ${{ inputs.divergence_note }}
+        PROBE_RESULT: ${{ inputs.probe_result }}
+        SIGNING_RESULT: ${{ inputs.signing_result }}
+        SIGNING_GATE_RESULT: ${{ inputs.signing_gate_result }}
+        PLATFORM_RESULT: ${{ inputs.platform_result }}
+        SECOBSERVE_API_BASE_URL: ${{ inputs.secobserve_api_base_url }}
+        RUN_URL: ${{ inputs.run_url }}
+      run: |
+        set -euo pipefail
+        DIGEST_LINE="N/A — run failed before a digest was recorded"
+        if [ "${SKIP_COPY:-}" = "true" ]; then
+          DIGEST_LINE="PASS — idempotent skip: ${INTERNAL_TAG:-?} verified equal to candidate digest"
+        elif [ -f pushed-digest.txt ]; then
+          PUSHED="$(cat pushed-digest.txt)"
+          if [ "${PUSHED}" = "${CANDIDATE_DIGEST:-}" ]; then
+            DIGEST_LINE="PASS — pushed ${PUSHED} == linux/amd64 candidate"
+          else
+            DIGEST_LINE="FAIL — pushed ${PUSHED} != candidate"
+          fi
+        fi
+        PLATFORM_LINE="N/A — platform assertion did not run"
+        if [ "${PLATFORM_RESULT:-}" = "success" ]; then
+          PLATFORM_LINE="PASS — exact linux/amd64 manifest verified"
+        elif [ "${PLATFORM_RESULT:-}" = "failure" ]; then
+          PLATFORM_LINE="FAIL — exact linux/amd64 manifest assertion failed"
+        fi
+
+        DB_LINE="N/A — DB metadata not captured"
+        if [ -f trivy-db-meta-1.txt ] && [ -f trivy-db-meta-2.txt ]; then
+          if diff -q trivy-db-meta-1.txt trivy-db-meta-2.txt > /dev/null; then
+            DB_LINE="PASS — identical Trivy DB metadata across both scans"
+          else
+            DB_LINE="FAIL — Trivy DB metadata changed between scans"
+          fi
+        elif [ -f trivy-db-meta-1.txt ]; then
+          DB_LINE="PARTIAL — only scan 1 metadata captured"
+        fi
+
+        PROBE_LINE="N/A — probe did not run"
+        if [ "${PROBE_RESULT:-}" = "pass" ]; then
+          PROBE_LINE="PASS — anonymous 200 with matching docker-content-digest"
+        elif [ "${PROBE_RESULT:-}" = "fail" ]; then
+          PROBE_LINE="FAIL — anonymous probe failed"
+        fi
+
+        SIGNING_LINE="N/A — signing did not run"
+        if [ "${SIGNING_RESULT:-}" = "failure" ]; then
+          SIGNING_LINE="FAIL — signing or attestation failed; promotion unsuccessful"
+        elif [ "${SIGNING_GATE_RESULT:-}" = "failure" ]; then
+          REASON="$(jq -r '.reason // "verification failed"' signing-evidence.json 2>/dev/null || echo 'verification failed')"
+          SIGNING_LINE="FAIL — ${REASON}; promotion unsuccessful"
+        elif [ "${SIGNING_GATE_RESULT:-}" = "success" ]; then
+          SIGNING_LINE="PASS — signature and CycloneDX attestation verified"
+        fi
+
+        # The panel displays what the validate job recorded in the evidence
+        # artifact. It never recomputes or overrides the result.
+        EVIDENCE=validation-evidence.json
+        [ -s "$EVIDENCE" ] || EVIDENCE=candidate-artifact/validation-evidence.json
+        if [ -f "$EVIDENCE" ]; then
+          V_RESULT="$(jq -r '.validation.result // "unknown"' "$EVIDENCE")"
+          V_TYPE="$(jq -r '.validation.type // "?"' "$EVIDENCE")"
+          V_PARAMS="$(jq -c '.validation.params // {}' "$EVIDENCE")"
+          V_HSTATUS="$(jq -r '.validation.health.final_status // "?"' "$EVIDENCE")"
+          V_TIMINGS="$(jq -r '.validation.timings // {} | "\(.started_at // "?") → \(.finished_at // "?") (\(.duration_seconds // "?")s)"' "$EVIDENCE")"
+          V_RUNNER="$(jq -r '.validation.runner // "?"' "$EVIDENCE")"
+          V_BASELINE="$(jq -c '{entrypoint: .validation.baseline.entrypoint, cmd: .validation.baseline.cmd, env: .validation.baseline.env}' "$EVIDENCE")"
+          VALID_RESULT_LINE="N/A — result '${V_RESULT}' not recorded"
+          if [ "${V_RESULT}" = "pass" ]; then
+            VALID_RESULT_LINE="PASS — validation recorded pass"
+          elif [ "${V_RESULT}" = "fail" ]; then
+            VALID_RESULT_LINE="FAIL — validation recorded fail"
+          fi
+          HEALTH_LINE="N/A — HEALTHCHECK status '${V_HSTATUS}' not mapped"
+          if [ "${V_HSTATUS}" = "healthy" ]; then
+            HEALTH_LINE="PASS — HEALTHCHECK reached healthy"
+          elif [ "${V_HSTATUS}" = "none-defined" ]; then
+            HEALTH_LINE="PASS — no HEALTHCHECK defined; profile check is the gate"
+          elif [ "${V_HSTATUS}" = "not-applicable" ]; then
+            HEALTH_LINE="N/A — oneshot profile: container exits by design"
+          elif [ "${V_HSTATUS}" = "unhealthy" ] || [ "${V_HSTATUS}" = "gone" ]; then
+            HEALTH_LINE="FAIL — HEALTHCHECK status '${V_HSTATUS}'"
+          elif [ "${V_HSTATUS}" = "starting" ]; then
+            HEALTH_LINE="FAIL — HEALTHCHECK stuck in 'starting' at the deadline"
+          fi
+        fi
+
+        {
+          echo "## Promotion evidence — ${APP:-<unknown app>}"
+          echo
+          echo "### Invariants"
+          echo
+          echo "| Invariant | Result |"
+          echo "| --- | --- |"
+          echo "| Digest equality | ${DIGEST_LINE} |"
+          echo "| Exact linux/amd64 manifest | ${PLATFORM_LINE} |"
+          echo "| Trivy DB match | ${DB_LINE} |"
+          echo "| Anonymous pull probe | ${PROBE_LINE} |"
+          echo "| Signing gate | ${SIGNING_LINE} |"
+          echo
+          echo "### Validation"
+          echo
+          echo "| Fact | Result |"
+          echo "| --- | --- |"
+          if [ -f "$EVIDENCE" ]; then
+            echo "| Profile + params | ${V_TYPE} — ${V_PARAMS} |"
+            echo "| Validation result | ${VALID_RESULT_LINE} |"
+            echo "| Health | ${HEALTH_LINE} |"
+            echo "| Timings | ${V_TIMINGS} |"
+            echo "| Runner | ${V_RUNNER} |"
+            echo "| Baseline (entrypoint/cmd/env) | ${V_BASELINE} |"
+          else
+            echo "| Validation | N/A — evidence artifact absent; validation did not complete |"
+          fi
+          echo
+          echo "### Vulnerabilities (deduped, full report)"
+          echo
+            REPORT=trivy-full.json
+            [ -s "$REPORT" ] || REPORT=candidate-artifact/trivy-full.json
+            if [ -s "$REPORT" ]; then
+            echo "| Severity | Count |"
+            echo "| --- | ---: |"
+            jq -r '
+              (
+                [((.Results // [])[] | .Vulnerabilities[]?)]
+                | unique_by([
+                    .VulnerabilityID,
+                    .PkgName,
+                    .InstalledVersion
+                  ])
+              ) as $v
+              |
+              "| Critical | \([$v[] | select(.Severity == "CRITICAL")] | length) |\n"
+              + "| High | \([$v[] | select(.Severity == "HIGH")] | length) |\n"
+              + "| Medium | \([$v[] | select(.Severity == "MEDIUM")] | length) |\n"
+              + "| Low | \([$v[] | select(.Severity == "LOW")] | length) |\n"
+              + "| Unknown | \([$v[] | select(.Severity == "UNKNOWN")] | length) |\n"
+              + "| **Total** | \($v | length) |"
+              ' "$REPORT"
+          else
+            echo "> Trivy report unavailable for this run."
+          fi
+          echo
+          source scripts/lib/summary.sh
+          append_promotion_summary
+          echo "### Links"
+          echo
+          echo "- Run: ${RUN_URL}"
+          echo "- GHCR package: https://github.com/bocklabs/${APP:-?}/pkgs/container/${APP:-?}"
+          if [ -n "${SECOBSERVE_API_BASE_URL:-}" ]; then
+            echo "- SecObserve UI (product trusted-images): ${SECOBSERVE_API_BASE_URL%/api}"
+          else
+            echo "- SecObserve UI: not configured (vars.SECOBSERVE_API_BASE_URL missing)"
+          fi
+          echo "- Artifacts: \`trivy-full-report\`, \`trivy-copa-report\`"
+          echo
+        } >> "$GITHUB_STEP_SUMMARY"

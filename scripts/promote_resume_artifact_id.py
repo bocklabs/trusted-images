@@ -3,11 +3,8 @@
 import json
 import sys
 
-rows = [
-    json.loads(line)
-    for line in open("resume-artifacts.jsonl", encoding="utf-8")
-    if line.strip()
-]
+with open("resume-artifacts.jsonl", encoding="utf-8") as stream:
+    rows = [json.loads(line) for line in stream if line.strip()]
 valid = [
     row
     for row in rows

@@ -1,0 +1,158 @@
+name: compute-tag
+description: Compute internal tag and detect skip
+inputs:
+  app:
+    description: Workflow input.
+    required: false
+  upstream_tag:
+    description: Workflow input.
+    required: false
+  upstream_digest:
+    description: Workflow input.
+    required: false
+  selected_child_digest:
+    description: Workflow input.
+    required: false
+  force_repromote:
+    description: Workflow input.
+    required: false
+  recover_tag:
+    description: Workflow input.
+    required: false
+outputs:
+  higher_upstream:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.higher_upstream }}
+  internal_tag:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.internal_tag }}
+  original_child_selected:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.original_child_selected }}
+  reuse_candidate_digest:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.reuse_candidate_digest }}
+  reuse_run_url:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.reuse_run_url }}
+  skip_copy:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.skip_copy }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        UPSTREAM_TAG: ${{ inputs.upstream_tag }}
+        UPSTREAM_DIGEST: ${{ inputs.upstream_digest }}
+        SELECTED_CHILD_DIGEST: ${{ inputs.selected_child_digest }}
+        FORCE_REPROMOTE: ${{ inputs.force_repromote }}
+        RECOVER_TAG: ${{ inputs.recover_tag }}
+      run: |
+        set -euo pipefail
+        source scripts/lib/ghcr.sh
+        TOKEN="$(ghcr_pull_token "${APP}" registry-token.json)"
+        if [ -z "${TOKEN}" ]; then
+          echo "GHCR package is not created yet; using anonymous tag discovery"
+        fi
+        AUTH=()
+        if [ -n "${TOKEN}" ]; then
+          AUTH=(-H "Authorization: Bearer ${TOKEN}")
+        fi
+        : > registry-tags.txt
+        : > registry-pages.txt
+        URL="https://ghcr.io/v2/bocklabs/${APP}/tags/list?n=100"
+        if [ -z "${TOKEN}" ]; then
+          URL=""
+        fi
+        FIRST_PAGE=true
+        while [ -n "${URL}" ]; do
+          grep -qFx "${URL}" registry-pages.txt && {
+            echo "FATAL: registry pagination cycle detected"
+            exit 1
+          }
+          printf '%s\n' "${URL}" >> registry-pages.txt
+          set +e
+          STATUS="$(curl --fail-with-body -sS \
+            ${AUTH[@]+"${AUTH[@]}"} \
+            -D registry-page.headers -o registry-page.json -w '%{http_code}' "${URL}")"
+          CURL_STATUS=$?
+          set -e
+          if [ "${CURL_STATUS}" -ne 0 ]; then
+            if [ "${FIRST_PAGE}" = true ] && [ "${STATUS}" = 404 ]; then
+              break
+            fi
+            echo "FATAL: registry tag listing failed (${STATUS:-network error})"
+            exit 1
+          fi
+          [ "${STATUS}" = 200 ] || { echo "FATAL: unexpected tag listing status ${STATUS}"; exit 1; }
+          jq -e 'type == "object" and ((.tags // []) | type == "array" and all(type == "string"))' \
+            registry-page.json > /dev/null || { echo "FATAL: malformed registry tag page"; exit 1; }
+        jq -r '.tags // [] | .[]' registry-page.json >> registry-tags.txt
+        URL="$(python3 scripts/promote_registry_next_link.py)"
+        PREFIX="https://ghcr.io/v2/bocklabs/${APP}/tags/list"
+        if [ -n "${URL}" ] && [[ "${URL}" != "${PREFIX}" && "${URL}" != "${PREFIX}?"* ]]; then
+          echo "FATAL: registry pagination left the expected package URL"
+          exit 1
+        fi
+        FIRST_PAGE=false
+        done
+
+        python3 scripts/promote_registry_candidates.py "${UPSTREAM_TAG}" registry-tags.txt > registry-candidates.txt
+        : > registry-observations.tsv
+        while IFS= read -r CAND; do
+          [ -n "${CAND}" ] || continue
+          set +e
+          STATUS="$(curl --fail-with-body -sS -I \
+              ${AUTH[@]+"${AUTH[@]}"} -H "Accept: ${GHCR_INDEX_ACCEPT}" \
+            -D registry-head.headers -o /dev/null -w '%{http_code}' \
+            "https://ghcr.io/v2/bocklabs/${APP}/manifests/${CAND}")"
+          CURL_STATUS=$?
+          set -e
+          [ "${CURL_STATUS}" -eq 0 ] && [ "${STATUS}" = 200 ] || {
+            echo "FATAL: registry manifest HEAD failed for observed tag ${CAND} (${STATUS:-network error})"
+            exit 1
+          }
+          CAND_DIGEST="$(tr -d '\r' < registry-head.headers \
+            | awk 'tolower($1)=="docker-content-digest:"{print $2}')"
+          [[ "${CAND_DIGEST}" =~ ^sha256:[a-f0-9]{64}$ ]] || {
+            echo "FATAL: observed tag ${CAND} has no valid digest HEAD"
+            exit 1
+          }
+          printf '%s\t%s\n' "${CAND}" "${CAND_DIGEST}" >> registry-observations.tsv
+        done < registry-candidates.txt
+        python3 scripts/promote_registry_observations.py "${APP}" > registry-observations.json
+
+        ARGS=(
+          --upstream-tag "${UPSTREAM_TAG}"
+          --upstream-digest "${UPSTREAM_DIGEST}"
+          --selected-child-digest "${SELECTED_CHILD_DIGEST}"
+          --observations registry-observations.json
+        )
+        [ "${FORCE_REPROMOTE}" = "true" ] && ARGS+=(--force-repromote)
+        if [ -n "${RECOVER_TAG}" ]; then
+          ARGS+=(
+            --recover-tag "${RECOVER_TAG}"
+            --recover-candidate-digest "$(jq -er .recovered_digest validation-context/context.json)"
+          )
+        fi
+        RESULT="$(python3 scripts/resolve_internal_tag.py "${ARGS[@]}")"
+        INTERNAL_TAG="$(jq -er .internal_tag <<<"${RESULT}")"
+        SKIP_COPY="$(jq -er '.skip_copy | tostring' <<<"${RESULT}")"
+        {
+          echo "skip_copy=${SKIP_COPY}"
+          echo "internal_tag=${INTERNAL_TAG}"
+          echo "higher_upstream=$(jq -r .supersedes.higher_upstream <<<"${RESULT}")"
+          echo "original_child_selected=$(jq -r .supersedes.original_child_selected <<<"${RESULT}")"
+          if [ "${SKIP_COPY}" = true ] && [ -z "${RECOVER_TAG}" ]; then
+            REUSE_RECORD="reuse-provenance.json"
+            git fetch origin main
+            python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > "${REUSE_RECORD}"
+            echo "reuse_candidate_digest=$(jq -er .internal.digest "${REUSE_RECORD}")"
+            echo "reuse_run_url=$(jq -er '.recovery.original_run_url // .pipeline.run_url' "${REUSE_RECORD}")"
+          fi
+        } >> "$GITHUB_OUTPUT"
+        echo "skip_copy:    ${SKIP_COPY}"
+        echo "internal_tag: ${INTERNAL_TAG}"
