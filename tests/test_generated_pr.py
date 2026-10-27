@@ -25,8 +25,8 @@ class GeneratedPRTests(unittest.TestCase):
         self.git("init", "-b", "main")
         self.git("config", "user.name", "Reviewer")
         self.git("config", "user.email", "reviewer@example.invalid")
-        (self.work / "inventory").mkdir()
-        (self.work / "inventory/evidence.json").write_text("original\n")
+        (self.work / "inventory/example").mkdir(parents=True)
+        (self.work / "inventory/example/go-file-build.json").write_text("original\n")
         self.git("add", ".")
         self.git("commit", "-m", "initial")
         self.git("remote", "add", "origin", str(self.remote))
@@ -53,7 +53,7 @@ class GeneratedPRTests(unittest.TestCase):
 
     def run_action(self):
         action = yaml.safe_load((ROOT / ".github/actions/validate/push-generated-pr/action.yaml").read_text())
-        (self.work / "inventory/evidence.json").write_text("generated\n")
+        (self.work / "inventory/example/go-file-build.json").write_text("generated\n")
         return subprocess.run(
             ["bash", "-c", action["runs"]["steps"][0]["run"]],
             cwd=self.work, env=self.env, check=False, capture_output=True, text=True,
@@ -69,7 +69,7 @@ class GeneratedPRTests(unittest.TestCase):
 
     def test_preserves_human_commits_on_existing_generated_branch(self):
         self.git("checkout", "-b", "chore/generated")
-        (self.work / "inventory/evidence.json").write_text("human edit\n")
+        (self.work / "inventory/example/go-file-build.json").write_text("human edit\n")
         self.git("commit", "-am", "review correction")
         head = self.git("rev-parse", "HEAD")
         self.git("push", "origin", "chore/generated")
@@ -79,25 +79,50 @@ class GeneratedPRTests(unittest.TestCase):
         self.assertIn("human commits", result.stdout)
         self.assertEqual(self.git("ls-remote", "origin", "refs/heads/chore/generated").split()[0], head)
 
-    def test_applies_retained_patch_only_at_its_source_commit(self):
+    def apply_evidence_patch(self, patch, source_sha):
         artifact = self.work / "published-rescan"
-        artifact.mkdir()
-        evidence = self.work / "inventory/evidence.json"
-        evidence.write_text("generated\n")
-        (artifact / "go-evidence.patch").write_text(self.git("diff") + "\n")
-        self.git("restore", "inventory/evidence.json")
+        artifact.mkdir(exist_ok=True)
+        (artifact / "go-evidence.patch").write_text(patch)
+        (artifact / "selection.json").write_text(json.dumps({"source_sha": source_sha}))
+        (artifact / "SHA256SUMS").write_text("".join(
+            f"{hashlib.sha256((artifact / name).read_bytes()).hexdigest()}  {name}\n"
+            for name in ("go-evidence.patch", "selection.json")
+        ))
         action = yaml.safe_load((ROOT / ".github/actions/validate/apply-go-evidence/action.yaml").read_text())
+        return subprocess.run(
+            ["bash", "-c", action["runs"]["steps"][0]["run"]], cwd=self.work,
+            env={**self.env, "GITHUB_SHA": self.git("rev-parse", "HEAD"), "APP": "example"},
+            check=False, capture_output=True, text=True,
+        )
+
+    def test_applies_retained_patch_only_at_its_source_commit(self):
+        evidence = self.work / "inventory/example/go-file-build.json"
+        evidence.write_text("generated\n")
+        patch = self.git("diff") + "\n"
+        self.git("restore", "inventory/example/go-file-build.json")
         head = self.git("rev-parse", "HEAD")
         for source_sha, expected in (("stale", 1), (head, 0)):
-            (artifact / "selection.json").write_text(json.dumps({"source_sha": source_sha}))
-            (artifact / "SHA256SUMS").write_text("".join(
-                f"{hashlib.sha256((artifact / name).read_bytes()).hexdigest()}  {name}\n"
-                for name in ("go-evidence.patch", "selection.json")
-            ))
-            result = subprocess.run(
-                ["bash", "-c", action["runs"]["steps"][0]["run"]],
-                cwd=self.work, env={**self.env, "GITHUB_SHA": head},
-                check=False, capture_output=True, text=True,
-            )
+            result = self.apply_evidence_patch(patch, source_sha)
             self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
             self.assertEqual(evidence.read_text(), "original\n" if expected else "generated\n")
+
+    def test_rejects_changes_and_renames_outside_go_evidence(self):
+        path = "inventory/example/image.yaml"
+        (self.work / path).write_text("original\n")
+        self.git("add", path)
+        self.git("commit", "-m", "inventory entry")
+        head = self.git("rev-parse", "HEAD")
+        (self.work / path).write_text("changed\n")
+        patch = self.git("diff") + "\n"
+        self.git("restore", path)
+        result = self.apply_evidence_patch(patch, head)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unexpected path", result.stdout)
+        self.assertEqual(self.git("diff", "HEAD"), "")
+        self.git("mv", path, "inventory/example/go-file-build-renamed.json")
+        patch = self.git("diff", "--cached") + "\n"
+        self.git("reset", "--hard", head)
+        result = self.apply_evidence_patch(patch, head)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unexpected path", result.stdout)
+        self.assertEqual(self.git("diff", "HEAD"), "")

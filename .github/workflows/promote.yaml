@@ -227,6 +227,8 @@ jobs:
 
       - name: Apply retained Go file-build evidence
         uses: ./.github/actions/validate/apply-go-evidence
+        with:
+          app: ${{ inputs.app }}
 
       - name: Push generated evidence PR
         id: evidence

@@ -282,6 +282,11 @@ def main():
     ref = selection["ref"]
     targets = versionless_targets(report)
     existing = load_existing(args.inventory, args.app)
+    scanned_targets = {
+        result.get("Target") for result in report.get("Results") or []
+        if result.get("Class") == "lang-pkgs" and result.get("Type") == "gobinary" and result.get("Packages")
+    }
+    require({key[0] for key in existing} <= scanned_targets, "scan is missing previously reviewed Go targets")
     if not targets:
         records = []
     else:

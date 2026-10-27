@@ -3,6 +3,7 @@
 
 import importlib
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -148,6 +149,37 @@ class GenerateGoFileBuildTests(unittest.TestCase):
             )
             self.assertFalse(changed)
             self.assertFalse(structural)
+
+    def test_missing_go_scan_preserves_evidence_but_versioned_scan_can_retire_it(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            app = root / "inventory/example"
+            app.mkdir(parents=True)
+            proof = app / "go-file-build.json"
+            original = json.dumps({
+                "target": "app", "module": "example/app", "source": {"repository": "example"},
+            })
+            proof.write_text(original)
+            (root / "selection.json").write_text(json.dumps({"ref": "example@sha256:abc"}))
+            reports = (
+                [{"Class": "os-pkgs", "Type": "alpine", "Packages": [{"Name": "musl", "Version": "1"}]}],
+                [{"Class": "lang-pkgs", "Type": "gobinary", "Target": "app",
+                  "Packages": [{"Name": "example/app", "Version": "v1"}]}],
+            )
+            for results, expected in zip(reports, (False, True)):
+                (root / "report.json").write_text(json.dumps({"Results": results}))
+                result = subprocess.run(
+                    [sys.executable, str(ROOT / "scripts/generate_go_file_build.py"),
+                     "--app", "example", "--inventory", str(root / "inventory"),
+                     "--report", str(root / "report.json"), "--selection", str(root / "selection.json")],
+                    check=False, capture_output=True, text=True,
+                )
+                self.assertEqual(result.returncode == 0, expected, result.stderr)
+                if not expected:
+                    self.assertIn("missing previously reviewed Go targets", result.stderr)
+                    self.assertEqual(proof.read_text(), original)
+                else:
+                    self.assertFalse(proof.exists())
 
     def test_promote_workflow_auto_merges_only_without_structural_drift(self):
         workflow = yaml.safe_load(
