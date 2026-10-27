@@ -1,0 +1,36 @@
+{
+  "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
+  "ref": "ghcr.io/bocklabs/cadvisor:v0.55.1-bocklabs.1@sha256:39e5d8f8b7f0cabfb6cd3f883a5e476a43856700c6bd25f82f0b802587f4c4b4",
+  "config_digest": "sha256:5ab88b4d5c6214830fe30f99965e17134bdb4e102b9a81c3da1ad686f3569807",
+  "upstream_child_digest": "sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069",
+  "target": "usr/bin/cadvisor",
+  "module": "../",
+  "layer": {
+    "Digest": "sha256:28d7ab525b10fdd3e588ecf02760552a0338309263f88ab17c84d4d09e8e0216",
+    "DiffID": "sha256:ab70e19376221c5e201d269c1cb86670e5317daf12f78219fdc057eeab4f9a29"
+  },
+  "binary_sha256": "b7fda328204352d4dfbbc5f63f03748b4d6b6dcb31239291ea54b342e5aee5fb",
+  "source": {
+    "repository": "https://github.com/google/cadvisor",
+    "revision": "f5bec3744d92f01556c6ca528ee52f3a26402d6d",
+    "tag": "v0.0.0-20251219201903-f5bec3744d92+dirty",
+    "files": {
+      "go.mod": {
+        "url": "https://raw.githubusercontent.com/google/cadvisor/f5bec3744d92f01556c6ca528ee52f3a26402d6d/go.mod",
+        "sha256": "8f23a5a53359b66e73dca3e5cb4ce8b35a3559d0856edf69cbbe0a4a653e6429"
+      }
+    }
+  },
+  "build_info": {
+    "program": "github.com/google/cadvisor/cmd",
+    "main_module": "github.com/google/cadvisor/cmd",
+    "module_version": "v0.0.0-20251219201903-f5bec3744d92+dirty",
+    "go_version": "go1.25.5",
+    "sha256": "f2015cb063689c82320ef467e308a41e1ac98245c5e1c284701b94eec78ab7db",
+    "go_package_count": 96,
+    "versioned_go_package_count": 96,
+    "vcs_revision": "f5bec3744d92f01556c6ca528ee52f3a26402d6d"
+  },
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40479980208",
+  "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
+}
