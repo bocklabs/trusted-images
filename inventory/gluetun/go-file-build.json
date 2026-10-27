@@ -34,6 +34,6 @@
     "go_package_count": 52,
     "versioned_go_package_count": 51
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40111542235",
-  "limitation": "The reviewed Go package has no module version in the scanned binary. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40480005299",
+  "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
