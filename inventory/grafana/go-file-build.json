@@ -1,7 +1,7 @@
 {
   "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
-  "ref": "ghcr.io/bocklabs/grafana:13.2.4-bocklabs.1@sha256:e2ce9168b6f02a1b1ef39151562b88ad8817388d8ab98eb67ff3fb44bc15a607",
-  "config_digest": "sha256:a82c77b48f855ddfe9583b2c968e5218798dc3d9aa8c302d85c453327b0efbe2",
+  "ref": "ghcr.io/bocklabs/grafana:13.2.4-bocklabs.2@sha256:f82096e412ba5e9c6966660318c82c2850c18ed6e208f73f395dcc2cad18a6c8",
+  "config_digest": "sha256:a500e8393b6f4bdaa11f1b45ed3e17174ce1fff43c2d865fbbcc8be9dbb93dd8",
   "upstream_child_digest": "sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b",
   "target": "usr/share/grafana/bin/grafana",
   "module": "github.com/grafana/grafana",
@@ -34,6 +34,6 @@
     "go_package_count": 521,
     "versioned_go_package_count": 494
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40459746026",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40463002405",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
