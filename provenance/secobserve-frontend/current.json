@@ -6,20 +6,20 @@
     "tag": "1.62.2",
     "digest": "sha256:d9a3ea4bf1c4f69fa2ec3b8874faedff1eb30db3a0739af0c3fe1554aa0b7316",
     "index_digest": "sha256:d9a3ea4bf1c4f69fa2ec3b8874faedff1eb30db3a0739af0c3fe1554aa0b7316",
-    "media_type": "application/vnd.oci.image.index.v1+json",
+    "media_type": "application/vnd.oci.image.manifest.v1+json",
     "selected_platform": "linux/amd64",
     "selected_child_digest": "sha256:d9a3ea4bf1c4f69fa2ec3b8874faedff1eb30db3a0739af0c3fe1554aa0b7316"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/secobserve-frontend",
-    "tag": "1.62.2-bocklabs.1",
-    "digest": "sha256:c59efd5acd36f5d2166aebd6ea5c954a26b57c00f516d88186a64285525d46a8",
+    "tag": "1.62.2-bocklabs.2",
+    "digest": "sha256:fed78a819c9b38ea3985454bb35ead0a1d386a0eed9b2494dbffcb938fa53aa9",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40638190004",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40749500051",
     "workflow": "promote",
     "dispatched_by": "nitish-raj"
   },
@@ -32,16 +32,16 @@
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:30f838e5f23606d6e8a3a0a0a7563b3179d9d88f739434378ecbffe4c410c3ec",
+      "check_bundle_digest": "sha256:79542c25a82e0fe42094f6b26f095e67297711187b1ccdf1da59589cf9158685",
       "updated_at": "2026-10-28 01:21:08.391884645 +0000 UTC"
     },
-    "full_report_sha256": "70c64d9910331aaefec527ce2a0ee4ff9b560ac6c6120a2fa72c682a7c04bf30",
-    "copa_report_sha256": "8f3c7421c5b974482798effb8823733d65aad7d9fa31e0b2b91c86e56eff63b9",
-    "decision_sha256": "24a4d56c4f5b3ddeda23d03f530a5315a320234e4100f25a750554355bafa3ee",
+    "full_report_sha256": "b5a525de2e85e0955305524aa69e0a8e0bb56b26b6de385276122802b0a208fc",
+    "copa_report_sha256": "0e8c1295486bdc806e3587602a20f17d025dfc95767dcf6d138974e4875cedc4",
+    "decision_sha256": "b5082ae882caf1081413656978336849b2eef9b3d73a1d771b2537e2500c002f",
     "reports": {
-      "before_sha256": "646a3c9ea4455525766dae3051979c27df4f6ac92d628530fd6e3838b8493913",
-      "final_sha256": "70c64d9910331aaefec527ce2a0ee4ff9b560ac6c6120a2fa72c682a7c04bf30",
-      "fixable_sha256": "8f3c7421c5b974482798effb8823733d65aad7d9fa31e0b2b91c86e56eff63b9"
+      "before_sha256": "b2f39ad9fa61ef5a0c1a8ea3917ffbf933ddd64152e6e2c8189178f9c586a86e",
+      "final_sha256": "b5a525de2e85e0955305524aa69e0a8e0bb56b26b6de385276122802b0a208fc",
+      "fixable_sha256": "0e8c1295486bdc806e3587602a20f17d025dfc95767dcf6d138974e4875cedc4"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -54,7 +54,7 @@
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
         "sha256": "2d9931c086e42d05425c2da924299c8d9b7ff836de373f981668b7ef5f6f0fd7",
-        "fetched_at": "2026-10-28T05:31:26Z",
+        "fetched_at": "2026-10-28T18:57:44Z",
         "catalogVersion": "2026.10.27",
         "dateReleased": "2026-10-27T19:00:02.2307Z"
       }
@@ -192,15 +192,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-28T05:29:56Z",
-      "finished_at": "2026-10-28T05:31:26Z",
+      "started_at": "2026-10-28T18:56:14Z",
+      "finished_at": "2026-10-28T18:57:44Z",
       "duration_seconds": 90.1
     },
     "health": {
       "defined": true,
       "final_status": "healthy"
     },
-    "runner": "GitHub Actions 1000015307",
+    "runner": "GitHub Actions 1000015414",
     "baseline": {
       "entrypoint": [
         "/docker-entrypoint.sh"
@@ -218,34 +218,34 @@
       ]
     }
   },
-  "promoted_at": "2026-10-28T05:32:51Z",
+  "promoted_at": "2026-10-28T18:58:42Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "beeba197d2e5b971ff7824576e8c50993b5d233154815c72d9f5a4af60faa92e",
-      "attachment_sha256": "bf1dc880bfc98b9df189a84974e04d467282fd5172b4323a6dc752a9d94af7b7",
+      "bundle_sha256": "21bbd1ceee2eb8dca7d6c64949fefd4bc6f1b24693311f160d9b47498b86902e",
+      "attachment_sha256": "6eae3e7d215205baece1b4a2333479967a5c762031030feb215c68ed71048552",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "1336d760dcfa415d0d0a7e2e09d7eb10c122e9a7e1e0d022045caa82566137f0",
-      "bundle_sha256": "628ca62027000d7c081e002d132dc16c5ab1c8519adb385fc64a06c86b3cc533",
-      "attachment_sha256": "0bed13ac8752912a51485b8e7095b28f4d7bdf90eac19d86c0e494d3fd520704"
+      "predicate_sha256": "689942c41d044a4256f680521289b69f0f01e93575f63aeb0975e8f1c323786d",
+      "bundle_sha256": "2f9849065fb3624f25250b5c3f06ffba7327c15215ec25cb3b35468f825d011b",
+      "attachment_sha256": "df7f995101c40355851c9bcda76336ca5d6fc18c2815ba3a10f7104928c7c6a6"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "jlez4PuLSWCwLZxZ+EAljZ/N8b8A8BMUKArJe9cebJ8=",
+        "inclusion_root_hash": "VJ5q8l8/CSsKrPpKY4xmRnjpeNqoX7lM6HBqmxGk4bM=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3533776596,
-        "signed_entry_timestamp": "MEUCIAJtNPzk9jqcuqjolvuy7+y2r02fCkpQwQSJz+JECQkUAiEA7O5eeGld6PUeF/jjsVqRJR/vKbbkpSM+wkGN9bg99SY="
+        "log_index": 3546344211,
+        "signed_entry_timestamp": "MEUCIFIbmgM8KMmA4gW8Vz8ok1yKAySQYRzHtvlR7j3ADH1RAiEAmJtpNMEx4BDvRD8Z23FapHbpF6myy81SfpejwyTi/OE="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "N0s3slwxbwprWa++aV73+FJf3JQgUYZKE1RkkpFUQ4s=",
+        "inclusion_root_hash": "p5zS6aM2FBMKux9IFUdZBbEcUYWPf2amXUETW+pInwU=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3533777026,
-        "signed_entry_timestamp": "MEUCIQCM0qvNw9hrBrHGd1EY5UDFzoaX3SVmAYslrREhpsuF3QIgQJSojarW3WVkya7FnTbt0qlZ983DCXvaAa0wCPPv4hY="
+        "log_index": 3546345775,
+        "signed_entry_timestamp": "MEUCIElS32LKrdXLqZceHQRIV/VAdptIcPJLwexVkGW9EmENAiEAm1epjro1KcpmpAeoiXlj7yhNbCeczM7wARxQlZSb1QU="
       }
     },
     "tools": {
