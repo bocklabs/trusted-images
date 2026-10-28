@@ -1067,7 +1067,7 @@ elif args[0] == 'run':
 
     def test_provenance_writeback_is_scoped_and_reusable(self) -> None:
         for text in (
-            "media_type: application/vnd.oci.image.index.v1+json",
+            "media_type: ${{ steps.candidate.outputs.upstream_media_type }}",
             '--upstream-child-digest "${SELECTED_CHILD_DIGEST}"',
             'git add "${RECORD}"',
             "git diff --cached --quiet",
@@ -1570,6 +1570,41 @@ elif args[:2] == ['run', 'download']:
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("wrong run", result.stdout + result.stderr)
         self.assertFalse((self.tmp / "wrong-run-output").exists())
+
+    def test_publisher_uses_checksum_bound_upstream_media_type(self):
+        steps = load_workflow(PUBLISHER_WORKFLOW)["jobs"]["promote"]["steps"]
+        verify = next(step for step in steps if step["name"] == "Verify candidate artifact")
+        provenance = next(step for step in steps if step["name"] == "Generate provenance record")
+        self.assertEqual(provenance["with"]["media_type"], "${{ steps.candidate.outputs.upstream_media_type }}")
+        (self.tmp / "scripts").symlink_to(REPO_ROOT / "scripts", target_is_directory=True)
+        (self.tmp / "inventory/app").mkdir(parents=True)
+        artifact = self.tmp / "candidate-artifact"
+        output = self.tmp / "media-output"
+        for direct in (False, True):
+            with self.subTest(direct=direct):
+                if direct:
+                    self.index.write_bytes(self.child.read_bytes())
+                    self.index_digest = self._child_digest()
+                fixture = self.candidate_artifact(())
+                if artifact.exists():
+                    shutil.rmtree(artifact)
+                shutil.copytree(fixture, artifact)
+                shutil.copyfile(artifact / "inventory-image.yaml", self.tmp / "inventory/app/image.yaml")
+                subprocess.run(
+                    ["bash", "-c", "find candidate-artifact -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > candidate-artifact/SHA256SUMS"],
+                    cwd=self.tmp, check=True, capture_output=True,
+                )
+                output.write_text("")
+                env = {**os.environ, **{key: "" for key in verify["env"]},
+                       "APP": "app", "SOURCE_SHA": "a" * 40, "RUN_ID": "123", "CANDIDATE_RUN_ATTEMPT": "1",
+                       "UPSTREAM_INDEX_DIGEST": self.index_digest, "GITHUB_OUTPUT": str(output),
+                       "EXPECTED_MANIFEST_SHA256": hashlib.sha256((artifact / "SHA256SUMS").read_bytes()).hexdigest()}
+                env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
+                result = subprocess.run(["bash", "-c", verify["run"]], cwd=self.tmp, env=env,
+                                        capture_output=True, text=True, timeout=10, check=False)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                media_type = json.loads(self.index.read_text())["mediaType"]
+                self.assertIn("upstream_media_type=" + media_type + "\n", output.read_text())
 
     def test_publisher_uses_checksum_bound_candidate_scanner_version(self):
         steps = load_workflow(PUBLISHER_WORKFLOW)["jobs"]["promote"]["steps"]

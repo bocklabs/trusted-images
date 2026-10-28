@@ -255,7 +255,7 @@ jobs:
           upstream_ref: ${{ steps.entry.outputs.upstream_ref }}
           upstream_tag: ${{ steps.entry.outputs.upstream_tag }}
           upstream_digest: ${{ steps.entry.outputs.upstream_digest }}
-          media_type: application/vnd.oci.image.index.v1+json
+          media_type: ${{ steps.candidate.outputs.upstream_media_type }}
           selected_child_digest: ${{ steps.candidate.outputs.selected_child_digest }}
           candidate_digest: ${{ steps.candidate.outputs.candidate_digest }}
           decision_sha256: ${{ steps.publication-decision.outputs.decision_sha256 || steps.quarantine-decision.outputs.decision_sha256 }}
