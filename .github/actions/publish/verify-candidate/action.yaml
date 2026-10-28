@@ -53,6 +53,9 @@ outputs:
   skip_copy:
     description: Workflow output.
     value: ${{ steps.run.outputs.skip_copy }}
+  upstream_media_type:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.upstream_media_type }}
   trivy_version:
     description: Workflow output.
     value: ${{ steps.run.outputs.trivy_version }}
@@ -128,6 +131,7 @@ runs:
           echo "FATAL: candidate upstream index bytes differ from the inventory digest"
           exit 1
         }
+        jq -er '"upstream_media_type=\(.mediaType | strings)"' candidate-artifact/upstream-index.json >> "$GITHUB_OUTPUT"
         TAG_FROM_ALLOCATION="$(jq -er .internal_tag candidate-artifact/tag-decision.json)"
         [ "${TAG_FROM_ALLOCATION}" = "$(jq -er .proposed_tag candidate-artifact/candidate-decision.json)" ] || {
           echo "FATAL: allocated tag differs from the candidate decision"
