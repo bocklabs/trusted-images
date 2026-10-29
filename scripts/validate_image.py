@@ -307,7 +307,7 @@ def docker_run_args(
     env_map: dict[str, str],
 ) -> list[str]:
     """docker run argv for a candidate container under --network none."""
-    args = ["run", "-d" if detached else "--rm", "--name", container_name, "--network", "none"]
+    args = ["run", "-d" if detached else "--rm", "--name", container_name, "--network", "none", "--hostname", "localhost"]
     for key in sorted(env_map):
         args += ["-e", f"{key}={env_map[key]}"]
     return args + [ref_digest, *command]
