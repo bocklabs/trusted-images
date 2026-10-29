@@ -291,6 +291,11 @@ class ValidateImageTests(unittest.TestCase):
                     value == "none" or value.startswith("container:"),
                     f"non-isolated run in spool: {entry}",
                 )
+                if value == "none":
+                    self.assertIn("--hostname", entry)
+                    self.assertEqual(entry[entry.index("--hostname") + 1], "localhost")
+                else:
+                    self.assertNotIn("--hostname", entry)
 
     def assert_container_removed(self) -> None:
         self.assertTrue(any(e[:2] == ["rm", "-f"] for e in self.spool_entries()))
