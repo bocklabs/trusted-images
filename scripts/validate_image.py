@@ -140,6 +140,8 @@ def docker(*args: str) -> tuple[bool, str]:
     """Run one docker command; return (ok, output). Single subprocess call site."""
     proc = subprocess.run(["docker", *args], check=False, capture_output=True, text=True)
     output = proc.stdout if proc.returncode == 0 else (proc.stderr or proc.stdout)
+    if proc.returncode == 0 and args[0] == "logs":
+        output += proc.stderr
     return proc.returncode == 0, output.strip()
 
 

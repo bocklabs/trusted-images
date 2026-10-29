@@ -73,6 +73,8 @@ if ARGS[:1] == ["inspect"]:
 
 if ARGS[:1] == ["logs"]:
     print(SCENARIO.get("logs", "fake container log line"))
+    if "logs_stderr" in SCENARIO:
+        print(SCENARIO["logs_stderr"], file=sys.stderr)
     raise SystemExit(SCENARIO.get("logs_exit", 0))
 
 if ARGS[:1] == ["rm"]:
@@ -347,6 +349,7 @@ class ValidateImageTests(unittest.TestCase):
                 "image_inspect": image_inspect(),
                 "inspect_states": [{"State": {"Running": False}}],
                 "logs": "application startup failed",
+                "logs_stderr": "application stderr diagnostic",
             }
         )
         result = self.run_cli("process", ("--duration-seconds", "2"))
@@ -364,7 +367,9 @@ class ValidateImageTests(unittest.TestCase):
         name = candidate[candidate.index("--name") + 1]
         self.assertLess(calls.index(["logs", name]), calls.index(["rm", "-f", name]))
         log_file = self.evidence_dir / "validation-logs" / f"{APP}.log"
-        self.assertIn("application startup failed", log_file.read_text())
+        log = log_file.read_text()
+        self.assertIn("application startup failed", log)
+        self.assertIn("application stderr diagnostic", log)
 
     def test_http_crash_after_probe_fails(self) -> None:
         self.write_scenario(
