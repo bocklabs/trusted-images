@@ -41,16 +41,16 @@
     },
     {
       "customType": "regex",
-      "description": "Digest-pinned tool images in workflows and scripts.",
+      "description": "Digest-pinned tool images in workflows, composite actions and scripts.",
       "managerFilePatterns": [
-        "\\.github/workflows/[^/]+\\.yaml$",
-        "^scripts/[^/]+\\.py$"
+        "/^\\.github\\/(?:workflows\\/[^/]+\\.ya?ml|actions\\/.+\\/action\\.ya?ml)$/",
+        "/^scripts\\/[^/]+\\.py$/"
       ],
       "matchStrings": [
-        "(?:[\"']|^)(?<depName>(?:[a-z0-9.-]+/)*[a-z0-9._-]+/[a-z0-9._-]+):(?<currentValue>[a-zA-Z0-9._-]+)@(?<currentDigest>sha256:[a-f0-9]{64})(?:[\"']|$)"
+        "(?:[\"'\\s]|^)(?<depName>(?:[a-z0-9.-]+/)*[a-z0-9._-]+/[a-z0-9._-]+):(?<currentValue>[a-zA-Z0-9._-]+)@(?<currentDigest>sha256:[a-f0-9]{64})(?:[\"'\\s]|$)"
       ],
       "datasourceTemplate": "docker",
-      "versioningTemplate": "loose"
+      "versioningTemplate": "docker"
     },
     {
       "customType": "regex",
@@ -84,10 +84,13 @@
       "automerge": true
     },
     {
-      "description": "Inventory images receive stable major and minor releases only.",
-      "matchFileNames": ["inventory/**/image.yaml"],
-      "matchUpdateTypes": ["patch", "digest", "pin", "pinDigest"],
-      "enabled": false
+      "description": "Automerge all stable image updates, including majors and digest refreshes, through required validation.",
+      "matchDatasources": ["docker"],
+      "enabled": true,
+      "automerge": true,
+      "ignoreUnstable": true,
+      "dependencyDashboardApproval": false,
+      "recreateWhen": "always"
     },
     {
       "description": "Automerge Cosign action and CLI pins through required validation.",
@@ -118,16 +121,16 @@
       "enabled": false
     },
     {
-      "description": "Review Playwright image updates with the revision-specific native validation command.",
-      "matchPackageNames": ["mcr.microsoft.com/playwright"],
-      "matchFileNames": ["inventory/playwright/image.yaml"],
-      "automerge": false
-    },
-    {
       "description": "Keep the project on the supported Python version.",
       "matchManagers": ["pyenv"],
       "matchFileNames": [".python-version"],
       "enabled": false
+    },
+    {
+      "description": "Exclude LinuxServer legacy and variant tags from application version upgrades.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|\\/)linuxserver\\//"],
+      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(\\.(?<build>\\d+))?$"
     }
   ]
 }
