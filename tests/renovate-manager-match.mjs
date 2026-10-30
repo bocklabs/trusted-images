@@ -8,7 +8,7 @@
 // entries extracted; exit 1 = miss.
 
 import { readFileSync, readdirSync } from "node:fs";
-import { join, matchesGlob } from "node:path";
+import { join, matchesGlob, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -150,11 +150,11 @@ if (config.automerge !== false || !config.platformAutomerge || config.automergeS
 const helperFiles = [".github/workflows", ".github/actions", "scripts"].flatMap((dir) =>
   readdirSync(join(root, dir), { recursive: true })
     .filter((file) => /\.(py|ya?ml)$/.test(file))
-    .map((file) => `${dir}/${file}`));
+    .map((file) => `${dir}/${file.split(sep).join("/")}`));
 let helperImages = 0;
 for (const file of helperFiles) {
   const content = readFileSync(join(root, file), "utf8");
-  for (const [reference] of content.matchAll(/[\w./-]+:[\w.-]+@sha256:[a-f0-9]{64}/g)) {
+  for (const [reference] of content.matchAll(/[\w./-]+(?::[\w.-]+)?@sha256:[a-f0-9]{64}/g)) {
     const extracted = managers.some((manager) =>
       manager.managerFilePatterns.some((pattern) => compileFilePattern(pattern).test(file)) &&
       manager.matchStrings.some((source) => [...content.matchAll(new RegExp(source, "g"))].some(({ groups }) =>
@@ -163,9 +163,10 @@ for (const file of helperFiles) {
     helperImages++;
   }
 }
+if (helperImages === 0) throw new Error("miss: no pinned helper image references found to verify");
 console.log(`helper: ${helperImages} pinned image references extracted`);
 
-const imageRule = config.packageRules.find((rule) => rule.matchDatasources?.includes("docker"));
+const imageRule = config.packageRules.find((rule) => rule.matchDatasources?.includes("docker") && !rule.matchPackageNames?.length);
 if (!imageRule?.enabled || !imageRule.automerge || !imageRule.ignoreUnstable ||
     imageRule.dependencyDashboardApproval !== false) {
   throw new Error("miss: stable image updates must be enabled and automerged without dashboard approval");
