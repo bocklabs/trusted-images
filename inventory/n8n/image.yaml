@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: n8nio/n8n
-    tag: 2.46.0
-    digest: sha256:0a0e0640806e9426ab9c1498186175332810551b28129b5cfcd36060a9623f32
+    tag: 2.46.2
+    digest: sha256:7835b0b05cb0a13133c7b9751c203b5b5d206ce3eb1b5f7fc0e5b01e8c6acdde
   destination:
     package: ghcr.io/bocklabs/n8n
   patchPolicy: disabled
