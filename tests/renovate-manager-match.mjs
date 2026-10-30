@@ -8,7 +8,7 @@
 // entries extracted; exit 1 = miss.
 
 import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, matchesGlob, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -16,7 +16,7 @@ const config = JSON.parse(readFileSync(join(root, "renovate.json"), "utf8"));
 
 // managerFilePatterns are "/body/flags" delimited; matchStrings are raw regex sources.
 const compileFilePattern = (p) => {
-  if (!p.startsWith("/")) return new RegExp(p);
+  if (!p.startsWith("/")) return { test: (name) => matchesGlob(name.toLowerCase(), p.toLowerCase()) };
   const end = p.lastIndexOf("/");
   return new RegExp(p.slice(1, end), p.slice(end + 1));
 };
@@ -145,4 +145,29 @@ for (const tool of tools) {
 }
 if (config.automerge !== false || !config.platformAutomerge || config.automergeStrategy !== "merge-commit") {
   throw new Error("miss: required-check automerge defaults drifted");
+}
+
+const helperFiles = [".github/workflows", ".github/actions", "scripts"].flatMap((dir) =>
+  readdirSync(join(root, dir), { recursive: true })
+    .filter((file) => /\.(py|ya?ml)$/.test(file))
+    .map((file) => `${dir}/${file.split(sep).join("/")}`));
+let helperImages = 0;
+for (const file of helperFiles) {
+  const content = readFileSync(join(root, file), "utf8");
+  for (const [reference] of content.matchAll(/[\w./-]+(?::[\w.-]+)?@sha256:[a-f0-9]{64}/g)) {
+    const extracted = managers.some((manager) =>
+      manager.managerFilePatterns.some((pattern) => compileFilePattern(pattern).test(file)) &&
+      manager.matchStrings.some((source) => [...content.matchAll(new RegExp(source, "g"))].some(({ groups }) =>
+        groups && `${groups.depName}:${groups.currentValue}@${groups.currentDigest}` === reference)));
+    if (!extracted) throw new Error(`miss: helper image ${reference} in ${file}`);
+    helperImages++;
+  }
+}
+if (helperImages === 0) throw new Error("miss: no pinned helper image references found to verify");
+console.log(`helper: ${helperImages} pinned image references extracted`);
+
+const imageRule = config.packageRules.find((rule) => rule.matchDatasources?.includes("docker") && !rule.matchPackageNames?.length);
+if (!imageRule?.enabled || !imageRule.automerge || !imageRule.ignoreUnstable ||
+    imageRule.dependencyDashboardApproval !== false) {
+  throw new Error("miss: stable image updates must be enabled and automerged without dashboard approval");
 }
