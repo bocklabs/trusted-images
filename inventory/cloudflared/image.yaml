@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: cloudflare/cloudflared
-    tag: 2026.10.1
-    digest: sha256:a15a3b50b8dabd57ac2090e9484c0247dba9dfa1f0df4d298d4317f9d69eb2d5
+    tag: 2026.10.7
+    digest: sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
   destination:
     package: ghcr.io/bocklabs/cloudflared
   patchPolicy: enabled
