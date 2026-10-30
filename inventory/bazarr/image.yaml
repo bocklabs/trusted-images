@@ -7,7 +7,7 @@ spec:
   upstream:
     ref: linuxserver/bazarr
     tag: 1.6.2
-    digest: sha256:fb0437897eaa7f96cf6ac42f795f8dcc208d34ec969eac5d366454e767304eb9
+    digest: sha256:9a625883f054e722795affe5e3ca71057e6ed817ecdf99f4a99624346fcc509c
   destination:
     package: ghcr.io/bocklabs/bazarr
   patchPolicy: enabled
