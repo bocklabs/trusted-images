@@ -365,17 +365,18 @@ class PromoteWorkflowTests(unittest.TestCase):
                     cdx.write_text(json.dumps(original))
                     result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-                    for field in ("pkgid", "name"):
+                    for field, value in (
+                        ("properties", [{"name": "aquasecurity:trivy:PkgID", "value": "wrong@1.0.11"}]),
+                        ("name", "wrong-parent"),
+                        ("properties", []),
+                    ):
                         changed = json.loads(json.dumps(original))
                         fragment = next(c for c in changed["components"] if c.get("bom-ref") == "skia.linux-x64-musl.node")
-                        if field == "pkgid":
-                            fragment["properties"][0]["value"] = "wrong@1.0.11"
-                        else:
-                            fragment["name"] = "wrong-parent"
+                        fragment[field] = value
                         cdx.write_text(json.dumps(changed))
                         result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
                         self.assertNotEqual(result.returncode, 0)
-                        self.assertIn("components differ", result.stdout)
+                        self.assertIn("unsupported Trivy npm subpath identity", result.stderr)
                     changed = json.loads(json.dumps(original))
                     changed["components"].pop()
                     cdx.write_text(json.dumps(changed))
