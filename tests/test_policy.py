@@ -1112,6 +1112,7 @@ class PolicyTests(unittest.TestCase):
             ("debian", "1:2.0-1", "2.0-1"),
             ("redhat", "1:1.0-2.el9", "1:1.0-1.el9"),
             ("alpine", "1.2.3-r2", "1.2.3-r1"),
+            ("alpine", "1.37.0_git20260817-r33", "1.37.0_git20260817-r32"),
             ("cbl-mariner", "1:2.0.0-25.cm2", "2.0.0-25.cm2"),
             ("azurelinux", "1:3.0.0-16.azl3", "1:3.0.0-15.azl3"),
             ("sles", "84.87+git20260610.3b5a868c-160000.1.1", "84.87+git20260610.3b5a868c-160000.1.0"),
@@ -1150,6 +1151,10 @@ class PolicyTests(unittest.TestCase):
             "Arch OS rows require dedicated independent evidence": {"result_type": "archlinux"},
             "missing package inventory": {"remove_packages": True},
             "malformed version": {"packages": [package("libexample", "not-a-version")]},
+            "malformed version for alpine/busybox": {
+                "result_type": "alpine",
+                "packages": [package("busybox", "1.37.0_git20260817-r33junk")],
+            },
             "ambiguous package identity": {
                 "packages": before + [package("libexample", "1.1")]
             },
@@ -1211,6 +1216,7 @@ class PolicyTests(unittest.TestCase):
         for ecosystem, version in (
             ("debian", "1:2.0-1"), ("redhat", "1:1.0-2.el9"),
             ("alpine", "1.2.3-r2"),
+            ("alpine", "1.37.0_git20260817-r33"),
             ("cbl-mariner", "1:2.0.0-25.cm2"),
             ("azurelinux", "1:3.0.0-16.azl3"),
             ("sles", "84.87+git20260610.3b5a868c-160000.1.1"),
