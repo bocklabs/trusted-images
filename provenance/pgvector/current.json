@@ -12,14 +12,14 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/pgvector",
-    "tag": "pg16-bocklabs.3",
-    "digest": "sha256:79921926e02eb2dc557af7112c43b61d9a8b0072b84efa9312efc9359d0db11c",
+    "tag": "pg16-bocklabs.4",
+    "digest": "sha256:8fd23085610c480898a9716b48a76a00f91ac1a86ac6fcf780f2fb625b4e44a5",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40298921979",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/41040873416",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
@@ -32,16 +32,16 @@
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:96ee978993524fa2026071c61b8641e2034b8208322fab672b2b814666ffbc83",
-      "updated_at": "2026-10-26 07:15:18.945937093 +0000 UTC"
+      "check_bundle_digest": "sha256:2c701f0c35c67b3179acd906b51e12b3942eb853128e2a24d79b53707c281c23",
+      "updated_at": "2026-10-30 01:01:11.134360213 +0000 UTC"
     },
-    "full_report_sha256": "6f316c06af65c1bd0f2c6ec987768b32737c6b3af4297c5812939e9dfa582b31",
-    "copa_report_sha256": "8abc034de8b847ac852a20609dc339a8009857d7dfe00dd059bcc7387d076e6d",
-    "decision_sha256": "97c4d977c4c5019b9ad66f11363c676408a731d57fb123d214a5e6dcc3bba490",
+    "full_report_sha256": "f6c8c663ccc1a8043d93d7186f316f178066e5d0086e33f8da50a2767c7cb828",
+    "copa_report_sha256": "3e3f8157ead32922e5626ea43e48f54e415495286ba76f899a348e706323a9db",
+    "decision_sha256": "90aaa4b25d3d12417751c6a5d5eba1f23b64a47e0f343aa898805c8c67f44773",
     "reports": {
-      "before_sha256": "f9e193f4a391585f8da98bd6911f5d54d08bad918cf8de230f23711351c58da5",
-      "final_sha256": "6f316c06af65c1bd0f2c6ec987768b32737c6b3af4297c5812939e9dfa582b31",
-      "fixable_sha256": "8abc034de8b847ac852a20609dc339a8009857d7dfe00dd059bcc7387d076e6d"
+      "before_sha256": "320572bd4055686d54d235d491f4db7fed8db1b4ada23edb6e45784768984bac",
+      "final_sha256": "f6c8c663ccc1a8043d93d7186f316f178066e5d0086e33f8da50a2767c7cb828",
+      "fixable_sha256": "3e3f8157ead32922e5626ea43e48f54e415495286ba76f899a348e706323a9db"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "97a6e54bc74c651ab3c55657191db9adec6c63b05ca54e4205327cfd97a8fb70",
-        "fetched_at": "2026-10-26T09:23:30Z",
-        "catalogVersion": "2026.10.23",
-        "dateReleased": "2026-10-23T19:30:18.9209Z"
+        "sha256": "38a7172a5f26470dc7632aaa1c6cff4a51fe7bfec8cdce978a19b816a751e34d",
+        "fetched_at": "2026-10-30T10:29:41Z",
+        "catalogVersion": "2026.10.29",
+        "dateReleased": "2026-10-29T19:09:34.4003Z"
       }
     },
     "acceptance": null,
@@ -73,7 +73,7 @@
       "limitation": null
     },
     "remediation": {
-      "need_sha256": "6129eedb8a907e430146d5bc64de9a00329b0676752530e98850ab4e795a3551"
+      "need_sha256": "3f044bba943181f424740ed89428a7e8cf79ea5bebaf94db994ecb4651238896"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -13080,6 +13080,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|tzdata|DLA-4867-1",
+        "platform": "linux/amd64",
+        "package": "tzdata",
+        "cve": "DLA-4867-1",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "pgvector/pgvector@sha256:a97d77306ff47cc1d8add4d000cec2207da2e110746318df3137ce53c337ca30 (debian 12.15)",
+        "installed_version": "2026b-0+deb12u1",
+        "fixed_version": "2026f-0+deb12u1",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|util-linux-extra|CVE-2022-0563",
         "platform": "linux/amd64",
         "package": "util-linux-extra",
@@ -19423,7 +19436,8 @@
         "CVE-2026-8376",
         "CVE-2026-84782",
         "DLA-4792-1",
-        "DLA-4854-1"
+        "DLA-4854-1",
+        "DLA-4867-1"
       ],
       "remaining": [
         "CVE-2005-2541",
@@ -19685,7 +19699,7 @@
         "name": "tzdata",
         "change": "upgraded",
         "before": "2026b-0+deb12u1",
-        "after": "2026e-0+deb12u1"
+        "after": "2026f-0+deb12u1"
       }
     ],
     "downgrades": [],
@@ -19713,15 +19727,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-26T09:23:29Z",
-      "finished_at": "2026-10-26T09:23:30Z",
+      "started_at": "2026-10-30T10:29:41Z",
+      "finished_at": "2026-10-30T10:29:41Z",
       "duration_seconds": 0.2
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000014947",
+    "runner": "GitHub Actions 1000015690",
     "baseline": {
       "entrypoint": [
         "docker-entrypoint.sh"
@@ -19739,34 +19753,34 @@
       ]
     }
   },
-  "promoted_at": "2026-10-26T09:25:08Z",
+  "promoted_at": "2026-10-30T10:31:19Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "1ac657e65b77454b3d0b24aca3f122f876f9d56a0991f817862717858539218d",
-      "attachment_sha256": "98f9ebcf1035026d183e62d297a2ae3c5e52bc35967fe89a68937022cacb1a7e",
+      "bundle_sha256": "c1b55300eed8b7dfb430ff818cbd8ee54f913f45adafd6a5c2c891bb196d45fc",
+      "attachment_sha256": "dc29ccd279e31dd1ecdf324ab050015a31a675b036c8536bfbeab9b99e294955",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "2c88b7594641bc465d9deac9208af6db222539e00b5ccfa386d9c378c7f2fc3f",
-      "bundle_sha256": "cf2b7fb62cf89fb41d8568360cae6a36dfeeb20cf0f93cc6c5f7fd3bdabc0570",
-      "attachment_sha256": "d8f378a8965de87272fd0823f22b6f3fc83e3c89c11faa766fd8ec6126eb9774"
+      "predicate_sha256": "af303c30b03f86bd8680deb5f000ebebe02f12025313863aaa3e27bda8426c26",
+      "bundle_sha256": "59418e3a6e56188ab53723dfee2e6d0a2e739dec8d4721921ffcd101f7f851bb",
+      "attachment_sha256": "8897476320c02cbef83e021029c38c9773298b3bc49ee3ae6f65de1bccbae032"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "SI6SJLYeSHynyHHU3WeTDAe1NGKdVzO3JSk0VJvpCM8=",
+        "inclusion_root_hash": "NFvu0x6mCPKHVXQoxrl2vI+5VQsctvtJICbwfQEFxU4=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3482976554,
-        "signed_entry_timestamp": "MEUCIAflmUpNEkZj5s2VhhE+E1+v8N6wRSSUYLPe2KAcCy2uAiEAycbBNYNCxi/Hvq03rNVnu8AB8gjZNX37OVtF9oeVkQA="
+        "log_index": 3591335495,
+        "signed_entry_timestamp": "MEUCIFJKIRBYGba4ckxA0t1mURcfjekz5wy5SU0TkH4QHdquAiEA6tBjqaYlROy1Glm0ZlWd9TiqV/798c44YJ63jDPQokE="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "ecoGruGivspY7xHUwnukrVQNNfplkXdBzln0E9m6j8c=",
+        "inclusion_root_hash": "25bD/Cr6Rg1KfTkhGgXra60sJafEh7Fso7kZvcFy4uQ=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3482978601,
-        "signed_entry_timestamp": "MEQCIC6dDAJ8hS+VTz5+t/5Mf2TSwypd4vxSyVcj5UxRNGYOAiBjsCt4CAnFkQ50ZfLJHdjK0ebxsOzjF2TbqEL1gg0R6w=="
+        "log_index": 3591337676,
+        "signed_entry_timestamp": "MEYCIQCT7lorg5dJR/hGUZvJgK0Z0I+Rwj+CJC8cduCfYABtDQIhAL8E6sxNNzPjJJmXBLdNOq1h5vO+JSoiIK1wSYc/voLo"
       }
     },
     "tools": {
