@@ -22,7 +22,20 @@ runs:
         test -s trivy-full.cdx.json
         jq -e '.bomFormat == "CycloneDX" and (.components | type == "array") and ([.components[] | select(.type == "operating-system")] | length <= 1)' trivy-full.cdx.json > /dev/null
         JSON_PACKAGES="$(jq -ce '[((.Results // [])[] | .Packages[]?) | {name: .Name, purl: .Identifier.PURL}] | sort_by(.name, .purl)' trivy-full.json)"
-        CDX_PACKAGES="$(jq -ce '[.components[] | select(.type == "library") | {name: (if ((.purl // "") | startswith("pkg:npm/")) and ((.group // "") | test("^@[^/]+$")) then .group + "/" + .name elif ((.purl // "") | startswith("pkg:maven/")) and ((.group // "") != "") then .group + ":" + .name else .name end), purl}] | sort_by(.name, .purl)' trivy-full.cdx.json)"
+        CDX_PACKAGES="$(jq -ce '
+          [.components[] | select(.type == "library") | . as $c | {name: (
+            if ((.purl // "") | startswith("pkg:npm/"))
+              and ((.group // "") | test("^@[^/]+$"))
+              and ((."bom-ref" // "") != "") and ((.version // "") != "")
+              and (((.purl // "") | split("#") | length) == 2)
+              and (."bom-ref" == ((.purl // "") | split("#")[1]))
+              and ((.purl | split("#")[0]) == ("pkg:npm/" + ($c.group | @uri) + "/" + ($c.name | @uri) + "@" + ($c.version | @uri)))
+              and ([.properties[]? | select(.name == "aquasecurity:trivy:PkgID") | .value] == [($c."bom-ref" + "@" + $c.version)])
+            then ."bom-ref"
+            elif ((.purl // "") | startswith("pkg:npm/")) and ((.group // "") | test("^@[^/]+$")) then .group + "/" + .name
+            elif ((.purl // "") | startswith("pkg:maven/")) and ((.group // "") != "") then .group + ":" + .name
+            else .name end), purl}] | sort_by(.name, .purl)
+        ' trivy-full.cdx.json)"
         [ "${JSON_PACKAGES}" = "${CDX_PACKAGES}" ] || { echo "FATAL: CycloneDX library components differ from Trivy packages"; exit 1; }
         JSON_FINDINGS="$(jq -ce '[((.Results // [])[] | .Vulnerabilities[]?) | {purl: (.PkgIdentifier.PURL // .PkgID), id: .VulnerabilityID}] | unique_by([.purl, .id])' trivy-full.json)"
         CDX_FINDINGS="$(jq -ce '(.components | map(select(.type == "library") | {key: ."bom-ref", value: .purl}) | from_entries) as $packages | [.vulnerabilities[]? as $v | $v.affects[]? | {purl: ($packages[.ref] // error("unknown SBOM package reference")), id: $v.id}] | unique_by([.purl, .id])' trivy-full.cdx.json)"

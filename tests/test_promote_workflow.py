@@ -324,6 +324,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                 {"Name": "lang", "Version": "3", "Identifier": {"PURL": "pkg:pypi/lang@3"}},
                 *[{"Name": "org.example:artifact", "Version": "1", "Identifier": {"PURL": "pkg:maven/org.example/artifact@1"}} for _ in range(2)],
                 *[{"Name": "@scope/package", "Version": "4", "Identifier": {"PURL": "pkg:npm/%40scope/package@4"}} for _ in range(2)],
+                {"Name": "skia.linux-x64-musl.node", "Version": "1.0.11", "Identifier": {"PURL": "pkg:npm/%40napi-rs/canvas-linux-x64-musl@1.0.11#skia.linux-x64-musl.node"}},
             ], "Vulnerabilities": [
                 {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:deb/debian/deb@2-1?arch=amd64"}},
                 {"VulnerabilityID": "CVE-2026-0001", "PkgIdentifier": {"PURL": "pkg:pypi/lang@3"}},
@@ -336,6 +337,7 @@ class PromoteWorkflowTests(unittest.TestCase):
                 {"type": "library", "name": "deb", "version": "2-1", "purl": "pkg:deb/debian/deb@2-1?arch=amd64", "bom-ref": "deb-ref"},
                 {"type": "library", "name": "lang", "version": "3", "purl": "pkg:pypi/lang@3", "bom-ref": "lang-ref"},
                 *[{"type": "library", "group": "@scope", "name": "package", "version": "4", "purl": "pkg:npm/%40scope/package@4", "bom-ref": f"npm-ref-{i}"} for i in range(2)],
+                {"type": "library", "group": "@napi-rs", "name": "canvas-linux-x64-musl", "version": "1.0.11", "purl": "pkg:npm/%40napi-rs/canvas-linux-x64-musl@1.0.11#skia.linux-x64-musl.node", "bom-ref": "skia.linux-x64-musl.node", "properties": [{"name": "aquasecurity:trivy:PkgID", "value": "skia.linux-x64-musl.node@1.0.11"}]},
                 *[{"type": "library", "group": "org.example", "name": "artifact", "version": "1", "purl": "pkg:maven/org.example/artifact@1", "bom-ref": f"maven-ref-{i}"} for i in range(2)]],
                 "vulnerabilities": [{"id": "CVE-2026-0001", "affects": [
                     {"ref": "deb-ref"},
@@ -363,6 +365,17 @@ class PromoteWorkflowTests(unittest.TestCase):
                     cdx.write_text(json.dumps(original))
                     result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    for field in ("pkgid", "name"):
+                        changed = json.loads(json.dumps(original))
+                        fragment = next(c for c in changed["components"] if c.get("bom-ref") == "skia.linux-x64-musl.node")
+                        if field == "pkgid":
+                            fragment["properties"][0]["value"] = "wrong@1.0.11"
+                        else:
+                            fragment["name"] = "wrong-parent"
+                        cdx.write_text(json.dumps(changed))
+                        result = subprocess.run(["bash", "-c", convert], cwd=root, env=env, capture_output=True, text=True, check=False)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn("components differ", result.stdout)
                     changed = json.loads(json.dumps(original))
                     changed["components"].pop()
                     cdx.write_text(json.dumps(changed))
