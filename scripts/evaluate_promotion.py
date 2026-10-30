@@ -12,9 +12,9 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote, urlsplit
 
 import yaml
+from alpine_version import AlpineVersion
 from finding_identity import REF, findings_hash, require
 from univers.versions import (
-    AlpineLinuxVersion,
     ArchLinuxVersion,
     DebianVersion,
     RpmVersion,
@@ -65,7 +65,7 @@ CONFIG_TYPES = {
 }
 VERSION_CLASSES = {
     "archlinux": ArchLinuxVersion,
-    "alpine": AlpineLinuxVersion,
+    "alpine": AlpineVersion,
     "debian": DebianVersion,
     "ubuntu": DebianVersion,
     "redhat": RpmVersion,
