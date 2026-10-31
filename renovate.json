@@ -131,6 +131,14 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["/(^|\\/)linuxserver\\//"],
       "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>0|[1-9]\\d*)\\.(?<patch>\\d+)(\\.(?<build>\\d+))?$"
+    },
+    {
+      "description": "LinuxServer keeps stale non-application tags beside current ones (for example qbittorrent 14.3.9 from 2022 outranks 5.3.0), and no tag pattern separates them. Major bumps therefore need dashboard approval.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|\\/)linuxserver\\//"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "automerge": false
     }
   ]
 }
