@@ -1,0 +1,22 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: pihole
+spec:
+  version: 2
+  upstream:
+    ref: pihole/pihole
+    tag: 2026.10.1
+    digest: sha256:30f803ad5dd60ff96cc0a63008a2e9271af481c1b0399a182192b2e91152c1f9
+  destination:
+    package: ghcr.io/bocklabs/pihole
+  patchPolicy: enabled
+  validation:
+    type: http
+    port: 80
+    path: /admin/
+    expectStatus: 302
+    durationSeconds: 180
+    command: []
+    expectedPlatforms:
+    - linux/amd64
