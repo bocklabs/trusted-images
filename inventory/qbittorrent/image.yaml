@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: linuxserver/qbittorrent
-    tag: 14.3.9
-    digest: sha256:751f377e7bcfe8e7aee1d219049720690510f488bba649f8ceffcd911e83d908
+    tag: 5.3.0
+    digest: sha256:75ecbb1c89ab7b0a21c4bde40b4820e4f1649d2d56d83b91913422155e8d2a5f
   destination:
     package: ghcr.io/bocklabs/qbittorrent
   patchPolicy: enabled
