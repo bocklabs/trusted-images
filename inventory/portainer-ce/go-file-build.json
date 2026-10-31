@@ -1,0 +1,30 @@
+{
+  "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
+  "ref": "ghcr.io/bocklabs/portainer-ce:2.45.3-bocklabs.1@sha256:1c9fd7e7a19941c15bec2c915298a5c95c7d2fab9882772bdb4dbe57a4d019f1",
+  "config_digest": "sha256:8bfae45f9e7b3359ec4046e6f36cf148c067958a049e6fbbdb77f92d015faa33",
+  "upstream_child_digest": "sha256:1c9fd7e7a19941c15bec2c915298a5c95c7d2fab9882772bdb4dbe57a4d019f1",
+  "target": "portainer",
+  "module": "github.com/portainer/portainer",
+  "layer": {
+    "Digest": "sha256:31052075cd93700c07655ec0b90d000aa92d08922f3ace30a0ec00e4f3936195",
+    "DiffID": "sha256:130e7148eba56362cb783374c16419a9b005ef33a2fd0053305a258beddc8392"
+  },
+  "binary_sha256": "14826671b11833ab7f3196db5071ffbe7f5b112e67267f6b2f1839ab03651929",
+  "source": {
+    "repository": "https://github.com/portainer/portainer",
+    "revision": "e5a61af591b98f2f9cf0c5c062fbb73694e6784d",
+    "files": {}
+  },
+  "build_info": {
+    "program": "github.com/portainer/portainer/api/cmd/portainer",
+    "main_module": "github.com/portainer/portainer",
+    "module_version": "(devel)",
+    "go_version": "go1.26.10",
+    "sha256": "6558ac152b8076a03741dd7f3780f436a130c3db78bab65f6153859e0ec12a42",
+    "go_package_count": 310,
+    "versioned_go_package_count": 310,
+    "vcs_revision": "e5a61af591b98f2f9cf0c5c062fbb73694e6784d"
+  },
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/41232068746",
+  "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
+}
