@@ -50,6 +50,9 @@ outputs:
   validation_env:
     description: Workflow output.
     value: ${{ steps.run.outputs.validation_env }}
+  validation_network:
+    description: Workflow output.
+    value: ${{ steps.run.outputs.validation_network }}
   validation_expect_status:
     description: Workflow output.
     value: ${{ steps.run.outputs.validation_expect_status }}

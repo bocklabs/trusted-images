@@ -27,13 +27,15 @@ bind to these exact strings):
   spec.version            == 2 (integer)
 
 Per-type validation params (required first, then optional):
-  http     port (int 1-65535); path; expectStatus, durationSeconds
-           (positive int); command (list of str)
+  http     port (int 1-65535); path; expectStatus, durationSeconds,
+           timeoutSeconds (positive int); command (list of str)
   process  durationSeconds (positive int); command (list of str)
   oneshot  expectedExit (int); timeoutSeconds (positive int);
            command (list of str)
   shared   expectedPlatforms (list of os/arch[/variant] strings); env
-           (str->str mapping)
+           (str->str mapping); network (bool; true means the candidate needs
+           outbound network at first boot, so validation runs it on bridge
+           instead of none)
 
 The v1 flat profile shape (a bare profile string where spec.validation now
 lives) is accepted nowhere: an entry still carrying it fails validation
@@ -70,7 +72,7 @@ PLATFORM_RE = re.compile(r"^[a-z0-9]+/[a-z0-9]+(/.+)?$")
 VALIDATION_PARAM_RULES = {
     "http": {
         "required": ("port",),
-        "optional": ("path", "expectStatus", "durationSeconds", "command"),
+        "optional": ("path", "expectStatus", "durationSeconds", "timeoutSeconds", "command"),
     },
     "process": {
         "required": (),
@@ -81,7 +83,7 @@ VALIDATION_PARAM_RULES = {
         "optional": ("expectedExit", "timeoutSeconds", "command"),
     },
 }
-SHARED_OPTIONAL = ("expectedPlatforms", "env")
+SHARED_OPTIONAL = ("expectedPlatforms", "env", "network")
 POSITIVE_INT_PARAMS = ("expectStatus", "durationSeconds", "timeoutSeconds")
 
 API_VERSION_FIELD = "apiVersion"
@@ -135,12 +137,20 @@ def param_failure(param: str, value: object) -> str | None:
         return platform_failure(value)
     elif param == "env":
         return env_failure(value)
+    elif param == "network":
+        return boolean_failure(value)
     return None
 
 
 def port_failure(value: object) -> str | None:
     if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 65535:
         return f"must be an integer in 1-65535 (got {value!r})"
+    return None
+
+
+def boolean_failure(value: object) -> str | None:
+    if not isinstance(value, bool):
+        return f"must be a boolean (got {value!r})"
     return None
 
 

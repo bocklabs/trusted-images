@@ -242,6 +242,16 @@ class ValidatorTests(unittest.TestCase):
         entry["spec"]["validation"]["expectedPlatforms"] = "linux/amd64"
         self.assert_fails(entry, "spec.validation.expectedPlatforms")
 
+    def test_validation_network_bool_passes(self) -> None:
+        entry = valid_entry()
+        entry["spec"]["validation"]["network"] = True
+        self.assert_valid(entry)
+
+    def test_validation_network_non_bool_fails(self) -> None:
+        entry = valid_entry()
+        entry["spec"]["validation"]["network"] = "bridge"
+        self.assert_fails(entry, "spec.validation.network")
+
 
 if __name__ == "__main__":
     unittest.main()

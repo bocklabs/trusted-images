@@ -9,11 +9,13 @@ workflow defaults.
    selected upstream child config except for additions to the four permitted
    OCI provenance labels. Manifest annotations are recorded separately.
 2. Runtime profiles, selected by --validation-type:
-   http: run detached with --network none. Runner curl enters the candidate
+   http: run detached with --network none (or bridge when the inventory opts
+         in). Runner curl enters the candidate
          network namespace through nsenter and polls the port until
          --expect-status within --timeout-seconds. The container must still
          run when --duration-seconds elapses.
-   process: run detached with --network none and require it to stay running
+   process: run detached with --network none (or bridge when the inventory
+         opts in) and require it to stay running
          through --duration-seconds.
    oneshot: run blocking under the coreutils timeout wrapper and require the
          exit code to equal --expected-exit.
@@ -113,6 +115,12 @@ def parse_args() -> argparse.Namespace:
         "--expected-platforms",
         default="linux/amd64",
         help="comma list; each must be present in the index",
+    )
+    parser.add_argument(
+        "--network",
+        choices=("none", "bridge"),
+        default="none",
+        help="runtime network mode; bridge is for images that fetch data at first boot",
     )
     parser.add_argument(
         "--command",
@@ -304,9 +312,10 @@ def docker_run_args(
     ref_digest: str,
     command: list[str],
     env_map: dict[str, str],
+    network: str = "none",
 ) -> list[str]:
-    """docker run argv for a candidate container under --network none."""
-    args = ["run", "-d" if detached else "--rm", "--name", container_name, "--network", "none", "--hostname", "localhost"]
+    """docker run argv for a candidate container."""
+    args = ["run", "-d" if detached else "--rm", "--name", container_name, "--network", network, "--hostname", "localhost"]
     for key in sorted(env_map):
         args += ["-e", f"{key}={env_map[key]}"]
     return args + [ref_digest, *command]
@@ -375,7 +384,7 @@ def profile_longrunning(
     namespace before the health gate applies.
     """
     ok, out = docker(
-        *docker_run_args(True, container_name, ref_digest, command, env_map)
+        *docker_run_args(True, container_name, ref_digest, command, env_map, args.network)
     )
     if not ok:
         return f"candidate failed to start under --network none: {out}", 2
@@ -417,7 +426,7 @@ def profile_oneshot(
     client; the job-level rm below and the VM teardown cover the container.
     The exit code must exactly equal expectedExit.
     """
-    run_args = docker_run_args(False, container_name, ref_digest, command, env_map)
+    run_args = docker_run_args(False, container_name, ref_digest, command, env_map, args.network)
     try:
         proc = subprocess.run(
             ["timeout", f"{args.timeout_seconds}s", "docker", *run_args],

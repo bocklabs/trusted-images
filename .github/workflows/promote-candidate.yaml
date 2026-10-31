@@ -425,6 +425,7 @@ jobs:
           validation_command: ${{ steps.entry.outputs.validation_command }}
           validation_expected_platforms: ${{ steps.entry.outputs.validation_expected_platforms }}
           validation_env: ${{ steps.entry.outputs.validation_env }}
+          validation_network: ${{ steps.entry.outputs.validation_network }}
 
       - name: Fetch CISA KEV catalog
         uses: ./.github/actions/candidate/fetch-kev

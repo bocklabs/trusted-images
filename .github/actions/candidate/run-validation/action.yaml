@@ -55,6 +55,9 @@ inputs:
   validation_env:
     description: Workflow input.
     required: false
+  validation_network:
+    description: Workflow input.
+    required: false
 runs:
   using: composite
   steps:
@@ -79,6 +82,7 @@ runs:
         VALIDATION_COMMAND: ${{ inputs.validation_command }}
         VALIDATION_EXPECTED_PLATFORMS: ${{ inputs.validation_expected_platforms }}
         VALIDATION_ENV: ${{ inputs.validation_env }}
+        VALIDATION_NETWORK: ${{ inputs.validation_network }}
       run: |
         set -euo pipefail
         if [ "${VALIDATION_TYPE}" = http ]; then
@@ -103,6 +107,7 @@ runs:
           --expected-exit "${VALIDATION_EXPECTED_EXIT:-0}"
           --expected-platforms "${VALIDATION_EXPECTED_PLATFORMS:-linux/amd64}"
           --command "${VALIDATION_COMMAND:-[]}"
+          --network "${VALIDATION_NETWORK:-none}"
         )
         [ "${PATCHED}" != true ] || ARGS+=(--local-image "${CANDIDATE_REF}" --local-image-id "${LOCAL_IMAGE_ID}")
         if [ -n "${VALIDATION_PORT:-}" ]; then

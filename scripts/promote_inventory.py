@@ -51,3 +51,5 @@ if "expectedPlatforms" in validation:
     print("validation_expected_platforms=" + ",".join(validation["expectedPlatforms"]))
 if validation.get("env"):
     print("validation_env=" + json.dumps(validation["env"]))
+if validation.get("network"):
+    print("validation_network=bridge")
