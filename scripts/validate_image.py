@@ -50,7 +50,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-CURL_IMAGE = "curlimages/curl:v8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777"  # v8.22.0
+CURL_IMAGE = "curlimages/curl:8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777"  # 8.22.0
 PROFILES = ("http", "process", "oneshot")
 POLL_INTERVAL_SECONDS = 2
 LOGS_DIRNAME = "validation-logs"
