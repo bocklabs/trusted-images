@@ -502,6 +502,7 @@ case "$1 $2" in
   "pr edit") exit 0 ;;
   "pr view") echo true ;;
   "pr merge") exit 0 ;;
+  "api "*) echo true ;;
   *) exit 9 ;;
 esac
 """)
@@ -516,6 +517,7 @@ esac
                         "MODE": mode,
                         "TRACE": str(trace),
                         "GH_TOKEN": "test-token",
+                        "GITHUB_REPOSITORY": "example/repo",
                         "BRANCH": "chore/sync-dispatch-options",
                         "COMMIT_MESSAGE": "chore: sync promote dispatch options with inventory",
                         "PR_TITLE": "chore: sync promote dispatch options with inventory",

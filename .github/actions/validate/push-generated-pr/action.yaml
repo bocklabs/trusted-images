@@ -65,8 +65,9 @@ runs:
         fi
         PR_URL="$(gh pr list --head "$BRANCH" --base main --state open --json url --jq '.[0].url // ""')"
         if [ -n "${PR_URL}" ]; then
-          gh pr view "$PR_URL" --json author,headRefName,baseRefName,isCrossRepository \
-            --jq '.author.login == "bocklabs-release[bot]" and .headRefName == env.BRANCH and .baseRefName == "main" and .isCrossRepository == false' | grep -qx true
+          gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_URL##*/}" \
+            --jq '.user.login == "bocklabs-release[bot]" and .user.type == "Bot" and .head.ref == env.BRANCH and .base.ref == "main" and .head.repo != null and .head.repo.fork == false' \
+            | grep -qx true || { echo "FATAL: existing generated PR is not owned by the release app"; exit 1; }
         fi
         git checkout -B "$BRANCH" origin/main
         git add -A -- "${PATH_LIST[@]}"

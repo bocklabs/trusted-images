@@ -38,6 +38,7 @@ class GeneratedPRTests(unittest.TestCase):
             **os.environ,
             "PATH": str(self.root) + os.pathsep + os.environ["PATH"],
             "GH_TOKEN": "test",
+            "GITHUB_REPOSITORY": "example/repo",
             "BRANCH": "chore/generated",
             "PATHS": "inventory",
             "COMMIT_MESSAGE": "chore: generate evidence",
@@ -58,6 +59,29 @@ class GeneratedPRTests(unittest.TestCase):
             ["bash", "-c", action["runs"]["steps"][0]["run"]],
             cwd=self.work, env=self.env, check=False, capture_output=True, text=True,
         )
+
+    def fake_existing_pr(self, owned):
+        (self.root / "gh").write_text(
+            "#!/bin/sh\n"
+            'if [ "$1" = api ]; then echo %s;'
+            ' elif [ "$2" = list ]; then echo https://github.com/example/repo/pull/1; fi\n'
+            % ("true" if owned else "false")
+        )
+        (self.root / "gh").chmod(0o755)
+
+    def test_updates_existing_generated_pr_owned_by_release_app(self):
+        self.fake_existing_pr(owned=True)
+        result = self.run_action()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("changed=true", (self.root / "output").read_text())
+
+    def test_rejects_existing_pr_not_owned_by_release_app(self):
+        self.fake_existing_pr(owned=False)
+        head = self.git("rev-parse", "HEAD")
+        result = self.run_action()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("not owned by the release app", result.stdout)
+        self.assertEqual(self.git("rev-parse", "HEAD"), head)
 
     def test_pushes_generated_files_and_reports_exact_remote_head(self):
         result = self.run_action()

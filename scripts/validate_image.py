@@ -314,7 +314,7 @@ def docker_run_args(
 
 def probe_http(args, container_name, logs_path):
     ok, pid = docker("inspect", "--format", "{{.State.Pid}}", container_name)
-    if not ok or not re.fullmatch(r"[1-9][0-9]*", pid):
+    if not ok or not re.fullmatch(r"[1-9]\d*", pid, flags=re.ASCII):
         return f"cannot resolve candidate process ID: {pid}", 2
     url = f"http://localhost:{args.port}{args.path}"
     expect = str(args.expect_status)
@@ -344,11 +344,16 @@ def probe_http(args, container_name, logs_path):
         sleep_until(probe_deadline)
     append_logs(logs_path, container_name)
     if last_status != expect:
-        return (
-            f"http probe on {url} never returned {expect} within "
-            f"{args.timeout_seconds}s; last status: {last_status}"
-        ), 1 if last_status.isdigit() and int(last_status) >= 100 else 2
+        return _probe_failure(url, expect, args.timeout_seconds, last_status)
     raise RuntimeError(f"http probe on {url} exited without a result")
+
+
+def _probe_failure(url: str, expect: str, timeout: int, last_status: str):
+    message = (
+        f"http probe on {url} never returned {expect} within {timeout}s; "
+        f"last status: {last_status}"
+    )
+    return message, 1 if last_status.isdigit() and int(last_status) >= 100 else 2
 
 
 def profile_longrunning(
