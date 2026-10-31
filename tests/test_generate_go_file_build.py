@@ -7,7 +7,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -41,6 +43,92 @@ class GenerateGoFileBuildTests(unittest.TestCase):
         self.assertEqual(info["main_module"], "")
         self.assertEqual(info["first_party_module"], "github.com/example/app")
         self.assertEqual(info["module_version"], "(devel)")
+
+    def assert_source_matches(self, source, info, labels):
+        rescan = importlib.import_module("rescan_published")
+        validator = importlib.import_module("validate_inventory")
+        layer = {"Digest": "sha256:" + "b" * 64, "DiffID": "sha256:" + "c" * 64}
+        config = "sha256:" + "d" * 64
+        child = "sha256:" + "e" * 64
+        ref = "example/app:full-tag@sha256:" + "a" * 64
+        review = {"schema": "trusted-images.bocklabs.dev/go-file-build-v1", "ref": ref,
+                  "config_digest": config, "upstream_child_digest": child,
+                  "target": "app", "module": info["first_party_module"], "layer": layer,
+                  "binary_sha256": "f" * 64, "source": source,
+                  "build_info": {"vcs_revision": info["build"]["vcs.revision"]}}
+        validator.parse_go_file_build(json.dumps(review).encode(), Path("review.json"))
+        selection = {"ref": ref, "published": {"upstream": {"selected_child_digest": child}}}
+        self.assertTrue(rescan.review_matches_image(review, selection, {"ImageID": config}, labels, [layer["DiffID"]]))
+
+    def test_unknown_source_tag_is_omitted_and_existing_gate_accepts_vcs(self):
+        revision = "92639f8432a16ec1dbd16ffa9f6b786ca085d64a"
+        info = generator.parse_build_info(
+            "app: go1.26.6\n\tpath\tgithub.com/portainer/portainer/api/cmd/portainer\n"
+            "\tmod\tgithub.com/portainer/portainer\t(devel)\t\n"
+            f"\tbuild\tvcs.revision={revision}\n"
+        )
+        labels = {"org.opencontainers.image.revision": revision[:7]}
+        with patch.object(generator.urllib.request, "urlopen", side_effect=urllib.error.URLError("offline")):
+            source = generator.source_info(labels, info)
+        self.assertNotIn("tag", source)
+        self.assertEqual(source["revision"], revision)
+        self.assert_source_matches(source, info, labels)
+
+    def test_opaque_module_requires_unique_matching_tag_and_binary_vcs(self):
+        revision = "72dd0fb067f6d7826c7f79907670ba4a713bfe37"
+        info = generator.parse_build_info(
+            "caddy: go1.26.8\n\tpath\tcaddy\n\tmod\tcaddy\t(devel)\t\n"
+            "\tdep\tgithub.com/caddyserver/caddy/v2\tv2.11.7\th1:example\n"
+            f"\tbuild\tvcs.revision={revision}\n"
+        )
+        labels = {"org.opencontainers.image.source": "https://github.com/caddyserver/caddy-docker",
+                  "org.opencontainers.image.version": "v2.11.7",
+                  "org.opencontainers.image.base.name": "caddy:2.11.7-alpine"}
+        tag_result = f"{revision}\trefs/tags/v2.11.7^{{}}\n"
+        with patch.object(generator, "run", return_value=tag_result), patch.object(
+            generator.urllib.request, "urlopen", side_effect=urllib.error.URLError("offline")
+        ):
+            source = generator.source_info(labels, info)
+        self.assertEqual(source["repository"], "https://github.com/caddyserver/caddy")
+        self.assertEqual(source["tag"], "v2.11.7")
+        self.assert_source_matches(source, info, labels)
+        ambiguous = {**info, "deps": info["deps"] + [["github.com/other/project", "v2.11.7"]]}
+        with self.assertRaisesRegex(ValueError, "ambiguous"):
+            generator.source_info(labels, ambiguous)
+        with patch.object(generator, "run", return_value=f"{'a' * 40}\trefs/tags/v2.11.7^{{}}\n"), self.assertRaisesRegex(ValueError, "revision|VCS"):
+            generator.source_info(labels, info)
+        with patch.object(generator, "run", return_value=""), self.assertRaisesRegex(ValueError, "not resolvable"):
+            generator.source_info(labels, info)
+        with patch.object(generator, "run", return_value=f"{revision}\trefs/tags/other^{{}}\n"), self.assertRaisesRegex(ValueError, "not resolvable"):
+            generator.source_info(labels, info)
+        with patch.object(generator, "run", side_effect=subprocess.CalledProcessError(1, ["git"])), self.assertRaisesRegex(ValueError, "not resolvable"):
+            generator.source_info(labels, info)
+
+    def test_native_go_build_info_hash_is_stable_across_temp_directories(self):
+        directories = []
+
+        def docker(*args):
+            if args[0] == "create":
+                return "container-id\n"
+            if args[0] == "cp":
+                Path(args[-1]).write_bytes(b"binary fixture")
+                return ""
+            self.assertEqual(args[0], "rm")
+            return ""
+
+        def run(*args, cwd=None):
+            self.assertEqual(args, ("go", "version", "-m", "app"))
+            self.assertEqual((Path(cwd) / "app").read_bytes(), b"binary fixture")
+            directories.append(cwd)
+            return "app: go1.26.6\n\tpath\texample/app\n\tmod\texample/app\t(devel)\t\n\tdep\texample/dep\tv1.2.3\th1:example\n"
+
+        with patch.object(generator, "docker", side_effect=docker), patch.object(generator, "run", side_effect=run):
+            first = generator.binary_build_info("example@sha256:abc", "usr/bin/app")
+            second = generator.binary_build_info("example@sha256:abc", "usr/bin/app")
+        self.assertNotEqual(directories[0], directories[1])
+        self.assertEqual(first, second)
+        self.assertEqual(first[1]["go_package_count"], 1)
+        self.assertEqual(first[1]["versioned_go_package_count"], 1)
 
     def test_versionless_targets_ignore_versioned_packages(self):
         report = {

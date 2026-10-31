@@ -14,7 +14,6 @@ import urllib.request
 from pathlib import Path
 
 INVENTORY = Path(__file__).resolve().parents[1] / "inventory"
-GOLANG_IMAGE = "docker.io/library/golang:1.25-alpine@sha256:1ae0735f00daffa3aaf1363a5184c0d2dc55c78e3db4ec70241cdac97bf84b59"
 DEVEL = "(devel)"
 VCS_REVISION = "vcs.revision"
 GITHUB_PREFIX = "https://github.com/"
@@ -25,8 +24,8 @@ def require(value, message):
         raise ValueError(message)
 
 
-def run(*args):
-    return subprocess.run(args, check=True, capture_output=True, text=True, timeout=120).stdout
+def run(*args, cwd=None):
+    return subprocess.run(args, check=True, capture_output=True, text=True, timeout=120, cwd=cwd).stdout
 
 
 def docker(*args):
@@ -94,18 +93,18 @@ def infer_modules(packages, info):
     return relative
 
 
-def resolve_tag(repository, base_tag):
-    for tag in (f"v{base_tag}", base_tag):
+def resolve_tag(repository, *tags):
+    for tag in tags:
         try:
             output = run("git", "ls-remote", "--tags", repository, f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}")
         except subprocess.CalledProcessError:
             continue
         rows = [line.split() for line in output.splitlines() if line.split()]
-        peeled = [sha for sha, ref in rows if ref.endswith("^{}")]
-        direct = [sha for sha, ref in rows if not ref.endswith("^{}")]
-        if peeled or direct:
-            return tag, (peeled or direct)[0]
-    raise ValueError(f"source tag is not resolvable for {repository}: {base_tag}")
+        refs = {ref: sha for sha, ref in rows}
+        revision = refs.get(f"refs/tags/{tag}^{{}}") or refs.get(f"refs/tags/{tag}")
+        if revision:
+            return tag, revision
+    raise ValueError(f"source tag is not resolvable for {repository}: {tags[-1]}")
 
 
 def github_source(module):
@@ -119,6 +118,22 @@ def same_repository(left, right):
     return left.rstrip("/").lower() == right.rstrip("/").lower()
 
 
+def opaque_source(module_repo, vcs_revision, image_version, deps, fallback):
+    if module_repo or not vcs_revision or not image_version:
+        return fallback
+    candidates = {
+        repo.lower(): repo for dep in deps
+        if dep[1] == image_version and (repo := github_source(dep[0]))
+    }
+    if not candidates:
+        return fallback
+    require(len(candidates) == 1, "ambiguous binary source repositories")
+    repository = next(iter(candidates.values()))
+    tag, revision = resolve_tag(repository, image_version)
+    require(revision == vcs_revision, "source tag revision differs from binary VCS revision")
+    return repository, tag, revision
+
+
 def source_info(labels, info):
     label_repo = labels.get("org.opencontainers.image.source", "")
     module_repo = github_source(info["first_party_module"])
@@ -130,10 +145,9 @@ def source_info(labels, info):
     ):
         repository = label_repo
     require(repository, "source repository is unknown")
-    revision = ""
-    if repository == label_repo:
-        revision = labels.get("org.opencontainers.image.revision", "")
-    revision = revision or info["build"].get(VCS_REVISION, "")
+    revision = labels.get("org.opencontainers.image.revision", "") if repository == label_repo else ""
+    vcs_revision = info["build"].get(VCS_REVISION, "")
+    revision = revision or vcs_revision
     base_tag = labels.get("org.opencontainers.image.base.name", "").rsplit(":", 1)[-1]
     tag = info["module_version"] if info["module_version"] != DEVEL else base_tag
     if not revision:
@@ -142,7 +156,11 @@ def source_info(labels, info):
             repository.startswith(GITHUB_PREFIX),
             "source tag fallback requires a GitHub repository",
         )
-        tag, revision = resolve_tag(repository, base_tag)
+        tag, revision = resolve_tag(repository, f"v{base_tag}", base_tag)
+    repository, tag, revision = opaque_source(
+        module_repo, vcs_revision, labels.get("org.opencontainers.image.version", ""), info.get("deps", []),
+        (repository, tag, revision),
+    )
     files = {}
     if repository.startswith(GITHUB_PREFIX):
         raw = repository.replace(GITHUB_PREFIX, "https://raw.githubusercontent.com/")
@@ -154,7 +172,7 @@ def source_info(labels, info):
             except (urllib.error.URLError, TimeoutError):
                 continue
             files[name] = {"url": url, "sha256": hashlib.sha256(data).hexdigest()}
-    return {"repository": repository, "revision": revision, "tag": tag, "files": files}
+    return {"repository": repository, "revision": revision, **({"tag": tag} if tag else {}), "files": files}
 
 
 def binary_build_info(ref, target):
@@ -167,7 +185,7 @@ def binary_build_info(ref, target):
             docker("rm", "-f", container)
         path = Path(directory) / name
         binary_sha = hashlib.sha256(path.read_bytes()).hexdigest()
-        text = docker("run", "--rm", "-v", f"{directory}:/work", GOLANG_IMAGE, "go", "version", "-m", f"/work/{name}")
+        text = run("go", "version", "-m", name, cwd=directory)
         info = parse_build_info(text)
         info["sha256"] = hashlib.sha256(text.encode()).hexdigest()
         return binary_sha, info
@@ -290,6 +308,7 @@ def main():
     if not targets:
         records = []
     else:
+        print(run("go", "version").strip(), file=sys.stderr)
         records = [item for target, packages in targets.items() for item in record(selection, report, ref, target, packages, args.run_url)]
     changed, structural = write_records(args.inventory, args.app, records, existing)
     value = {"app": args.app, "changed": changed, "structural_drift": structural, "records": len(records)}
