@@ -9,8 +9,8 @@ workflow defaults.
    selected upstream child config except for additions to the four permitted
    OCI provenance labels. Manifest annotations are recorded separately.
 2. Runtime profiles, selected by --validation-type:
-   http: run detached with --network none. A digest-pinned curl sidecar joins
-         the candidate network namespace and polls the port until
+   http: run detached with --network none. Runner curl enters the candidate
+         network namespace through nsenter and polls the port until
          --expect-status within --timeout-seconds. The container must still
          run when --duration-seconds elapses.
    process: run detached with --network none and require it to stay running
@@ -50,7 +50,6 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-CURL_IMAGE = "curlimages/curl:8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777"  # 8.22.0
 PROFILES = ("http", "process", "oneshot")
 POLL_INTERVAL_SECONDS = 2
 LOGS_DIRNAME = "validation-logs"
@@ -314,6 +313,9 @@ def docker_run_args(
 
 
 def probe_http(args, container_name, logs_path):
+    ok, pid = docker("inspect", "--format", "{{.State.Pid}}", container_name)
+    if not ok or not re.fullmatch(r"[1-9][0-9]*", pid):
+        return f"cannot resolve candidate process ID: {pid}", 2
     url = f"http://localhost:{args.port}{args.path}"
     expect = str(args.expect_status)
     probe_deadline = time.monotonic() + args.timeout_seconds
@@ -323,22 +325,20 @@ def probe_http(args, container_name, logs_path):
         remaining = probe_deadline - time.monotonic()
         if remaining <= 0:
             break
-        ok, out = docker(
-            "run",
-            "--rm",
-            "--network",
-            f"container:{container_name}",
-            CURL_IMAGE,
-            "-s",
-            "--max-time",
-            str(remaining),
-            "-o",
-            "/dev/null",
-            "-w",
-            "%{http_code}",
-            url,
+        try:
+            probe = subprocess.run(
+                ["sudo", "-n", "nsenter", "--target", pid, "--net", "--", "curl",
+                 "--noproxy", "*", "-s", "--max-time", str(remaining),
+                 "-o", "/dev/null", "-w", "%{http_code}", url],
+                check=False, capture_output=True, text=True, timeout=remaining,
+            )
+        except subprocess.TimeoutExpired:
+            last_status = "probe-timeout"
+            break
+        last_status = (
+            probe.stdout.strip() if probe.returncode == 0
+            else f"probe-error: {probe.stderr.strip() or probe.returncode}"
         )
-        last_status = out.strip() if ok else "sidecar-error"
         if last_status == expect:
             return None, 0
         sleep_until(probe_deadline)
@@ -366,8 +366,8 @@ def profile_longrunning(
 
     Both run the candidate detached under --network none and share the health
     gate, stay-running window, and liveness assertion. The http profile
-    additionally probes the port with a digest-pinned curl sidecar joined to
-    the candidate network namespace before the health gate applies.
+    additionally probes the port with runner curl inside the candidate network
+    namespace before the health gate applies.
     """
     ok, out = docker(
         *docker_run_args(True, container_name, ref_digest, command, env_map)
