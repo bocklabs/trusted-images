@@ -51,7 +51,7 @@ permissions:
   id-token: write
 
 env:
-  SKOPEO_IMAGE: "quay.io/skopeo/stable:v1.22.2@sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+  SKOPEO_IMAGE: "quay.io/skopeo/stable:v1.22.3@sha256:ad1d2e25cf0234bb50476e753a8fc9debd4f0582cdd2ab6fd7bad9bacdfe3b9b"
 
 jobs:
   promote:
