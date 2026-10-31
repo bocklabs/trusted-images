@@ -6,11 +6,12 @@ import re
 from functools import total_ordering
 
 _VERSION = re.compile(
-    r"([0-9]+)((?:\.[0-9]+)*)([a-z]?)"
-    r"((?:_(?:alpha|beta|pre|rc|cvs|svn|git|hg|p)[0-9]*)*)"
-    r"(?:~([0-9a-f]+))?(?:-r([0-9]+))?"
+    r"(\d+)((?:\.\d+)*)([a-z]?)"
+    r"((?:_(?:alpha|beta|pre|rc|cvs|svn|git|hg|p)\d*)*)"
+    r"(?:~([0-9a-f]+))?(?:-r(\d+))?",
+    re.ASCII,
 )
-_SUFFIX = re.compile(r"_(alpha|beta|pre|rc|cvs|svn|git|hg|p)([0-9]*)")
+_SUFFIX = re.compile(r"_(alpha|beta|pre|rc|cvs|svn|git|hg|p)(\d*)", re.ASCII)
 _INITIAL, _DIGIT, _LETTER, _SUFFIX_KIND, _SUFFIX_NO, _HASH, _REVISION, _END = range(8)
 _SUFFIX_ORDER = {name: index for index, name in enumerate(
     ("alpha", "beta", "pre", "rc", "", "cvs", "svn", "git", "hg", "p")
