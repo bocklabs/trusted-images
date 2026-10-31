@@ -108,7 +108,9 @@ findings, while Copa stays within stable OS scope. Existing residual/no-fix and
 KEV policy still applies; remediation promises no zero-CVE result.
 
 1. **Validate inventory and candidate** in a read-only validation job. The job
-   has no network egress for the container and only read GitHub/registry scope.
+   has read-only GitHub and registry access. The candidate has no network egress
+   by default. An inventory entry can set `spec.validation.network: true` to use
+   Docker bridge networking, which allows network access during validation.
    Static checks select the pinned root's exact `linux/amd64` image and record
    runtime configuration. Live validation follows the inventory `http`, `process`,
    or `oneshot` profile and observes an image-defined healthcheck when present.

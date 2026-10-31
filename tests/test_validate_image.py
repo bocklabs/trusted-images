@@ -484,6 +484,7 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "pass")
+        self.assertEqual(ev["validation"]["params"]["network"], "none")
         self.assertEqual(
             ev["validation"]["health"],
             {"defined": False, "final_status": "none-defined"},
@@ -523,6 +524,7 @@ class ValidateImageTests(unittest.TestCase):
         runs = [entry for entry in self.spool_entries() if entry[:1] == ["run"]]
         self.assertTrue(runs)
         self.assertEqual(runs[0][runs[0].index("--network") + 1], "bridge")
+        self.assertEqual(self.load_evidence()["validation"]["params"]["network"], "bridge")
 
     def test_http_missing_pid_fails_before_probe(self):
         self.write_scenario({"image_inspect": image_inspect(), "pid": 0})

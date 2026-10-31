@@ -378,7 +378,7 @@ def profile_longrunning(
 ) -> tuple[str | None, int]:
     """Run the http or process profile.
 
-    Both run the candidate detached under --network none and share the health
+    Both run the candidate detached on the configured network and share the health
     gate, stay-running window, and liveness assertion. The http profile
     additionally probes the port with runner curl inside the candidate network
     namespace before the health gate applies.
@@ -387,7 +387,7 @@ def profile_longrunning(
         *docker_run_args(True, container_name, ref_digest, command, env_map, args.network)
     )
     if not ok:
-        return f"candidate failed to start under --network none: {out}", 2
+        return f"candidate failed to start under --network {args.network}: {out}", 2
     try:
         if args.validation_type == "http":
             reason, status = probe_http(args, container_name, logs_path)
@@ -535,6 +535,7 @@ def initial_evidence(args, command: list[str], env_map: dict) -> dict:
                 "expectStatus": args.expect_status,
                 "durationSeconds": args.duration_seconds,
                 "timeoutSeconds": args.timeout_seconds,
+                "network": args.network,
                 "expectedExit": args.expected_exit,
                 "command": command,
                 "expectedPlatforms": [
