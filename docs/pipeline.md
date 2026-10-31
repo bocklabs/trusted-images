@@ -66,6 +66,8 @@ matching uses the immutable image/config identity and the package's
 `Layer.Digest` and `Layer.DiffID`, plus the reviewed target and module.
 Malformed or stale evidence fails with an explicit validation error.
 Inventory CI and rescans use the same parser for required binding fields.
+For versionless Go targets, the runner checks for Go before extracting binaries.
+The Go tool reads build information without executing those binaries.
 Inventory CI also rejects invalid JSON and unknown top-level, layer or source
 keys. The rescan decision retains every review hash and an explicit unknown
 application-version limitation. Raw scan rows and findings remain unchanged.
