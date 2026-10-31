@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: quay.io/docling-project/docling-serve
-    tag: v1.38.0
-    digest: sha256:240f731c0dd8a8cac4137e7a09aeba5db02c4ace806da3ea20aa79a8d87d3f58
+    tag: v1.38.2
+    digest: sha256:8a5fbc993da9dec17c53880e2445834591ad26800ef698ca64096bef29671808
   destination:
     package: ghcr.io/bocklabs/docling-serve
   patchPolicy: enabled
