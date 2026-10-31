@@ -81,6 +81,11 @@ runs:
         VALIDATION_ENV: ${{ inputs.validation_env }}
       run: |
         set -euo pipefail
+        if [ "${VALIDATION_TYPE}" = http ]; then
+          curl --version
+          nsenter --version
+          sudo -n true
+        fi
         # Workflow defaults apply wherever the inventory entry does not override them.
         ARGS=(
           --app "${APP}"

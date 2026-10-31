@@ -110,6 +110,9 @@ KEV policy still applies; remediation promises no zero-CVE result.
    Static checks select the pinned root's exact `linux/amd64` image and record
    runtime configuration. Live validation follows the inventory `http`, `process`,
    or `oneshot` profile and observes an image-defined healthcheck when present.
+   HTTP probes use runner curl through `sudo -n nsenter` in the candidate's network
+   namespace. CI checks these host tools before validation. No probe image or
+   published host port is required.
 2. **Resolve immutable identities**: the pinned upstream index or image manifest,
    its exact `linux/amd64` image, the append-only internal tag, and any existing
    same-candidate revision.

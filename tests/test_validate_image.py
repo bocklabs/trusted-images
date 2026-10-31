@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Stubbed-docker negative and happy suite for scripts/validate_image.py.
 
-Runs the validation CLI as a subprocess with a fake `docker` shim prepended
-to PATH: the shim records every argv to a spool file, emits canned
+Runs the validation CLI with fake `docker` and `sudo` shims prepended to
+PATH. The shims record argv to a spool file and emit canned
 image/container inspect JSON, probe statuses, and exit codes from a
 per-test scenario file (scenarios are data, not per-test logic). No case
 touches a real daemon. Every scenario uses short duration/timeout windows
@@ -42,7 +42,7 @@ SCENARIO = json.load(open(os.environ["FAKE_DOCKER_SCENARIO"]))
 ARGS = sys.argv[1:]
 
 with open(SPOOL, "a", encoding="utf-8") as fh:
-    fh.write(json.dumps(ARGS) + "\\n")
+    fh.write(json.dumps((["sudo"] if os.path.basename(sys.argv[0]) == "sudo" else []) + ARGS) + "\\n")
 
 
 def next_from(key, default):
@@ -59,6 +59,20 @@ def next_from(key, default):
         fh.write(str(idx + 1))
     return value
 
+
+if os.path.basename(sys.argv[0]) == "sudo":
+    if ARGS[:7] != ["-n", "nsenter", "--target", str(SCENARIO.get("pid", 1234)), "--net", "--", "curl"]:
+        raise SystemExit("unexpected namespace probe command")
+    if "probe_url" in SCENARIO:
+        probe = ARGS[7:]
+        probe[-1] = SCENARIO["probe_url"]
+        raise SystemExit(subprocess.run(["curl", *probe]).returncode)
+    print(next_from("probe_statuses", "000"))
+    raise SystemExit(SCENARIO.get("probe_exit", 0))
+
+if ARGS[:3] == ["inspect", "--format", "{{.State.Pid}}"]:
+    print(SCENARIO.get("pid", 1234))
+    raise SystemExit(0)
 
 if ARGS[:2] == ["image", "inspect"]:
     if "image_inspects" in SCENARIO:
@@ -85,13 +99,6 @@ if ARGS[:1] == ["run"]:
     if "-d" in rest:
         print("fake-container-id")
         raise SystemExit(SCENARIO.get("run_detached_exit", 0))
-    if any(arg.startswith("container:") for arg in rest):
-        if "probe_url" in SCENARIO:
-            probe = ARGS[ARGS.index("-s"):]
-            probe[-1] = SCENARIO["probe_url"]
-            raise SystemExit(subprocess.run(["curl", *probe]).returncode)
-        print(next_from("probe_statuses", "000"))
-        raise SystemExit(0)
     print(SCENARIO.get("oneshot_stdout", ""))
     raise SystemExit(SCENARIO.get("oneshot_exit", 0))
 
@@ -140,9 +147,10 @@ class ValidateImageTests(unittest.TestCase):
         self.tmp = Path(tmp.name)
         self.bin_dir = self.tmp / "bin"
         self.bin_dir.mkdir()
-        fake = self.bin_dir / "docker"
-        fake.write_text(FAKE_DOCKER, encoding="utf-8")
-        fake.chmod(0o755)
+        for name in ("docker", "sudo"):
+            fake = self.bin_dir / name
+            fake.write_text(FAKE_DOCKER, encoding="utf-8")
+            fake.chmod(0o755)
         self.spool = self.tmp / "docker-spool.jsonl"
         self.scenario_path = self.tmp / "scenario.json"
         self.index = self.tmp / "upstream-index.json"
@@ -287,15 +295,9 @@ class ValidateImageTests(unittest.TestCase):
             if entry[:1] == ["run"]:
                 self.assertIn("--network", entry)
                 value = entry[entry.index("--network") + 1]
-                self.assertTrue(
-                    value == "none" or value.startswith("container:"),
-                    f"non-isolated run in spool: {entry}",
-                )
-                if value == "none":
-                    self.assertIn("--hostname", entry)
-                    self.assertEqual(entry[entry.index("--hostname") + 1], "localhost")
-                else:
-                    self.assertNotIn("--hostname", entry)
+                self.assertEqual(value, "none", f"non-isolated run in spool: {entry}")
+                self.assertIn("--hostname", entry)
+                self.assertEqual(entry[entry.index("--hostname") + 1], "localhost")
 
     def assert_container_removed(self) -> None:
         self.assertTrue(any(e[:2] == ["rm", "-f"] for e in self.spool_entries()))
@@ -488,9 +490,22 @@ class ValidateImageTests(unittest.TestCase):
         )
         self.assert_common_evidence(ev)
         self.assert_network_isolated()
+        probes = [entry for entry in self.spool_entries() if entry[:1] == ["sudo"]]
+        self.assertTrue(probes)
+        self.assertEqual(probes[0][:8], ["sudo", "-n", "nsenter", "--target", "1234", "--net", "--", "curl"])
+        self.assertEqual(probes[0][-1], "http://localhost:9187/")
         self.assert_container_removed()
         log_file = self.evidence_dir / "validation-logs" / f"{APP}.log"
         self.assertTrue(log_file.is_file() and log_file.stat().st_size > 0)
+
+    def test_http_missing_pid_fails_before_probe(self):
+        self.write_scenario({"image_inspect": image_inspect(), "pid": 0})
+        result = self.run_cli("http", ("--port", "9187"))
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("candidate process ID", result.stdout + result.stderr)
+        self.assertFalse(any(entry[:1] == ["sudo"] for entry in self.spool_entries()))
+        self.assertEqual(self.load_evidence()["validation"]["result"], "fail")
+        self.assert_container_removed()
 
     def test_happy_process_passes(self) -> None:
         self.write_scenario(
