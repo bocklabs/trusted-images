@@ -30,10 +30,10 @@
     "main_module": "github.com/grafana/grafana",
     "module_version": "(devel)",
     "go_version": "go1.26.9",
-    "sha256": "4982453b02e4556494fbfabedb791aee5421e20e5addc3f9fed8fbf0c794f0fa",
+    "sha256": "36728ec813f32b1e048dc3770d747fa50482e17f5941a5f7c7ecea0d87a197ca",
     "go_package_count": 521,
     "versioned_go_package_count": 494
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40463002405",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/41299022777",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
