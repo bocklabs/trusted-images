@@ -30,10 +30,10 @@
     "main_module": null,
     "module_version": "(devel)",
     "go_version": "go1.25.11",
-    "sha256": "52f3294633b2d2d8c4216e0908080f717d7444f021b443bb993e9e0de066a70b",
+    "sha256": "0055c8a320b958fd3a33983348589e60f3c15d53f1d3440034877822d2fef4dc",
     "go_package_count": 52,
     "versioned_go_package_count": 51
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40480005299",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/41299020891",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
