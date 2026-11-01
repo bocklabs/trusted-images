@@ -52,6 +52,6 @@ runs:
         if jq -e 'type == "object"' existing-provenance.json > /dev/null; then
           echo "FATAL: immutable image already has provenance; a fresh revision is required"; exit 1
         fi
-        printf '%s' "${GH_TOKEN}" | cosign login ghcr.io --username "${ACTOR}" --password-stdin
-        cosign sign --yes --bundle sign-bundle.json "${IMAGE}"
-        cosign attest --yes --bundle sbom-bundle.json --predicate trivy-full.cdx.json --type cyclonedx "${IMAGE}"
+        REGISTRY_AUTH=(--registry-username "${ACTOR}" --registry-password "${GH_TOKEN}")
+        cosign sign --yes --bundle sign-bundle.json "${IMAGE}" "${REGISTRY_AUTH[@]}"
+        cosign attest --yes --bundle sbom-bundle.json --predicate trivy-full.cdx.json --type cyclonedx "${IMAGE}" "${REGISTRY_AUTH[@]}"
