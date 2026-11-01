@@ -1,0 +1,173 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "pihole",
+  "upstream": {
+    "ref": "pihole/pihole",
+    "tag": "2026.10.1",
+    "digest": "sha256:30f803ad5dd60ff96cc0a63008a2e9271af481c1b0399a182192b2e91152c1f9",
+    "index_digest": "sha256:30f803ad5dd60ff96cc0a63008a2e9271af481c1b0399a182192b2e91152c1f9",
+    "media_type": "application/vnd.oci.image.index.v1+json",
+    "selected_platform": "linux/amd64",
+    "selected_child_digest": "sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/pihole",
+    "tag": "2026.10.1-bocklabs.1",
+    "digest": "sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/41288558225",
+    "workflow": "promote",
+    "dispatched_by": "nitish-raj"
+  },
+  "tools": {
+    "trivy": "0.76.1",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "copa": null,
+    "skopeo": "v1.22.3",
+    "skopeo_image_digest": "sha256:ad1d2e25cf0234bb50476e753a8fc9debd4f0582cdd2ab6fd7bad9bacdfe3b9b"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:9b926087bdcc9055427ef11bad8c029ca03f0441979f736bf79314991c2f44f2",
+      "updated_at": "2026-11-01 07:08:40.846369079 +0000 UTC"
+    },
+    "full_report_sha256": "ee2c4b090fcedbf715f768bbb8754fd4eb24811a2373072d07f6af97f1cb5f18",
+    "copa_report_sha256": "a13e54910d0678f7b63162435e43e5b5f9fb3529e87612df96bed3af426fa8f1",
+    "decision_sha256": "09e4787b62c2200a6e41fc74fee240dfca8e5c697fd62150346824993b924370",
+    "reports": {
+      "before_sha256": "ee2c4b090fcedbf715f768bbb8754fd4eb24811a2373072d07f6af97f1cb5f18",
+      "final_sha256": "ee2c4b090fcedbf715f768bbb8754fd4eb24811a2373072d07f6af97f1cb5f18",
+      "fixable_sha256": "a13e54910d0678f7b63162435e43e5b5f9fb3529e87612df96bed3af426fa8f1"
+    },
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "pihole/pihole:2026.10.1"
+    }
+  },
+  "policy": {
+    "kev": {
+      "matches": [],
+      "catalog": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "sha256": "3aa9cf3c01f116362a29d111702979175453c425e3733bde80fc4f6f8e2294e5",
+        "fetched_at": "2026-11-01T08:28:03Z",
+        "catalogVersion": "2026.10.30",
+        "dateReleased": "2026-10-30T17:02:45.3665Z"
+      }
+    },
+    "acceptance": null,
+    "patching": {
+      "disabled": false
+    },
+    "copa": {
+      "classification": "not-required",
+      "original_child_input": false,
+      "mode": "not-required",
+      "release": null,
+      "source_sha": null,
+      "runtime_digest": null,
+      "limitation": null
+    },
+    "supersedes": {
+      "higher_upstream": false,
+      "original_child_selected": false
+    },
+    "outcome": "clean",
+    "eligible": true,
+    "warnings": []
+  },
+  "cves": {
+    "before": [],
+    "final": [],
+    "summary": {
+      "resolved": [],
+      "remaining": [],
+      "introduced": [],
+      "unresolved_fixable": []
+    }
+  },
+  "packages": {
+    "changes": [],
+    "downgrades": [],
+    "downgrade_blocked": false
+  },
+  "validation": {
+    "profile": "http",
+    "result": "pass",
+    "params": {
+      "type": "http",
+      "port": 80,
+      "path": "/admin/",
+      "expectStatus": 302,
+      "durationSeconds": 300,
+      "timeoutSeconds": 300,
+      "network": "bridge",
+      "expectedExit": 0,
+      "command": [],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-11-01T08:23:03Z",
+      "finished_at": "2026-11-01T08:28:03Z",
+      "duration_seconds": 300.1
+    },
+    "health": {
+      "defined": true,
+      "final_status": "healthy"
+    },
+    "runner": "GitHub Actions 1000016064",
+    "baseline": {
+      "entrypoint": [
+        "start.sh"
+      ],
+      "cmd": [],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "DNSMASQ_USER=pihole",
+        "FTL_CMD=no-daemon"
+      ]
+    }
+  },
+  "promoted_at": "2026-11-01T08:29:27Z",
+  "notes": "",
+  "signing": {
+    "result": "pass",
+    "image_signature": {
+      "bundle_sha256": "76fb46ac81fc1262a9aebc0edba280737651645ab7228ed341ee47ed4937fe18",
+      "attachment_sha256": "c5dd8624a32b63a5cf89990ec88ff0df65d4a654b9fdc01d005ab3e55b99a1b2",
+      "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+      "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
+    },
+    "sbom_attestation": {
+      "predicate_type": "https://cyclonedx.org/bom",
+      "predicate_sha256": "fb1abb3a85271c0f4918aa22892b54b8e4a6e732de8e0276189852873e59a168",
+      "bundle_sha256": "6c7aa35ce0e60eb30be78f5aa4b49ee5e8de548c92d48c52c6ac453c205c357e",
+      "attachment_sha256": "25760b4ca8cb50d2de5a21dbc810ab626f57ed55ec8eea770b900bd9db2b4240"
+    },
+    "rekor": {
+      "signature": {
+        "inclusion_root_hash": "Vv4OQ3x5f3aIzGt5qVRoDrcWQBeExx9brjj5lIA2cuk=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3624423112,
+        "signed_entry_timestamp": "MEQCIQDO1exNYyuYXFISpjsU3NAlCmoKFPCbR4NfFDtp4xnWdwIfWJ/A4mIWMf73JOy5U4Jd0W/LSDabtB90dqvYwL04Vw=="
+      },
+      "sbom_attestation": {
+        "inclusion_root_hash": "LYRV3P6BpIs6fF07pJlqoZiB72+pVw5IgoSJ0Mk4Sgw=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 3624424502,
+        "signed_entry_timestamp": "MEYCIQDCj8DUwnHnVynZbLTuEp1ba41+2ms2gbagUH4BlXuSJwIhAJuBCVtSdpnsbgWJJfqtqZBLJwHdWdiWfBub/ix2/xpr"
+      }
+    },
+    "tools": {
+      "cosign": "v3.1.4",
+      "trivy": "0.76.1"
+    }
+  }
+}
