@@ -4,44 +4,44 @@
   "upstream": {
     "ref": "linuxserver/qbittorrent",
     "tag": "5.3.0",
-    "digest": "sha256:e887804fa9de4c60f5f0fb1f3a7e4febe40a8f69fe736f70c4e8589b1f868dab",
-    "index_digest": "sha256:e887804fa9de4c60f5f0fb1f3a7e4febe40a8f69fe736f70c4e8589b1f868dab",
+    "digest": "sha256:75ecbb1c89ab7b0a21c4bde40b4820e4f1649d2d56d83b91913422155e8d2a5f",
+    "index_digest": "sha256:75ecbb1c89ab7b0a21c4bde40b4820e4f1649d2d56d83b91913422155e8d2a5f",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c"
+    "selected_child_digest": "sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/qbittorrent",
-    "tag": "5.3.0-bocklabs.3",
-    "digest": "sha256:683a0520157098676b3bea36b8f3b56245e8ed8eed8b067c290d0da4ca8e7843",
+    "tag": "5.3.0-bocklabs.4",
+    "digest": "sha256:d1af69c45c37a75b99671fac9d4beebe16a3718e8576e7fd845865cecaf72293",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40668755349",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/41313870894",
     "workflow": "promote",
-    "dispatched_by": "bocklabs-release[bot]"
+    "dispatched_by": "nitish-raj"
   },
   "tools": {
     "trivy": "0.76.1",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "skopeo": "v1.22.3",
+    "skopeo_image_digest": "sha256:ad1d2e25cf0234bb50476e753a8fc9debd4f0582cdd2ab6fd7bad9bacdfe3b9b"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:5a8df9c70fae1e865f0a7076441ddbb6c26acbb985b9e0321d781f22bc1b8470",
-      "updated_at": "2026-10-28 01:21:08.391884645 +0000 UTC"
+      "check_bundle_digest": "sha256:610ba6fde4f1196dd4c3f5cab237075ff6d1882b76bdc6f5ec63f72235acb783",
+      "updated_at": "2026-11-01 07:08:40.846369079 +0000 UTC"
     },
-    "full_report_sha256": "bc9bbd937600e0304ce5ea2ba8cea6f45c178468eec8c5163b564dedb807ce79",
-    "copa_report_sha256": "ee4098cb1e161ef23554253f6d6731b687b40cbafe7b80e16cf3dfd715589129",
-    "decision_sha256": "a3c587581b3a6a7432265b79f7e6b029df72910a00dcdf3e670ce3955da8237f",
+    "full_report_sha256": "9ff8200a55264e7894d7ef1c9180f44ea6e32ff2cbbdb0aec09988a4bdcd64b0",
+    "copa_report_sha256": "a7b9fbb27353be94ede2c7bb1bbf45f8d435342270bc3a4e21c4169c263d7064",
+    "decision_sha256": "41b2544e4ca630e70588a7054d426ca11447c00994925c9f382c9819621cec46",
     "reports": {
-      "before_sha256": "e1276a16ed07b73a4ac341ee61b8c4bfdf850bc88e3675c75c4b9887cb9780f9",
-      "final_sha256": "bc9bbd937600e0304ce5ea2ba8cea6f45c178468eec8c5163b564dedb807ce79",
-      "fixable_sha256": "ee4098cb1e161ef23554253f6d6731b687b40cbafe7b80e16cf3dfd715589129"
+      "before_sha256": "eb049d6eda0af275625aae56404d2e0eb523fb66641c7ec09a10cdd4294740b7",
+      "final_sha256": "9ff8200a55264e7894d7ef1c9180f44ea6e32ff2cbbdb0aec09988a4bdcd64b0",
+      "fixable_sha256": "a7b9fbb27353be94ede2c7bb1bbf45f8d435342270bc3a4e21c4169c263d7064"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "2d9931c086e42d05425c2da924299c8d9b7ff836de373f981668b7ef5f6f0fd7",
-        "fetched_at": "2026-10-28T10:03:40Z",
-        "catalogVersion": "2026.10.27",
-        "dateReleased": "2026-10-27T19:00:02.2307Z"
+        "sha256": "3aa9cf3c01f116362a29d111702979175453c425e3733bde80fc4f6f8e2294e5",
+        "fetched_at": "2026-11-01T14:00:31Z",
+        "catalogVersion": "2026.10.30",
+        "dateReleased": "2026-10-30T17:02:45.3665Z"
       }
     },
     "acceptance": null,
@@ -72,12 +72,9 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
-    "remediation": {
-      "need_sha256": "e689b4ba7fdb3dfe41b825cbce1f1925e7745d0cca5d0dd15575fdb5741bc1d8"
-    },
     "supersedes": {
-      "higher_upstream": false,
-      "original_child_selected": false
+      "higher_upstream": true,
+      "original_child_selected": true
     },
     "outcome": "patched",
     "eligible": true,
@@ -86,26 +83,13 @@
   "cves": {
     "before": [
       {
-        "identity": "linux/amd64|brotli-libs|CVE-2026-111497",
-        "platform": "linux/amd64",
-        "package": "brotli-libs",
-        "cve": "CVE-2026-111497",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
-        "installed_version": "1.2.0-r1",
-        "fixed_version": "1.2.1-r0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
         "identity": "linux/amd64|curl|CVE-2026-107928",
         "platform": "linux/amd64",
         "package": "curl",
         "cve": "CVE-2026-107928",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -118,7 +102,7 @@
         "cve": "CVE-2026-107929",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -131,7 +115,7 @@
         "cve": "CVE-2026-86409",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -144,7 +128,7 @@
         "cve": "CVE-2026-86410",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -157,7 +141,7 @@
         "cve": "CVE-2026-86411",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -170,7 +154,7 @@
         "cve": "CVE-2026-86412",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -183,7 +167,7 @@
         "cve": "CVE-2026-86413",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -196,7 +180,7 @@
         "cve": "CVE-2026-86414",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -209,7 +193,7 @@
         "cve": "CVE-2026-86415",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -222,7 +206,7 @@
         "cve": "CVE-2026-87861",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -235,7 +219,7 @@
         "cve": "CVE-2026-87862",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -248,7 +232,7 @@
         "cve": "CVE-2026-87863",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -261,7 +245,7 @@
         "cve": "CVE-2026-87864",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -274,7 +258,7 @@
         "cve": "CVE-2026-87865",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -287,7 +271,7 @@
         "cve": "CVE-2026-87866",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -300,7 +284,7 @@
         "cve": "CVE-2026-92386",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -313,7 +297,7 @@
         "cve": "CVE-2026-92387",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -326,7 +310,7 @@
         "cve": "CVE-2026-92388",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "MEDIUM",
@@ -339,7 +323,7 @@
         "cve": "CVE-2026-92389",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -352,7 +336,7 @@
         "cve": "CVE-2026-92390",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -365,7 +349,7 @@
         "cve": "CVE-2026-92391",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -378,7 +362,7 @@
         "cve": "CVE-2026-92392",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "HIGH",
@@ -391,7 +375,7 @@
         "cve": "CVE-2026-94265",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -404,7 +388,7 @@
         "cve": "CVE-2026-94266",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -417,7 +401,7 @@
         "cve": "CVE-2026-107928",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -430,7 +414,7 @@
         "cve": "CVE-2026-107929",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -443,7 +427,7 @@
         "cve": "CVE-2026-86409",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -456,7 +440,7 @@
         "cve": "CVE-2026-86410",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -469,7 +453,7 @@
         "cve": "CVE-2026-86411",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -482,7 +466,7 @@
         "cve": "CVE-2026-86412",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -495,7 +479,7 @@
         "cve": "CVE-2026-86413",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -508,7 +492,7 @@
         "cve": "CVE-2026-86414",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -521,7 +505,7 @@
         "cve": "CVE-2026-86415",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -534,7 +518,7 @@
         "cve": "CVE-2026-87861",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -547,7 +531,7 @@
         "cve": "CVE-2026-87862",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -560,7 +544,7 @@
         "cve": "CVE-2026-87863",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -573,7 +557,7 @@
         "cve": "CVE-2026-87864",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -586,7 +570,7 @@
         "cve": "CVE-2026-87865",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -599,7 +583,7 @@
         "cve": "CVE-2026-87866",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -612,7 +596,7 @@
         "cve": "CVE-2026-92386",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -625,7 +609,7 @@
         "cve": "CVE-2026-92387",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -638,7 +622,7 @@
         "cve": "CVE-2026-92388",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "MEDIUM",
@@ -651,7 +635,7 @@
         "cve": "CVE-2026-92389",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -664,7 +648,7 @@
         "cve": "CVE-2026-92390",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -677,7 +661,7 @@
         "cve": "CVE-2026-92391",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -690,7 +674,7 @@
         "cve": "CVE-2026-92392",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "HIGH",
@@ -703,7 +687,7 @@
         "cve": "CVE-2026-94265",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
@@ -716,36 +700,10 @@
         "cve": "CVE-2026-94266",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "8.22.0-r0",
         "fixed_version": "8.23.0-r0",
         "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|musl-utils|CVE-2026-107891",
-        "platform": "linux/amd64",
-        "package": "musl-utils",
-        "cve": "CVE-2026-107891",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
-        "installed_version": "1.2.6-r2",
-        "fixed_version": "1.2.6-r3",
-        "severity": "UNKNOWN",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|musl|CVE-2026-107891",
-        "platform": "linux/amd64",
-        "package": "musl",
-        "cve": "CVE-2026-107891",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
-        "installed_version": "1.2.6-r2",
-        "fixed_version": "1.2.6-r3",
-        "severity": "UNKNOWN",
         "severity_source": ""
       },
       {
@@ -755,10 +713,10 @@
         "cve": "CVE-2026-114583",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
-        "severity": "UNKNOWN",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -768,10 +726,10 @@
         "cve": "CVE-2026-115557",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
-        "severity": "CRITICAL",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -781,7 +739,7 @@
         "cve": "CVE-2026-12345",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
         "severity": "MEDIUM",
@@ -794,10 +752,10 @@
         "cve": "CVE-2026-114583",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
-        "severity": "UNKNOWN",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -807,10 +765,10 @@
         "cve": "CVE-2026-115557",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
-        "severity": "CRITICAL",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -820,7 +778,7 @@
         "cve": "CVE-2026-12345",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
         "severity": "MEDIUM",
@@ -833,10 +791,10 @@
         "cve": "CVE-2026-114583",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
-        "severity": "UNKNOWN",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -846,10 +804,10 @@
         "cve": "CVE-2026-115557",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
-        "severity": "CRITICAL",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -859,7 +817,7 @@
         "cve": "CVE-2026-12345",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
         "severity": "MEDIUM",
@@ -872,10 +830,10 @@
         "cve": "CVE-2026-114583",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
-        "severity": "UNKNOWN",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -885,10 +843,10 @@
         "cve": "CVE-2026-115557",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
-        "severity": "CRITICAL",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -898,7 +856,7 @@
         "cve": "CVE-2026-12345",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:0f8c20d15d18f5bb0b29ed4811c82c462960b5d3c441d07b59f38c2d337ad20c (alpine 3.24.2)",
+        "target": "linuxserver/qbittorrent@sha256:236a7a3a81a3706182ae1f12ee55aa3781c753963e680b2d9c8e55541686d0ce (alpine 3.24.3)",
         "installed_version": "3.14.8-r0",
         "fixed_version": "3.14.10-r0",
         "severity": "MEDIUM",
@@ -908,10 +866,8 @@
     "final": [],
     "summary": {
       "resolved": [
-        "CVE-2026-107891",
         "CVE-2026-107928",
         "CVE-2026-107929",
-        "CVE-2026-111497",
         "CVE-2026-114583",
         "CVE-2026-115557",
         "CVE-2026-12345",
@@ -947,41 +903,6 @@
     "changes": [
       {
         "ecosystem": "alpine",
-        "name": "alpine-release",
-        "change": "upgraded",
-        "before": "3.24.2-r0",
-        "after": "3.24.3-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "brotli-libs",
-        "change": "upgraded",
-        "before": "1.2.0-r1",
-        "after": "1.2.1-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "c-ares",
-        "change": "upgraded",
-        "before": "1.34.8-r0",
-        "after": "1.34.9-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "ca-certificates",
-        "change": "upgraded",
-        "before": "20260909-r0",
-        "after": "20261020-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "ca-certificates-bundle",
-        "change": "upgraded",
-        "before": "20260909-r0",
-        "after": "20261020-r0"
-      },
-      {
-        "ecosystem": "alpine",
         "name": "curl",
         "change": "upgraded",
         "before": "8.22.0-r0",
@@ -993,20 +914,6 @@
         "change": "upgraded",
         "before": "8.22.0-r0",
         "after": "8.23.0-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "musl",
-        "change": "upgraded",
-        "before": "1.2.6-r2",
-        "after": "1.2.6-r3"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "musl-utils",
-        "change": "upgraded",
-        "before": "1.2.6-r2",
-        "after": "1.2.6-r3"
       },
       {
         "ecosystem": "alpine",
@@ -1050,6 +957,7 @@
       "expectStatus": 200,
       "durationSeconds": 30,
       "timeoutSeconds": 180,
+      "network": "none",
       "expectedExit": 0,
       "command": [
         "/app/qbittorrent-nox",
@@ -1061,15 +969,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-28T10:03:32Z",
-      "finished_at": "2026-10-28T10:03:40Z",
-      "duration_seconds": 8.4
+      "started_at": "2026-11-01T14:00:23Z",
+      "finished_at": "2026-11-01T14:00:31Z",
+      "duration_seconds": 8.5
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000015361",
+    "runner": "GitHub Actions 1000016168",
     "baseline": {
       "entrypoint": [
         "/init"
@@ -1090,34 +998,34 @@
       ]
     }
   },
-  "promoted_at": "2026-10-28T10:05:44Z",
+  "promoted_at": "2026-11-01T14:01:32Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "ac377c04eb43ff0c1315b021de3c61a00be56713f1f7253f629c04f12e5c0742",
-      "attachment_sha256": "ffa857485abe694a3c8ed44ffe067eed2222ee8cb98470ca8dd69d6e7f839c0f",
+      "bundle_sha256": "7b44a3d6b8ad26e74c11c1fab682c1a011a1928ef3682e98d832c8dcbb02e9d2",
+      "attachment_sha256": "08f5b7e0b7241f16231770c3c2c6c26a08157763a024c329061d58ea52a86a4d",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "fc3cb6f9bc09e8221e9631c7a8c99783c357d4815a329f3d5123e5204a949ca6",
-      "bundle_sha256": "b4e8081e53f03bb60c09f588d7918ca3bf435520fed0ab31f15bbfc6da9bc0dd",
-      "attachment_sha256": "dbf99b48c44919e99e01490598859dd0d4b7115118b9fd73e1e42739d7b824ba"
+      "predicate_sha256": "ffec239506c10f2b96ef4687a331c52433de6be9d3d56fbd4d5fc46d3bc7a36c",
+      "bundle_sha256": "68cbf8377f2c6898de089d574547bb9feb8ce65f01ef1aa691e60efa7abb49c5",
+      "attachment_sha256": "3ef3926a9ca205daeac93db963a5c413efe0ad25cd20e717b318d56c5a7aed4a"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "Uy608vU3LcIZbQBh2dbmJBLYIYtU2sAy0so+78j/aew=",
+        "inclusion_root_hash": "asJzwYjqp4UGeTX2aWa9KrhGDCkKBombrLU60k0UjLs=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3535948599,
-        "signed_entry_timestamp": "MEUCIFCYpwYoGLHa3rAAWJ2yNYCmo46xLOIoD95XVRQLevjVAiEApbQuqYi+f6ztfAxlDeE3268ZO7Fscze5E8mGGGGQzZI="
+        "log_index": 3631972050,
+        "signed_entry_timestamp": "MEYCIQDqIT+BQa387BJc7PMSSmegW8RV3jr++OWVSdda2MbXRgIhAKw7pHSqkHGxffCpN6wofpqSKPQ9l0dBA5uwXa/dsJ7M"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "AuLvtH+WwXK6TM9tlzevTssm9tVRNgeWCnITnAsVNAQ=",
+        "inclusion_root_hash": "0UfemhtrSpp9eoQHiIsYuQtn0SdYM3UJg8G1JnrImSE=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3535951916,
-        "signed_entry_timestamp": "MEUCIQC/rF7HLgJ2Br4J8dNr7cp8epAg9056qMK28e3F8njrcQIgIxbrEMyY8ZETDvxEKTonNSx4GR9zI/1r3uqZTjNpwh0="
+        "log_index": 3631972887,
+        "signed_entry_timestamp": "MEUCIQC6pRJ3XKvRbg6PYOS6qiFgd/TdYhmD42ypTDBfzzHwXQIgIkxeQBLvhtR72DcRW/Q0VUzIz+IGlMu/t2qyTaZiKAw="
       }
     },
     "tools": {
