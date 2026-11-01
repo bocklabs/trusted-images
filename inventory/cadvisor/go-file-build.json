@@ -26,11 +26,11 @@
     "main_module": "github.com/google/cadvisor/cmd",
     "module_version": "v0.0.0-20251219201903-f5bec3744d92+dirty",
     "go_version": "go1.25.5",
-    "sha256": "f2015cb063689c82320ef467e308a41e1ac98245c5e1c284701b94eec78ab7db",
+    "sha256": "aa359c9162fa2707fde8bf59d672543f3aebe4d30484d4dcbd323284d261751a",
     "go_package_count": 96,
     "versioned_go_package_count": 96,
     "vcs_revision": "f5bec3744d92f01556c6ca528ee52f3a26402d6d"
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40479980208",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/41299007333",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
