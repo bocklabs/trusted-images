@@ -176,7 +176,6 @@ jobs:
           skip_copy: ${{ steps.occupancy.outputs.skip_copy }}
           candidate_digest: ${{ steps.candidate.outputs.candidate_digest }}
           gh_token: ${{ github.token }}
-          actor: ${{ github.actor }}
 
       - name: Verify signing evidence
         id: signing-gate
