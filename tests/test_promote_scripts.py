@@ -363,7 +363,7 @@ class PromotionScriptTestCase(unittest.TestCase):
 
 
 class SigningActionTests(unittest.TestCase):
-    def test_sign_and_attest_use_direct_auth_without_changing_docker_config(self) -> None:
+    def test_sign_and_attest_use_keychain_without_exposing_credentials(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             binaries = root / "bin"
@@ -382,6 +382,7 @@ class SigningActionTests(unittest.TestCase):
                     (
                         'printf "%s\\n" "$@" > "$CALLS/$1"\n'
                         'if [ "$1" = login ]; then printf "changed\\n" > "$DOCKER_CONFIG/config.json"; fi\n'
+                        'test "${GITHUB_TOKEN-}" = "$EXPECTED_TOKEN" && test "${GITHUB_ACTOR-}" = "$EXPECTED_ACTOR"\n'
                     ),
                 ),
             ):
@@ -391,7 +392,7 @@ class SigningActionTests(unittest.TestCase):
             action = yaml.safe_load(
                 (REPO_ROOT / ".github/actions/publish/sign-and-attest/action.yaml").read_text()
             )
-            script = next(step["run"] for step in action["runs"]["steps"] if step["id"] == "run")
+            step = next(step for step in action["runs"]["steps"] if step["id"] == "run")
             actor, token = "fake-actor", "fake token $;*"
             env = {
                 **os.environ,
@@ -402,11 +403,15 @@ class SigningActionTests(unittest.TestCase):
                 "CANDIDATE_DIGEST": DIGEST_A,
                 "ACTOR": actor,
                 "GH_TOKEN": token,
+                "GITHUB_ACTOR": actor,
+                "GITHUB_TOKEN": token,
+                "EXPECTED_ACTOR": actor,
+                "EXPECTED_TOKEN": token,
                 "CALLS": str(calls),
                 "DOCKER_CONFIG": str(config_dir),
             }
             result = subprocess.run(
-                ["bash", "-c", script], cwd=root, env=env,
+                ["bash", "-c", step["run"]], cwd=root, env=env,
                 capture_output=True, text=True, check=False,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -414,16 +419,20 @@ class SigningActionTests(unittest.TestCase):
             self.assertFalse((calls / "login").exists(), "Cosign login persists Docker credentials")
             self.assertEqual(config.read_text(encoding="utf-8"), '{"auths":{}}\n')
             for command, bundle in (("sign", "sign-bundle.json"), ("attest", "sbom-bundle.json")):
-                args = (calls / command).read_text(encoding="utf-8").splitlines()
+                arguments = (calls / command).read_text(encoding="utf-8")
+                self.assertNotIn(token, arguments, "Cosign arguments expose registry credentials")
+                args = arguments.splitlines()
                 self.assertEqual(args[0], command)
+                self.assertEqual(args[-1], f"ghcr.io/bocklabs/{APP}@{DIGEST_A}")
                 self.assertIn("--yes", args)
-                self.assertIn(f"ghcr.io/bocklabs/{APP}@{DIGEST_A}", args)
-                options = [("--bundle", bundle), ("--registry-username", actor), ("--registry-password", token)]
+                self.assertIn("--k8s-keychain", args)
+                options = [("--bundle", bundle)]
                 if command == "attest":
                     options += [("--predicate", "trivy-full.cdx.json"), ("--type", "cyclonedx")]
                 for option, value in options:
                     self.assertIn(option, args)
                     self.assertEqual(args[args.index(option) + 1], value)
+            self.assertEqual(step["env"].get("GITHUB_TOKEN"), "${{ inputs.gh_token }}")
 
 
 class RecoveryTests(PromotionScriptTestCase):

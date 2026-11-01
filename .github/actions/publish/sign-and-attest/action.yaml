@@ -16,9 +16,6 @@ inputs:
   gh_token:
     description: Workflow input.
     required: false
-  actor:
-    description: Workflow input.
-    required: false
 runs:
   using: composite
   steps:
@@ -29,8 +26,7 @@ runs:
         INTERNAL_TAG: ${{ inputs.internal_tag }}
         SKIP_COPY: ${{ inputs.skip_copy }}
         CANDIDATE_DIGEST: ${{ inputs.candidate_digest }}
-        GH_TOKEN: ${{ inputs.gh_token }}
-        ACTOR: ${{ inputs.actor }}
+        GITHUB_TOKEN: ${{ inputs.gh_token }}
       run: |
         set -euo pipefail
         IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"
@@ -52,6 +48,6 @@ runs:
         if jq -e 'type == "object"' existing-provenance.json > /dev/null; then
           echo "FATAL: immutable image already has provenance; a fresh revision is required"; exit 1
         fi
-        REGISTRY_AUTH=(--registry-username "${ACTOR}" --registry-password "${GH_TOKEN}")
-        cosign sign --yes --bundle sign-bundle.json "${IMAGE}" "${REGISTRY_AUTH[@]}"
-        cosign attest --yes --bundle sbom-bundle.json --predicate trivy-full.cdx.json --type cyclonedx "${IMAGE}" "${REGISTRY_AUTH[@]}"
+        # Cosign's k8s keychain includes GitHub's environment-based registry auth.
+        cosign sign --yes --bundle sign-bundle.json --k8s-keychain "${IMAGE}"
+        cosign attest --yes --bundle sbom-bundle.json --predicate trivy-full.cdx.json --type cyclonedx --k8s-keychain "${IMAGE}"

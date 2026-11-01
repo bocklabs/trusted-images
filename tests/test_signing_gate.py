@@ -255,7 +255,7 @@ else:
         self.assertNotIn("continue-on-error", gate)
         self.assertEqual(decision["if"], "${{ success() && steps.signing-gate.outcome == 'success' }}")
         self.assertIn('IMAGE="ghcr.io/bocklabs/${APP}@${CANDIDATE_DIGEST}"', sign["run"])
-        self.assertIn('cosign sign --yes --bundle sign-bundle.json "${IMAGE}"', sign["run"])
+        self.assertIn('cosign sign --yes --bundle sign-bundle.json', sign["run"])
         self.assertIn('cosign attest --yes --bundle sbom-bundle.json', sign["run"])
         self.assertIn('--image "${IMAGE}"', gate["run"])
         self.assertIn('config/signing-identity.json', gate["run"])
