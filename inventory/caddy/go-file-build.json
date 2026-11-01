@@ -1,0 +1,36 @@
+{
+  "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
+  "ref": "ghcr.io/bocklabs/caddy:2.11.7-alpine-bocklabs.3@sha256:91a5d420c6d56b2c9732f182a65637ac3379782220c7f99dcbf7626542978f46",
+  "config_digest": "sha256:3fae3c414cb2ce72e8cd09d0284f84cf81edd36d9efa225f2863b773e5e6af3b",
+  "upstream_child_digest": "sha256:173b26306d711395accaeba8b67afcaad2a085ccb1e6bf26010bfe8c095a5229",
+  "target": "usr/bin/caddy",
+  "module": "caddy",
+  "layer": {
+    "Digest": "sha256:b274aba9aa61dc404ae2a096e6392d073301413fb1ff05d1c1109ba8a4a99cc4",
+    "DiffID": "sha256:f65067307924adc02a360e9bdd9acbdcbf5270a4f9ec2f007f436fc58f5e6874"
+  },
+  "binary_sha256": "678ade3bfc088749c81a681adc603333ee0bb023b6a6cfe3c0f58bef8ff854e9",
+  "source": {
+    "repository": "https://github.com/caddyserver/caddy",
+    "revision": "72dd0fb067f6d7826c7f79907670ba4a713bfe37",
+    "tag": "v2.11.7",
+    "files": {
+      "go.mod": {
+        "url": "https://raw.githubusercontent.com/caddyserver/caddy/72dd0fb067f6d7826c7f79907670ba4a713bfe37/go.mod",
+        "sha256": "62fdd786b2f9ced74c818132ebaeba320e25528ed316202902918afa73473b72"
+      }
+    }
+  },
+  "build_info": {
+    "program": "caddy",
+    "main_module": "caddy",
+    "module_version": "(devel)",
+    "go_version": "go1.26.8",
+    "sha256": "2b3c1ae9f9468c7784db4808ba8a4df5f46de483e50d9d6c4feafb0711832ba1",
+    "go_package_count": 147,
+    "versioned_go_package_count": 147,
+    "vcs_revision": "72dd0fb067f6d7826c7f79907670ba4a713bfe37"
+  },
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/41299005437",
+  "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
+}
