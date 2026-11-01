@@ -26,11 +26,11 @@
     "main_module": "github.com/grafana/grafana-prometheus-datasource",
     "module_version": "v0.0.0-20260929115645-6d21418acde6",
     "go_version": "go1.27.1",
-    "sha256": "03d687caad9136e984ebd6a0a1a8b6df0977705505b27a6fcc94f4a3247f5d88",
+    "sha256": "8bd6b24eab1db321bba33eea9b8421ad38442d96cd7916a378936d8427733197",
     "go_package_count": 110,
     "versioned_go_package_count": 110,
     "vcs_revision": "6d21418acde6ce31c9f7a6418a88758842a881bb"
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/40463002405",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/41299022777",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
