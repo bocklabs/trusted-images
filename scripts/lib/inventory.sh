@@ -9,7 +9,7 @@ emit_inventory_context() {
     key="${line%%=*}"
     [ -z "${seen[$key]+x}" ] || { echo "FATAL: duplicate inventory output key" >&2; return 1; }
     case "$key" in
-      upstream_ref|upstream_tag|upstream_digest|dest_package|patch_policy|app|validation_type|validation_port|validation_path|validation_expect_status|validation_duration_seconds|validation_timeout_seconds|validation_expected_exit|validation_command|validation_expected_platforms|validation_env) ;;
+      upstream_ref|upstream_tag|upstream_digest|dest_package|patch_policy|app|validation_type|validation_port|validation_path|validation_expect_status|validation_duration_seconds|validation_timeout_seconds|validation_expected_exit|validation_command|validation_expected_platforms|validation_env|validation_network) ;;
       *) echo "FATAL: invalid inventory output key" >&2; return 1 ;;
     esac
     seen[$key]=1

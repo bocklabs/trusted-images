@@ -484,6 +484,7 @@ class ValidateImageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         ev = self.load_evidence()
         self.assertEqual(ev["validation"]["result"], "pass")
+        self.assertEqual(ev["validation"]["params"]["network"], "none")
         self.assertEqual(
             ev["validation"]["health"],
             {"defined": False, "final_status": "none-defined"},
@@ -497,6 +498,33 @@ class ValidateImageTests(unittest.TestCase):
         self.assert_container_removed()
         log_file = self.evidence_dir / "validation-logs" / f"{APP}.log"
         self.assertTrue(log_file.is_file() and log_file.stat().st_size > 0)
+
+    def test_network_opt_in_runs_on_bridge(self) -> None:
+        self.write_scenario(
+            {
+                "image_inspect": image_inspect(),
+                "probe_statuses": ["200"],
+                "inspect_states": [running()],
+            }
+        )
+        result = self.run_cli(
+            "http",
+            (
+                "--port",
+                "9187",
+                "--timeout-seconds",
+                "3",
+                "--duration-seconds",
+                "2",
+                "--network",
+                "bridge",
+            ),
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        runs = [entry for entry in self.spool_entries() if entry[:1] == ["run"]]
+        self.assertTrue(runs)
+        self.assertEqual(runs[0][runs[0].index("--network") + 1], "bridge")
+        self.assertEqual(self.load_evidence()["validation"]["params"]["network"], "bridge")
 
     def test_http_missing_pid_fails_before_probe(self):
         self.write_scenario({"image_inspect": image_inspect(), "pid": 0})

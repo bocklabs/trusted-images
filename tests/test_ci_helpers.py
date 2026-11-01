@@ -3,6 +3,7 @@
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -140,6 +141,20 @@ sys.exit(22)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("FATAL: duplicate inventory output key", result.stderr)
             self.assertEqual(output.read_text(), "")
+
+    def test_inventory_context_emits_pihole_network(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "github-output"
+            result = self.run_bash(
+                "source scripts/lib/inventory.sh; emit_inventory_context candidate inventory/pihole/image.yaml pihole",
+                cwd=ROOT,
+                env={
+                    "PATH": f"{Path(sys.executable).parent}:{os.environ['PATH']}",
+                    "GITHUB_OUTPUT": str(output),
+                },
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("validation_network=bridge", output.read_text().splitlines())
 
     def test_app_name_allowlist_rejects_paths_and_shell_metacharacters(self) -> None:
         script = 'source scripts/lib/validate.sh; require_app_name "$APP"'

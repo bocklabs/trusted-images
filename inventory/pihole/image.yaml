@@ -16,7 +16,9 @@ spec:
     port: 80
     path: /admin/
     expectStatus: 302
-    durationSeconds: 180
+    durationSeconds: 300
+    timeoutSeconds: 300
+    network: true
     command: []
     expectedPlatforms:
     - linux/amd64
