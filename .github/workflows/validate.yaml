@@ -23,27 +23,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python environment
-        uses: ./.github/actions/setup-python-env
-
-      - name: Run test suite
-        uses: ./.github/actions/common/run-tests
-        with:
-          coverage: 'false'
-
-      - name: Check Python types
-        uses: ./.github/actions/common/check-types
-
-      - name: Validate inventory
-        uses: ./.github/actions/common/validate-inventory
-
       - name: Validate Renovate config
+        background: true
         uses: ./.github/actions/common/validate-renovate-config
         with:
           npm_config_loglevel: error
 
-      - name: Run Renovate drift guard
-        uses: ./.github/actions/common/renovate-drift-guard
+      - name: Set up Python environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Detect Cosign verifier pin change
         id: cosign-pin
@@ -66,11 +53,29 @@ jobs:
           cosign-release: ${{ steps.cosign-pin.outputs.version }}
 
       - name: Reverify signed provenance
+        background: true
         if: steps.cosign-pin.outputs.changed == 'true'
         uses: ./.github/actions/common/reverify-provenance
         with:
           base: ${{ steps.cosign-pin.outputs.base }}
           history_only: 'false'
+
+      - name: Run test suite
+        uses: ./.github/actions/common/run-tests
+        with:
+          coverage: 'false'
+
+      - name: Check Python types
+        uses: ./.github/actions/common/check-types
+
+      - name: Validate inventory
+        uses: ./.github/actions/common/validate-inventory
+
+      - name: Run Renovate drift guard
+        uses: ./.github/actions/common/renovate-drift-guard
+
+      - name: Wait for parallel checks
+        wait-all:
 
       - name: Guard runner labels
         uses: ./.github/actions/runner-label-guard

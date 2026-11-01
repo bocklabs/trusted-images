@@ -390,6 +390,21 @@ elif a[:2]==['pr','view']: print('true')
         self.assertNotIn("<<", verify["run"])
         self.assertNotIn("continue-on-error", verify)
 
+    def test_validation_waits_for_parallel_checks_before_refresh(self):
+        steps = load_workflow(ROOT / ".github/workflows/validate.yaml")["jobs"]["inventory"]["steps"]
+        names = [step["name"] for step in steps]
+        wait = names.index("Wait for parallel checks")
+        self.assertIn("wait-all", steps[wait])
+        self.assertNotIn("continue-on-error", steps[wait])
+        for name in ("Validate Renovate config", "Reverify signed provenance"):
+            step = steps[names.index(name)]
+            self.assertIs(step["background"], True)
+            self.assertNotIn("continue-on-error", step)
+            self.assertLess(names.index(name), names.index("Run test suite"))
+            self.assertLess(names.index(name), wait)
+        for name in ("Mint release App token for current provenance refresh", "Refresh armed current provenance PRs"):
+            self.assertLess(wait, names.index(name))
+
     def test_historical_verifier_checks_public_digest_and_attachment_hashes(self):
         sys.path.insert(0, str(ROOT / "scripts"))
         self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
