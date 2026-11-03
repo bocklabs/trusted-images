@@ -4,44 +4,44 @@
   "upstream": {
     "ref": "docker.io/valkey/valkey",
     "tag": "9-alpine",
-    "digest": "sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11",
-    "index_digest": "sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11",
+    "digest": "sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b",
+    "index_digest": "sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:3b83b0b6a598bb390c8186a408a69949772f439548a81c5ea0ab7ccf102c248d"
+    "selected_child_digest": "sha256:de6fbe9626fea9f6f297b6867d2c8cf8f0394ee5ed171613166fc093cb49d0a6"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/valkey",
-    "tag": "9-alpine-bocklabs.2",
-    "digest": "sha256:e9985f5685e21e9279ecf32433e71c8baa444dad7106649ca243beaad8b23306",
+    "tag": "9-alpine-bocklabs.3",
+    "digest": "sha256:de6fbe9626fea9f6f297b6867d2c8cf8f0394ee5ed171613166fc093cb49d0a6",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39751446438",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/41726500943",
     "workflow": "promote",
-    "dispatched_by": "bocklabs-release[bot]"
+    "dispatched_by": "nitish-raj"
   },
   "tools": {
-    "trivy": "0.76.0",
+    "trivy": "0.76.1",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
-    "copa": "0.15.0",
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "copa": null,
+    "skopeo": "v1.22.3",
+    "skopeo_image_digest": "sha256:62da3f53e4b72219741bfa6681e092d30391a880b6346d20bf064778f7caa3c5"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:24a3bba55ee3421b0a462915a938af3d66ae6b2fd479ab033f31c9f6e270fe80",
-      "updated_at": "2026-10-22 01:15:55.263770788 +0000 UTC"
+      "check_bundle_digest": "sha256:781582e75e68f286fa4f491b590b16dd86d268d3f386fdcea905790c01ff0faa",
+      "updated_at": "2026-11-03 07:14:02.629452927 +0000 UTC"
     },
-    "full_report_sha256": "f355ed190c0952ec8aa0de00dbc14f194981119b077d936c36cd52719dff9343",
-    "copa_report_sha256": "595b6ab62ddc85de7774d7c5ba8df0b0bdc46a7eb3e634651d33976120fabc37",
-    "decision_sha256": "771f8afc3eb1879afbf8fb62a902183f178efdb8292140712c561670462ae27e",
+    "full_report_sha256": "f8aa3cf95d7a58e050e1dd9f5fa5eb4387aef898069a79bab3e2a76f1bb19b5d",
+    "copa_report_sha256": "59edfea0acb70d11a75a2eb57f8c4e5a11340b10b37669f156f11e809bf0ffce",
+    "decision_sha256": "36c91ba4d0a055d05cb2c60b0130fbc624170bf1760ce3a4d59233f622e9bec5",
     "reports": {
-      "before_sha256": "01d86086e894dfba51dbac1a337028255b6fef911bcd0040f110d556e810a349",
-      "final_sha256": "f355ed190c0952ec8aa0de00dbc14f194981119b077d936c36cd52719dff9343",
-      "fixable_sha256": "595b6ab62ddc85de7774d7c5ba8df0b0bdc46a7eb3e634651d33976120fabc37"
+      "before_sha256": "f8aa3cf95d7a58e050e1dd9f5fa5eb4387aef898069a79bab3e2a76f1bb19b5d",
+      "final_sha256": "f8aa3cf95d7a58e050e1dd9f5fa5eb4387aef898069a79bab3e2a76f1bb19b5d",
+      "fixable_sha256": "59edfea0acb70d11a75a2eb57f8c4e5a11340b10b37669f156f11e809bf0ffce"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
-        "fetched_at": "2026-10-22T08:57:45Z",
-        "catalogVersion": "2026.10.21",
-        "dateReleased": "2026-10-21T14:04:39.8983Z"
+        "sha256": "0e7e91681f2207c7920a338f0d2b14c67933473ecf9550153627efaaba8d2e4c",
+        "fetched_at": "2026-11-03T21:59:03Z",
+        "catalogVersion": "2026.11.03",
+        "dateReleased": "2026-11-03T20:00:24.8741Z"
       }
     },
     "acceptance": null,
@@ -64,144 +64,34 @@
       "disabled": false
     },
     "copa": {
-      "classification": "succeeded",
-      "original_child_input": true,
-      "mode": "comprehensive",
-      "release": "0.15.0",
-      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
-      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
+      "classification": "not-required",
+      "original_child_input": false,
+      "mode": "not-required",
+      "release": null,
+      "source_sha": null,
+      "runtime_digest": null,
       "limitation": null
     },
-    "remediation": {
-      "need_sha256": "74e197752cf259242c3d8cd69b36ef891258bb2368a29aa141ea037872278333"
-    },
     "supersedes": {
-      "higher_upstream": false,
-      "original_child_selected": false
+      "higher_upstream": true,
+      "original_child_selected": true
     },
-    "outcome": "patched",
+    "outcome": "clean",
     "eligible": true,
     "warnings": []
   },
   "cves": {
-    "before": [
-      {
-        "identity": "linux/amd64|musl-utils|CVE-2026-107891",
-        "platform": "linux/amd64",
-        "package": "musl-utils",
-        "cve": "CVE-2026-107891",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:3b83b0b6a598bb390c8186a408a69949772f439548a81c5ea0ab7ccf102c248d (alpine 3.24.2)",
-        "installed_version": "1.2.6-r2",
-        "fixed_version": "1.2.6-r3",
-        "severity": "UNKNOWN",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|musl|CVE-2026-107891",
-        "platform": "linux/amd64",
-        "package": "musl",
-        "cve": "CVE-2026-107891",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:3b83b0b6a598bb390c8186a408a69949772f439548a81c5ea0ab7ccf102c248d (alpine 3.24.2)",
-        "installed_version": "1.2.6-r2",
-        "fixed_version": "1.2.6-r3",
-        "severity": "UNKNOWN",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|zlib|CVE-2026-85091",
-        "platform": "linux/amd64",
-        "package": "zlib",
-        "cve": "CVE-2026-85091",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:3b83b0b6a598bb390c8186a408a69949772f439548a81c5ea0ab7ccf102c248d (alpine 3.24.2)",
-        "installed_version": "1.3.2-r0",
-        "fixed_version": "1.3.2-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      }
-    ],
+    "before": [],
     "final": [],
     "summary": {
-      "resolved": [
-        "CVE-2026-107891",
-        "CVE-2026-85091"
-      ],
+      "resolved": [],
       "remaining": [],
       "introduced": [],
       "unresolved_fixable": []
     }
   },
   "packages": {
-    "changes": [
-      {
-        "ecosystem": "alpine",
-        "name": "alpine-release",
-        "change": "upgraded",
-        "before": "3.24.2-r0",
-        "after": "3.24.3-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "ca-certificates-bundle",
-        "change": "upgraded",
-        "before": "20260909-r0",
-        "after": "20261020-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "libcrypto3",
-        "change": "upgraded",
-        "before": "3.5.8-r0",
-        "after": "3.5.9-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "libssl3",
-        "change": "upgraded",
-        "before": "3.5.8-r0",
-        "after": "3.5.9-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "musl",
-        "change": "upgraded",
-        "before": "1.2.6-r2",
-        "after": "1.2.6-r3"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "musl-utils",
-        "change": "upgraded",
-        "before": "1.2.6-r2",
-        "after": "1.2.6-r3"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "openssl",
-        "change": "upgraded",
-        "before": "3.5.8-r0",
-        "after": "3.5.9-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "tzdata",
-        "change": "upgraded",
-        "before": "2026d-r0",
-        "after": "2026e-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "zlib",
-        "change": "upgraded",
-        "before": "1.3.2-r0",
-        "after": "1.3.2-r1"
-      }
-    ],
+    "changes": [],
     "downgrades": [],
     "downgrade_blocked": false
   },
@@ -215,6 +105,7 @@
       "expectStatus": 200,
       "durationSeconds": 30,
       "timeoutSeconds": 30,
+      "network": "none",
       "expectedExit": 0,
       "command": [
         "valkey-server",
@@ -226,15 +117,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-22T08:57:44Z",
-      "finished_at": "2026-10-22T08:57:45Z",
-      "duration_seconds": 1.0
+      "started_at": "2026-11-03T21:59:02Z",
+      "finished_at": "2026-11-03T21:59:03Z",
+      "duration_seconds": 0.2
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000013811",
+    "runner": "GitHub Actions 1000016633",
     "baseline": {
       "entrypoint": [
         "tini",
@@ -246,43 +137,43 @@
       ],
       "env": [
         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "VALKEY_VERSION=9.1.2"
+        "VALKEY_VERSION=9.1.3"
       ]
     }
   },
-  "promoted_at": "2026-10-22T08:59:16Z",
+  "promoted_at": "2026-11-03T21:59:57Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "0ae974e008ca658f9ded23cbe2521208381d54d3ab31b486c67f9b646bf65b67",
-      "attachment_sha256": "f64e3dfef300c7840c8a152f5b5e7a11f4f70415e8b9711e0f155d38c644c3d5",
+      "bundle_sha256": "0182dcd8c56d3498da3676aabbc16f055918016152c3dbece204b4354b23ab56",
+      "attachment_sha256": "121ff0ba1b39b3d9111c4ff4807c0d920795edf5c7d3feefbb5a7be0c3d0df53",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "3d0339e61c7707d7d3f797f35be45ab1a6215b7605971450b45fd3d55dd13fd5",
-      "bundle_sha256": "fcfb6003394242ec8505c01de4c02b1ce07a735ed37d46a0025b2268e8577fe7",
-      "attachment_sha256": "1b450e6f3c2e8f1167795047e8b9c26f7bed8271115f7b01fa6a87939490eecc"
+      "predicate_sha256": "8e515788a524b227cc762021019de33b4839d3963d50917c0906ed84efc5e91e",
+      "bundle_sha256": "22d3ca3e6b99d899fc72bece6c722a7641c1852ef8a79d18fbbed2df2e3dddb2",
+      "attachment_sha256": "a0c248b3de2e146c443b693f50f3e2f836c3be913e994a7ad31db94db8accf1b"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "avnhscfGv8TFToJNM+ioHF+XeoUUuTinDBMs9IXlvEk=",
+        "inclusion_root_hash": "C1ZcrEmTndis5+DjNxenSPF7Pbhbom4WqkouOePiWTI=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3382468001,
-        "signed_entry_timestamp": "MEUCIEMYN67xKvFUlrxrDOhCulZOCmJ4JqQ8vszUL16FcuPjAiEAsmzrhMgqTsx4z4Qec9kre/pAIugii9Fsdk3NUC3v9Pw="
+        "log_index": 3680540072,
+        "signed_entry_timestamp": "MEUCIQChb15Vl9ETvlyaZ82HqEP0QfMu1yQt9/mqDCwYDol1WwIgBQcnmON67ivOrWfueMMadR7EpLPtYjBzmmehYKOesuk="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "ClWGGKn+7WvHvHTAY5z8OrSxQHyIrcTAragboBXoKy8=",
+        "inclusion_root_hash": "4mwLo9m3nwODd0biscInp4Rw2aezN05SCUaBc//LPKE=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3382471560,
-        "signed_entry_timestamp": "MEUCIGH9bNriE3JHZ1zOY7W+sM9rARhcSJp52ptuT31j/ZdAAiEA8BWITS8TClBi+upBlmqfvW6qx1glG4TgAYtDi4od+TY="
+        "log_index": 3680541106,
+        "signed_entry_timestamp": "MEQCIBF5JKc9f4y3CIPfa2vYlbskk4fUU12+yEX5vJtTOediAiAYh7/eMlMTDI8oo4PPyZI98xWQDnS11ZxsPrhqwqEORQ=="
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.0"
+      "trivy": "0.76.1"
     }
   }
 }
