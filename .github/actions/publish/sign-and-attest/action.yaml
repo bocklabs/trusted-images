@@ -44,6 +44,7 @@ runs:
           fi
           exit 0
         fi
+        [ -n "${GITHUB_TOKEN:-}" ] || { echo "FATAL: GHCR token is empty"; exit 1; }
         python3 scripts/reverify_signing.py --resolve "${APP}" --tag "${INTERNAL_TAG}" > existing-provenance.json
         if jq -e 'type == "object"' existing-provenance.json > /dev/null; then
           echo "FATAL: immutable image already has provenance; a fresh revision is required"; exit 1

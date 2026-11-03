@@ -401,8 +401,6 @@ class SigningActionTests(unittest.TestCase):
                 "INTERNAL_TAG": INTERNAL_TAG,
                 "SKIP_COPY": "false",
                 "CANDIDATE_DIGEST": DIGEST_A,
-                "ACTOR": actor,
-                "GH_TOKEN": token,
                 "GITHUB_ACTOR": actor,
                 "GITHUB_TOKEN": token,
                 "EXPECTED_ACTOR": actor,
@@ -410,6 +408,15 @@ class SigningActionTests(unittest.TestCase):
                 "CALLS": str(calls),
                 "DOCKER_CONFIG": str(config_dir),
             }
+            missing = subprocess.run(
+                ["bash", "-c", step["run"]], cwd=root,
+                env={**env, "GITHUB_TOKEN": ""},
+                capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(missing.returncode, 0)
+            self.assertEqual(list(calls.iterdir()), [], "Missing token must not call Cosign")
+            self.assertIn("FATAL: GHCR token is empty", missing.stdout + missing.stderr)
+            self.assertEqual(config.read_text(encoding="utf-8"), '{"auths":{}}\n')
             result = subprocess.run(
                 ["bash", "-c", step["run"]], cwd=root, env=env,
                 capture_output=True, text=True, check=False,
