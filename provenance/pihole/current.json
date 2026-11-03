@@ -12,36 +12,36 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/pihole",
-    "tag": "2026.10.1-bocklabs.1",
-    "digest": "sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557",
+    "tag": "2026.10.1-bocklabs.2",
+    "digest": "sha256:2ce10ab2a8a1450a718689fbe9cb359f3960f3dc9cafe2f0f50368b420668edc",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/41288558225",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/41626629430",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
     "trivy": "0.76.1",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
-    "copa": null,
+    "copa": "0.15.0",
     "skopeo": "v1.22.3",
-    "skopeo_image_digest": "sha256:ad1d2e25cf0234bb50476e753a8fc9debd4f0582cdd2ab6fd7bad9bacdfe3b9b"
+    "skopeo_image_digest": "sha256:62da3f53e4b72219741bfa6681e092d30391a880b6346d20bf064778f7caa3c5"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:9b926087bdcc9055427ef11bad8c029ca03f0441979f736bf79314991c2f44f2",
-      "updated_at": "2026-11-01 07:08:40.846369079 +0000 UTC"
+      "check_bundle_digest": "sha256:9ae7b562d8f6077054e7eadcc65c686f34e804581cab3d89bd55010b187e8941",
+      "updated_at": "2026-11-03 07:14:02.629452927 +0000 UTC"
     },
-    "full_report_sha256": "ee2c4b090fcedbf715f768bbb8754fd4eb24811a2373072d07f6af97f1cb5f18",
-    "copa_report_sha256": "a13e54910d0678f7b63162435e43e5b5f9fb3529e87612df96bed3af426fa8f1",
-    "decision_sha256": "09e4787b62c2200a6e41fc74fee240dfca8e5c697fd62150346824993b924370",
+    "full_report_sha256": "4b5f0c6e063a01ddf2c53b3f5f3cfde3b6e6e1745880f026e8c8e4e96be4b6f4",
+    "copa_report_sha256": "e61cc4e16c33a0cc6034e509852fdc71b59db4197753bb36a0a18fcaa040a7cb",
+    "decision_sha256": "12473608901577968c9ef194aec7c2ae8a11852e8d425141e18752e358ea7dc9",
     "reports": {
-      "before_sha256": "ee2c4b090fcedbf715f768bbb8754fd4eb24811a2373072d07f6af97f1cb5f18",
-      "final_sha256": "ee2c4b090fcedbf715f768bbb8754fd4eb24811a2373072d07f6af97f1cb5f18",
-      "fixable_sha256": "a13e54910d0678f7b63162435e43e5b5f9fb3529e87612df96bed3af426fa8f1"
+      "before_sha256": "1f6e5755234654fa3ba1cea651b96bfe0702e53644258b3b66d875ef4056d8fa",
+      "final_sha256": "4b5f0c6e063a01ddf2c53b3f5f3cfde3b6e6e1745880f026e8c8e4e96be4b6f4",
+      "fixable_sha256": "e61cc4e16c33a0cc6034e509852fdc71b59db4197753bb36a0a18fcaa040a7cb"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -54,7 +54,7 @@
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
         "sha256": "3aa9cf3c01f116362a29d111702979175453c425e3733bde80fc4f6f8e2294e5",
-        "fetched_at": "2026-11-01T08:28:03Z",
+        "fetched_at": "2026-11-03T11:27:03Z",
         "catalogVersion": "2026.10.30",
         "dateReleased": "2026-10-30T17:02:45.3665Z"
       }
@@ -64,34 +64,103 @@
       "disabled": false
     },
     "copa": {
-      "classification": "not-required",
-      "original_child_input": false,
-      "mode": "not-required",
-      "release": null,
-      "source_sha": null,
-      "runtime_digest": null,
+      "classification": "succeeded",
+      "original_child_input": true,
+      "mode": "comprehensive",
+      "release": "0.15.0",
+      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
+      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
+    },
+    "remediation": {
+      "need_sha256": "d9090743954b2de3d058f5814217d22cbf163c30fa371cbcfaca13c06ba48497"
     },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "clean",
+    "outcome": "patched",
     "eligible": true,
     "warnings": []
   },
   "cves": {
-    "before": [],
+    "before": [
+      {
+        "identity": "linux/amd64|libexpat|CVE-2026-113351",
+        "platform": "linux/amd64",
+        "package": "libexpat",
+        "cve": "CVE-2026-113351",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "2.9.0-r0",
+        "fixed_version": "2.10.0-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libexpat|CVE-2026-115506",
+        "platform": "linux/amd64",
+        "package": "libexpat",
+        "cve": "CVE-2026-115506",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "2.9.0-r0",
+        "fixed_version": "2.10.0-r0",
+        "severity": "UNKNOWN",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libexpat|CVE-2026-117610",
+        "platform": "linux/amd64",
+        "package": "libexpat",
+        "cve": "CVE-2026-117610",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "2.9.0-r0",
+        "fixed_version": "2.10.0-r0",
+        "severity": "HIGH",
+        "severity_source": "nvd"
+      },
+      {
+        "identity": "linux/amd64|libexpat|CVE-2026-118370",
+        "platform": "linux/amd64",
+        "package": "libexpat",
+        "cve": "CVE-2026-118370",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "2.9.0-r0",
+        "fixed_version": "2.10.0-r0",
+        "severity": "HIGH",
+        "severity_source": "nvd"
+      }
+    ],
     "final": [],
     "summary": {
-      "resolved": [],
+      "resolved": [
+        "CVE-2026-113351",
+        "CVE-2026-115506",
+        "CVE-2026-117610",
+        "CVE-2026-118370"
+      ],
       "remaining": [],
       "introduced": [],
       "unresolved_fixable": []
     }
   },
   "packages": {
-    "changes": [],
+    "changes": [
+      {
+        "ecosystem": "alpine",
+        "name": "libexpat",
+        "change": "upgraded",
+        "before": "2.9.0-r0",
+        "after": "2.10.0-r0"
+      }
+    ],
     "downgrades": [],
     "downgrade_blocked": false
   },
@@ -114,15 +183,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-01T08:23:03Z",
-      "finished_at": "2026-11-01T08:28:03Z",
+      "started_at": "2026-11-03T11:22:03Z",
+      "finished_at": "2026-11-03T11:27:03Z",
       "duration_seconds": 300.1
     },
     "health": {
       "defined": true,
       "final_status": "healthy"
     },
-    "runner": "GitHub Actions 1000016064",
+    "runner": "GitHub Actions 1000016518",
     "baseline": {
       "entrypoint": [
         "start.sh"
@@ -135,34 +204,34 @@
       ]
     }
   },
-  "promoted_at": "2026-11-01T08:29:27Z",
+  "promoted_at": "2026-11-03T11:28:12Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "76fb46ac81fc1262a9aebc0edba280737651645ab7228ed341ee47ed4937fe18",
-      "attachment_sha256": "c5dd8624a32b63a5cf89990ec88ff0df65d4a654b9fdc01d005ab3e55b99a1b2",
+      "bundle_sha256": "33f62547d4a44ce652858d9ab47df87afb8bfadd658895379160affb11789737",
+      "attachment_sha256": "fc1be09c056643aaeaece7999b5b5695c4278bf049997c21605ca608ef7edc7b",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "fb1abb3a85271c0f4918aa22892b54b8e4a6e732de8e0276189852873e59a168",
-      "bundle_sha256": "6c7aa35ce0e60eb30be78f5aa4b49ee5e8de548c92d48c52c6ac453c205c357e",
-      "attachment_sha256": "25760b4ca8cb50d2de5a21dbc810ab626f57ed55ec8eea770b900bd9db2b4240"
+      "predicate_sha256": "4cbd16a41cbb3affd54aee85ed67f41cb484bafc6320e43fd7ac2dce117c8700",
+      "bundle_sha256": "0280dc6d4977f4c13675f0b5ec387b62d53ca24bcc0796bbf50dd9a7870286c6",
+      "attachment_sha256": "53fb3135358bd52a5f4dff056f53fdb4afb87ed40525857d72a2db846db84a0b"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "Vv4OQ3x5f3aIzGt5qVRoDrcWQBeExx9brjj5lIA2cuk=",
+        "inclusion_root_hash": "5cJfa4fa3uHxoWUxA7KMCPGZgRumrgveK7veMFeTleA=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3624423112,
-        "signed_entry_timestamp": "MEQCIQDO1exNYyuYXFISpjsU3NAlCmoKFPCbR4NfFDtp4xnWdwIfWJ/A4mIWMf73JOy5U4Jd0W/LSDabtB90dqvYwL04Vw=="
+        "log_index": 3668027823,
+        "signed_entry_timestamp": "MEYCIQDG3naqQz5S5q8dEXJxrTJDTbtLmK+yW5JzqdM42qDrsAIhANCs387rMxOWcKNogxNPTS9rSToJyQ1hzbYGIKF/cEql"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "LYRV3P6BpIs6fF07pJlqoZiB72+pVw5IgoSJ0Mk4Sgw=",
+        "inclusion_root_hash": "ZerNUgnrzfJUvi/zhvDFhVjD4vsWawIaX4sGuPbHc+8=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3624424502,
-        "signed_entry_timestamp": "MEYCIQDCj8DUwnHnVynZbLTuEp1ba41+2ms2gbagUH4BlXuSJwIhAJuBCVtSdpnsbgWJJfqtqZBLJwHdWdiWfBub/ix2/xpr"
+        "log_index": 3668030611,
+        "signed_entry_timestamp": "MEUCIFOinYuvRYdZB8Sdm4VjfOxKV0B12LQInmerhogw9DxrAiEA71Gn9aePSymXlaPwIYVftBLjaY8NOHW8PmakVaC+Ixw="
       }
     },
     "tools": {
