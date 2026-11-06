@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: caddy
-    tag: 2.11.8-alpine
-    digest: sha256:f6228111e5fafa1a5238258d0858e103f10599b8d1659a146e7726681a002bb9
+    tag: 2.11.9-alpine
+    digest: sha256:0bbb055bda6793c999bde78b1b5ce3e89f829fb031af2cf50056ea1246559fee
   destination:
     package: ghcr.io/bocklabs/caddy
   patchPolicy: enabled
