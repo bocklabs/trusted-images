@@ -77,19 +77,25 @@ else:
         config_path = "blobs/sha256/" + digest
 
         class FailOnEof(io.BytesIO):
+            def __init__(self, data: bytes, error_type: type[OSError | ValueError]) -> None:
+                super().__init__(data)
+                self.error_type = error_type
+
             def read(self, size: int | None = -1) -> bytes:
                 if self.tell() == len(self.getbuffer()):
-                    raise OSError("readback stream failed")
+                    raise self.error_type("readback stream failed")
                 return super().read(size)
 
         with tempfile.TemporaryDirectory() as directory:
             manifest = Path(directory) / "candidate-manifest.json"
             manifest.write_text(json.dumps({"config": {"digest": "sha256:" + digest, "size": len(content)}}))
-            for selected, error_type, message in (
-                ("wrong.json", ValueError, "selected archive config digest mismatch"),
-                (config_path, OSError, "readback stream failed"),
+            for selected, drain_error, error_type, message in (
+                ("wrong.json", OSError, ValueError, "selected archive config digest mismatch"),
+                (config_path, OSError, OSError, "readback stream failed"),
+                ("wrong.json", ValueError, ValueError, "selected archive config digest mismatch"),
+                (config_path, ValueError, ValueError, "readback stream failed"),
             ):
-                with self.subTest(selected=selected):
+                with self.subTest(selected=selected, drain_error=drain_error.__name__):
                     data = io.BytesIO()
                     with tarfile.open(fileobj=data, mode="w") as archive:
                         for name, raw in ((config_path, content), ("manifest.json", json.dumps([{"Config": selected}]).encode())):
@@ -100,8 +106,8 @@ else:
                         try:
                             raise RuntimeError("outer error")
                         except RuntimeError:
-                            verify(manifest, FailOnEof(data.getvalue()))
-                    if error_type is ValueError:
+                            verify(manifest, FailOnEof(data.getvalue(), drain_error))
+                    if selected == "wrong.json":
                         self.assertIn("readback stream failed", " ".join(caught.exception.__notes__))
 
     def test_finalizer_preserves_healthcheck_removes_new_labels_and_rebinds_descriptors(self) -> None:

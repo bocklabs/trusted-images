@@ -44,7 +44,7 @@ def drain(source: IO[bytes], primary_error: BaseException | None) -> None:
     try:
         while source.read(1024 * 1024):
             pass
-    except OSError as drain_error:
+    except (OSError, ValueError) as drain_error:
         if primary_error is None:
             raise
         primary_error.add_note(f"archive stream drain failed: {drain_error}")
