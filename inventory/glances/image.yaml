@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: nicolargo/glances
-    tag: 4.5.8-full
-    digest: sha256:63823bf68687b42afab3bced830d1f157447c0204476cb7a62cb1e5e65dc292c
+    tag: 4.5.9-full
+    digest: sha256:0b309652e8a4f2e827b823609044b9976b309765517760c0383d2e4f73f756c5
   destination:
     package: ghcr.io/bocklabs/glances
   patchPolicy: enabled
