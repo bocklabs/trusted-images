@@ -3,23 +3,23 @@
   "app": "redis-exporter",
   "upstream": {
     "ref": "oliver006/redis_exporter",
-    "tag": "v1.95.0",
-    "digest": "sha256:afb21407aba3df1b4010899f155fc6b1ba2026c97b725d72aca4019d772e7b6b",
-    "index_digest": "sha256:afb21407aba3df1b4010899f155fc6b1ba2026c97b725d72aca4019d772e7b6b",
+    "tag": "v1.97.0",
+    "digest": "sha256:f5f903fbe77571d455ede0453b084d6840bc62fc105efac001034421cab83b99",
+    "index_digest": "sha256:f5f903fbe77571d455ede0453b084d6840bc62fc105efac001034421cab83b99",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:855957b82786168061ccf19c785821136af1447c56ff5183369629cc74861094"
+    "selected_child_digest": "sha256:d16780dcfefc6e42f48682ecc5fbd6dd3207938b1ee88f766b838436a4e27e6e"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/redis-exporter",
-    "tag": "v1.95.0-bocklabs.1",
-    "digest": "sha256:855957b82786168061ccf19c785821136af1447c56ff5183369629cc74861094",
+    "tag": "v1.97.0-bocklabs.1",
+    "digest": "sha256:d16780dcfefc6e42f48682ecc5fbd6dd3207938b1ee88f766b838436a4e27e6e",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39825205022",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42362247655",
     "workflow": "promote",
     "dispatched_by": "nitish-raj"
   },
@@ -27,25 +27,25 @@
     "trivy": "0.76.1",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": null,
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "skopeo": "v1.22.3",
+    "skopeo_image_digest": "sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:944f226dc06b9786a514f85b768776e282e3050fa111776909bd8b26162005e4",
-      "updated_at": "2026-10-22 01:15:55.263770788 +0000 UTC"
+      "check_bundle_digest": "sha256:edd340f7487d3b3a50a4b1ceaa9d3da09fcbcddb5f6d5c60dd9921d41915eee0",
+      "updated_at": "2026-11-07 06:54:25.084761873 +0000 UTC"
     },
-    "full_report_sha256": "75131caeff8dcb9a93d9cd49b0479728b875303db440b0ef9f0fd87a64688aba",
-    "copa_report_sha256": "a57d32024e5c1c49a35f00e49f263aefdcc17460fb3a7aefcc50c6a386004c46",
-    "decision_sha256": "04cd758e4f83cf73906596ad6975814aaffd33ee5e81f48fb9c2e2394012aa53",
+    "full_report_sha256": "4de99bf29329333dbb8566ad3a3e1e0886af84365701b19ae09254a43e76186a",
+    "copa_report_sha256": "5fee7b0fc22daaf3fe84fcf6e2246e16d5b4ba82da7e063c8aec4fd8ef53ccb3",
+    "decision_sha256": "8fa8befbaee7673dbcc37768a2b95fa57f918dff05e069d286f40c1a78e3c754",
     "reports": {
-      "before_sha256": "75131caeff8dcb9a93d9cd49b0479728b875303db440b0ef9f0fd87a64688aba",
-      "final_sha256": "75131caeff8dcb9a93d9cd49b0479728b875303db440b0ef9f0fd87a64688aba",
-      "fixable_sha256": "a57d32024e5c1c49a35f00e49f263aefdcc17460fb3a7aefcc50c6a386004c46"
+      "before_sha256": "4de99bf29329333dbb8566ad3a3e1e0886af84365701b19ae09254a43e76186a",
+      "final_sha256": "4de99bf29329333dbb8566ad3a3e1e0886af84365701b19ae09254a43e76186a",
+      "fixable_sha256": "5fee7b0fc22daaf3fe84fcf6e2246e16d5b4ba82da7e063c8aec4fd8ef53ccb3"
     },
     "secobserve": {
       "product": "trusted-images",
-      "origin": "oliver006/redis_exporter:v1.95.0"
+      "origin": "oliver006/redis_exporter:v1.97.0"
     }
   },
   "policy": {
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
-        "fetched_at": "2026-10-22T17:44:34Z",
-        "catalogVersion": "2026.10.21",
-        "dateReleased": "2026-10-21T14:04:39.8983Z"
+        "sha256": "47e0406b2be5a40420eff66f3d90e83eb8883dae6ff4d08e1b2a942c366f6cc2",
+        "fetched_at": "2026-11-07T10:03:29Z",
+        "catalogVersion": "2026.11.06",
+        "dateReleased": "2026-11-06T19:44:45.1797Z"
       }
     },
     "acceptance": null,
@@ -89,7 +89,7 @@
         "type": "gobinary",
         "target": "redis_exporter",
         "installed_version": "v0.58.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       }
@@ -106,7 +106,7 @@
         "type": "gobinary",
         "target": "redis_exporter",
         "installed_version": "v0.58.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       }
@@ -121,7 +121,7 @@
         "type": "gobinary",
         "target": "redis_exporter",
         "installed_version": "v0.58.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       }
@@ -150,6 +150,7 @@
       "expectStatus": 200,
       "durationSeconds": 30,
       "timeoutSeconds": 30,
+      "network": "none",
       "expectedExit": 0,
       "command": [
         "--version"
@@ -160,15 +161,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-22T17:44:34Z",
-      "finished_at": "2026-10-22T17:44:34Z",
-      "duration_seconds": 0.2
+      "started_at": "2026-11-07T10:03:26Z",
+      "finished_at": "2026-11-07T10:03:29Z",
+      "duration_seconds": 3.3
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000013910",
+    "runner": "GitHub Actions 1000017084",
     "baseline": {
       "entrypoint": [
         "/redis_exporter"
@@ -179,34 +180,34 @@
       ]
     }
   },
-  "promoted_at": "2026-10-22T17:45:43Z",
+  "promoted_at": "2026-11-07T10:04:20Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "ec2cad608a82bea7353452a46a8282f230c3dae6a776ae30f60c75f5bccf52a5",
-      "attachment_sha256": "78ab21fc835a1a44c6240b80640128ab82461fdc2fa16f80526b112c39d6daea",
+      "bundle_sha256": "fba0e6ac95b537824f7152e863959e86d333059f10406a569411b89c13ac87ca",
+      "attachment_sha256": "775380890764529318f163ef6af9dcdfcdf551d01cd5a3b685ffbdaaac4cad42",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "745399c4b2fe23683943fa60bbc9ccd693cbe838a9052b07a68c017725ba8dc7",
-      "bundle_sha256": "57417122653f2e7ea34b756cb26c10da2671662a7ad31134277f313d4419f03e",
-      "attachment_sha256": "f0655151cc42f1ff97104ad6fd8568eb92fcf269c445113756bf8a3bb3af736a"
+      "predicate_sha256": "5df06f1a46705f56a0f8970e07d671b697ef60b4afb5993b8770520861416bb1",
+      "bundle_sha256": "e176104025c6de78a3613d0a6330ff1b79a9fc02cee92bebbb587491dcc4fc1e",
+      "attachment_sha256": "5b047c743a8262587a8047f299d0c6d2cea11f4aed788d5dedcdd13ab4664d8b"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "PcYBDrTNBjtaIwdcTlcXZDlvsczE3UwVaU4DwOJPaRs=",
+        "inclusion_root_hash": "5Y9kh8f89OUmytbY1k2l00B86qC3vTPKOcSkvQsPxaE=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3395547696,
-        "signed_entry_timestamp": "MEUCIEzHp6utE8QkvQ9TcKBaiKNaNm3QY5+nLZJcyhgAaEiVAiEA73Qer37EFrbAm0ihvXJ8HQK2ktsFgRACjuDS71AvbhE="
+        "log_index": 3735230860,
+        "signed_entry_timestamp": "MEUCIEJYWLvD8twt3LY6bfzT4agJeksdSHTouaL3/3lkQUrCAiEAvwtg0+6MNXbdOFBBF7xFH+lo7W+fq3PEBpFMZ7iVxEk="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "dirfNXREOib3gvBRJB1QVOqPJsbzibUUwJTFfLF5MAA=",
+        "inclusion_root_hash": "XDYjzE1A3LZzU9FjNOY5gIZuC3coTkmGOmdb0GCUV24=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3395551310,
-        "signed_entry_timestamp": "MEQCICmeuq469Y7OhWkndBXO/TXplnxHICAcAxUSGV/ysF53AiAFP06cs3RJsjhA2dOhc5aFKuOn/r1OqmNdZyU3rfaQZA=="
+        "log_index": 3735231429,
+        "signed_entry_timestamp": "MEQCIGYa8lEsS0mqekRuYXN9ze6txhHtAmDyyXOPIcnkVvO0AiBiLNU+qJBAfVF6akd0UcWqaq7edZZtPRiErt31mtdH4g=="
       }
     },
     "tools": {
