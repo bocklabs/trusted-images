@@ -16,6 +16,7 @@ from tests.workflow_helpers import load_workflow
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from finalize_candidate_config import finalize
 from validate_image import config_drift, label_drift
+from verify_candidate_archive import verify
 
 
 class CandidateMaterializationTests(unittest.TestCase):
@@ -55,6 +56,7 @@ else:
                 ("classic", legacy_path, content, legacy_path, 0),
                 ("changed", config_path, content[:-1] + b"!", config_path, 1),
                 ("unreferenced", config_path, content, "blobs/sha256/" + "b" * 64, 1),
+                ("malformed", config_path, content, [], 1),
             ):
                 with self.subTest(name=name):
                     with tarfile.open(root / "saved.tar", "w") as archive:
@@ -66,6 +68,41 @@ else:
                                             capture_output=True, text=True, check=False)
                     self.assertEqual(result.returncode == 0, expected == 0, result.stdout + result.stderr)
                     self.assertNotIn("BrokenPipe", result.stderr)
+                    if name == "malformed":
+                        self.assertIn("selected archive config digest mismatch", result.stderr)
+
+    def test_drain_error_preserves_verification_error_and_fails_after_success(self) -> None:
+        content = b'{}'
+        digest = hashlib.sha256(content).hexdigest()
+        config_path = "blobs/sha256/" + digest
+
+        class FailOnEof(io.BytesIO):
+            def read(self, size: int | None = -1) -> bytes:
+                if self.tell() == len(self.getbuffer()):
+                    raise OSError("readback stream failed")
+                return super().read(size)
+
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "candidate-manifest.json"
+            manifest.write_text(json.dumps({"config": {"digest": "sha256:" + digest, "size": len(content)}}))
+            for selected, error_type, message in (
+                ("wrong.json", ValueError, "selected archive config digest mismatch"),
+                (config_path, OSError, "readback stream failed"),
+            ):
+                with self.subTest(selected=selected):
+                    data = io.BytesIO()
+                    with tarfile.open(fileobj=data, mode="w") as archive:
+                        for name, raw in ((config_path, content), ("manifest.json", json.dumps([{"Config": selected}]).encode())):
+                            member = tarfile.TarInfo(name)
+                            member.size = len(raw)
+                            archive.addfile(member, io.BytesIO(raw))
+                    with self.assertRaisesRegex(error_type, message) as caught:
+                        try:
+                            raise RuntimeError("outer error")
+                        except RuntimeError:
+                            verify(manifest, FailOnEof(data.getvalue()))
+                    if error_type is ValueError:
+                        self.assertIn("readback stream failed", " ".join(caught.exception.__notes__))
 
     def test_finalizer_preserves_healthcheck_removes_new_labels_and_rebinds_descriptors(self) -> None:
         original: dict = {"Labels": {"sh.copa.chisel.version": "original"}}

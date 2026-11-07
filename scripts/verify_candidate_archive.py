@@ -40,7 +40,18 @@ def archive_config(source: IO[bytes], names: set[str], size: int) -> tuple[objec
     return selected, found
 
 
+def drain(source: IO[bytes], primary_error: BaseException | None) -> None:
+    try:
+        while source.read(1024 * 1024):
+            pass
+    except OSError as drain_error:
+        if primary_error is None:
+            raise
+        primary_error.add_note(f"archive stream drain failed: {drain_error}")
+
+
 def verify(manifest_path: Path, source: IO[bytes]) -> None:
+    verified = False
     try:
         manifest = json.loads(manifest_path.read_bytes())
         config = manifest.get("config") if isinstance(manifest, dict) else None
@@ -55,11 +66,11 @@ def verify(manifest_path: Path, source: IO[bytes]) -> None:
         if not isinstance(selected, list) or len(selected) != 1 or not isinstance(selected[0], dict):
             raise ValueError("archive must select exactly one image")
         config_path = selected[0].get("Config")
-        if config_path not in names or found.get(config_path) != digest:
+        if not isinstance(config_path, str) or found.get(config_path) != digest:
             raise ValueError("selected archive config digest mismatch")
+        verified = True
     finally:
-        while source.read(1024 * 1024):
-            pass
+        drain(source, None if verified else sys.exception())
 
 
 if __name__ == "__main__":
