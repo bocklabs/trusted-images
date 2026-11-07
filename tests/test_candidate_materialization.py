@@ -1,8 +1,12 @@
 import copy
 import hashlib
+import io
 import json
+import os
 import shlex
+import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,6 +19,54 @@ from validate_image import config_drift, label_drift
 
 
 class CandidateMaterializationTests(unittest.TestCase):
+    def test_loaded_image_is_bound_to_expected_config_even_when_id_is_manifest(self) -> None:
+        workflow = load_workflow(Path(__file__).parents[1] / ".github/workflows/promote-candidate.yaml")
+        run = next(step["run"] for step in workflow["jobs"]["validate"]["steps"] if step.get("id") == "patched")
+        start = run.index('FINAL_IMAGE_ID=')
+        end = run.index("docker image inspect copa:final --format '{{json .Config.Labels}}'", start)
+        snippet = run[start:end]
+        image_id = "sha256:" + "a" * 64
+        content = b'{"architecture":"amd64","config":{"Labels":{"test":"keep"}}}'
+        digest = hashlib.sha256(content).hexdigest()
+        self.assertNotEqual(image_id, "sha256:" + digest)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "scripts").symlink_to(Path(__file__).parents[1] / "scripts", target_is_directory=True)
+            (root / "candidate-manifest.json").write_text(json.dumps({"config": {"digest": "sha256:" + digest, "size": len(content)}}))
+            docker = root / "docker"
+            docker.write_text('''#!/usr/bin/env python3
+import os, pathlib, sys
+args = sys.argv[1:]
+if args[:2] == ["image", "inspect"]:
+    print(os.environ["TEST_IMAGE_ID"])
+elif args == ["image", "save", os.environ["TEST_IMAGE_ID"]]:
+    sys.stdout.buffer.write(pathlib.Path(os.environ["TEST_IMAGE_ARCHIVE"]).read_bytes())
+    sys.stdout.buffer.write(b"\\0" * 1000000)
+else:
+    sys.exit(2)
+''')
+            docker.chmod(0o755)
+            env = os.environ | {"PATH": str(root) + os.pathsep + os.environ["PATH"], "TEST_IMAGE_ID": image_id,
+                                "TEST_IMAGE_ARCHIVE": str(root / "saved.tar")}
+            config_path = "blobs/sha256/" + digest
+            legacy_path = digest + ".json"
+            for name, filename, raw, selected, expected in (
+                ("containerd", config_path, content, config_path, 0),
+                ("classic", legacy_path, content, legacy_path, 0),
+                ("changed", config_path, content[:-1] + b"!", config_path, 1),
+                ("unreferenced", config_path, content, "blobs/sha256/" + "b" * 64, 1),
+            ):
+                with self.subTest(name=name):
+                    with tarfile.open(root / "saved.tar", "w") as archive:
+                        for path, data in ((filename, raw), ("manifest.json", json.dumps([{"Config": selected}]).encode())):
+                            entry = tarfile.TarInfo(path)
+                            entry.size = len(data)
+                            archive.addfile(entry, io.BytesIO(data))
+                    result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", snippet], cwd=root, env=env,
+                                            capture_output=True, text=True, check=False)
+                    self.assertEqual(result.returncode == 0, expected == 0, result.stdout + result.stderr)
+                    self.assertNotIn("BrokenPipe", result.stderr)
+
     def test_finalizer_preserves_healthcheck_removes_new_labels_and_rebinds_descriptors(self) -> None:
         original: dict = {"Labels": {"sh.copa.chisel.version": "original"}}
         candidate: dict = {"architecture": "amd64", "config": {"Labels": {
@@ -108,7 +160,9 @@ class CandidateMaterializationTests(unittest.TestCase):
         self.assertEqual(shlex.split(command)[-2:], ["oci:/workspace/candidate-oci:candidate",
                                                    "docker-archive:/workspace/candidate-final.tar:copa:final"])
         ordered = [run.index(token) for token in ("rm candidate-final.tar", "copy --format v2s2 oci:",
-                   "docker load --input candidate-final.tar", "FINAL_IMAGE_ID=", '[ "${FINAL_IMAGE_ID}" = "$(jq -er .config.digest candidate-manifest.json)" ]',
+                   "python3 scripts/verify_candidate_archive.py candidate-manifest.json candidate-final.tar",
+                   "docker load --input candidate-final.tar", "FINAL_IMAGE_ID=",
+                   'docker image save "${FINAL_IMAGE_ID}" | python3 scripts/verify_candidate_archive.py candidate-manifest.json -',
                    'echo "image_id=${FINAL_IMAGE_ID}"')]
         self.assertEqual(ordered, sorted(ordered))
         scan = next(step for step in steps if step.get("id") == "scanafter")

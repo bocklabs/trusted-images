@@ -917,9 +917,13 @@ config_digest = hashlib.sha256(config_text.encode()).hexdigest()
 with open(os.environ['SPOOL'], 'a') as fh: fh.write(json.dumps(args) + '\\n')
 if args[:2] == ['image', 'inspect']:
     if args[-1] == '{{.Id}}':
-        print('sha256:' + config_digest)
+        print('sha256:' + 'c' * 64)
     else:
         print('{}')
+elif args[:2] == ['image', 'save']:
+    if args[-1] != 'sha256:' + 'c' * 64: sys.exit('save requires the inspected image ID')
+    from pathlib import Path
+    sys.stdout.buffer.write(Path('candidate-final.tar').read_bytes())
 elif args[0] == 'create': print('metadata-container')
 elif args[0] == 'commit':
     if args[-2] != 'metadata-container': sys.exit('commit requires a container')
@@ -943,6 +947,14 @@ elif args[0] == 'run':
         P(blob_dir / config_digest).write_text(config_text)
         layout.write_text(json.dumps({"schemaVersion": 2, "manifests": [{"digest": digest,
                           "size": len(manifest_text), "mediaType": "application/vnd.oci.image.manifest.v1+json"}]}))
+    else:
+        import io, tarfile
+        with tarfile.open('candidate-final.tar', 'w') as archive:
+            for name, data in ((config_digest + '.json', config_text.encode()),
+                               ('manifest.json', json.dumps([{'Config': config_digest + '.json'}]).encode())):
+                member = tarfile.TarInfo(name)
+                member.size = len(data)
+                archive.addfile(member, io.BytesIO(data))
     print(layout.read_text())
 """)
             executable.chmod(0o755)
