@@ -12,36 +12,36 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/seerr",
-    "tag": "v3.5.1-bocklabs.1",
-    "digest": "sha256:0347681e9e453d81776cda5f1ff15ed5c4da5d3752ad621447c4bc4b41367077",
+    "tag": "v3.5.1-bocklabs.2",
+    "digest": "sha256:80b2c53ff143d9134eb62c7b1dd471a4f3e8cf3c631be8ca8f24ccd3ac140151",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/41020866490",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42472783306",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
-    "trivy": "0.76.1",
+    "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "skopeo": "v1.22.3",
+    "skopeo_image_digest": "sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:9d775d57f95ee376b212b548aab1acb7c07ffc322f4f6b7f9e6534cf36d7b0f8",
-      "updated_at": "2026-10-30 01:01:11.134360213 +0000 UTC"
+      "check_bundle_digest": "sha256:e70d29ed3f228011d5527bd220c603ed56ba1cf1312d6feb6af9b8f64740b782",
+      "updated_at": "2026-11-08 06:39:21.614725497 +0000 UTC"
     },
-    "full_report_sha256": "eff3ba30556d6100f1d27847c144bf56e750246b5855d42ba66064b9c77afe6e",
-    "copa_report_sha256": "e978d12d0ac740ad209b655a6a29b892d2d82b3a5ef80d55e165e3b6e596a3c9",
-    "decision_sha256": "0cc64a865c6916882b0e2600a1d5b3b0eb31c0465fb0e611f1abb745200f545c",
+    "full_report_sha256": "f228866bec82209133b1fa514b37331d3495a34fb495685b36018fa1c85fb2da",
+    "copa_report_sha256": "9e484967cfa1aa310492ac467f92a219fcfef0cd1ddad7b31428e07163e0919f",
+    "decision_sha256": "bd54157ceef304a872fbacd2f2fdc1293ace7b0cb10b4c88b56470a44fab1576",
     "reports": {
-      "before_sha256": "03be2d59cc97b7bd9c980fc5b17fbe806f9dc00d4ac7627066cfda6aaa1d785e",
-      "final_sha256": "eff3ba30556d6100f1d27847c144bf56e750246b5855d42ba66064b9c77afe6e",
-      "fixable_sha256": "e978d12d0ac740ad209b655a6a29b892d2d82b3a5ef80d55e165e3b6e596a3c9"
+      "before_sha256": "aa3f527e1539432b5479cb8c9ce98bd8929cdb38a421e503923a9fd8692b639e",
+      "final_sha256": "f228866bec82209133b1fa514b37331d3495a34fb495685b36018fa1c85fb2da",
+      "fixable_sha256": "9e484967cfa1aa310492ac467f92a219fcfef0cd1ddad7b31428e07163e0919f"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "38a7172a5f26470dc7632aaa1c6cff4a51fe7bfec8cdce978a19b816a751e34d",
-        "fetched_at": "2026-10-30T07:38:11Z",
-        "catalogVersion": "2026.10.29",
-        "dateReleased": "2026-10-29T19:09:34.4003Z"
+        "sha256": "47e0406b2be5a40420eff66f3d90e83eb8883dae6ff4d08e1b2a942c366f6cc2",
+        "fetched_at": "2026-11-08T10:49:42Z",
+        "catalogVersion": "2026.11.06",
+        "dateReleased": "2026-11-06T19:44:45.1797Z"
       }
     },
     "acceptance": null,
@@ -72,11 +72,14 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
+    "remediation": {
+      "need_sha256": "a1bd93177c34afb883b39240aebf0871356fbeaca4ca7c6e7fe156059a2c5b61"
+    },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-49356:LOW:ghsa,CVE-2026-44728:HIGH:ghsa,CVE-2026-48758:MEDIUM:ghsa,CVE-2026-3449:LOW:ghsa,CVE-2026-101898:HIGH:ghsa,CVE-2026-101899:MEDIUM:ghsa,CVE-2026-101900:MEDIUM:ghsa,CVE-2026-101901:HIGH:ghsa,CVE-2026-101902:MEDIUM:ghsa,CVE-2026-101904:MEDIUM:ghsa,CVE-2026-101906:HIGH:ghsa,CVE-2026-101908:MEDIUM:ghsa,CVE-2026-42033:HIGH:ghsa,CVE-2026-42034:MEDIUM:ghsa,CVE-2026-42035:HIGH:ghsa,CVE-2026-42036:MEDIUM:ghsa,CVE-2026-42037:MEDIUM:ghsa,CVE-2026-42038:MEDIUM:ghsa,CVE-2026-42039:MEDIUM:ghsa,CVE-2026-42040:LOW:ghsa,CVE-2026-42041:MEDIUM:ghsa,CVE-2026-42042:MEDIUM:ghsa,CVE-2026-42043:HIGH:ghsa,CVE-2026-42044:MEDIUM:ghsa,CVE-2026-42264:HIGH:ghsa,CVE-2026-44486:HIGH:ghsa,CVE-2026-44487:HIGH:ghsa,CVE-2026-44488:HIGH:ghsa,CVE-2026-44490:MEDIUM:ghsa,CVE-2026-44492:HIGH:ghsa,CVE-2026-44494:HIGH:ghsa,CVE-2026-44495:HIGH:ghsa,CVE-2026-44496:HIGH:ghsa,CVE-2026-67312:MEDIUM:ghsa,CVE-2026-67313:MEDIUM:ghsa,CVE-2026-67315:MEDIUM:ghsa,CVE-2026-67316:MEDIUM:ghsa,CVE-2026-67317:MEDIUM:ghsa,CVE-2026-67318:MEDIUM:ghsa,CVE-2026-67319:MEDIUM:ghsa,CVE-2026-45819:MEDIUM:ghsa,CVE-2026-2739:MEDIUM:ghsa,CVE-2026-111181:HIGH:ghsa,CVE-2026-12590:LOW:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-45149:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-73088:HIGH:ghsa,CVE-2026-73089:HIGH:ghsa,CVE-2026-93753:LOW:ghsa,CVE-2026-110095:LOW:ghsa,CVE-2026-110306:MEDIUM:ghsa,CVE-2026-110725:LOW:ghsa,CVE-2026-13676:HIGH:ghsa,CVE-2026-16221:HIGH:ghsa,CVE-2026-18446:HIGH:ghsa,CVE-2026-6321:HIGH:ghsa,CVE-2026-6322:HIGH:ghsa,CVE-2026-75975:HIGH:ghsa,CVE-2026-76172:HIGH:ghsa,CVE-2026-84292:HIGH:ghsa,CVE-2026-86472:MEDIUM:ghsa,CVE-2026-111755:HIGH:ghsa,CVE-2026-111756:HIGH:ghsa,CVE-2026-12143:HIGH:ghsa,CVE-2026-106444:MEDIUM:ghsa,CVE-2026-106445:CRITICAL:ghsa,CVE-2026-106446:CRITICAL:ghsa,CVE-2026-33916:MEDIUM:ghsa,CVE-2026-33937:CRITICAL:ghsa,CVE-2026-33938:HIGH:ghsa,CVE-2026-33939:HIGH:ghsa,CVE-2026-33940:HIGH:ghsa,CVE-2026-33941:HIGH:ghsa,GHSA-442j-39wm-28r2:LOW:ghsa,GHSA-7rx3-28cr-v5wh:MEDIUM:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-42338:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-101910:MEDIUM:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-54272:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-69198:MEDIUM:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-42338:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-42338:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-53550:MEDIUM:ghsa,CVE-2026-59869:HIGH:ghsa,CVE-2026-84375:HIGH:ghsa,GHSA-5p4m-2wfm-xmqj:HIGH:ghsa,CVE-2026-48801:HIGH:ghsa,CVE-2026-59887:HIGH:ghsa,CVE-2026-2950:MEDIUM:ghsa,CVE-2026-4800:HIGH:ghsa,CVE-2026-3455:LOW:ghsa,CVE-2026-26996:HIGH:ghsa,CVE-2026-27903:HIGH:ghsa,CVE-2026-27904:HIGH:ghsa,CVE-2026-17495:MEDIUM:ghsa,CVE-2026-113872:HIGH:ghsa,CVE-2026-5038:MEDIUM:ghsa,CVE-2026-5079:HIGH:ghsa,CVE-2026-77063:LOW:ghsa,CVE-2026-77078:HIGH:ghsa,CVE-2026-82333:HIGH:ghsa,CVE-2026-67213:HIGH:ghsa,CVE-2026-67214:HIGH:ghsa,CVE-2026-67214:HIGH:ghsa,CVE-2026-64641:HIGH:ghsa,CVE-2026-64642:HIGH:ghsa,CVE-2026-64643:MEDIUM:ghsa,CVE-2026-64644:MEDIUM:ghsa,CVE-2026-64645:HIGH:ghsa,CVE-2026-64646:MEDIUM:ghsa,CVE-2026-64647:MEDIUM:ghsa,CVE-2026-64648:MEDIUM:ghsa,CVE-2026-64649:HIGH:ghsa,CVE-2026-75604:CRITICAL:ghsa,CVE-2026-94482:HIGH:ghsa,CVE-2026-94483:HIGH:ghsa,CVE-2026-94484:MEDIUM:ghsa,CVE-2026-94485:MEDIUM:ghsa,CVE-2026-94486:LOW:ghsa,CVE-2026-94543:MEDIUM:ghsa,GHSA-2464-fhr4-w9xw:CRITICAL:ghsa,GHSA-2xp9-vwfh-vxw4:CRITICAL:ghsa,GHSA-673q-mjm6-r5xr:CRITICAL:ghsa,GHSA-vcvr-r3jv-pc5j:CRITICAL:ghsa,CVE-2025-13033:MEDIUM:ghsa,CVE-2025-14874:HIGH:ghsa,CVE-2026-110871:MEDIUM:ghsa,CVE-2026-82659:HIGH:ghsa,CVE-2026-82662:HIGH:ghsa,GHSA-268h-hp4c-crq3:MEDIUM:ghsa,GHSA-2x7j-588g-ccc2:HIGH:ghsa,GHSA-4ffr-jq9g-5ffx:MEDIUM:ghsa,GHSA-4g23-2xm8-66gc:MEDIUM:ghsa,GHSA-6vj9-mwq6-2f5v:MEDIUM:ghsa,GHSA-85x2-q946-cp5h:MEDIUM:ghsa,GHSA-8c8m-p3m8-cjg8:MEDIUM:ghsa,GHSA-8m3c-c648-2xjj:MEDIUM:ghsa,GHSA-8vvx-rff5-p5rq:MEDIUM:ghsa,GHSA-c7w3-x93f-qmm8:LOW:ghsa,GHSA-cc9r-2j5m-2m83:MEDIUM:ghsa,GHSA-g73g-hqqh-jr95:MEDIUM:ghsa,GHSA-m943-m63m-w62w:MEDIUM:ghsa,GHSA-v53p-9fqp-m79j:HIGH:ghsa,GHSA-vvjj-xcjg-gr5g:MEDIUM:ghsa,GHSA-wmmp-3585-3rmp:MEDIUM:ghsa,GHSA-wqvq-jvpq-h66f:MEDIUM:ghsa,CVE-2025-13033:MEDIUM:ghsa,CVE-2025-14874:HIGH:ghsa,CVE-2026-110871:MEDIUM:ghsa,CVE-2026-82659:HIGH:ghsa,CVE-2026-82662:HIGH:ghsa,GHSA-268h-hp4c-crq3:MEDIUM:ghsa,GHSA-2x7j-588g-ccc2:HIGH:ghsa,GHSA-4ffr-jq9g-5ffx:MEDIUM:ghsa,GHSA-4g23-2xm8-66gc:MEDIUM:ghsa,GHSA-6vj9-mwq6-2f5v:MEDIUM:ghsa,GHSA-85x2-q946-cp5h:MEDIUM:ghsa,GHSA-8c8m-p3m8-cjg8:MEDIUM:ghsa,GHSA-8m3c-c648-2xjj:MEDIUM:ghsa,GHSA-8vvx-rff5-p5rq:MEDIUM:ghsa,GHSA-c7w3-x93f-qmm8:LOW:ghsa,GHSA-cc9r-2j5m-2m83:MEDIUM:ghsa,GHSA-g73g-hqqh-jr95:MEDIUM:ghsa,GHSA-m943-m63m-w62w:MEDIUM:ghsa,GHSA-v53p-9fqp-m79j:HIGH:ghsa,GHSA-vvjj-xcjg-gr5g:MEDIUM:ghsa,GHSA-wmmp-3585-3rmp:MEDIUM:ghsa,GHSA-wqvq-jvpq-h66f:MEDIUM:ghsa,CVE-2026-110871:MEDIUM:ghsa,CVE-2026-82659:HIGH:ghsa,CVE-2026-82662:HIGH:ghsa,GHSA-268h-hp4c-crq3:MEDIUM:ghsa,GHSA-2x7j-588g-ccc2:HIGH:ghsa,GHSA-4ffr-jq9g-5ffx:MEDIUM:ghsa,GHSA-4g23-2xm8-66gc:MEDIUM:ghsa,GHSA-6vj9-mwq6-2f5v:MEDIUM:ghsa,GHSA-85x2-q946-cp5h:MEDIUM:ghsa,GHSA-8c8m-p3m8-cjg8:MEDIUM:ghsa,GHSA-8m3c-c648-2xjj:MEDIUM:ghsa,GHSA-8vvx-rff5-p5rq:MEDIUM:ghsa,GHSA-c7w3-x93f-qmm8:LOW:ghsa,GHSA-cc9r-2j5m-2m83:MEDIUM:ghsa,GHSA-g73g-hqqh-jr95:MEDIUM:ghsa,GHSA-m943-m63m-w62w:MEDIUM:ghsa,GHSA-v53p-9fqp-m79j:HIGH:ghsa,GHSA-vvjj-xcjg-gr5g:MEDIUM:ghsa,GHSA-wmmp-3585-3rmp:MEDIUM:ghsa,GHSA-wqvq-jvpq-h66f:MEDIUM:ghsa,CVE-2026-110871:MEDIUM:ghsa,CVE-2026-82659:HIGH:ghsa,CVE-2026-82662:HIGH:ghsa,GHSA-268h-hp4c-crq3:MEDIUM:ghsa,GHSA-2x7j-588g-ccc2:HIGH:ghsa,GHSA-4ffr-jq9g-5ffx:MEDIUM:ghsa,GHSA-4g23-2xm8-66gc:MEDIUM:ghsa,GHSA-6vj9-mwq6-2f5v:MEDIUM:ghsa,GHSA-85x2-q946-cp5h:MEDIUM:ghsa,GHSA-8c8m-p3m8-cjg8:MEDIUM:ghsa,GHSA-8m3c-c648-2xjj:MEDIUM:ghsa,GHSA-8vvx-rff5-p5rq:MEDIUM:ghsa,GHSA-cc9r-2j5m-2m83:MEDIUM:ghsa,GHSA-g73g-hqqh-jr95:MEDIUM:ghsa,GHSA-m943-m63m-w62w:MEDIUM:ghsa,GHSA-v53p-9fqp-m79j:HIGH:ghsa,GHSA-wmmp-3585-3rmp:MEDIUM:ghsa,GHSA-wqvq-jvpq-h66f:MEDIUM:ghsa,CVE-2026-9496:HIGH:ghsa,CVE-2026-9496:HIGH:ghsa,CVE-2026-33671:HIGH:ghsa,CVE-2026-33672:MEDIUM:ghsa,CVE-2026-104844:MEDIUM:ghsa,CVE-2026-9358:LOW:ghsa,CVE-2026-41305:MEDIUM:ghsa,CVE-2026-45623:HIGH:ghsa,CVE-2026-69153:MEDIUM:ghsa,CVE-2026-73646:HIGH:ghsa,CVE-2026-90711:CRITICAL:ghsa,CVE-2026-110816:MEDIUM:ghsa,CVE-2026-2391:LOW:ghsa,CVE-2026-82417:MEDIUM:ghsa,CVE-2026-8723:MEDIUM:ghsa,GHSA-f88m-g3jw-g9cj:HIGH:ghsa,GHSA-rgj7-g3m4-5g8c:HIGH:ghsa,GHSA-wq5f-xc86-pv6w:HIGH:ghsa,CVE-2026-48815:HIGH:ghsa,CVE-2026-93749:HIGH:ghsa,CVE-2026-73650:HIGH:ghsa,CVE-2026-84369:MEDIUM:ghsa,CVE-2026-84370:HIGH:ghsa,CVE-2026-23745:HIGH:ghsa,CVE-2026-23950:HIGH:ghsa,CVE-2026-24842:HIGH:ghsa,CVE-2026-26960:HIGH:ghsa,CVE-2026-29786:HIGH:ghsa,CVE-2026-31802:HIGH:ghsa,CVE-2026-53655:MEDIUM:ghsa,CVE-2026-59871:MEDIUM:ghsa,CVE-2026-59873:CRITICAL:ghsa,CVE-2026-59874:HIGH:ghsa,CVE-2026-59875:MEDIUM:ghsa,CVE-2026-73566:HIGH:ghsa,CVE-2026-53655:MEDIUM:ghsa,CVE-2026-59871:MEDIUM:ghsa,CVE-2026-59873:CRITICAL:ghsa,CVE-2026-59874:HIGH:ghsa,CVE-2026-59875:MEDIUM:ghsa,CVE-2026-73566:HIGH:ghsa,CVE-2026-48125:MEDIUM:ghsa,CVE-2026-27601:HIGH:ghsa,CVE-2026-109383:HIGH:ghsa,CVE-2026-109869:HIGH:ghsa,CVE-2026-109924:MEDIUM:ghsa,CVE-2026-109932:MEDIUM:ghsa,CVE-2026-11525:LOW:ghsa,CVE-2026-12151:HIGH:ghsa,CVE-2026-15157:MEDIUM:ghsa,CVE-2026-16728:MEDIUM:ghsa,CVE-2026-16729:MEDIUM:ghsa,CVE-2026-18540:LOW:ghsa,CVE-2026-19534:HIGH:ghsa,CVE-2026-6733:LOW:ghsa,CVE-2026-85024:MEDIUM:ghsa,CVE-2026-87018:HIGH:ghsa,CVE-2026-9679:MEDIUM:ghsa,CVE-2026-109383:HIGH:ghsa,CVE-2026-109829:HIGH:ghsa,CVE-2026-109841:MEDIUM:ghsa,CVE-2026-109869:HIGH:ghsa,CVE-2026-109924:MEDIUM:ghsa,CVE-2026-109932:MEDIUM:ghsa,CVE-2026-11525:LOW:ghsa,CVE-2026-12151:HIGH:ghsa,CVE-2026-13697:HIGH:ghsa,CVE-2026-14643:MEDIUM:ghsa,CVE-2026-15157:MEDIUM:ghsa,CVE-2026-16728:MEDIUM:ghsa,CVE-2026-16729:MEDIUM:ghsa,CVE-2026-18149:MEDIUM:ghsa,CVE-2026-18540:LOW:ghsa,CVE-2026-19534:HIGH:ghsa,CVE-2026-6733:LOW:ghsa,CVE-2026-6734:HIGH:ghsa,CVE-2026-84890:MEDIUM:ghsa,CVE-2026-84933:MEDIUM:ghsa,CVE-2026-84947:LOW:ghsa,CVE-2026-84961:HIGH:ghsa,CVE-2026-85008:LOW:ghsa,CVE-2026-85014:MEDIUM:ghsa,CVE-2026-85024:MEDIUM:ghsa,CVE-2026-87018:HIGH:ghsa,CVE-2026-87029:MEDIUM:ghsa,CVE-2026-9675:HIGH:ghsa,CVE-2026-9678:MEDIUM:ghsa,CVE-2026-9679:MEDIUM:ghsa,CVE-2026-9697:HIGH:ghsa,CVE-2026-41907:MEDIUM:ghsa,CVE-2026-33532:MEDIUM:ghsa",
+    "outcome": "eligible with no-fix warnings: CVE-2026-49356:LOW:ghsa,CVE-2026-44728:HIGH:ghsa,CVE-2026-48758:MEDIUM:ghsa,CVE-2026-3449:LOW:ghsa,CVE-2026-101898:HIGH:ghsa,CVE-2026-101899:MEDIUM:ghsa,CVE-2026-101900:MEDIUM:ghsa,CVE-2026-101901:HIGH:ghsa,CVE-2026-101902:MEDIUM:ghsa,CVE-2026-101904:MEDIUM:ghsa,CVE-2026-101906:HIGH:ghsa,CVE-2026-101908:MEDIUM:ghsa,CVE-2026-42033:HIGH:ghsa,CVE-2026-42034:MEDIUM:ghsa,CVE-2026-42035:HIGH:ghsa,CVE-2026-42036:MEDIUM:ghsa,CVE-2026-42037:MEDIUM:ghsa,CVE-2026-42038:MEDIUM:ghsa,CVE-2026-42039:MEDIUM:ghsa,CVE-2026-42040:LOW:ghsa,CVE-2026-42041:MEDIUM:ghsa,CVE-2026-42042:MEDIUM:ghsa,CVE-2026-42043:HIGH:ghsa,CVE-2026-42044:MEDIUM:ghsa,CVE-2026-42264:HIGH:ghsa,CVE-2026-44486:HIGH:ghsa,CVE-2026-44487:HIGH:ghsa,CVE-2026-44488:HIGH:ghsa,CVE-2026-44490:MEDIUM:ghsa,CVE-2026-44492:HIGH:ghsa,CVE-2026-44494:HIGH:ghsa,CVE-2026-44495:HIGH:ghsa,CVE-2026-44496:HIGH:ghsa,CVE-2026-67312:MEDIUM:ghsa,CVE-2026-67313:MEDIUM:ghsa,CVE-2026-67315:MEDIUM:ghsa,CVE-2026-67316:MEDIUM:ghsa,CVE-2026-67317:MEDIUM:ghsa,CVE-2026-67318:MEDIUM:ghsa,CVE-2026-67319:MEDIUM:ghsa,CVE-2026-45819:MEDIUM:ghsa,CVE-2026-2739:MEDIUM:ghsa,CVE-2026-111181:HIGH:ghsa,CVE-2026-12590:LOW:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-45149:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2026-13149:HIGH:ghsa,CVE-2026-14257:HIGH:ghsa,CVE-2026-33750:MEDIUM:ghsa,CVE-2026-69152:HIGH:ghsa,CVE-2026-73088:HIGH:ghsa,CVE-2026-73089:HIGH:ghsa,CVE-2026-110095:LOW:ghsa,CVE-2026-110306:MEDIUM:ghsa,CVE-2026-110725:LOW:ghsa,CVE-2026-13676:HIGH:ghsa,CVE-2026-16221:HIGH:ghsa,CVE-2026-18446:HIGH:ghsa,CVE-2026-6321:HIGH:ghsa,CVE-2026-6322:HIGH:ghsa,CVE-2026-75975:HIGH:ghsa,CVE-2026-76172:HIGH:ghsa,CVE-2026-84292:HIGH:ghsa,CVE-2026-86472:MEDIUM:ghsa,CVE-2026-111755:HIGH:ghsa,CVE-2026-111756:HIGH:ghsa,CVE-2026-116689:HIGH:ghsa,CVE-2026-12143:HIGH:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-106444:MEDIUM:ghsa,CVE-2026-106445:CRITICAL:ghsa,CVE-2026-106446:CRITICAL:ghsa,CVE-2026-33916:MEDIUM:ghsa,CVE-2026-33937:CRITICAL:ghsa,CVE-2026-33938:HIGH:ghsa,CVE-2026-33939:HIGH:ghsa,CVE-2026-33940:HIGH:ghsa,CVE-2026-33941:HIGH:ghsa,GHSA-442j-39wm-28r2:LOW:ghsa,GHSA-7rx3-28cr-v5wh:MEDIUM:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-42338:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-101910:MEDIUM:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-54272:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-69198:MEDIUM:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-42338:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-42338:MEDIUM:ghsa,CVE-2026-69192:HIGH:ghsa,CVE-2026-53550:MEDIUM:ghsa,CVE-2026-59869:HIGH:ghsa,CVE-2026-84375:HIGH:ghsa,GHSA-5p4m-2wfm-xmqj:HIGH:ghsa,CVE-2026-48801:HIGH:ghsa,CVE-2026-59887:HIGH:ghsa,CVE-2026-2950:MEDIUM:ghsa,CVE-2026-4800:HIGH:ghsa,CVE-2026-3455:LOW:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-26996:HIGH:ghsa,CVE-2026-27903:HIGH:ghsa,CVE-2026-27904:HIGH:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-17495:MEDIUM:ghsa,CVE-2026-113872:HIGH:ghsa,CVE-2026-5038:MEDIUM:ghsa,CVE-2026-5079:HIGH:ghsa,CVE-2026-77063:LOW:ghsa,CVE-2026-77078:HIGH:ghsa,CVE-2026-82333:HIGH:ghsa,CVE-2026-67213:HIGH:ghsa,CVE-2026-67214:HIGH:ghsa,CVE-2026-67214:HIGH:ghsa,CVE-2026-64641:HIGH:ghsa,CVE-2026-64642:HIGH:ghsa,CVE-2026-64643:MEDIUM:ghsa,CVE-2026-64644:MEDIUM:ghsa,CVE-2026-64645:HIGH:ghsa,CVE-2026-64646:MEDIUM:ghsa,CVE-2026-64647:MEDIUM:ghsa,CVE-2026-64648:MEDIUM:ghsa,CVE-2026-64649:HIGH:ghsa,CVE-2026-75604:CRITICAL:ghsa,CVE-2026-94482:HIGH:ghsa,CVE-2026-94483:HIGH:ghsa,CVE-2026-94484:MEDIUM:ghsa,CVE-2026-94485:MEDIUM:ghsa,CVE-2026-94486:LOW:ghsa,CVE-2026-94543:MEDIUM:ghsa,GHSA-2464-fhr4-w9xw:CRITICAL:ghsa,GHSA-2xp9-vwfh-vxw4:CRITICAL:ghsa,GHSA-673q-mjm6-r5xr:CRITICAL:ghsa,GHSA-vcvr-r3jv-pc5j:CRITICAL:ghsa,CVE-2025-13033:MEDIUM:ghsa,CVE-2025-14874:HIGH:ghsa,CVE-2026-110871:MEDIUM:ghsa,CVE-2026-82659:HIGH:ghsa,CVE-2026-82662:HIGH:ghsa,GHSA-268h-hp4c-crq3:MEDIUM:ghsa,GHSA-2x7j-588g-ccc2:HIGH:ghsa,GHSA-4ffr-jq9g-5ffx:MEDIUM:ghsa,GHSA-4g23-2xm8-66gc:MEDIUM:ghsa,GHSA-6vj9-mwq6-2f5v:MEDIUM:ghsa,GHSA-85x2-q946-cp5h:MEDIUM:ghsa,GHSA-8c8m-p3m8-cjg8:MEDIUM:ghsa,GHSA-8m3c-c648-2xjj:MEDIUM:ghsa,GHSA-8vvx-rff5-p5rq:MEDIUM:ghsa,GHSA-c7w3-x93f-qmm8:LOW:ghsa,GHSA-cc9r-2j5m-2m83:MEDIUM:ghsa,GHSA-g73g-hqqh-jr95:MEDIUM:ghsa,GHSA-m943-m63m-w62w:MEDIUM:ghsa,GHSA-v53p-9fqp-m79j:HIGH:ghsa,GHSA-vvjj-xcjg-gr5g:MEDIUM:ghsa,GHSA-wmmp-3585-3rmp:MEDIUM:ghsa,GHSA-wqvq-jvpq-h66f:MEDIUM:ghsa,CVE-2025-13033:MEDIUM:ghsa,CVE-2025-14874:HIGH:ghsa,CVE-2026-110871:MEDIUM:ghsa,CVE-2026-82659:HIGH:ghsa,CVE-2026-82662:HIGH:ghsa,GHSA-268h-hp4c-crq3:MEDIUM:ghsa,GHSA-2x7j-588g-ccc2:HIGH:ghsa,GHSA-4ffr-jq9g-5ffx:MEDIUM:ghsa,GHSA-4g23-2xm8-66gc:MEDIUM:ghsa,GHSA-6vj9-mwq6-2f5v:MEDIUM:ghsa,GHSA-85x2-q946-cp5h:MEDIUM:ghsa,GHSA-8c8m-p3m8-cjg8:MEDIUM:ghsa,GHSA-8m3c-c648-2xjj:MEDIUM:ghsa,GHSA-8vvx-rff5-p5rq:MEDIUM:ghsa,GHSA-c7w3-x93f-qmm8:LOW:ghsa,GHSA-cc9r-2j5m-2m83:MEDIUM:ghsa,GHSA-g73g-hqqh-jr95:MEDIUM:ghsa,GHSA-m943-m63m-w62w:MEDIUM:ghsa,GHSA-v53p-9fqp-m79j:HIGH:ghsa,GHSA-vvjj-xcjg-gr5g:MEDIUM:ghsa,GHSA-wmmp-3585-3rmp:MEDIUM:ghsa,GHSA-wqvq-jvpq-h66f:MEDIUM:ghsa,CVE-2026-110871:MEDIUM:ghsa,CVE-2026-82659:HIGH:ghsa,CVE-2026-82662:HIGH:ghsa,GHSA-268h-hp4c-crq3:MEDIUM:ghsa,GHSA-2x7j-588g-ccc2:HIGH:ghsa,GHSA-4ffr-jq9g-5ffx:MEDIUM:ghsa,GHSA-4g23-2xm8-66gc:MEDIUM:ghsa,GHSA-6vj9-mwq6-2f5v:MEDIUM:ghsa,GHSA-85x2-q946-cp5h:MEDIUM:ghsa,GHSA-8c8m-p3m8-cjg8:MEDIUM:ghsa,GHSA-8m3c-c648-2xjj:MEDIUM:ghsa,GHSA-8vvx-rff5-p5rq:MEDIUM:ghsa,GHSA-c7w3-x93f-qmm8:LOW:ghsa,GHSA-cc9r-2j5m-2m83:MEDIUM:ghsa,GHSA-g73g-hqqh-jr95:MEDIUM:ghsa,GHSA-m943-m63m-w62w:MEDIUM:ghsa,GHSA-v53p-9fqp-m79j:HIGH:ghsa,GHSA-vvjj-xcjg-gr5g:MEDIUM:ghsa,GHSA-wmmp-3585-3rmp:MEDIUM:ghsa,GHSA-wqvq-jvpq-h66f:MEDIUM:ghsa,CVE-2026-110871:MEDIUM:ghsa,CVE-2026-82659:HIGH:ghsa,CVE-2026-82662:HIGH:ghsa,GHSA-268h-hp4c-crq3:MEDIUM:ghsa,GHSA-2x7j-588g-ccc2:HIGH:ghsa,GHSA-4ffr-jq9g-5ffx:MEDIUM:ghsa,GHSA-4g23-2xm8-66gc:MEDIUM:ghsa,GHSA-6vj9-mwq6-2f5v:MEDIUM:ghsa,GHSA-85x2-q946-cp5h:MEDIUM:ghsa,GHSA-8c8m-p3m8-cjg8:MEDIUM:ghsa,GHSA-8m3c-c648-2xjj:MEDIUM:ghsa,GHSA-8vvx-rff5-p5rq:MEDIUM:ghsa,GHSA-cc9r-2j5m-2m83:MEDIUM:ghsa,GHSA-g73g-hqqh-jr95:MEDIUM:ghsa,GHSA-m943-m63m-w62w:MEDIUM:ghsa,GHSA-v53p-9fqp-m79j:HIGH:ghsa,GHSA-wmmp-3585-3rmp:MEDIUM:ghsa,GHSA-wqvq-jvpq-h66f:MEDIUM:ghsa,CVE-2026-9496:HIGH:ghsa,CVE-2026-9496:HIGH:ghsa,CVE-2026-33671:HIGH:ghsa,CVE-2026-33672:MEDIUM:ghsa,CVE-2026-104844:MEDIUM:ghsa,CVE-2026-9358:LOW:ghsa,CVE-2026-41305:MEDIUM:ghsa,CVE-2026-45623:HIGH:ghsa,CVE-2026-69153:MEDIUM:ghsa,CVE-2026-73646:HIGH:ghsa,CVE-2026-90711:CRITICAL:ghsa,CVE-2026-110816:MEDIUM:ghsa,CVE-2026-2391:LOW:ghsa,CVE-2026-82417:MEDIUM:ghsa,CVE-2026-8723:MEDIUM:ghsa,GHSA-f88m-g3jw-g9cj:HIGH:ghsa,GHSA-rgj7-g3m4-5g8c:HIGH:ghsa,GHSA-wq5f-xc86-pv6w:HIGH:ghsa,CVE-2026-48815:HIGH:ghsa,CVE-2026-93749:HIGH:ghsa,CVE-2026-73650:HIGH:ghsa,CVE-2026-84369:MEDIUM:ghsa,CVE-2026-84370:HIGH:ghsa,CVE-2026-23745:HIGH:ghsa,CVE-2026-23950:HIGH:ghsa,CVE-2026-24842:HIGH:ghsa,CVE-2026-26960:HIGH:ghsa,CVE-2026-29786:HIGH:ghsa,CVE-2026-31802:HIGH:ghsa,CVE-2026-53655:MEDIUM:ghsa,CVE-2026-59871:MEDIUM:ghsa,CVE-2026-59873:CRITICAL:ghsa,CVE-2026-59874:HIGH:ghsa,CVE-2026-59875:MEDIUM:ghsa,CVE-2026-73566:HIGH:ghsa,CVE-2026-53655:MEDIUM:ghsa,CVE-2026-59871:MEDIUM:ghsa,CVE-2026-59873:CRITICAL:ghsa,CVE-2026-59874:HIGH:ghsa,CVE-2026-59875:MEDIUM:ghsa,CVE-2026-73566:HIGH:ghsa,CVE-2026-48125:MEDIUM:ghsa,CVE-2026-27601:HIGH:ghsa,CVE-2026-109383:HIGH:ghsa,CVE-2026-109869:HIGH:ghsa,CVE-2026-109924:MEDIUM:ghsa,CVE-2026-109932:MEDIUM:ghsa,CVE-2026-11525:LOW:ghsa,CVE-2026-12151:HIGH:ghsa,CVE-2026-15157:MEDIUM:ghsa,CVE-2026-16728:MEDIUM:ghsa,CVE-2026-16729:MEDIUM:ghsa,CVE-2026-18540:LOW:ghsa,CVE-2026-19534:HIGH:ghsa,CVE-2026-6733:LOW:ghsa,CVE-2026-85024:MEDIUM:ghsa,CVE-2026-87018:HIGH:ghsa,CVE-2026-9679:MEDIUM:ghsa,CVE-2026-109383:HIGH:ghsa,CVE-2026-109829:HIGH:ghsa,CVE-2026-109841:MEDIUM:ghsa,CVE-2026-109869:HIGH:ghsa,CVE-2026-109924:MEDIUM:ghsa,CVE-2026-109932:MEDIUM:ghsa,CVE-2026-11525:LOW:ghsa,CVE-2026-12151:HIGH:ghsa,CVE-2026-13697:HIGH:ghsa,CVE-2026-14643:MEDIUM:ghsa,CVE-2026-15157:MEDIUM:ghsa,CVE-2026-16728:MEDIUM:ghsa,CVE-2026-16729:MEDIUM:ghsa,CVE-2026-18149:MEDIUM:ghsa,CVE-2026-18540:LOW:ghsa,CVE-2026-19534:HIGH:ghsa,CVE-2026-6733:LOW:ghsa,CVE-2026-6734:HIGH:ghsa,CVE-2026-84890:MEDIUM:ghsa,CVE-2026-84933:MEDIUM:ghsa,CVE-2026-84947:LOW:ghsa,CVE-2026-84961:HIGH:ghsa,CVE-2026-85008:LOW:ghsa,CVE-2026-85014:MEDIUM:ghsa,CVE-2026-85024:MEDIUM:ghsa,CVE-2026-87018:HIGH:ghsa,CVE-2026-87029:MEDIUM:ghsa,CVE-2026-9675:HIGH:ghsa,CVE-2026-9678:MEDIUM:ghsa,CVE-2026-9679:MEDIUM:ghsa,CVE-2026-9697:HIGH:ghsa,CVE-2026-41907:MEDIUM:ghsa,CVE-2026-33532:MEDIUM:ghsa",
     "eligible": true,
     "warnings": [
       {
@@ -1131,20 +1134,6 @@
       },
       {
         "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:deepmerge:app%2Fnode_modules%2F.pnpm%2Fdeepmerge%404.3.1%2Fnode_modules%2Fdeepmerge%2Fpackage.json|CVE-2026-93753",
-        "platform": "linux/amd64",
-        "package": "deepmerge",
-        "cve": "CVE-2026-93753",
-        "class": "lang-pkgs",
-        "type": "node-pkg",
-        "target": "Node.js",
-        "installed_version": "4.3.1",
-        "fixed_version": "",
-        "severity": "LOW",
-        "severity_source": "ghsa"
-      },
-      {
-        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:fast-uri:app%2Fnode_modules%2F.pnpm%2Ffast-uri%403.1.0%2Fnode_modules%2Ffast-uri%2Fpackage.json|CVE-2026-110095",
         "platform": "linux/amd64",
         "package": "fast-uri",
@@ -1341,6 +1330,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:follow-redirects:app%2Fnode_modules%2F.pnpm%2Ffollow-redirects%401.16.0%2Fnode_modules%2Ffollow-redirects%2Fpackage.json|CVE-2026-116689",
+        "platform": "linux/amd64",
+        "package": "follow-redirects",
+        "cve": "CVE-2026-116689",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "1.16.0",
+        "fixed_version": "1.16.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:form-data:app%2Fnode_modules%2F.pnpm%2Fform-data%404.0.5%2Fnode_modules%2Fform-data%2Fpackage.json|CVE-2026-12143",
         "platform": "linux/amd64",
         "package": "form-data",
@@ -1351,6 +1354,48 @@
         "installed_version": "4.0.5",
         "fixed_version": "2.5.6, 3.0.5, 4.0.6",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:app%2Fnode_modules%2F.pnpm%2Fglob%4010.5.0%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.5.0",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:app%2Fnode_modules%2F.pnpm%2Fglob%4013.0.6%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "13.0.6",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.5.0",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -1965,7 +2010,7 @@
         "type": "node-pkg",
         "target": "Node.js",
         "installed_version": "4.17.23",
-        "fixed_version": "4.18.0",
+        "fixed_version": "4.18.1",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -1995,6 +2040,34 @@
         "installed_version": "3.7.2",
         "fixed_version": "3.9.3",
         "severity": "LOW",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:app%2Fnode_modules%2F.pnpm%2Fminimatch%4010.2.4%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.2.4",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:app%2Fnode_modules%2F.pnpm%2Fminimatch%409.0.5%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "9.0.5",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -2037,6 +2110,20 @@
         "installed_version": "9.0.5",
         "fixed_version": "10.2.3, 9.0.7, 8.0.6, 7.4.8, 6.2.2, 5.1.8, 4.2.5, 3.1.4",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "9.0.9",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -5861,19 +5948,6 @@
         "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:deepmerge:app%2Fnode_modules%2F.pnpm%2Fdeepmerge%404.3.1%2Fnode_modules%2Fdeepmerge%2Fpackage.json|CVE-2026-93753",
-        "platform": "linux/amd64",
-        "package": "deepmerge",
-        "cve": "CVE-2026-93753",
-        "class": "lang-pkgs",
-        "type": "node-pkg",
-        "target": "Node.js",
-        "installed_version": "4.3.1",
-        "fixed_version": "",
-        "severity": "LOW",
-        "severity_source": "ghsa"
-      },
-      {
         "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:fast-uri:app%2Fnode_modules%2F.pnpm%2Ffast-uri%403.1.0%2Fnode_modules%2Ffast-uri%2Fpackage.json|CVE-2026-110095",
         "platform": "linux/amd64",
         "package": "fast-uri",
@@ -6056,6 +6130,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:follow-redirects:app%2Fnode_modules%2F.pnpm%2Ffollow-redirects%401.16.0%2Fnode_modules%2Ffollow-redirects%2Fpackage.json|CVE-2026-116689",
+        "platform": "linux/amd64",
+        "package": "follow-redirects",
+        "cve": "CVE-2026-116689",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "1.16.0",
+        "fixed_version": "1.16.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:form-data:app%2Fnode_modules%2F.pnpm%2Fform-data%404.0.5%2Fnode_modules%2Fform-data%2Fpackage.json|CVE-2026-12143",
         "platform": "linux/amd64",
         "package": "form-data",
@@ -6066,6 +6153,45 @@
         "installed_version": "4.0.5",
         "fixed_version": "2.5.6, 3.0.5, 4.0.6",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:app%2Fnode_modules%2F.pnpm%2Fglob%4010.5.0%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.5.0",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:app%2Fnode_modules%2F.pnpm%2Fglob%4013.0.6%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "13.0.6",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.5.0",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -6636,7 +6762,7 @@
         "type": "node-pkg",
         "target": "Node.js",
         "installed_version": "4.17.23",
-        "fixed_version": "4.18.0",
+        "fixed_version": "4.18.1",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -6664,6 +6790,32 @@
         "installed_version": "3.7.2",
         "fixed_version": "3.9.3",
         "severity": "LOW",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:app%2Fnode_modules%2F.pnpm%2Fminimatch%4010.2.4%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.2.4",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:app%2Fnode_modules%2F.pnpm%2Fminimatch%409.0.5%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "9.0.5",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -6703,6 +6855,19 @@
         "installed_version": "9.0.5",
         "fixed_version": "10.2.3, 9.0.7, 8.0.6, 7.4.8, 6.2.2, 5.1.8, 4.2.5, 3.1.4",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "9.0.9",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -9354,7 +9519,7 @@
         "target": "ghcr.io/seerr-team/seerr@sha256:2636191726a315dbd75228537f7be74b2fa7498998bb22e37b5b5c8756018fba (alpine 3.23.6)",
         "installed_version": "1.2.5-r23",
         "fixed_version": "1.2.5-r24",
-        "severity": "UNKNOWN",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -9367,7 +9532,20 @@
         "target": "ghcr.io/seerr-team/seerr@sha256:2636191726a315dbd75228537f7be74b2fa7498998bb22e37b5b5c8756018fba (alpine 3.23.6)",
         "installed_version": "1.2.5-r23",
         "fixed_version": "1.2.5-r24",
-        "severity": "UNKNOWN",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|zlib|CVE-2026-4738",
+        "platform": "linux/amd64",
+        "package": "zlib",
+        "cve": "CVE-2026-4738",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:2636191726a315dbd75228537f7be74b2fa7498998bb22e37b5b5c8756018fba (alpine 3.23.6)",
+        "installed_version": "1.3.2-r0",
+        "fixed_version": "1.4-r0",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -9380,7 +9558,7 @@
         "target": "ghcr.io/seerr-team/seerr@sha256:2636191726a315dbd75228537f7be74b2fa7498998bb22e37b5b5c8756018fba (alpine 3.23.6)",
         "installed_version": "1.3.2-r0",
         "fixed_version": "1.3.2-r1",
-        "severity": "MEDIUM",
+        "severity": "HIGH",
         "severity_source": ""
       }
     ],
@@ -10361,19 +10539,6 @@
         "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:deepmerge:app%2Fnode_modules%2F.pnpm%2Fdeepmerge%404.3.1%2Fnode_modules%2Fdeepmerge%2Fpackage.json|CVE-2026-93753",
-        "platform": "linux/amd64",
-        "package": "deepmerge",
-        "cve": "CVE-2026-93753",
-        "class": "lang-pkgs",
-        "type": "node-pkg",
-        "target": "Node.js",
-        "installed_version": "4.3.1",
-        "fixed_version": "",
-        "severity": "LOW",
-        "severity_source": "ghsa"
-      },
-      {
         "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:fast-uri:app%2Fnode_modules%2F.pnpm%2Ffast-uri%403.1.0%2Fnode_modules%2Ffast-uri%2Fpackage.json|CVE-2026-110095",
         "platform": "linux/amd64",
         "package": "fast-uri",
@@ -10556,6 +10721,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:follow-redirects:app%2Fnode_modules%2F.pnpm%2Ffollow-redirects%401.16.0%2Fnode_modules%2Ffollow-redirects%2Fpackage.json|CVE-2026-116689",
+        "platform": "linux/amd64",
+        "package": "follow-redirects",
+        "cve": "CVE-2026-116689",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "1.16.0",
+        "fixed_version": "1.16.2",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:form-data:app%2Fnode_modules%2F.pnpm%2Fform-data%404.0.5%2Fnode_modules%2Fform-data%2Fpackage.json|CVE-2026-12143",
         "platform": "linux/amd64",
         "package": "form-data",
@@ -10566,6 +10744,45 @@
         "installed_version": "4.0.5",
         "fixed_version": "2.5.6, 3.0.5, 4.0.6",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:app%2Fnode_modules%2F.pnpm%2Fglob%4010.5.0%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.5.0",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:app%2Fnode_modules%2F.pnpm%2Fglob%4013.0.6%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "13.0.6",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:glob:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fglob%2Fpackage.json|CVE-2026-118773",
+        "platform": "linux/amd64",
+        "package": "glob",
+        "cve": "CVE-2026-118773",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.5.0",
+        "fixed_version": "14.0.2",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -11136,7 +11353,7 @@
         "type": "node-pkg",
         "target": "Node.js",
         "installed_version": "4.17.23",
-        "fixed_version": "4.18.0",
+        "fixed_version": "4.18.1",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -11164,6 +11381,32 @@
         "installed_version": "3.7.2",
         "fixed_version": "3.9.3",
         "severity": "LOW",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:app%2Fnode_modules%2F.pnpm%2Fminimatch%4010.2.4%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "10.2.4",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:app%2Fnode_modules%2F.pnpm%2Fminimatch%409.0.5%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "9.0.5",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -11203,6 +11446,19 @@
         "installed_version": "9.0.5",
         "fixed_version": "10.2.3, 9.0.7, 8.0.6, 7.4.8, 6.2.2, 5.1.8, 4.2.5, 3.1.4",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:minimatch:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fminimatch%2Fpackage.json|CVE-2026-118764",
+        "platform": "linux/amd64",
+        "package": "minimatch",
+        "cve": "CVE-2026-118764",
+        "class": "lang-pkgs",
+        "type": "node-pkg",
+        "target": "Node.js",
+        "installed_version": "9.0.9",
+        "fixed_version": "11.0.1",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -13848,6 +14104,7 @@
     "summary": {
       "resolved": [
         "CVE-2026-107891",
+        "CVE-2026-4738",
         "CVE-2026-85091"
       ],
       "remaining": [
@@ -13889,6 +14146,9 @@
         "CVE-2026-111997",
         "CVE-2026-113872",
         "CVE-2026-11525",
+        "CVE-2026-116689",
+        "CVE-2026-118764",
+        "CVE-2026-118773",
         "CVE-2026-12143",
         "CVE-2026-12151",
         "CVE-2026-12590",
@@ -14034,7 +14294,6 @@
         "CVE-2026-90711",
         "CVE-2026-9358",
         "CVE-2026-93749",
-        "CVE-2026-93753",
         "CVE-2026-94482",
         "CVE-2026-94483",
         "CVE-2026-94484",
@@ -14085,7 +14344,14 @@
         "name": "alpine-release",
         "change": "upgraded",
         "before": "3.23.6-r0",
-        "after": "3.23.7-r0"
+        "after": "3.23.8-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "apk-tools",
+        "change": "upgraded",
+        "before": "3.0.8-r0",
+        "after": "3.0.9-r0"
       },
       {
         "ecosystem": "alpine",
@@ -14093,6 +14359,13 @@
         "change": "upgraded",
         "before": "20260909-r0",
         "after": "20261020-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libapk",
+        "change": "upgraded",
+        "before": "3.0.8-r0",
+        "after": "3.0.9-r0"
       },
       {
         "ecosystem": "alpine",
@@ -14124,10 +14397,17 @@
       },
       {
         "ecosystem": "alpine",
+        "name": "tzdata",
+        "change": "upgraded",
+        "before": "2026e-r0",
+        "after": "2026f-r0"
+      },
+      {
+        "ecosystem": "alpine",
         "name": "zlib",
         "change": "upgraded",
         "before": "1.3.2-r0",
-        "after": "1.3.2-r1"
+        "after": "1.4-r0"
       }
     ],
     "downgrades": [],
@@ -14143,6 +14423,7 @@
       "expectStatus": 200,
       "durationSeconds": 90,
       "timeoutSeconds": 60,
+      "network": "none",
       "expectedExit": 0,
       "command": [],
       "expectedPlatforms": [
@@ -14151,15 +14432,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-30T07:36:40Z",
-      "finished_at": "2026-10-30T07:38:11Z",
+      "started_at": "2026-11-08T10:48:12Z",
+      "finished_at": "2026-11-08T10:49:42Z",
       "duration_seconds": 90.1
     },
     "health": {
       "defined": false,
       "final_status": "none-defined"
     },
-    "runner": "GitHub Actions 1000015604",
+    "runner": "GitHub Actions 1000017256",
     "baseline": {
       "entrypoint": [
         "docker-entrypoint.sh"
@@ -14177,39 +14458,39 @@
       ]
     }
   },
-  "promoted_at": "2026-10-30T07:40:12Z",
+  "promoted_at": "2026-11-08T10:50:58Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "1591ed82f0e93016d0b62fd6a2d62641c579ce0ca5dd0b366f6c456c6e2e94b0",
-      "attachment_sha256": "8a1e2e5e4a4cea2af8b9437619a006fd3ea825dad66d6887a7fde7fdb7d7c1fc",
+      "bundle_sha256": "d4a02c5ada64105e2906a949de9af29f2b092e68ac6976585f5050c499358ee1",
+      "attachment_sha256": "50c05e89057206a357ffc85b34ae8f2aafe66ff0564938f4c62993faf57d48a0",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "7e1e0a84615056271b90c8ab4fa09a205d7786c57fdcc348322259e6b784e818",
-      "bundle_sha256": "97c7123d6f4162ece2393c96d49e6d67119e57f6347b0fa3776e4db7c8c686cd",
-      "attachment_sha256": "4b64840a04ac6df35408f029721129feb2a18c77827c72fb29fa724b0881c0ec"
+      "predicate_sha256": "18fd322d3cb461c4c9eb9867bc32840a8afe8f04503136ddd4eebd4531b6fb36",
+      "bundle_sha256": "60077e3c69830df01d62e53f443664747eaf1c3426e47a6a1d74fdeba1ecaee4",
+      "attachment_sha256": "456ac093ac2acbcadda9cdfd6956a5d7bf2dcf5ef558e1c2d9583a87f655a92a"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "CijvCQK9kURh+OTU9EKAxxp/HnSHb6ee89W7boOvpc8=",
+        "inclusion_root_hash": "8hQknj0frVjtAIeHL2GY490PHAP9KGbK2hcaqD4FS9Y=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3588197096,
-        "signed_entry_timestamp": "MEQCIFD+EbjvKeedd35e/qqN9FSAXXilHWJTa6j+TnGg+aU0AiBlm9Pme1Zq3wHs8vOID7dx2n0zSkWCgknZ4ojfDbXmfw=="
+        "log_index": 3754125151,
+        "signed_entry_timestamp": "MEUCICdgpcfrAFUp+9la+dlTMVkRdqZs+nakHqqggzfnF+62AiEAkilFrRobz0Hx5848fD7m7uvZsvwFEpyvFTPR9b+gHr8="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "txKMVFF/HII0buVNBiAQDtWpyioR24renRUaCGy1Ldw=",
+        "inclusion_root_hash": "3Kexkm0qfyRHYQkTJ+Vg4I79HX0IwedGtZxyntiXhz8=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3588199231,
-        "signed_entry_timestamp": "MEUCIQCqoIas2caE5fLDLPQ0RyrcRRxOHlQ3KcvlUQgdCfuDwAIgJZoNsEZX0mvfVaKTU7cB3ubMjPb/xrmN/E0DyT/IxYc="
+        "log_index": 3754125297,
+        "signed_entry_timestamp": "MEYCIQCfPL86vQJobueFUpSh2NQcuDDIIcI+kTqV0Dy1cjqdhwIhAP/cMsRqVNcGdesbNyZ7n2ffsyvpytmyD61S2cy3wBVI"
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.1"
+      "trivy": "0.76.2"
     }
   }
 }
