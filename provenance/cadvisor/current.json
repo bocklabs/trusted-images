@@ -6,42 +6,42 @@
     "tag": "v0.55.1",
     "digest": "sha256:3de2bd5203120b866d74a9b283b2ffb8ec382fbf9dc321814700c6ea6f44ec57",
     "index_digest": "sha256:3de2bd5203120b866d74a9b283b2ffb8ec382fbf9dc321814700c6ea6f44ec57",
-    "media_type": "application/vnd.oci.image.index.v1+json",
+    "media_type": "application/vnd.docker.distribution.manifest.list.v2+json",
     "selected_platform": "linux/amd64",
     "selected_child_digest": "sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/cadvisor",
-    "tag": "v0.55.1-bocklabs.1",
-    "digest": "sha256:39e5d8f8b7f0cabfb6cd3f883a5e476a43856700c6bd25f82f0b802587f4c4b4",
+    "tag": "v0.55.1-bocklabs.2",
+    "digest": "sha256:60b358e0d57c529ca5b9b392001fda35f0df3bf1c9169ac39d8086209067ca11",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39846240145",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42472717004",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
-    "trivy": "0.76.1",
+    "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "skopeo": "v1.22.3",
+    "skopeo_image_digest": "sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:e417537406128bd80426f6cd3b9a1e45f9c64f490793b71941dc630b41f10654",
-      "updated_at": "2026-10-22 01:15:55.263770788 +0000 UTC"
+      "check_bundle_digest": "sha256:e70d29ed3f228011d5527bd220c603ed56ba1cf1312d6feb6af9b8f64740b782",
+      "updated_at": "2026-11-08 06:39:21.614725497 +0000 UTC"
     },
-    "full_report_sha256": "4a830b250f8e7dfed249f6059caaa2fe95f3cfa976a7b4c2704ac7f6b7f573b8",
-    "copa_report_sha256": "40deaa97328ff0ef8c604ebccbb5e4672755ad6db077bfeffb2f2bab54ff0287",
-    "decision_sha256": "14e4c4df4f4888557ef6efaa78d985599638a56eea189452fb45a589c825085d",
+    "full_report_sha256": "adf1198c4a897439bd2405dcbe8f531a91c66894f6465e4b659653eb44ed5901",
+    "copa_report_sha256": "ab5730c58a5c3d5c8ad9b98ef6633c53135af9ebaedfcb44645a5e2a728d0d54",
+    "decision_sha256": "643fa96b0161e37925f6e65b1cc5d21d316b2978067453c1ef026ea56be2d3cc",
     "reports": {
-      "before_sha256": "3d52e7a23e46644b41d3318372844222df3fa690a0017d53b3854b597e52298e",
-      "final_sha256": "4a830b250f8e7dfed249f6059caaa2fe95f3cfa976a7b4c2704ac7f6b7f573b8",
-      "fixable_sha256": "40deaa97328ff0ef8c604ebccbb5e4672755ad6db077bfeffb2f2bab54ff0287"
+      "before_sha256": "de0baaac0daffad66c78a36d11f664a57b29fc48a209c0649c71588c94d15828",
+      "final_sha256": "adf1198c4a897439bd2405dcbe8f531a91c66894f6465e4b659653eb44ed5901",
+      "fixable_sha256": "ab5730c58a5c3d5c8ad9b98ef6633c53135af9ebaedfcb44645a5e2a728d0d54"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
-        "fetched_at": "2026-10-22T20:09:53Z",
-        "catalogVersion": "2026.10.21",
-        "dateReleased": "2026-10-21T14:04:39.8983Z"
+        "sha256": "47e0406b2be5a40420eff66f3d90e83eb8883dae6ff4d08e1b2a942c366f6cc2",
+        "fetched_at": "2026-11-08T10:46:39Z",
+        "catalogVersion": "2026.11.06",
+        "dateReleased": "2026-11-06T19:44:45.1797Z"
       }
     },
     "acceptance": null,
@@ -72,11 +72,14 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
+    "remediation": {
+      "need_sha256": "b6db3829f38c34396c10858afb9feb17ec23d21e923015556d79d790959428a2"
+    },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-33997:MEDIUM:ghsa,CVE-2026-41567:HIGH:ghsa,CVE-2026-41568:MEDIUM:ghsa,CVE-2026-42306:HIGH:ghsa,CVE-2026-63209:HIGH:ghsa,CVE-2026-41579:MEDIUM:ghsa,CVE-2026-29181:HIGH:ghsa,CVE-2026-39827:MEDIUM:,CVE-2026-39828:HIGH:,CVE-2026-39829:HIGH:,CVE-2026-39830:HIGH:,CVE-2026-39831:HIGH:,CVE-2026-39832:HIGH:,CVE-2026-39833:MEDIUM:,CVE-2026-39834:MEDIUM:,CVE-2026-39835:HIGH:,CVE-2026-42508:HIGH:,CVE-2026-46595:HIGH:,CVE-2026-46597:HIGH:,CVE-2026-46598:MEDIUM:,CVE-2026-56854:HIGH:,CVE-2026-56855:MEDIUM:,CVE-2026-78662:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-25680:MEDIUM:,CVE-2026-25681:HIGH:,CVE-2026-27136:HIGH:,CVE-2026-33814:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-42502:MEDIUM:,CVE-2026-42506:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-39824:UNKNOWN:,CVE-2026-56851:HIGH:,CVE-2026-56852:HIGH:,CVE-2026-33186:CRITICAL:ghsa,CVE-2026-84303:MEDIUM:ghsa,CVE-2026-84304:HIGH:ghsa,CVE-2026-84445:HIGH:ghsa,GHSA-hrxh-6v49-42gf:HIGH:ghsa,CVE-2025-61726:HIGH:,CVE-2025-61728:MEDIUM:,CVE-2025-61730:MEDIUM:,CVE-2025-68121:CRITICAL:nvd,CVE-2026-111943:HIGH:,CVE-2026-25679:HIGH:,CVE-2026-27139:LOW:,CVE-2026-27142:MEDIUM:,CVE-2026-27145:HIGH:,CVE-2026-32280:HIGH:,CVE-2026-32281:HIGH:nvd,CVE-2026-32282:MEDIUM:nvd,CVE-2026-32283:HIGH:nvd,CVE-2026-32288:MEDIUM:nvd,CVE-2026-32289:MEDIUM:nvd,CVE-2026-33811:HIGH:nvd,CVE-2026-33814:HIGH:nvd,CVE-2026-33818:HIGH:,CVE-2026-39820:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-39822:HIGH:,CVE-2026-39823:MEDIUM:,CVE-2026-39825:MEDIUM:,CVE-2026-39826:MEDIUM:,CVE-2026-39836:HIGH:nvd,CVE-2026-42499:HIGH:,CVE-2026-42504:HIGH:,CVE-2026-42505:MEDIUM:,CVE-2026-42507:MEDIUM:,CVE-2026-56853:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56858:HIGH:,CVE-2026-56859:HIGH:,CVE-2026-56860:HIGH:,CVE-2026-56862:HIGH:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:",
+    "outcome": "eligible with no-fix warnings: CVE-2026-33997:MEDIUM:ghsa,CVE-2026-41567:HIGH:ghsa,CVE-2026-41568:MEDIUM:ghsa,CVE-2026-42306:HIGH:ghsa,CVE-2026-63209:HIGH:ghsa,CVE-2026-41579:MEDIUM:ghsa,CVE-2026-29181:HIGH:ghsa,CVE-2026-39827:MEDIUM:,CVE-2026-39828:HIGH:,CVE-2026-39829:HIGH:,CVE-2026-39830:HIGH:,CVE-2026-39831:HIGH:,CVE-2026-39832:HIGH:,CVE-2026-39833:MEDIUM:,CVE-2026-39834:MEDIUM:,CVE-2026-39835:HIGH:,CVE-2026-42508:HIGH:,CVE-2026-46595:HIGH:,CVE-2026-46597:HIGH:,CVE-2026-46598:MEDIUM:,CVE-2026-56854:HIGH:,CVE-2026-56855:MEDIUM:,CVE-2026-78662:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-25680:MEDIUM:,CVE-2026-25681:HIGH:,CVE-2026-27136:HIGH:,CVE-2026-33814:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-42502:MEDIUM:,CVE-2026-42506:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78661:HIGH:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-97045:MEDIUM:,CVE-2026-39824:UNKNOWN:,CVE-2026-56851:HIGH:,CVE-2026-56852:HIGH:,CVE-2026-33186:CRITICAL:ghsa,CVE-2026-84303:MEDIUM:ghsa,CVE-2026-84304:HIGH:ghsa,CVE-2026-84445:HIGH:ghsa,GHSA-hrxh-6v49-42gf:HIGH:ghsa,CVE-2025-61726:HIGH:,CVE-2025-61728:MEDIUM:,CVE-2025-61730:MEDIUM:,CVE-2025-68121:CRITICAL:nvd,CVE-2026-111943:HIGH:,CVE-2026-25679:HIGH:,CVE-2026-27139:LOW:,CVE-2026-27142:MEDIUM:,CVE-2026-27145:HIGH:,CVE-2026-32280:HIGH:,CVE-2026-32281:HIGH:nvd,CVE-2026-32282:MEDIUM:nvd,CVE-2026-32283:HIGH:nvd,CVE-2026-32288:MEDIUM:nvd,CVE-2026-32289:MEDIUM:nvd,CVE-2026-33811:HIGH:nvd,CVE-2026-33814:HIGH:nvd,CVE-2026-33818:HIGH:,CVE-2026-39820:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-39822:HIGH:,CVE-2026-39823:MEDIUM:,CVE-2026-39825:MEDIUM:,CVE-2026-39826:MEDIUM:,CVE-2026-39836:HIGH:nvd,CVE-2026-42499:HIGH:,CVE-2026-42504:HIGH:,CVE-2026-42505:MEDIUM:,CVE-2026-42507:MEDIUM:,CVE-2026-56853:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56858:HIGH:,CVE-2026-56859:HIGH:,CVE-2026-56860:HIGH:,CVE-2026-56862:HIGH:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:",
     "eligible": true,
     "warnings": [
       {
@@ -411,7 +414,7 @@
         "type": "gobinary",
         "target": "usr/bin/cadvisor",
         "installed_version": "v0.45.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       },
@@ -557,6 +560,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-78661",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78661",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/cadvisor",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-78663",
         "platform": "linux/amd64",
         "package": "golang.org/x/net",
@@ -594,6 +611,20 @@
         "target": "usr/bin/cadvisor",
         "installed_version": "v0.47.0",
         "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-97045",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97045",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/cadvisor",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
         "severity": "MEDIUM",
         "severity_source": ""
       },
@@ -1731,7 +1762,7 @@
         "type": "gobinary",
         "target": "usr/bin/cadvisor",
         "installed_version": "v0.45.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       },
@@ -1866,6 +1897,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-78661",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78661",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/cadvisor",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-78663",
         "platform": "linux/amd64",
         "package": "golang.org/x/net",
@@ -1901,6 +1945,19 @@
         "target": "usr/bin/cadvisor",
         "installed_version": "v0.47.0",
         "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-97045",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97045",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/cadvisor",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
         "severity": "MEDIUM",
         "severity_source": ""
       },
@@ -3981,7 +4038,7 @@
         "target": "gcr.io/cadvisor/cadvisor@sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069 (alpine 3.22.2)",
         "installed_version": "1.2.5-r10",
         "fixed_version": "1.2.5-r13",
-        "severity": "UNKNOWN",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -4020,7 +4077,7 @@
         "target": "gcr.io/cadvisor/cadvisor@sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069 (alpine 3.22.2)",
         "installed_version": "1.2.5-r10",
         "fixed_version": "1.2.5-r13",
-        "severity": "UNKNOWN",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -4115,6 +4172,19 @@
         "severity_source": "nvd"
       },
       {
+        "identity": "linux/amd64|zlib|CVE-2026-4738",
+        "platform": "linux/amd64",
+        "package": "zlib",
+        "cve": "CVE-2026-4738",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "gcr.io/cadvisor/cadvisor@sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069 (alpine 3.22.2)",
+        "installed_version": "1.3.1-r2",
+        "fixed_version": "1.4-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|zlib|CVE-2026-85091",
         "platform": "linux/amd64",
         "package": "zlib",
@@ -4124,7 +4194,7 @@
         "target": "gcr.io/cadvisor/cadvisor@sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069 (alpine 3.22.2)",
         "installed_version": "1.3.1-r2",
         "fixed_version": "1.3.2-r1",
-        "severity": "MEDIUM",
+        "severity": "HIGH",
         "severity_source": ""
       }
     ],
@@ -4437,7 +4507,7 @@
         "type": "gobinary",
         "target": "usr/bin/cadvisor",
         "installed_version": "v0.45.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       },
@@ -4572,6 +4642,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-78661",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78661",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/cadvisor",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-78663",
         "platform": "linux/amd64",
         "package": "golang.org/x/net",
@@ -4607,6 +4690,19 @@
         "target": "usr/bin/cadvisor",
         "installed_version": "v0.47.0",
         "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Fcadvisor:golang.org%2Fx%2Fnet|CVE-2026-97045",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97045",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/cadvisor",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
         "severity": "MEDIUM",
         "severity_source": ""
       },
@@ -5372,6 +5468,7 @@
         "CVE-2026-45445",
         "CVE-2026-45446",
         "CVE-2026-45447",
+        "CVE-2026-4738",
         "CVE-2026-53612",
         "CVE-2026-53613",
         "CVE-2026-53614",
@@ -5461,6 +5558,7 @@
         "CVE-2026-63209",
         "CVE-2026-78659",
         "CVE-2026-78660",
+        "CVE-2026-78661",
         "CVE-2026-78662",
         "CVE-2026-78663",
         "CVE-2026-78667",
@@ -5474,6 +5572,7 @@
         "CVE-2026-97030",
         "CVE-2026-97031",
         "CVE-2026-97032",
+        "CVE-2026-97045",
         "GHSA-hrxh-6v49-42gf",
         "GO-2026-5932"
       ],
@@ -5488,14 +5587,14 @@
         "name": "alpine-release",
         "change": "upgraded",
         "before": "3.22.2-r0",
-        "after": "3.22.7-r0"
+        "after": "3.22.8-r0"
       },
       {
         "ecosystem": "alpine",
         "name": "apk-tools",
         "change": "upgraded",
         "before": "2.14.9-r3",
-        "after": "2.14.12-r0"
+        "after": "2.14.13-r0"
       },
       {
         "ecosystem": "alpine",
@@ -5523,7 +5622,7 @@
         "name": "libapk2",
         "change": "upgraded",
         "before": "2.14.9-r3",
-        "after": "2.14.12-r0"
+        "after": "2.14.13-r0"
       },
       {
         "ecosystem": "alpine",
@@ -5600,7 +5699,7 @@
         "name": "zlib",
         "change": "upgraded",
         "before": "1.3.1-r2",
-        "after": "1.3.2-r1"
+        "after": "1.4-r0"
       }
     ],
     "downgrades": [],
@@ -5616,6 +5715,7 @@
       "expectStatus": 200,
       "durationSeconds": 30,
       "timeoutSeconds": 30,
+      "network": "none",
       "expectedExit": 0,
       "command": [
         "--version"
@@ -5626,15 +5726,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-22T20:09:53Z",
-      "finished_at": "2026-10-22T20:09:53Z",
-      "duration_seconds": 0.3
+      "started_at": "2026-11-08T10:46:39Z",
+      "finished_at": "2026-11-08T10:46:39Z",
+      "duration_seconds": 0.2
     },
     "health": {
       "defined": true,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000013958",
+    "runner": "GitHub Actions 1000017227",
     "baseline": {
       "entrypoint": [
         "/usr/bin/cadvisor",
@@ -5647,39 +5747,39 @@
       ]
     }
   },
-  "promoted_at": "2026-10-22T20:11:19Z",
+  "promoted_at": "2026-11-08T10:47:27Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "5213a5b807f7caea0e1405ae526764eef702a121762f4a522109545716302a29",
-      "attachment_sha256": "37f335c6b726546be39da52101147229071db9b956564e0dd372e807f76f14b3",
+      "bundle_sha256": "dfde55531a4c98a60c733f9661ea6c20d365553a88279a93eaf9f5835ec4ed11",
+      "attachment_sha256": "18cff31b4141f6f52f7fe01c1779e24e118639e04f2ec5772f561e70fc92cfc3",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "d9b1caa3322007183c984acfc4ca381017c9fbb7d839d32975f3345407757c1d",
-      "bundle_sha256": "37a9a2ffa6a4f976cf3528c0df7af3c44a91566585442d84b61c478b5c789d42",
-      "attachment_sha256": "224ee24d48ac1b8512f65f6aa652e5e608d868df06266afadfb21e4cb689f304"
+      "predicate_sha256": "afa3eaac50222a0fa26ec4eeee955bd2abde08db1e9b03ea98cf2493eb8b4c0a",
+      "bundle_sha256": "c2045876796d0adbec766b60eeef072d62a3e40d62f6b7a22eef43d3a1aa52f3",
+      "attachment_sha256": "de1484c1f1a307fb0ba8b44d6a91bfb15139561e2d6790b1a0f9ee0ed03dd370"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "NGGxY/oJkcdxcbBsEKu30rvchAkkIpyTT2mzeNhtwTg=",
+        "inclusion_root_hash": "wRCoABVQ7CFFGlKiJdCyDGOwYGj8BM44eN1+dHAsmxo=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3399314723,
-        "signed_entry_timestamp": "MEUCIQDl5MXoRYQoSA12Q/mP7YXgJLm16/eIB/yP+kQbdbF84gIgBRLRVOG1c04gHb78JK6fPQ3dlrAEkanrI08XTvRxPmc="
+        "log_index": 3754119846,
+        "signed_entry_timestamp": "MEQCIG3MoSn0rV3dAoi+QttCaB0ZDuXwg6EV9yyHip0w0/y7AiBfMbWGwhFl0/GpwlU7kVxOnDO2L7+8UeG+ageMC5lCeQ=="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "X2ffsY7eSjqJK1jwsdEMve+5YzaOUM+WHDIHE+YaR00=",
+        "inclusion_root_hash": "r2nQFVhhX5hmbiTQP+uCgzRCVda3JVF3CPKStb0bWfw=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3399317356,
-        "signed_entry_timestamp": "MEYCIQCJu24Lfl9kaHjtczCQbcLeeFr17GZKzF4sYx7418vc2gIhAJ9arB6LDH87qA076C3R9+uhOYWzG59trIh/sUAxWegP"
+        "log_index": 3754119877,
+        "signed_entry_timestamp": "MEUCIE9xQ+AJ2i8JbcHltP53tmZ4bNl3xRtwaOy0S1ZFIPjDAiEA7siVQky+5LcwHharn+LWyu2bhhhsBrriPNkAHqqHZvI="
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.1"
+      "trivy": "0.76.2"
     }
   }
 }
