@@ -12,36 +12,36 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/gluetun",
-    "tag": "v3.41.3-bocklabs.1",
-    "digest": "sha256:046b49055bbdf8a76dd327388088414e69b01fa436a1c652fbadb12d4b994944",
+    "tag": "v3.41.3-bocklabs.2",
+    "digest": "sha256:a3a6c74040aa80bc5b4de82d15b8d1acd1d6eb4743d0b3c3c744d9164a32ab2a",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/39985094446",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42472728178",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
-    "trivy": "0.76.1",
+    "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "skopeo": "v1.22.3",
+    "skopeo_image_digest": "sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:254939d39445fe9c045bdbef25f992ee09177477eaf1e11895bdfe474e60b554",
-      "updated_at": "2026-10-23 07:12:39.66827463 +0000 UTC"
+      "check_bundle_digest": "sha256:e70d29ed3f228011d5527bd220c603ed56ba1cf1312d6feb6af9b8f64740b782",
+      "updated_at": "2026-11-08 06:39:21.614725497 +0000 UTC"
     },
-    "full_report_sha256": "5acc11f8c56dc7307c22b3b4e39fce10b037a25886ee68586d0abd33a27ae34d",
-    "copa_report_sha256": "05321d6cb7625e800b38a4fe8afd7c20cbdc80b806357282ce6819bdf5dc6306",
-    "decision_sha256": "c8955e3e77454a20769ca1d44fbc154e1d4163759ceb723d7d10f2ec40690ca9",
+    "full_report_sha256": "cb4507ffdbeda16d2459af5273bec7be603f0da30af59b78319b51b0bb82c7d1",
+    "copa_report_sha256": "3ef208a761c21df0cfbeaa690a244c39c5c33b8fa4c835dbaf10060b7e08a18d",
+    "decision_sha256": "46ac902da6ef1fb7aa7b25be2eed449be5e2fafe0e92b1e6d404b9b84cdf0daa",
     "reports": {
-      "before_sha256": "ce67c4596ec3711ad92c8515e87a06a4d6521bab1f4c29094138578a3bf9332b",
-      "final_sha256": "5acc11f8c56dc7307c22b3b4e39fce10b037a25886ee68586d0abd33a27ae34d",
-      "fixable_sha256": "05321d6cb7625e800b38a4fe8afd7c20cbdc80b806357282ce6819bdf5dc6306"
+      "before_sha256": "d3b66769f494f3829eaac23478aa5d380dcfcd09c73c2d957e8ac718d62c3810",
+      "final_sha256": "cb4507ffdbeda16d2459af5273bec7be603f0da30af59b78319b51b0bb82c7d1",
+      "fixable_sha256": "3ef208a761c21df0cfbeaa690a244c39c5c33b8fa4c835dbaf10060b7e08a18d"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ef8fffede5c472001da046c7751beb2a3242458896d0ce08da52b30968b8b56b",
-        "fetched_at": "2026-10-23T16:16:18Z",
-        "catalogVersion": "2026.10.21",
-        "dateReleased": "2026-10-21T14:04:39.8983Z"
+        "sha256": "47e0406b2be5a40420eff66f3d90e83eb8883dae6ff4d08e1b2a942c366f6cc2",
+        "fetched_at": "2026-11-08T10:46:56Z",
+        "catalogVersion": "2026.11.06",
+        "dateReleased": "2026-11-06T19:44:45.1797Z"
       }
     },
     "acceptance": null,
@@ -72,11 +72,14 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
+    "remediation": {
+      "need_sha256": "c80542c2c9ea9df1c708fb959fadc5ca4f1d5b316ce305844f3b78fbe034d4f0"
+    },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-1229:LOW:ghsa,CVE-2026-63209:HIGH:ghsa,CVE-2026-39827:MEDIUM:,CVE-2026-39828:HIGH:,CVE-2026-39829:HIGH:,CVE-2026-39830:HIGH:,CVE-2026-39831:HIGH:,CVE-2026-39832:HIGH:,CVE-2026-39833:MEDIUM:,CVE-2026-39834:MEDIUM:,CVE-2026-39835:HIGH:,CVE-2026-42508:HIGH:,CVE-2026-46595:HIGH:,CVE-2026-46597:HIGH:,CVE-2026-46598:MEDIUM:,CVE-2026-56854:HIGH:,CVE-2026-56855:MEDIUM:,CVE-2026-78662:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-25680:MEDIUM:,CVE-2026-25681:HIGH:,CVE-2026-27136:HIGH:,CVE-2026-33814:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-42502:MEDIUM:,CVE-2026-42506:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-39824:UNKNOWN:,CVE-2026-56851:HIGH:,CVE-2026-56852:HIGH:,CVE-2026-111943:HIGH:,CVE-2026-33818:HIGH:,CVE-2026-39821:HIGH:,CVE-2026-39822:HIGH:,CVE-2026-42505:MEDIUM:,CVE-2026-56853:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56858:HIGH:,CVE-2026-56859:HIGH:,CVE-2026-56860:HIGH:,CVE-2026-56862:HIGH:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:",
+    "outcome": "eligible with no-fix warnings: CVE-2026-1229:LOW:ghsa,CVE-2026-63209:HIGH:ghsa,CVE-2026-39827:MEDIUM:,CVE-2026-39828:HIGH:,CVE-2026-39829:HIGH:,CVE-2026-39830:HIGH:,CVE-2026-39831:HIGH:,CVE-2026-39832:HIGH:,CVE-2026-39833:MEDIUM:,CVE-2026-39834:MEDIUM:,CVE-2026-39835:HIGH:,CVE-2026-42508:HIGH:,CVE-2026-46595:HIGH:,CVE-2026-46597:HIGH:,CVE-2026-46598:MEDIUM:,CVE-2026-56854:HIGH:,CVE-2026-56855:MEDIUM:,CVE-2026-78662:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-25680:MEDIUM:,CVE-2026-25681:HIGH:,CVE-2026-27136:HIGH:,CVE-2026-33814:HIGH:nvd,CVE-2026-39821:HIGH:,CVE-2026-42502:MEDIUM:,CVE-2026-42506:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78661:HIGH:,CVE-2026-78663:MEDIUM:,CVE-2026-78669:HIGH:,CVE-2026-97032:MEDIUM:,CVE-2026-97045:MEDIUM:,CVE-2026-39824:UNKNOWN:,CVE-2026-56851:HIGH:,CVE-2026-56852:HIGH:,CVE-2026-111943:HIGH:,CVE-2026-33818:HIGH:,CVE-2026-39821:HIGH:,CVE-2026-39822:HIGH:,CVE-2026-42505:MEDIUM:,CVE-2026-56853:HIGH:,CVE-2026-56857:LOW:,CVE-2026-56858:HIGH:,CVE-2026-56859:HIGH:,CVE-2026-56860:HIGH:,CVE-2026-56862:HIGH:,CVE-2026-56866:MEDIUM:,CVE-2026-78659:MEDIUM:,CVE-2026-78660:MEDIUM:,CVE-2026-78663:MEDIUM:,CVE-2026-78667:HIGH:,CVE-2026-78669:HIGH:,CVE-2026-94439:MEDIUM:,CVE-2026-94440:MEDIUM:,CVE-2026-94448:MEDIUM:,CVE-2026-97030:MEDIUM:,CVE-2026-97031:HIGH:,CVE-2026-97032:MEDIUM:",
     "eligible": true,
     "warnings": [
       {
@@ -341,7 +344,7 @@
         "type": "gobinary",
         "target": "gluetun-entrypoint",
         "installed_version": "v0.45.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       },
@@ -487,6 +490,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-78661",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78661",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "gluetun-entrypoint",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-78663",
         "platform": "linux/amd64",
         "package": "golang.org/x/net",
@@ -524,6 +541,20 @@
         "target": "gluetun-entrypoint",
         "installed_version": "v0.47.0",
         "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-97045",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97045",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "gluetun-entrypoint",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
         "severity": "MEDIUM",
         "severity_source": ""
       },
@@ -1138,7 +1169,7 @@
         "type": "gobinary",
         "target": "gluetun-entrypoint",
         "installed_version": "v0.45.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       },
@@ -1273,6 +1304,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-78661",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78661",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "gluetun-entrypoint",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-78663",
         "platform": "linux/amd64",
         "package": "golang.org/x/net",
@@ -1308,6 +1352,19 @@
         "target": "gluetun-entrypoint",
         "installed_version": "v0.47.0",
         "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-97045",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97045",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "gluetun-entrypoint",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
         "severity": "MEDIUM",
         "severity_source": ""
       },
@@ -1919,7 +1976,7 @@
         "target": "qmcgaw/gluetun@sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e (alpine 3.22.5)",
         "installed_version": "1.2.5-r12",
         "fixed_version": "1.2.5-r13",
-        "severity": "UNKNOWN",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -1932,7 +1989,7 @@
         "target": "qmcgaw/gluetun@sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e (alpine 3.22.5)",
         "installed_version": "1.2.5-r12",
         "fixed_version": "1.2.5-r13",
-        "severity": "UNKNOWN",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -2040,6 +2097,19 @@
         "severity_source": "nvd"
       },
       {
+        "identity": "linux/amd64|zlib|CVE-2026-4738",
+        "platform": "linux/amd64",
+        "package": "zlib",
+        "cve": "CVE-2026-4738",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "qmcgaw/gluetun@sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e (alpine 3.22.5)",
+        "installed_version": "1.3.2-r0",
+        "fixed_version": "1.4-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|zlib|CVE-2026-85091",
         "platform": "linux/amd64",
         "package": "zlib",
@@ -2049,7 +2119,7 @@
         "target": "qmcgaw/gluetun@sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e (alpine 3.22.5)",
         "installed_version": "1.3.2-r0",
         "fixed_version": "1.3.2-r1",
-        "severity": "MEDIUM",
+        "severity": "HIGH",
         "severity_source": ""
       }
     ],
@@ -2297,7 +2367,7 @@
         "type": "gobinary",
         "target": "gluetun-entrypoint",
         "installed_version": "v0.45.0",
-        "fixed_version": "",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
         "severity_source": ""
       },
@@ -2432,6 +2502,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-78661",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-78661",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "gluetun-entrypoint",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-78663",
         "platform": "linux/amd64",
         "package": "golang.org/x/net",
@@ -2467,6 +2550,19 @@
         "target": "gluetun-entrypoint",
         "installed_version": "v0.47.0",
         "fixed_version": "0.60.0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:gluetun-entrypoint:golang.org%2Fx%2Fnet|CVE-2026-97045",
+        "platform": "linux/amd64",
+        "package": "golang.org/x/net",
+        "cve": "CVE-2026-97045",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "gluetun-entrypoint",
+        "installed_version": "v0.47.0",
+        "fixed_version": "0.62.0",
         "severity": "MEDIUM",
         "severity_source": ""
       },
@@ -2816,6 +2912,7 @@
         "CVE-2026-14456",
         "CVE-2026-14457",
         "CVE-2026-18798",
+        "CVE-2026-4738",
         "CVE-2026-54874",
         "CVE-2026-63072",
         "CVE-2026-63073",
@@ -2874,6 +2971,7 @@
         "CVE-2026-63209",
         "CVE-2026-78659",
         "CVE-2026-78660",
+        "CVE-2026-78661",
         "CVE-2026-78662",
         "CVE-2026-78663",
         "CVE-2026-78667",
@@ -2884,6 +2982,7 @@
         "CVE-2026-97030",
         "CVE-2026-97031",
         "CVE-2026-97032",
+        "CVE-2026-97045",
         "GO-2026-5932"
       ],
       "introduced": [],
@@ -2897,14 +2996,14 @@
         "name": "alpine-release",
         "change": "upgraded",
         "before": "3.22.5-r0",
-        "after": "3.22.7-r0"
+        "after": "3.22.8-r0"
       },
       {
         "ecosystem": "alpine",
         "name": "apk-tools",
         "change": "upgraded",
         "before": "2.14.10-r0",
-        "after": "2.14.12-r0"
+        "after": "2.14.13-r0"
       },
       {
         "ecosystem": "alpine",
@@ -2925,7 +3024,7 @@
         "name": "libapk2",
         "change": "upgraded",
         "before": "2.14.10-r0",
-        "after": "2.14.12-r0"
+        "after": "2.14.13-r0"
       },
       {
         "ecosystem": "alpine",
@@ -2967,14 +3066,14 @@
         "name": "tzdata",
         "change": "upgraded",
         "before": "2026c-r0",
-        "after": "2026e-r0"
+        "after": "2026f-r0"
       },
       {
         "ecosystem": "alpine",
         "name": "zlib",
         "change": "upgraded",
         "before": "1.3.2-r0",
-        "after": "1.3.2-r1"
+        "after": "1.4-r0"
       }
     ],
     "downgrades": [],
@@ -2990,6 +3089,7 @@
       "expectStatus": 200,
       "durationSeconds": 30,
       "timeoutSeconds": 30,
+      "network": "none",
       "expectedExit": 0,
       "command": [
         "genkey"
@@ -3000,15 +3100,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-23T16:16:17Z",
-      "finished_at": "2026-10-23T16:16:18Z",
-      "duration_seconds": 1.0
+      "started_at": "2026-11-08T10:46:56Z",
+      "finished_at": "2026-11-08T10:46:56Z",
+      "duration_seconds": 0.2
     },
     "health": {
       "defined": true,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000014090",
+    "runner": "GitHub Actions 1000017239",
     "baseline": {
       "entrypoint": [
         "/gluetun-entrypoint"
@@ -3146,39 +3246,39 @@
       ]
     }
   },
-  "promoted_at": "2026-10-23T16:17:35Z",
+  "promoted_at": "2026-11-08T10:48:17Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "3d7705125d4eabad6e62aab93351dfa03e15f31a6262d7b82aac76ef6d8a0225",
-      "attachment_sha256": "cea41ac17da040db29e22e530ac1fe374c18a55fa39bf91aa2a3274d3ff8de95",
+      "bundle_sha256": "101736bb50acefa91d89053ed6242c5df7979b1e7407b9bd0e72c6361e8d4804",
+      "attachment_sha256": "c914ff3d85d4e8ad959b82327a44158fa9cb20c9c257efd414f474d3787ad1a5",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "97e46decd1432777ca1dc30169399e41d2cc4399022cd64d9cd94f85e76b177b",
-      "bundle_sha256": "5bb290dea7c8261e543d32885111fbb43697f95c54eecc8a142843344a7048af",
-      "attachment_sha256": "b9ddb88528c4318acc9874a7e422467d103ab79369add9ab1bed6afd393a062d"
+      "predicate_sha256": "1597f03f3a53ae3492af45380c47c4029c6f850363352f4eb8252f8b860262cd",
+      "bundle_sha256": "2fcd28f56e8eb7837afe357d28d8ae75d4585deb974ae3ea19347c2e644303b2",
+      "attachment_sha256": "9c1e93ca39b2e55a0d46e19b953285cab4ca815f13f8a71d996b8b1c0a2b4d3b"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "gxBoWl7I/Ci/9rky7K/+jv7qpDPySQvrGKJxdJCUrzs=",
+        "inclusion_root_hash": "Z2fcigtRzzFrdw+AmgXkMtE31Uf7LY/xpiER67bpTmk=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3420888049,
-        "signed_entry_timestamp": "MEYCIQCywpJa8h72sQ4emCDPoNFi+BD0nz6aPRjdk1EJsgXErQIhALYspHQqCLsqlFRuw3aeG9gUeXYoNUl5jdN9HbkPYBKF"
+        "log_index": 3754120764,
+        "signed_entry_timestamp": "MEUCIC41yhi2NHmYl5WGmkw9FNP3imKZCngd3/ncf8BSyS7lAiEAvJtX1Rusy/sFcYvH7PbkTQDMEYVgYBdJe2qar/nCwjc="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "JqvoKsReoQKNZFdcEi07w1LnukfKFDHJpvYq/a5ilKA=",
+        "inclusion_root_hash": "IACAWdWsgGNgqvfAlSN6iLIQn3wJWFNY4YETi8zdKI4=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3420888383,
-        "signed_entry_timestamp": "MEUCIAX9jcGxQC46LGghTDVuLICk+qdFDzkjI+VyA3CzM1tgAiEAky3ceBfaL9lugYWYG+b8oVyQXxeATXZYZUVu7lCYXNM="
+        "log_index": 3754120884,
+        "signed_entry_timestamp": "MEUCIQCB16VC1KV4sDhRc/oRj0NgFNqcfBuXMCg34xn41Q59UwIgfO9/0mbhsRF4klVflo2dw+t4VB2fiB7W+2iCTaDwveQ="
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.1"
+      "trivy": "0.76.2"
     }
   }
 }
