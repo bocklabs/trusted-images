@@ -3,49 +3,49 @@
   "app": "prowlarr",
   "upstream": {
     "ref": "linuxserver/prowlarr",
-    "tag": "2.6.5",
-    "digest": "sha256:f9151e5bc1025c6d0a630d503210cdcb6bb55a7cc098562609d96a408d838902",
-    "index_digest": "sha256:f9151e5bc1025c6d0a630d503210cdcb6bb55a7cc098562609d96a408d838902",
+    "tag": "2.7.0",
+    "digest": "sha256:431d7efebcef466e56adaa40a7a2fa2b0e85159a037b8bf465eaadbf0cf5bedf",
+    "index_digest": "sha256:431d7efebcef466e56adaa40a7a2fa2b0e85159a037b8bf465eaadbf0cf5bedf",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf"
+    "selected_child_digest": "sha256:171f9b04f0ac0754d4edea819355fa1ccf4021df5ab230e06e1df1c050f85af1"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/prowlarr",
-    "tag": "2.6.5-bocklabs.3",
-    "digest": "sha256:0e56a28272fce900c50bff006dbbfdc645ba607d4a94393d46d4a816f291b6fd",
+    "tag": "2.7.0-bocklabs.1",
+    "digest": "sha256:b4461914dc90a32d4704306a309a81b8ef90e527644d6f58af04262b13c0b6be",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40298944356",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42461368088",
     "workflow": "promote",
-    "dispatched_by": "bocklabs-release[bot]"
+    "dispatched_by": "nitish-raj"
   },
   "tools": {
-    "trivy": "0.76.1",
+    "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "skopeo": "v1.22.3",
+    "skopeo_image_digest": "sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:96ee978993524fa2026071c61b8641e2034b8208322fab672b2b814666ffbc83",
-      "updated_at": "2026-10-26 07:15:18.945937093 +0000 UTC"
+      "check_bundle_digest": "sha256:e70d29ed3f228011d5527bd220c603ed56ba1cf1312d6feb6af9b8f64740b782",
+      "updated_at": "2026-11-08 06:39:21.614725497 +0000 UTC"
     },
-    "full_report_sha256": "8ba604c0dba38bf104a22a6816f9924d7824f029ad900eff8c242aefd0303089",
-    "copa_report_sha256": "140db4199065a49e5a2e720e416934a5af01759364adac85611dbaca69accaf5",
-    "decision_sha256": "7b1692e1940704886191ee08f16a32c7c6c6cdc75b79ef48a82e821d9aa56a8b",
+    "full_report_sha256": "135f922601cb6d2706a2626939c618c7b3d0bf73ec431f2db1f14f413adbd616",
+    "copa_report_sha256": "d65d022503fb5c9f44d4b9eef0f278ae63b88a5e0fb15905651cd4d7f79c31ba",
+    "decision_sha256": "780e229c4c3621a41bb73d86ec4365035a8a6fbff12c2a656ddb36235b1df320",
     "reports": {
-      "before_sha256": "c4d32a34443fe3c4c6cfa76a83323fc6cd2a0f4e1039f297b1efa773b1ade448",
-      "final_sha256": "8ba604c0dba38bf104a22a6816f9924d7824f029ad900eff8c242aefd0303089",
-      "fixable_sha256": "140db4199065a49e5a2e720e416934a5af01759364adac85611dbaca69accaf5"
+      "before_sha256": "29542d1c6159c035736515c454b14289d8c8005f563fdb4e4220f5d82b9bcc49",
+      "final_sha256": "135f922601cb6d2706a2626939c618c7b3d0bf73ec431f2db1f14f413adbd616",
+      "fixable_sha256": "d65d022503fb5c9f44d4b9eef0f278ae63b88a5e0fb15905651cd4d7f79c31ba"
     },
     "secobserve": {
       "product": "trusted-images",
-      "origin": "linuxserver/prowlarr:2.6.5"
+      "origin": "linuxserver/prowlarr:2.7.0"
     }
   },
   "policy": {
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "97a6e54bc74c651ab3c55657191db9adec6c63b05ca54e4205327cfd97a8fb70",
-        "fetched_at": "2026-10-26T09:24:08Z",
-        "catalogVersion": "2026.10.23",
-        "dateReleased": "2026-10-23T19:30:18.9209Z"
+        "sha256": "47e0406b2be5a40420eff66f3d90e83eb8883dae6ff4d08e1b2a942c366f6cc2",
+        "fetched_at": "2026-11-08T08:06:26Z",
+        "catalogVersion": "2026.11.06",
+        "dateReleased": "2026-11-06T19:44:45.1797Z"
       }
     },
     "acceptance": null,
@@ -72,14 +72,11 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
-    "remediation": {
-      "need_sha256": "21b7151c09af27ea1149e23249c0cc9394d3d194247dc2a3c95628fb45ca3645"
-    },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa",
+    "outcome": "eligible with no-fix warnings: CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa",
     "eligible": true,
     "warnings": [
       {
@@ -406,6 +403,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Api.V1.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Api.V1.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Api.V1.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -644,6 +655,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-47302",
         "platform": "linux/amd64",
         "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
@@ -849,6 +874,20 @@
         "target": "app/prowlarr/bin/Prowlarr.Core.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1204,6 +1243,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Host.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -1554,6 +1607,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Http.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -1787,6 +1854,20 @@
         "target": "app/prowlarr/bin/Prowlarr.Mono.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2109,6 +2190,20 @@
         "target": "app/prowlarr/bin/Prowlarr.SignalR.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2461,336 +2556,25 @@
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
         "severity": "HIGH",
         "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
       }
     ]
   },
   "cves": {
     "before": [
-      {
-        "identity": "linux/amd64|brotli-libs|CVE-2026-111497",
-        "platform": "linux/amd64",
-        "package": "brotli-libs",
-        "cve": "CVE-2026-111497",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "1.2.0-r1",
-        "fixed_version": "1.2.1-r0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-107928",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-107928",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-107929",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-107929",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86409",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86409",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86410",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86410",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86411",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86411",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86412",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86412",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86413",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86413",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86414",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86414",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86415",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86415",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87861",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87861",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87862",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87862",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87863",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87863",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87864",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87864",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87865",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87865",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87866",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87866",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92386",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92386",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92387",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92387",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92388",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92388",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92389",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92389",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92390",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92390",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92391",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92391",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92392",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92392",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-94265",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-94265",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-94266",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-94266",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
       {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Api.V1.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-70175",
         "platform": "linux/amd64",
@@ -3091,6 +2875,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Api.V1.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Api.V1.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Api.V1.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -3312,6 +3109,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-47302",
         "platform": "linux/amd64",
         "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
@@ -3503,6 +3313,19 @@
         "target": "app/prowlarr/bin/Prowlarr.Core.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -3832,6 +3655,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Host.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -4157,6 +3993,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Http.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -4374,6 +4223,19 @@
         "target": "app/prowlarr/bin/Prowlarr.Mono.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4673,6 +4535,19 @@
         "target": "app/prowlarr/bin/Prowlarr.SignalR.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -5002,341 +4877,29 @@
         "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|libcurl|CVE-2026-107928",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
         "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-107928",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-107929",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-107929",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86409",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86409",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86410",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86410",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86411",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86411",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86412",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86412",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86413",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86413",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86414",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86414",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86415",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86415",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87861",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87861",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87862",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87862",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87863",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87863",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87864",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87864",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87865",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87865",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87866",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87866",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92386",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92386",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92387",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92387",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92388",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92388",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92389",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92389",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92390",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92390",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92391",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92391",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92392",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92392",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
-        "severity_source": ""
+        "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|libcurl|CVE-2026-94265",
+        "identity": "linux/amd64|zlib|CVE-2026-4738",
         "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-94265",
+        "package": "zlib",
+        "cve": "CVE-2026-4738",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-94266",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-94266",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|musl-utils|CVE-2026-107891",
-        "platform": "linux/amd64",
-        "package": "musl-utils",
-        "cve": "CVE-2026-107891",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "1.2.6-r2",
-        "fixed_version": "1.2.6-r3",
-        "severity": "UNKNOWN",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|musl|CVE-2026-107891",
-        "platform": "linux/amd64",
-        "package": "musl",
-        "cve": "CVE-2026-107891",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/prowlarr@sha256:20bc5fdf919b4f86f9ab9b46d0f51a3b5d3fa83108819a0e4bbbc7bc2fee11cf (alpine 3.24.2)",
-        "installed_version": "1.2.6-r2",
-        "fixed_version": "1.2.6-r3",
-        "severity": "UNKNOWN",
+        "target": "linuxserver/prowlarr@sha256:171f9b04f0ac0754d4edea819355fa1ccf4021df5ab230e06e1df1c050f85af1 (alpine 3.24.3)",
+        "installed_version": "1.3.2-r1",
+        "fixed_version": "1.4-r0",
+        "severity": "MEDIUM",
         "severity_source": ""
       }
     ],
@@ -5641,6 +5204,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Api.V1.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Api.V1.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Api.V1.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -5862,6 +5438,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-47302",
         "platform": "linux/amd64",
         "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
@@ -6053,6 +5642,19 @@
         "target": "app/prowlarr/bin/Prowlarr.Core.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -6382,6 +5984,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Host.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -6707,6 +6322,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Http.deps.json:System.Security.Cryptography.Pkcs|CVE-2026-70162",
         "platform": "linux/amd64",
         "package": "System.Security.Cryptography.Pkcs",
@@ -6924,6 +6552,19 @@
         "target": "app/prowlarr/bin/Prowlarr.Mono.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7223,6 +6864,19 @@
         "target": "app/prowlarr/bin/Prowlarr.SignalR.deps.json",
         "installed_version": "8.0.27",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7550,36 +7204,24 @@
         "fixed_version": "10.0.13, 11.0.0-rc.2, 9.0.21, 8.0.32",
         "severity": "HIGH",
         "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fprowlarr%2Fbin%2FProwlarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/prowlarr/bin/Prowlarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
       }
     ],
     "summary": {
       "resolved": [
-        "CVE-2026-107891",
-        "CVE-2026-107928",
-        "CVE-2026-107929",
-        "CVE-2026-111497",
-        "CVE-2026-86409",
-        "CVE-2026-86410",
-        "CVE-2026-86411",
-        "CVE-2026-86412",
-        "CVE-2026-86413",
-        "CVE-2026-86414",
-        "CVE-2026-86415",
-        "CVE-2026-87861",
-        "CVE-2026-87862",
-        "CVE-2026-87863",
-        "CVE-2026-87864",
-        "CVE-2026-87865",
-        "CVE-2026-87866",
-        "CVE-2026-92386",
-        "CVE-2026-92387",
-        "CVE-2026-92388",
-        "CVE-2026-92389",
-        "CVE-2026-92390",
-        "CVE-2026-92391",
-        "CVE-2026-92392",
-        "CVE-2026-94265",
-        "CVE-2026-94266"
+        "CVE-2026-4738"
       ],
       "remaining": [
         "CVE-2026-47302",
@@ -7606,7 +7248,8 @@
         "CVE-2026-96225",
         "CVE-2026-96231",
         "CVE-2026-96233",
-        "CVE-2026-96236"
+        "CVE-2026-96236",
+        "GHSA-p3jp-9v83-76w9"
       ],
       "introduced": [],
       "unresolved_fixable": []
@@ -7618,71 +7261,36 @@
         "ecosystem": "alpine",
         "name": "alpine-release",
         "change": "upgraded",
-        "before": "3.24.2-r0",
-        "after": "3.24.3-r0"
+        "before": "3.24.3-r0",
+        "after": "3.24.4-r0"
       },
       {
         "ecosystem": "alpine",
-        "name": "brotli-libs",
+        "name": "apk-tools",
         "change": "upgraded",
-        "before": "1.2.0-r1",
-        "after": "1.2.1-r0"
+        "before": "3.0.8-r0",
+        "after": "3.0.9-r0"
       },
       {
         "ecosystem": "alpine",
-        "name": "c-ares",
+        "name": "libapk",
         "change": "upgraded",
-        "before": "1.34.8-r0",
-        "after": "1.34.9-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "ca-certificates",
-        "change": "upgraded",
-        "before": "20260909-r0",
-        "after": "20261020-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "ca-certificates-bundle",
-        "change": "upgraded",
-        "before": "20260909-r0",
-        "after": "20261020-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "curl",
-        "change": "upgraded",
-        "before": "8.22.0-r0",
-        "after": "8.23.0-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "libcurl",
-        "change": "upgraded",
-        "before": "8.22.0-r0",
-        "after": "8.23.0-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "musl",
-        "change": "upgraded",
-        "before": "1.2.6-r2",
-        "after": "1.2.6-r3"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "musl-utils",
-        "change": "upgraded",
-        "before": "1.2.6-r2",
-        "after": "1.2.6-r3"
+        "before": "3.0.8-r0",
+        "after": "3.0.9-r0"
       },
       {
         "ecosystem": "alpine",
         "name": "tzdata",
         "change": "upgraded",
-        "before": "2026d-r0",
-        "after": "2026e-r0"
+        "before": "2026e-r0",
+        "after": "2026f-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "zlib",
+        "change": "upgraded",
+        "before": "1.3.2-r1",
+        "after": "1.4-r0"
       }
     ],
     "downgrades": [],
@@ -7698,6 +7306,7 @@
       "expectStatus": 200,
       "durationSeconds": 30,
       "timeoutSeconds": 180,
+      "network": "none",
       "expectedExit": 0,
       "command": [
         "/app/prowlarr/bin/Prowlarr",
@@ -7711,15 +7320,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-26T09:23:56Z",
-      "finished_at": "2026-10-26T09:24:08Z",
-      "duration_seconds": 12.5
+      "started_at": "2026-11-08T08:06:14Z",
+      "finished_at": "2026-11-08T08:06:26Z",
+      "duration_seconds": 12.2
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000014949",
+    "runner": "GitHub Actions 1000017184",
     "baseline": {
       "entrypoint": [
         "/init"
@@ -7741,39 +7350,39 @@
       ]
     }
   },
-  "promoted_at": "2026-10-26T09:25:01Z",
+  "promoted_at": "2026-11-08T08:07:28Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "aebdf936e19f040a4cb2d9651c3379523518dcbfa2cb52badf8689dca293bc8b",
-      "attachment_sha256": "22648e2c8ec3de76fa7eea8f6a8d4fd88cc8354938af4a269438ddd0c41734ee",
+      "bundle_sha256": "6408cf67d0e8a5a8c3c81a0cb8611b0816e2b7d9a8de08d635ea17407674571e",
+      "attachment_sha256": "4b1de021aaa6807e80f3ebf460a301023957a5eb376e8aeb84d42d177b44e7fb",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "c806cf0a8bb63b9a634e7b5415ab03348e577c77412a57cd0103a2d78dc78d4b",
-      "bundle_sha256": "4d8034b5bb60197fdf2c782b2db15720f24c27eb4fa5c0b19f5a1397c8fea09f",
-      "attachment_sha256": "e01bac38aa8769895a63c07a2b187dc5eb4187917f2fe9a5d986e4eda1ed5734"
+      "predicate_sha256": "1ae937b45b4b78ed5439272a322eef37d8f01fe118984544dac2f6007b8ec8dc",
+      "bundle_sha256": "bcb1c82621713a5accc5ca6ef4267ebbd4f99654490a7ad77e3de8f0de21f7b0",
+      "attachment_sha256": "885a56b7b79f6fb6ca270f78c90a7218800ca8c47cf1dabafa82e5398023f23d"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "NF7w4dbTETxASXOWclAKNE9lagQF5RuyPV6WL5NhNE0=",
+        "inclusion_root_hash": "uNsFBhqfqzalqEEJapa2fBgMofFltS0vJbtZEztaLu4=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3482977398,
-        "signed_entry_timestamp": "MEYCIQDF7Kfzn7Y6xQnnb3uYqavT90udijXJoPo7AY1fFhPYxQIhAIZhejt8N0aUmRcUcYJnkU7iuuXg0ez5DGu3TzrMy0EG"
+        "log_index": 3751871906,
+        "signed_entry_timestamp": "MEYCIQCb7XEJCGd8W3ZdEXvEfgYX4kB9KjWFqesCZyfXwMsQ3gIhAPpdLdaSvsIk7E9vf8yhYPZ94dJIuPP2+w75Q4ji3duc"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "pw5mya4XEgeNTEMzEi25qoQUMTLTnACvswQoCUb6N4I=",
+        "inclusion_root_hash": "0CBTCAAo/7h9sKdLElW6SlAr1ckW+YhS0DTFEfqMiks=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3482979206,
-        "signed_entry_timestamp": "MEYCIQC2a2nmbO+Rj23PHF0nr3iX16rhoExUKJqJsVEngN7bsgIhAPeqiziZHUk6SdCGH8aW9ae50GKrYGjGrZ98SH/qoUSA"
+        "log_index": 3751873171,
+        "signed_entry_timestamp": "MEQCIBK6+jSR5u2Q6HVRahBToWAEOx5pzj+JGYk/kDbjPpFcAiAkFJEyvPYsUrfegrRbCwLot+M9aTDK9oRQ7hEpSigjIQ=="
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.1"
+      "trivy": "0.76.2"
     }
   }
 }
