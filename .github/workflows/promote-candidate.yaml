@@ -198,7 +198,7 @@ jobs:
           TRIVY_USERNAME: ${{ steps.creds.outputs.is_dockerhub == 'true' && vars.DOCKERHUB_USERNAME || '' }}
           TRIVY_PASSWORD: ${{ steps.creds.outputs.is_dockerhub == 'true' && secrets.DOCKERHUB_TOKEN || '' }}
         with:
-          version: v0.76.1
+          version: v0.76.2
           image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
           format: json
@@ -228,7 +228,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true' # no action input exists — env pass-through; reuse scan 1's DB
         with:
-          version: v0.76.1
+          version: v0.76.2
           skip-setup-trivy: 'true'
           image-ref: ${{ steps.entry.outputs.upstream_ref }}@${{ steps.child.outputs.digest }}
           scanners: vuln
@@ -338,7 +338,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true'
         with:
-          version: v0.76.1
+          version: v0.76.2
           skip-setup-trivy: 'true'
           input: candidate-final.tar
           scanners: vuln
@@ -360,7 +360,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
           TRIVY_SKIP_DB_UPDATE: 'true'
         with:
-          version: v0.76.1
+          version: v0.76.2
           skip-setup-trivy: 'true'
           input: resume-final.tar
           scanners: vuln
