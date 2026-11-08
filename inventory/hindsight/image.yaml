@@ -17,4 +17,5 @@ spec:
     durationSeconds: 180
     env:
       HINDSIGHT_API_LLM_PROVIDER: none
+      HF_HUB_OFFLINE: "1"
   version: 2
