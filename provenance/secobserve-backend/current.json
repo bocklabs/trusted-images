@@ -12,36 +12,36 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/secobserve-backend",
-    "tag": "1.63.0-bocklabs.1",
-    "digest": "sha256:2dbcf5a57678dfb75077522d77dc39238243ba79fc9f65d037220dcf0942ecc0",
+    "tag": "1.63.0-bocklabs.2",
+    "digest": "sha256:96ed6b005405be44f5383d3d185c135ac1d436ca22597e5ccefd30bbbb312d1e",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/41357342125",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42472780112",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
-    "trivy": "0.76.1",
+    "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
-    "copa": null,
+    "copa": "0.15.0",
     "skopeo": "v1.22.3",
-    "skopeo_image_digest": "sha256:ad1d2e25cf0234bb50476e753a8fc9debd4f0582cdd2ab6fd7bad9bacdfe3b9b"
+    "skopeo_image_digest": "sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:99cb588dc6a5343e7237e710b9b8d2b65ad6ae082de9baca350280b5c0ca4172",
-      "updated_at": "2026-11-01 07:08:40.846369079 +0000 UTC"
+      "check_bundle_digest": "sha256:e70d29ed3f228011d5527bd220c603ed56ba1cf1312d6feb6af9b8f64740b782",
+      "updated_at": "2026-11-08 06:39:21.614725497 +0000 UTC"
     },
-    "full_report_sha256": "2ab4ec936f6f16651c994b2b4b7c77b7b3eafa0d472867570ebbbe01ab648276",
-    "copa_report_sha256": "e98b2e8e03cd24249789761da47e354d829a156c6b61e8c8f0c64588bd723e72",
-    "decision_sha256": "7e531f4cf0b98adaa4bd19199a453d23344e1896351f03ea5601953a16a4ecb0",
+    "full_report_sha256": "592767a0b024f32752b3c62196ec45e594e74138c6fd829eaaeba18d9edf22c9",
+    "copa_report_sha256": "c34a538127cebd984d0ea874bcc40c16c601d51427d5be53882c2550302c0b5d",
+    "decision_sha256": "4b20958e988f97f4ac500f187879e8be136c78d228209d3e35ba8ccdaa53b9f8",
     "reports": {
-      "before_sha256": "2ab4ec936f6f16651c994b2b4b7c77b7b3eafa0d472867570ebbbe01ab648276",
-      "final_sha256": "2ab4ec936f6f16651c994b2b4b7c77b7b3eafa0d472867570ebbbe01ab648276",
-      "fixable_sha256": "e98b2e8e03cd24249789761da47e354d829a156c6b61e8c8f0c64588bd723e72"
+      "before_sha256": "82433a495ff33368bced8b69ce914047f4b6910943bdd30d498b7c348eecaaef",
+      "final_sha256": "592767a0b024f32752b3c62196ec45e594e74138c6fd829eaaeba18d9edf22c9",
+      "fixable_sha256": "c34a538127cebd984d0ea874bcc40c16c601d51427d5be53882c2550302c0b5d"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "3aa9cf3c01f116362a29d111702979175453c425e3733bde80fc4f6f8e2294e5",
-        "fetched_at": "2026-11-01T22:31:39Z",
-        "catalogVersion": "2026.10.30",
-        "dateReleased": "2026-10-30T17:02:45.3665Z"
+        "sha256": "47e0406b2be5a40420eff66f3d90e83eb8883dae6ff4d08e1b2a942c366f6cc2",
+        "fetched_at": "2026-11-08T10:49:12Z",
+        "catalogVersion": "2026.11.06",
+        "dateReleased": "2026-11-06T19:44:45.1797Z"
       }
     },
     "acceptance": null,
@@ -64,13 +64,16 @@
       "disabled": false
     },
     "copa": {
-      "classification": "not-required",
-      "original_child_input": false,
-      "mode": "not-required",
-      "release": null,
-      "source_sha": null,
-      "runtime_digest": null,
+      "classification": "succeeded",
+      "original_child_input": true,
+      "mode": "comprehensive",
+      "release": "0.15.0",
+      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
+      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
+    },
+    "remediation": {
+      "need_sha256": "3e1a7ea8dd209ec4e21fbfb7dd937c7ddbd537a460c1717dded1567a5f8e7294"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -298,6 +301,32 @@
         "fixed_version": "2.8.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|zlib-dev|CVE-2026-4738",
+        "platform": "linux/amd64",
+        "package": "zlib-dev",
+        "cve": "CVE-2026-4738",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/secobserve/secobserve-backend@sha256:2dbcf5a57678dfb75077522d77dc39238243ba79fc9f65d037220dcf0942ecc0 (alpine 3.24.3)",
+        "installed_version": "1.3.2-r1",
+        "fixed_version": "1.4-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|zlib|CVE-2026-4738",
+        "platform": "linux/amd64",
+        "package": "zlib",
+        "cve": "CVE-2026-4738",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/secobserve/secobserve-backend@sha256:2dbcf5a57678dfb75077522d77dc39238243ba79fc9f65d037220dcf0942ecc0 (alpine 3.24.3)",
+        "installed_version": "1.3.2-r1",
+        "fixed_version": "1.4-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
       }
     ],
     "final": [
@@ -407,7 +436,9 @@
       }
     ],
     "summary": {
-      "resolved": [],
+      "resolved": [
+        "CVE-2026-4738"
+      ],
       "remaining": [
         "CVE-2025-47273",
         "CVE-2026-114613",
@@ -423,7 +454,50 @@
     }
   },
   "packages": {
-    "changes": [],
+    "changes": [
+      {
+        "ecosystem": "alpine",
+        "name": "alpine-release",
+        "change": "upgraded",
+        "before": "3.24.3-r0",
+        "after": "3.24.4-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "apk-tools",
+        "change": "upgraded",
+        "before": "3.0.8-r0",
+        "after": "3.0.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libapk",
+        "change": "upgraded",
+        "before": "3.0.8-r0",
+        "after": "3.0.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "tzdata",
+        "change": "upgraded",
+        "before": "2026e-r0",
+        "after": "2026f-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "zlib",
+        "change": "upgraded",
+        "before": "1.3.2-r1",
+        "after": "1.4-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "zlib-dev",
+        "change": "upgraded",
+        "before": "1.3.2-r1",
+        "after": "1.4-r0"
+      }
+    ],
     "downgrades": [],
     "downgrade_blocked": false
   },
@@ -455,15 +529,15 @@
       }
     },
     "timings": {
-      "started_at": "2026-11-01T22:30:09Z",
-      "finished_at": "2026-11-01T22:31:39Z",
+      "started_at": "2026-11-08T10:47:42Z",
+      "finished_at": "2026-11-08T10:49:12Z",
       "duration_seconds": 90.1
     },
     "health": {
       "defined": true,
       "final_status": "healthy"
     },
-    "runner": "GitHub Actions 1000016291",
+    "runner": "GitHub Actions 1000017255",
     "baseline": {
       "entrypoint": [
         "/entrypoint"
@@ -481,39 +555,39 @@
       ]
     }
   },
-  "promoted_at": "2026-11-01T22:32:57Z",
+  "promoted_at": "2026-11-08T10:50:33Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "b473dcdc9ba654d212b180739583d7cc49f47389b7dc98c41c626b844b6fb4f3",
-      "attachment_sha256": "4e0d3a86b462ae74ec7ad6b8930af83d8e97a06c4ab403105fa65090e63943a2",
+      "bundle_sha256": "6be53b7a20eec6bfa3de83fd5a7b63533445e7403a4a44d2ed657c7345d09e65",
+      "attachment_sha256": "8405f21b8edb076a757719ffdd34dd06d28cc08c85f813a6cb28b587ccda1bcf",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "9baf1c704a8ffef74d35607550da146d2dd9e268dc0c3f068f3858ae725faf2d",
-      "bundle_sha256": "b46c844bc9a4056c0237beaea761e783243f598ec828c31375d5df8f3afd00d4",
-      "attachment_sha256": "ef5144080d94176a1fb467182412961b548d060c0a1fdf193ccb43f58ab8573a"
+      "predicate_sha256": "80e2369fbeb422a6a25a0d277be4b3bd924c5871cdca63287a80597c39486fbe",
+      "bundle_sha256": "6a5a2e127b350ce8d8ebdeac3dbebbc202f57db18f50b1b50e9bc0e9d53e3dc2",
+      "attachment_sha256": "c96b40b449fe9fb49f1df228f866b306b6ce737208067754c6745b494afd46f9"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "4rhiXyItmA8hocONQgDGFVJSS/rcWSWLkLFHvOwfwQc=",
+        "inclusion_root_hash": "+T/9reXgCE91ictHwAH3bkhRvUzX0iijmQJRcj4NBlw=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3636692563,
-        "signed_entry_timestamp": "MEUCIQDgalowHGrYETtjetGgr7bMj57JHbOsmY+X9b+iBUi7xwIgWrhq8QOnjKytOx6qze5xBVtqL5/JR4uOMMuBo2SLyAs="
+        "log_index": 3754124537,
+        "signed_entry_timestamp": "MEUCIFAqhGBFR+QYLwlJlemasVgg34xFc1TFzO0Xh0RVw6OYAiEAtyUzE4/DTXapISSAyAltpUpYytvX6hgU9kQWuV6gzZw="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "NNlgJ/+bSyNdVh5OBbDBpNCRSrL9T9lXXpO+0Pnatak=",
+        "inclusion_root_hash": "T46iORTvea6aRxrVaZ1iGVqg/20wlO5P7fnlPlp84zY=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3636693346,
-        "signed_entry_timestamp": "MEYCIQD2tAyqg40tgDPmgjas0+P2TcRexaKFCxHbC8V1Fco5yAIhAPxPGgt0NaB/h/oJa/uwGAvwKRrwMr5UXj1JTWJICCxX"
+        "log_index": 3754124668,
+        "signed_entry_timestamp": "MEUCIQDW29jC1ECeGtyuljumrtynyT3ksyJp3MI2ulpnF/AZAwIgCnO6UpNDDvRGh7iqR/mMUrGCek8Otm0HJDfc/u2cu1c="
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.1"
+      "trivy": "0.76.2"
     }
   }
 }
