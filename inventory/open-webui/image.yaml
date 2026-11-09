@@ -5,8 +5,8 @@ metadata:
 spec:
   upstream:
     ref: ghcr.io/open-webui/open-webui
-    tag: v0.13.2
-    digest: sha256:4f1dd4d81ef1445d4e4bfb4a7a55838dfb1de38a834a0fbe7615d92990333a71
+    tag: v0.13.3
+    digest: sha256:46b59158e6558eeb980bc828e0f1b30238ad24d82ed84d5e5eda1dab2a082f14
   destination:
     package: ghcr.io/bocklabs/open-webui
   patchPolicy: enabled
