@@ -1,0 +1,23 @@
+apiVersion: trusted-images.bocklabs.dev/v1
+kind: Image
+metadata:
+  name: forkkeeper
+spec:
+  version: 2
+  upstream:
+    ref: ghcr.io/bocklabs/forkkeeper
+    tag: 0.3.2
+    digest: sha256:fc3a046ada34c077eac95d21cd4667cd110341525272e6499901461ce9e572fc
+  destination:
+    package: ghcr.io/bocklabs/forkkeeper
+  patchPolicy: enabled
+  validation:
+    type: oneshot
+    command:
+    - --help
+    expectedExit: 0
+    timeoutSeconds: 30
+    expectedPlatforms:
+    - linux/amd64
+    env:
+      FORKKEEPER_INTERVAL_SECONDS: "0"
