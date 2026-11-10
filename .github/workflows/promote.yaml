@@ -19,6 +19,7 @@ on:
           - docling-serve
           - docling-serve-cu124
           - flaresolverr
+          - forkkeeper
           - glances
           - gluetun
           - grafana
