@@ -102,11 +102,12 @@ else:
                             member = tarfile.TarInfo(name)
                             member.size = len(raw)
                             archive.addfile(member, io.BytesIO(raw))
-                    with self.assertRaisesRegex(error_type, message) as caught:
-                        try:
-                            raise RuntimeError("outer error")
-                        except RuntimeError:
-                            verify(manifest, FailOnEof(data.getvalue(), drain_error))
+                    stream = FailOnEof(data.getvalue(), drain_error)
+                    try:
+                        raise RuntimeError("outer error")
+                    except RuntimeError:
+                        with self.assertRaisesRegex(error_type, message) as caught:
+                            verify(manifest, stream)
                     if selected == "wrong.json":
                         self.assertIn("readback stream failed", " ".join(caught.exception.__notes__))
 
