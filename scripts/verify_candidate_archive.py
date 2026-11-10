@@ -42,8 +42,9 @@ def archive_config(source: IO[bytes], names: set[str], size: int) -> tuple[objec
 
 def drain(source: IO[bytes], primary_error: BaseException | None) -> None:
     try:
-        while source.read(1024 * 1024):
-            pass
+        while True:
+            if not source.read(1024 * 1024):
+                break
     except (OSError, ValueError) as drain_error:
         if primary_error is None:
             raise

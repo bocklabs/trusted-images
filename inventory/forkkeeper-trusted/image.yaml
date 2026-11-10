@@ -1,7 +1,7 @@
 apiVersion: trusted-images.bocklabs.dev/v1
 kind: Image
 metadata:
-  name: forkkeeper
+  name: forkkeeper-trusted
 spec:
   version: 2
   upstream:
@@ -9,7 +9,7 @@ spec:
     tag: 0.4.0
     digest: sha256:6ca8dad5e72c6a473a91c621ebe382e31cd39317d9aed499246327493ee7a220
   destination:
-    package: ghcr.io/bocklabs/forkkeeper
+    package: ghcr.io/bocklabs/forkkeeper-trusted
   patchPolicy: enabled
   validation:
     type: oneshot
