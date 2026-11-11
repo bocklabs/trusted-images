@@ -9,5 +9,5 @@ dev = [
   "coverage==7.17.2",
   "mypy==2.4.1",
   "pre-commit==4.7.0",
-  "types-PyYAML==6.0.12.20261103",
+  "types-PyYAML==6.0.12.20261111",
 ]
