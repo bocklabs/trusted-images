@@ -12,14 +12,14 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/pihole",
-    "tag": "2026.10.1-bocklabs.3",
-    "digest": "sha256:ff271c9d95147d06ef05768fc4b10a77ce333aaf12f18cabc391ab156728699a",
+    "tag": "2026.10.1-bocklabs.4",
+    "digest": "sha256:c3c870c98a11d535c2fc2d8cb755cad95c92bba212b71f7da95bfc93344265c6",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42472757909",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/43011981246",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
@@ -27,21 +27,21 @@
     "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
-    "skopeo": "v1.22.3",
-    "skopeo_image_digest": "sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
+    "skopeo": "v1.24.1",
+    "skopeo_image_digest": "sha256:ed369b58b75b773ebe6cb8b6edd1c9b4323701c703777c8567e3c1fc7df9527c"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:e70d29ed3f228011d5527bd220c603ed56ba1cf1312d6feb6af9b8f64740b782",
-      "updated_at": "2026-11-08 06:39:21.614725497 +0000 UTC"
+      "check_bundle_digest": "sha256:14f56847ed15e256894971193a7783788b655e77487c71e233a5116ce348b87f",
+      "updated_at": "2026-11-10 19:01:23.081219346 +0000 UTC"
     },
-    "full_report_sha256": "5f31f592820985128fe0fb2b6d46fb7ad886206af35df6aa1f79ffed59eb4437",
-    "copa_report_sha256": "18157b6d891e6787967bb6dc6fa61c41ffe18db5595a36741567625b23ea7b67",
-    "decision_sha256": "2f14c449614149a4f13941affe50077f059bc05f9ec359f42872f6a5e5437764",
+    "full_report_sha256": "c6f6469f6ab52406b7a9369e254afee51559efc6f0e5b406ac7efa07d2c253e2",
+    "copa_report_sha256": "2a3bb3b3ddfcafa56f19c8d77ab3681e1605d86a2ac3f708a1cb5aadc87bbf67",
+    "decision_sha256": "4028123d5334dad821263627dfa31f25dbfd1e4c22191beccb800b5ad296edb9",
     "reports": {
-      "before_sha256": "3887554333ba9cbc19e9fd7f247e787457466720c26b83193a72616747626409",
-      "final_sha256": "5f31f592820985128fe0fb2b6d46fb7ad886206af35df6aa1f79ffed59eb4437",
-      "fixable_sha256": "18157b6d891e6787967bb6dc6fa61c41ffe18db5595a36741567625b23ea7b67"
+      "before_sha256": "8972fe9a50415e31444c0773ab245d1686fe3de0c5f59ee7dce61db57f062f90",
+      "final_sha256": "c6f6469f6ab52406b7a9369e254afee51559efc6f0e5b406ac7efa07d2c253e2",
+      "fixable_sha256": "2a3bb3b3ddfcafa56f19c8d77ab3681e1605d86a2ac3f708a1cb5aadc87bbf67"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "47e0406b2be5a40420eff66f3d90e83eb8883dae6ff4d08e1b2a942c366f6cc2",
-        "fetched_at": "2026-11-08T10:52:20Z",
-        "catalogVersion": "2026.11.06",
-        "dateReleased": "2026-11-06T19:44:45.1797Z"
+        "sha256": "41c8091ad62d508d6f8906ad5cd26b20efe551f7d51b95ecc8a6981fa640b4ea",
+        "fetched_at": "2026-11-11T11:33:14Z",
+        "catalogVersion": "2026.11.10",
+        "dateReleased": "2026-11-10T19:03:29.8375Z"
       }
     },
     "acceptance": null,
@@ -73,7 +73,7 @@
       "limitation": null
     },
     "remediation": {
-      "need_sha256": "9b9cfc0abd0ab83911eff3e35f4bab8eafd7ad8445d0dd5056e48af2468f8eb1"
+      "need_sha256": "24e521f74bc33deb213ec87bde1aa12eb59d322466e0c16811ee2c4a978571eb"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -85,6 +85,279 @@
   },
   "cves": {
     "before": [
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-107364",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-107364",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-107708",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-107708",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-107778",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-107778",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-107884",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-107884",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-111423",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-111423",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112314",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112314",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112315",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112315",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112316",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112316",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112317",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112317",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112318",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112318",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112319",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112319",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112320",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112320",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112321",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112321",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112322",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112322",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-112323",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-112323",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-118380",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-118380",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-119079",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-119079",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-40355",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-40355",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": "nvd"
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-40356",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-40356",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": "nvd"
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-71199",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-71199",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|krb5-libs|CVE-2026-71200",
+        "platform": "linux/amd64",
+        "package": "krb5-libs",
+        "cve": "CVE-2026-71200",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:1c7aba2fdaa043d5ce194e9141dcaeded762bb72a15b53350751b9ba7b488557 (alpine 3.24.3)",
+        "installed_version": "1.22.2-r1",
+        "fixed_version": "1.22.3-r0",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
       {
         "identity": "linux/amd64|libexpat|CVE-2026-113351",
         "platform": "linux/amd64",
@@ -154,11 +427,32 @@
     "final": [],
     "summary": {
       "resolved": [
+        "CVE-2026-107364",
+        "CVE-2026-107708",
+        "CVE-2026-107778",
+        "CVE-2026-107884",
+        "CVE-2026-111423",
+        "CVE-2026-112314",
+        "CVE-2026-112315",
+        "CVE-2026-112316",
+        "CVE-2026-112317",
+        "CVE-2026-112318",
+        "CVE-2026-112319",
+        "CVE-2026-112320",
+        "CVE-2026-112321",
+        "CVE-2026-112322",
+        "CVE-2026-112323",
         "CVE-2026-113351",
         "CVE-2026-115506",
         "CVE-2026-117610",
         "CVE-2026-118370",
-        "CVE-2026-4738"
+        "CVE-2026-118380",
+        "CVE-2026-119079",
+        "CVE-2026-40355",
+        "CVE-2026-40356",
+        "CVE-2026-4738",
+        "CVE-2026-71199",
+        "CVE-2026-71200"
       ],
       "remaining": [],
       "introduced": [],
@@ -187,6 +481,34 @@
         "change": "upgraded",
         "before": "3.0.8-r0",
         "after": "3.0.9-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "git",
+        "change": "upgraded",
+        "before": "2.54.0-r0",
+        "after": "2.54.1-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "git-bash-completion",
+        "change": "upgraded",
+        "before": "2.54.0-r0",
+        "after": "2.54.1-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "git-init-template",
+        "change": "upgraded",
+        "before": "2.54.0-r0",
+        "after": "2.54.1-r0"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "krb5-libs",
+        "change": "upgraded",
+        "before": "1.22.2-r1",
+        "after": "1.22.3-r0"
       },
       {
         "ecosystem": "alpine",
@@ -239,15 +561,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-08T10:47:20Z",
-      "finished_at": "2026-11-08T10:52:20Z",
+      "started_at": "2026-11-11T11:28:14Z",
+      "finished_at": "2026-11-11T11:33:14Z",
       "duration_seconds": 300.1
     },
     "health": {
       "defined": true,
       "final_status": "healthy"
     },
-    "runner": "GitHub Actions 1000017252",
+    "runner": "GitHub Actions 1000017963",
     "baseline": {
       "entrypoint": [
         "start.sh"
@@ -260,34 +582,34 @@
       ]
     }
   },
-  "promoted_at": "2026-11-08T10:53:24Z",
+  "promoted_at": "2026-11-11T11:34:09Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "4a9c7a25ba608f2b15d85ded4b5662c48e3bc3fdfe269eb966bf04bc095fd43b",
-      "attachment_sha256": "332e51cbddefdedbd4b249819f80a539e7b80d75bc9674ca7cd3ef72ce717379",
+      "bundle_sha256": "95b673dcbc3260938f86437bf141d13f7b4b2d08692338966fb34beb79f4220a",
+      "attachment_sha256": "04c74705bd0727bdb187567c3a8c627fb426676cb0e3f628d11c3ff8ba4982df",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "a27822c9ede1238dfdda52c5647c5819899f712d9ef58a171af80c692054dac0",
-      "bundle_sha256": "d68fa771508b99e872d7c4dc88fec8c9fd1b53f1c9dd9f00ff5031def5c96b4c",
-      "attachment_sha256": "7688584948bafd523d5a3fe83c7dc5756a05122e31d03a3ee06d9cfbb7541bac"
+      "predicate_sha256": "033345d6a67094ea3036ca6a26590a7cdef0d3467e9f3773af1469be7a8e18b4",
+      "bundle_sha256": "ae7693de389ab53dc58e64d86a9fe5666405cf589a2ac042a30aba110ed41302",
+      "attachment_sha256": "fa324c70d17bd595f9c0ff842306d7cac7fcf5e60e24ea546522d60f7f3b0691"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "7kAWQcn0HDvvEO5aDXnChpGNpHO9T1rR4A+Owv11NBI=",
+        "inclusion_root_hash": "Ku/qmKCprDvQ7RIZ9RipHtZjB3Fb964qG2+da9INJWQ=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3754132714,
-        "signed_entry_timestamp": "MEUCIHEPXW2PhRpKJ4/IV8yha/zeFfBeO19WlsT1aJuVBBjHAiEAqBVi7UonnAbpFuQsKqW7HLb2TcYngVI3EEwhTDA9VmA="
+        "log_index": 3809009475,
+        "signed_entry_timestamp": "MEQCICGsa5qqtyc733KrAHyqCsBaDc1TmKXjWDY6r4yURgjKAiAzwp4Y1FrG71Nw0Ew36OJuAjHovZt+NPUzTdbc927xHw=="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "gC5zz8xsCPzVTHZNvm89nIGWM4KbV83RWUbWu/WmJ3M=",
+        "inclusion_root_hash": "i4CbB/ddSIdouNuJTTpovNi/R1m/aYaYWJOVX6fqO50=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3754133160,
-        "signed_entry_timestamp": "MEUCIH+EoALezS+BvqWYM6SjCxpC5fWSLQt8GCXTKYEvOg9oAiEA6JE3j/NYL1Mx287OZazSKaV7NQ4kwT0AF8Ax8DNmdTg="
+        "log_index": 3809009904,
+        "signed_entry_timestamp": "MEUCIQDpZXS2q/mw8h9tqHebpUlLubp3LzOagoh4MJJXzcBL5gIgQwUZk/kMIYzGrqxudepM/hTthTDQrqjb6gRT12TndqY="
       }
     },
     "tools": {
