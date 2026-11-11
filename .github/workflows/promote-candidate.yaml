@@ -60,7 +60,7 @@ permissions:
   issues: read
 
 env:
-  SKOPEO_IMAGE: "quay.io/skopeo/stable:v1.22.3@sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
+  SKOPEO_IMAGE: "quay.io/skopeo/stable:v1.24.1@sha256:ed369b58b75b773ebe6cb8b6edd1c9b4323701c703777c8567e3c1fc7df9527c"
 
 jobs:
   validate:
