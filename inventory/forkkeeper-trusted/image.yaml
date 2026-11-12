@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: ghcr.io/bocklabs/forkkeeper
-    tag: 0.4.0
-    digest: sha256:6ca8dad5e72c6a473a91c621ebe382e31cd39317d9aed499246327493ee7a220
+    tag: 0.4.1
+    digest: sha256:4eb2a18691224719599935a20caa10c9752887ad33df949d2d4b47ea40a96a51
   destination:
     package: ghcr.io/bocklabs/forkkeeper-trusted
   patchPolicy: enabled
