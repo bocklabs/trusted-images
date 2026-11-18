@@ -24,7 +24,7 @@ jobs:
           node-version: 26
 
       - name: Run OpenCodeReview
-        uses: alibaba/open-code-review@7e5ce06c88de5ce81df5dc4f24e2e485b517fae8 # v1.13.10
+        uses: alibaba/open-code-review@f921d6a0de3b71befce15d8edf589cd3609968fa # v1.13.12
         with:
           llm_url: ${{ secrets.OCR_LLM_URL }}
           llm_auth_token: ${{ secrets.OCR_LLM_AUTH_TOKEN }}
