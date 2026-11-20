@@ -1,7 +1,7 @@
 {
   "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
-  "ref": "ghcr.io/bocklabs/caddy:2.11.9-alpine-bocklabs.1@sha256:2f7ee08ce32516ada4fd8b7dab4c4868878568f3551bc2f32f7933a804ef137e",
-  "config_digest": "sha256:ae1135c876803b35a9e5abe71ed89e5365bbbdede1a6b663e6f0e40da849ecbf",
+  "ref": "ghcr.io/bocklabs/caddy:2.11.9-alpine-bocklabs.2@sha256:d5ac21444bafaca5f60b519ba76d7ef3a4bcabad55b76ae12010dc3fae15a187",
+  "config_digest": "sha256:7a297a047e32ea8f18c5a5d7d055d2e13cf947fa43f216a42bf420998f119cc9",
   "upstream_child_digest": "sha256:fc9cbc100585871d18d4e451cca7021785c90a7006087427ae5ceb3e4efe6424",
   "target": "usr/bin/caddy",
   "module": "caddy",
@@ -31,6 +31,6 @@
     "versioned_go_package_count": 147,
     "vcs_revision": "0d98caea58f794f88e709b1bef2880996a471bca"
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/44520808390",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/44733385449",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
