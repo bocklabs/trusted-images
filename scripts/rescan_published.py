@@ -121,7 +121,7 @@ def review_matches_image(review, selection, metadata, labels, diff_ids):
     )
 
 
-def reviewed_file_builds(selection, report):
+def reviewed_file_builds(selection, report, *, allow_historical=False):
     app = selection["app"]
     require(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", app), "invalid inventory app")
     paths = sorted((INVENTORY / app).glob("go-file-build*.json"))
@@ -138,10 +138,9 @@ def reviewed_file_builds(selection, report):
         require(path.is_file() and not path.is_symlink(), "unsafe Go file-build evidence")
         raw = path.read_bytes()
         review = parse_go_file_build(raw, path)
-        require(
-            review["ref"] == selection["ref"],
-            "Go file-build evidence is stale for the selected published image",
-        )
+        if review["ref"] != selection["ref"]:
+            require(allow_historical, "Go file-build evidence is stale for the selected published image")
+            continue
         require(
             review_matches_image(review, selection, metadata, labels, diff_ids),
             "Go file-build scan evidence differs from scanned image",
@@ -283,9 +282,11 @@ def read_go_source_skip(selection, report):
     skip = json.loads(path.read_text(encoding="utf-8"))
     require(isinstance(skip, dict) and skip.get("app") == selection["app"] and skip.get("ref") == selection["ref"],
             "Go source skip record does not match the selected image")
-    require(all(isinstance(skip.get(key), str) and skip[key] for key in ("target", "reason")),
-            "Go source skip record lacks target or reason")
-    require(skip["target"] in versionless_targets(report), "Go source skip target is missing from the scan")
+    targets = skip.get("targets")
+    require(isinstance(targets, dict) and targets, "Go source skip record lacks targets")
+    require(all(isinstance(reason, str) and reason for reason in targets.values()),
+            "Go source skip record lacks a target reason")
+    require(targets.keys() <= versionless_targets(report).keys(), "Go source skip target is missing from the scan")
     return skip
 
 
@@ -296,7 +297,7 @@ def decide(selection, report, enabled):
     normalized = findings(report, "published full report")
     require(report.get("Metadata", {}).get("OS", {}).get("EOSL") is not True, "published image is end-of-life")
     skip = read_go_source_skip(selection, report)
-    file_builds = [] if skip else reviewed_file_builds(selection, report)
+    file_builds = reviewed_file_builds(selection, report, allow_historical=bool(skip))
     covered, limitations = package_coverage(results, file_builds)
     limitations.extend(review_limitations(file_builds))
     spec = selection["spec"]

@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 import urllib.error
+from http.client import IncompleteRead
 from pathlib import Path
 from unittest.mock import patch
 
@@ -103,6 +104,13 @@ class GenerateGoFileBuildTests(unittest.TestCase):
             generator.source_info(labels, info)
         with patch.object(generator, "run", side_effect=subprocess.CalledProcessError(1, ["git"])), self.assertRaises(subprocess.CalledProcessError):
             generator.source_info(labels, info)
+
+    def test_truncated_optional_source_file_preserves_other_source_files(self):
+        with patch.object(generator.urllib.request, "urlopen") as opened:
+            response = opened.return_value.__enter__.return_value
+            response.read.side_effect = [IncompleteRead(b"partial"), b"module example/app"]
+            files = generator.source_files("https://github.com/example/app", "a" * 40)
+        self.assertEqual(set(files), {"go.mod"})
 
     def test_native_go_build_info_hash_is_stable_across_temp_directories(self):
         directories = []

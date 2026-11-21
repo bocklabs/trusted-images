@@ -9,8 +9,8 @@ import re
 import subprocess
 import sys
 import tempfile
-import urllib.error
 import urllib.request
+from http.client import HTTPException
 from pathlib import Path
 
 INVENTORY = Path(__file__).resolve().parents[1] / "inventory"
@@ -155,7 +155,7 @@ def source_files(repository, revision):
             try:
                 with urllib.request.urlopen(url, timeout=20) as response:
                     data = response.read()
-            except (urllib.error.URLError, TimeoutError):
+            except (HTTPException, OSError):
                 continue
             files[name] = {"url": url, "sha256": hashlib.sha256(data).hexdigest()}
     return files
@@ -322,16 +322,19 @@ def main():
     }
     require({key[0] for key in existing} <= scanned_targets, "scan is missing previously reviewed Go targets")
     records = []
+    skipped = {}
     if targets:
         print(run("go", "version").strip(), file=sys.stderr)
     for target, packages in targets.items():
         try:
             records.extend(record(selection, report, ref, target, packages, args.run_url))
         except GoSourceUnavailable as error:
-            skip = json.dumps({"app": args.app, "ref": ref, "target": target, "reason": str(error)})
-            skip_path.write_text(skip + "\n", encoding="utf-8")
-            print("Go source evidence skipped: " + skip)
-            return 0
+            skipped[target] = str(error)
+    if skipped:
+        skip = json.dumps({"app": args.app, "ref": ref, "targets": skipped})
+        skip_path.write_text(skip + "\n", encoding="utf-8")
+        print("Go source evidence skipped: " + skip)
+        return 0
     changed, structural = write_records(args.inventory, args.app, records, existing)
     value = {"app": args.app, "changed": changed, "structural_drift": structural, "records": len(records)}
     print(json.dumps(value))

@@ -65,7 +65,7 @@ The review records the binary hash and embedded build metadata as audit
 evidence. Trivy JSON provides no binary hash for a direct comparison. Runtime
 matching uses the immutable image/config identity and the package's
 `Layer.Digest` and `Layer.DiffID`, plus the reviewed target and module.
-Malformed or stale evidence fails with an explicit validation error.
+Malformed evidence fails with an explicit validation error.
 Inventory CI and rescans use the same parser for required binding fields.
 For versionless Go targets, the runner checks for Go before extracting binaries.
 The Go tool reads build information without executing those binaries.
@@ -78,9 +78,10 @@ not vulnerability coverage for the unversioned packages.
 
 The existing daily promotion workflow generates evidence once per automatic
 published-image scan. If the binary lacks a verifiable source tag or revision,
-the workflow records the skipped Go evidence and retains the full scan. That run
-is monitoring-only. Failed lookups, invalid scans, and conflicting source
-evidence still fail the run.
+the workflow records each skipped target and retains the full scan. That run is
+monitoring-only and preserves the existing evidence files. Evidence for the
+scanned digest still has to pass identity checks. Earlier evidence cannot cover
+the current image. Failed required lookups and invalid scans still fail the run.
 
 When evidence is available, the workflow retains a checksummed patch for a
 scoped evidence PR against the same source commit. A changed main branch stops the write-back.
