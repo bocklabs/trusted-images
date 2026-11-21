@@ -3,49 +3,49 @@
   "app": "postgres-exporter",
   "upstream": {
     "ref": "quay.io/prometheuscommunity/postgres-exporter",
-    "tag": "v0.20.1",
-    "digest": "sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e",
-    "index_digest": "sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e",
+    "tag": "v0.21.1",
+    "digest": "sha256:a88794758ad461c75f3825b51cde4bde730bdff04b3b24d00efe14217e41f615",
+    "index_digest": "sha256:a88794758ad461c75f3825b51cde4bde730bdff04b3b24d00efe14217e41f615",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:4f3d82803c1f99ea5e767890de3557d2479ebbc711f63f2e04c663daa840057a"
+    "selected_child_digest": "sha256:d6a144f7fd357b637371d96879b46682329353bb9e0b5d494a73d71631a60612"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/postgres-exporter",
-    "tag": "v0.20.1-bocklabs.7",
-    "digest": "sha256:4f3d82803c1f99ea5e767890de3557d2479ebbc711f63f2e04c663daa840057a",
+    "tag": "v0.21.1-bocklabs.1",
+    "digest": "sha256:d6a144f7fd357b637371d96879b46682329353bb9e0b5d494a73d71631a60612",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/36323168753",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44916808359",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
-    "trivy": "0.74.0",
+    "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": null,
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "skopeo": "v1.25.1",
+    "skopeo_image_digest": "sha256:075359e92740bec687ed6ec8d12141bdb3666e6547dcd917657e24a7758926ed"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:abe2fc39c4c2516f430a40691c2de7c7ead48c407b0f5751e2160bc97a0c09ec",
-      "updated_at": "2026-09-27 13:06:25.102527619 +0000 UTC"
+      "check_bundle_digest": "sha256:e332bd9f15e7baf670514e47b30579d8aca659296eeb6cade32bcf721dbec0d6",
+      "updated_at": "2026-11-21 07:02:51.626719824 +0000 UTC"
     },
-    "full_report_sha256": "39779ce0e1723be1b49501d61f2895655b04ce9360471b3a46e23d52b2aafd6d",
-    "copa_report_sha256": "7d976446cb252d89d1c8cca2ff4e26f0c7c9ede1f6b23d4236bce321869695db",
-    "decision_sha256": "18b042916da425ea9550567a1183ad92f0b875c01d1b47638de0985d6072e6f9",
+    "full_report_sha256": "a777cd36144c2ea42be3ceb772e6141b6574a76ed992fb91d430e7031b7629c5",
+    "copa_report_sha256": "6391ac43d65ea0b32149751decbd0f68ea57ef0956baf843df80b8dcdbfb8c07",
+    "decision_sha256": "35e8b18ee8edce2ae269a52f6bfd8fcc516cb45c8454338da92ac5f1f37dce2d",
     "reports": {
-      "before_sha256": "39779ce0e1723be1b49501d61f2895655b04ce9360471b3a46e23d52b2aafd6d",
-      "final_sha256": "39779ce0e1723be1b49501d61f2895655b04ce9360471b3a46e23d52b2aafd6d",
-      "fixable_sha256": "7d976446cb252d89d1c8cca2ff4e26f0c7c9ede1f6b23d4236bce321869695db"
+      "before_sha256": "a777cd36144c2ea42be3ceb772e6141b6574a76ed992fb91d430e7031b7629c5",
+      "final_sha256": "a777cd36144c2ea42be3ceb772e6141b6574a76ed992fb91d430e7031b7629c5",
+      "fixable_sha256": "6391ac43d65ea0b32149751decbd0f68ea57ef0956baf843df80b8dcdbfb8c07"
     },
     "secobserve": {
       "product": "trusted-images",
-      "origin": "quay.io/prometheuscommunity/postgres-exporter:v0.20.1"
+      "origin": "quay.io/prometheuscommunity/postgres-exporter:v0.21.1"
     }
   },
   "policy": {
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "8a41e76a385f304a9f436f33640ed6bec1ca94d9dee699a4e9ecb908c9d51395",
-        "fetched_at": "2026-09-27T13:41:22Z",
-        "catalogVersion": "2026.09.25",
-        "dateReleased": "2026-09-25T18:58:16.5029Z"
+        "sha256": "12c9ca4c5350ecacdf22bdce91b4ffcf06b8c8dc9c69b8bfb4c1a21be7a5fe50",
+        "fetched_at": "2026-11-21T15:01:37Z",
+        "catalogVersion": "2026.11.20",
+        "dateReleased": "2026-11-20T17:48:39.1516Z"
       }
     },
     "acceptance": null,
@@ -65,57 +65,20 @@
     },
     "copa": {
       "classification": "not-required",
-      "original_child_input": false
+      "original_child_input": false,
+      "mode": "not-required",
+      "release": null,
+      "source_sha": null,
+      "runtime_digest": null,
+      "limitation": null
     },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-56854:HIGH:,CVE-2026-56855:MEDIUM:,CVE-2026-78662:MEDIUM:,GO-2026-5932:UNKNOWN:,CVE-2026-46600:HIGH:,CVE-2026-56852:HIGH:,CVE-2026-33818:HIGH:,CVE-2026-39821:HIGH:,CVE-2026-39822:HIGH:,CVE-2026-42505:MEDIUM:,CVE-2026-46600:HIGH:,CVE-2026-56853:HIGH:,CVE-2026-56858:HIGH:,CVE-2026-56859:HIGH:,CVE-2026-56860:HIGH:,CVE-2026-56862:HIGH:",
+    "outcome": "eligible with no-fix warnings: GO-2026-5932:UNKNOWN:",
     "eligible": true,
     "warnings": [
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-56854",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-56854",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.55.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-56855",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-56855",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.56.0",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-78662",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-78662",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.56.0",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
       {
         "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
@@ -125,177 +88,9 @@
         "class": "lang-pkgs",
         "type": "gobinary",
         "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "",
+        "installed_version": "v0.58.0",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fnet|CVE-2026-46600",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/net",
-        "cve": "CVE-2026-46600",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.55.0",
-        "fixed_version": "0.56.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Ftext|CVE-2026-56852",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/text",
-        "cve": "CVE-2026-56852",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.38.0",
-        "fixed_version": "0.39.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-33818",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-33818",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-39821",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-39821",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-39822",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-39822",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.12, 1.26.5, 1.27.0-rc.2",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-42505",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-42505",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.12, 1.26.5, 1.27.0-rc.2",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-46600",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-46600",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56853",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56853",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56858",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56858",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56859",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56859",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56860",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56860",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56862",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56862",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
         "severity_source": ""
       }
     ]
@@ -303,45 +98,6 @@
   "cves": {
     "before": [
       {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-56854",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-56854",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.55.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-56855",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-56855",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.56.0",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-78662",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-78662",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.56.0",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
         "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
         "platform": "linux/amd64",
         "package": "golang.org/x/crypto",
@@ -349,209 +105,14 @@
         "class": "lang-pkgs",
         "type": "gobinary",
         "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "",
+        "installed_version": "v0.58.0",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fnet|CVE-2026-46600",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/net",
-        "cve": "CVE-2026-46600",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.55.0",
-        "fixed_version": "0.56.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Ftext|CVE-2026-56852",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/text",
-        "cve": "CVE-2026-56852",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.38.0",
-        "fixed_version": "0.39.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-33818",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-33818",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-39821",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-39821",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-39822",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-39822",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.12, 1.26.5, 1.27.0-rc.2",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-42505",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-42505",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.12, 1.26.5, 1.27.0-rc.2",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-46600",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-46600",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56853",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56853",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56858",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56858",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56859",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56859",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56860",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56860",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56862",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56862",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
         "severity_source": ""
       }
     ],
     "final": [
       {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-56854",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-56854",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.55.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-56855",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-56855",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.56.0",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|CVE-2026-78662",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "CVE-2026-78662",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "0.56.0",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
         "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
         "platform": "linux/amd64",
         "package": "golang.org/x/crypto",
@@ -559,185 +120,15 @@
         "class": "lang-pkgs",
         "type": "gobinary",
         "target": "bin/postgres_exporter",
-        "installed_version": "v0.53.0",
-        "fixed_version": "",
+        "installed_version": "v0.58.0",
+        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
         "severity": "UNKNOWN",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Fnet|CVE-2026-46600",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/net",
-        "cve": "CVE-2026-46600",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.55.0",
-        "fixed_version": "0.56.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:golang.org%2Fx%2Ftext|CVE-2026-56852",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/text",
-        "cve": "CVE-2026-56852",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v0.38.0",
-        "fixed_version": "0.39.0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-33818",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-33818",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-39821",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-39821",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-39822",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-39822",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.12, 1.26.5, 1.27.0-rc.2",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-42505",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-42505",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.12, 1.26.5, 1.27.0-rc.2",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-46600",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-46600",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56853",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56853",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56858",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56858",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56859",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56859",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56860",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56860",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:bin%2Fpostgres_exporter:stdlib|CVE-2026-56862",
-        "platform": "linux/amd64",
-        "package": "stdlib",
-        "cve": "CVE-2026-56862",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "bin/postgres_exporter",
-        "installed_version": "v1.26.4",
-        "fixed_version": "1.25.13, 1.26.6, 1.27.0-rc.3",
-        "severity": "HIGH",
         "severity_source": ""
       }
     ],
     "summary": {
       "resolved": [],
       "remaining": [
-        "CVE-2026-33818",
-        "CVE-2026-39821",
-        "CVE-2026-39822",
-        "CVE-2026-42505",
-        "CVE-2026-46600",
-        "CVE-2026-56852",
-        "CVE-2026-56853",
-        "CVE-2026-56854",
-        "CVE-2026-56855",
-        "CVE-2026-56858",
-        "CVE-2026-56859",
-        "CVE-2026-56860",
-        "CVE-2026-56862",
-        "CVE-2026-78662",
         "GO-2026-5932"
       ],
       "introduced": [],
@@ -759,6 +150,7 @@
       "expectStatus": 200,
       "durationSeconds": 30,
       "timeoutSeconds": 60,
+      "network": "none",
       "expectedExit": 0,
       "command": [],
       "expectedPlatforms": [
@@ -767,15 +159,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-09-27T13:40:51Z",
-      "finished_at": "2026-09-27T13:41:21Z",
+      "started_at": "2026-11-21T15:01:07Z",
+      "finished_at": "2026-11-21T15:01:37Z",
       "duration_seconds": 30.1
     },
     "health": {
       "defined": false,
       "final_status": "none-defined"
     },
-    "runner": "GitHub Actions 1000010642",
+    "runner": "GitHub Actions 1000019725",
     "baseline": {
       "entrypoint": [
         "/bin/postgres_exporter"
@@ -786,39 +178,39 @@
       ]
     }
   },
-  "promoted_at": "2026-09-27T13:42:31Z",
+  "promoted_at": "2026-11-21T15:02:44Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "2d660b2105654f6b275831363a785e3ffb79b15327c65f4ebed1df948905ce83",
-      "attachment_sha256": "1457a664ed4e1aeb498b33c8866154b4579b2c59712c3f83904e107423cb24e8",
+      "bundle_sha256": "a99e4acccd828d3c651527d7d8e8a5994bd41546db0c93e86b9f851d8c74e8e0",
+      "attachment_sha256": "3297fcd47e8469fe6aab1da7f3b38d297c146651a45d5323ae1722312b3478c1",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "fe5d8254e5359fa00507d506076cc19a01821431699437e5e50a9593450a1a9d",
-      "bundle_sha256": "50c8e9dfaee170eb08ade91f464ab695848abb945de47b8b56809d749d9eb3bb",
-      "attachment_sha256": "53c92056b923d7a9219570f8c675a41ca7a5f4ed1f3460facf30741d766d666e"
+      "predicate_sha256": "bf238719024dbffec4c8adb67c5c4306f668bd7392a990464166c688cde285f1",
+      "bundle_sha256": "070062a583e3490363eeb7e8f06ae02c6e3b981404374ef1f9895340a974a78a",
+      "attachment_sha256": "33bd13f8ad039ed9d3fdf1e467e368a49962c488f485a1cd8f22f40e4db12327"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "1ihB8pEuVp+ygfDyetOWL1WeGQ1ig5Hrx1yP4rXxx/k=",
+        "inclusion_root_hash": "d3cp9NxuPlZMegKQhheUxNObQYkXMwn7OBaHOU4fCOA=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 2975529885,
-        "signed_entry_timestamp": "MEQCIB608MI/flaeYJzz5XjZAAFQD74hWTp7onKd73HcyV1hAiAtuNYcxSNRrhOwA2SnKNRygWMpExY+De+3H3iUxhV5ng=="
+        "log_index": 4033359802,
+        "signed_entry_timestamp": "MEYCIQDqYbiyzvSf3s0rx7Rc2zseGlcfXhS44t6ls6XmeALP7wIhALxyDEOQ065jUShUzklLVkDJ1WUTMh8vDcdeTP+/tZYX"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "+K29ossb/m3WSOL8uRXdQ+UFpOwxuhJEkHFmtCoJHL0=",
+        "inclusion_root_hash": "xLdJ6rzP2B2JMv3igJURWSoNZZMmE65bkZC7ztddLrk=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 2975530752,
-        "signed_entry_timestamp": "MEUCIQDoFjWwpM2krNQqa1PD7P87TFuGSMh2CJlEjllwSqyoeQIgD9mFl3O6/ffjMFACYAE+VtOcJyKh4D9qv0Bw8A2nF20="
+        "log_index": 4033359913,
+        "signed_entry_timestamp": "MEYCIQCgRcT4CkWN5aZ/3oXdz9FJpFucvCc1X+n59RvuZ9loDwIhAMzt52YQvKtjVrW8WB4PHOhl/S3G2i5WQ8g2lnU91s51"
       }
     },
     "tools": {
-      "cosign": "v3.1.3",
-      "trivy": "0.74.0"
+      "cosign": "v3.1.4",
+      "trivy": "0.76.2"
     }
   }
 }
