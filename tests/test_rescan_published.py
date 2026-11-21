@@ -436,13 +436,10 @@ class PublishedRescanTests(unittest.TestCase):
             rescan.decide(self.selection, self.report, True)
 
     def test_latest_merged_signed_record_and_corrupt_identity(self):
-        older = copy.deepcopy(self.record)
-        older["promoted_at"] = "2026-09-26T00:00:00Z"
-        older.pop("signing")
-        older["internal"]["tag"] = "v0.20.1-bocklabs.6"
+        unsigned = {key: value for key, value in self.record.items() if key != "signing"}
         with patch.object(rescan, "merged_commit", return_value="a" * 40), patch.object(rescan, "load_current", return_value=self.record):
             self.assertEqual(rescan.latest_record("postgres-exporter")[1], self.ref)
-            with patch.object(rescan, "load_current", return_value=older):
+            with patch.object(rescan, "load_current", return_value=unsigned):
                 self.assertIsNone(rescan.latest_record("postgres-exporter"))
             self.record["internal"]["package"] = "ghcr.io/bocklabs/other"
             with self.assertRaisesRegex(ValueError, "provenance identity"):

@@ -487,11 +487,29 @@ class ProvenanceTests(unittest.TestCase):
         import reverify_signing
 
         root = self.out.parents[2]
-        current = json.loads((REPO_ROOT / "provenance/postgres-exporter/current.json").read_bytes())
-        record = json.loads(json.dumps(current))
-        record.pop("signing")
-        record["internal"].update(tag="v0.20.1-bocklabs.1", platforms=["linux/amd64", "linux/arm64"])
-        record["upstream"].pop("selected_child_digest")
+        legacy_internal = {
+            "package": "ghcr.io/bocklabs/postgres-exporter",
+            "tag": "v0.20.1-bocklabs.1",
+            "digest": PILOT_UPSTREAM_DIGEST,
+            "platforms": ["linux/amd64", "linux/arm64"],
+        }
+        record = {
+            "schema": SCHEMA,
+            "app": "postgres-exporter",
+            "promoted_at": "2026-09-26T00:00:00Z",
+            "upstream": {"tag": "v0.20.1"},
+            "internal": legacy_internal,
+        }
+        current = {
+            **record,
+            "upstream": {"tag": "v0.21.1", "selected_child_digest": CHILD_DIGEST},
+            "internal": {
+                **legacy_internal,
+                "tag": "v0.21.1-bocklabs.1",
+                "digest": CHILD_DIGEST,
+                "platforms": ["linux/amd64"],
+            },
+        }
         legacy = self.out.with_name("v0.20.1-bocklabs.1.json")
         legacy.parent.mkdir(parents=True)
         original = (json.dumps(record) + "\n").encode()
