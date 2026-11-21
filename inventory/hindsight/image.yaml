@@ -5,8 +5,8 @@ metadata:
 spec:
   upstream:
     ref: ghcr.io/vectorize-io/hindsight
-    tag: 1.2.1
-    digest: sha256:d2bc230a714e933affd63753e181a0579328fdcbbc021800a76e0bc7b6e76b31
+    tag: 1.2.3
+    digest: sha256:601cfdd1bd3f6053864c6458ee15259f065a01a3f83090b56a8ae57db67f8f38
   destination:
     package: ghcr.io/bocklabs/hindsight
   patchPolicy: enabled
