@@ -345,6 +345,12 @@ class PublishedRescanTests(unittest.TestCase):
         self.report["Results"][0]["Class"] = "lang-pkgs"
         self.report["Results"][0]["Type"] = "gobinary"
         self.assertFalse(rescan.decide(self.selection, self.report, True)["proceed"])
+        self.spec["upstream"]["digest"] = "sha256:" + "a" * 64
+        value = rescan.decide(self.selection, self.report, True)
+        self.assertFalse(value["proceed"])
+        self.assertFalse(value["force_repromote"])
+        self.assertEqual(value["unsupported"], 1)
+        self.assertIn("inventory upstream pin differs", value["reason"])
 
     def test_changed_pin_does_not_request_daily_remediation(self):
         for pin in ({"tag": "v0.20.2"}, {"digest": "sha256:" + "a" * 64}):

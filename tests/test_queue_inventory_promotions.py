@@ -22,7 +22,7 @@ class InventoryPromotionTests(unittest.TestCase):
                 path = root / "inventory" / app / "image.yaml"
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(
-                    f"spec:\n  upstream: {{ref: example/{app}, tag: '{tag}', digest: {digest}}}\n"
+                    f"# Entrée\nspec:\n  upstream: {{ref: example/{app}, tag: '{tag}', digest: {digest}}}\n"
                     f"  validation: {{timeoutSeconds: {timeout}}}\n",
                     encoding="utf-8",
                 )
@@ -51,7 +51,14 @@ class InventoryPromotionTests(unittest.TestCase):
             subprocess.run(
                 [sys.executable, str(SCRIPT), before, after, "example/producer"],
                 cwd=root,
-                env={**os.environ, "PATH": f"{root}:{os.environ['PATH']}", "DISPATCH_LOG": str(log)},
+                env={
+                    **os.environ,
+                    "PATH": f"{root}:{os.environ['PATH']}",
+                    "DISPATCH_LOG": str(log),
+                    "LC_ALL": "C",
+                    "PYTHONCOERCECLOCALE": "0",
+                    "PYTHONUTF8": "0",
+                },
                 check=True,
             )
             self.assertCountEqual(
