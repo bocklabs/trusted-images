@@ -4,44 +4,44 @@
   "upstream": {
     "ref": "docker.io/valkey/valkey",
     "tag": "9-alpine",
-    "digest": "sha256:56729e68bdda139cbd3f6a2538683dc3523325fc5711ea1a379938f1b37893f0",
-    "index_digest": "sha256:56729e68bdda139cbd3f6a2538683dc3523325fc5711ea1a379938f1b37893f0",
+    "digest": "sha256:c8e2d17498838af5d91e12eb7c11220b3434a7b7131a333e3af52ad5e0b80882",
+    "index_digest": "sha256:c8e2d17498838af5d91e12eb7c11220b3434a7b7131a333e3af52ad5e0b80882",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f"
+    "selected_child_digest": "sha256:e99efc1c5573be5e444c9ddeef424ad65f15b5e948206159274a2ca1c01f5541"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/valkey",
-    "tag": "9-alpine-bocklabs.5",
-    "digest": "sha256:865b53c6d71b76c92ee4e447f9c5b20fe73161187483fc91b0836508c1fde80d",
+    "tag": "9-alpine-bocklabs.6",
+    "digest": "sha256:90be10f34ce39914ca8dc7f395d5e7b237488d430ed4b0670ecb4677fcfde3fc",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44520981764",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44883011856",
     "workflow": "promote",
-    "dispatched_by": "bocklabs-release[bot]"
+    "dispatched_by": "nitish-raj"
   },
   "tools": {
     "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:58db214a5bdca54f5f14de36c6a9052d7c189ce9d7a500688da0ce94f5a33e92"
+    "skopeo_image_digest": "sha256:075359e92740bec687ed6ec8d12141bdb3666e6547dcd917657e24a7758926ed"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:12af2cc363cbf0e0e53b515a3946071fa50c704f02f499f96b9cdada0c85c649",
-      "updated_at": "2026-11-19 07:06:49.809946527 +0000 UTC"
+      "check_bundle_digest": "sha256:c77b79f405b0cabf3bcddb2cc463180efec17f293e28cee9210cfea895878b9b",
+      "updated_at": "2026-11-21 07:02:51.626719824 +0000 UTC"
     },
-    "full_report_sha256": "11114d6ad981a834ec0e8a15d545f36c108148b6bfd6de9f8aa7b62647c58116",
-    "copa_report_sha256": "5b7a5fd6c7214ef6ff552482d260e5daca7b20bdd9b5d10e13257a8f67c40135",
-    "decision_sha256": "bb299c87356bdf747d1699e2b7065de7d02f20e3f0c45f0060356e141b6ff0e2",
+    "full_report_sha256": "2cfdaae3e73dfefee56898f3feef6c0fd92d47b8bbbed1f0f3b1e3960e4606c0",
+    "copa_report_sha256": "cdc7bb50238f9c3d8197a02c97dfd0066a5ca5f1fb1f1551c97934e92bcc0424",
+    "decision_sha256": "469798a7240a55743e044cd57378a10c85e116f5b6381f577aaee3a61219b745",
     "reports": {
-      "before_sha256": "a14208c1aba600d1483ee276d40a462b7087314a02b75f31a5cd1d04483e969b",
-      "final_sha256": "11114d6ad981a834ec0e8a15d545f36c108148b6bfd6de9f8aa7b62647c58116",
-      "fixable_sha256": "5b7a5fd6c7214ef6ff552482d260e5daca7b20bdd9b5d10e13257a8f67c40135"
+      "before_sha256": "8dee6481cfaaac82e9a4d021280e567717d6f1b8a46240f4a278ef75f011723d",
+      "final_sha256": "2cfdaae3e73dfefee56898f3feef6c0fd92d47b8bbbed1f0f3b1e3960e4606c0",
+      "fixable_sha256": "cdc7bb50238f9c3d8197a02c97dfd0066a5ca5f1fb1f1551c97934e92bcc0424"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ad618e404a43d72ac6435b6e5a8d75000778b9245a6b70dbde46530152f2eef3",
-        "fetched_at": "2026-11-19T12:09:32Z",
-        "catalogVersion": "2026.11.18",
-        "dateReleased": "2026-11-18T19:17:41.0354Z"
+        "sha256": "12c9ca4c5350ecacdf22bdce91b4ffcf06b8c8dc9c69b8bfb4c1a21be7a5fe50",
+        "fetched_at": "2026-11-21T08:03:52Z",
+        "catalogVersion": "2026.11.20",
+        "dateReleased": "2026-11-20T17:48:39.1516Z"
       }
     },
     "acceptance": null,
@@ -72,9 +72,6 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
-    "remediation": {
-      "need_sha256": "6e8d79946a43a266ff9e55c1c76dd6a7a778533670bb80fbbfd0dcfafdba9fd6"
-    },
     "supersedes": {
       "higher_upstream": true,
       "original_child_selected": true
@@ -86,208 +83,13 @@
   "cves": {
     "before": [
       {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-107496",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-107496",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-88822",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-88822",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-88823",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-88823",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-95691",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-95691",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-95692",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-95692",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-107496",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-107496",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-88822",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-88822",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-88823",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-88823",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-95691",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-95691",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-95692",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-95692",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|openssl|CVE-2026-107496",
-        "platform": "linux/amd64",
-        "package": "openssl",
-        "cve": "CVE-2026-107496",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|openssl|CVE-2026-88822",
-        "platform": "linux/amd64",
-        "package": "openssl",
-        "cve": "CVE-2026-88822",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|openssl|CVE-2026-88823",
-        "platform": "linux/amd64",
-        "package": "openssl",
-        "cve": "CVE-2026-88823",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|openssl|CVE-2026-95691",
-        "platform": "linux/amd64",
-        "package": "openssl",
-        "cve": "CVE-2026-95691",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|openssl|CVE-2026-95692",
-        "platform": "linux/amd64",
-        "package": "openssl",
-        "cve": "CVE-2026-95692",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
         "identity": "linux/amd64|zlib|CVE-2026-4738",
         "platform": "linux/amd64",
         "package": "zlib",
         "cve": "CVE-2026-4738",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "docker.io/valkey/valkey@sha256:ebe5bffba1ca308057b8af37481c9cdcdcb96c2c7e19581572478e045616ac6f (alpine 3.24.4)",
+        "target": "docker.io/valkey/valkey@sha256:e99efc1c5573be5e444c9ddeef424ad65f15b5e948206159274a2ca1c01f5541 (alpine 3.24.4)",
         "installed_version": "1.3.2-r1",
         "fixed_version": "1.4-r0",
         "severity": "MEDIUM",
@@ -297,12 +99,7 @@
     "final": [],
     "summary": {
       "resolved": [
-        "CVE-2026-107496",
-        "CVE-2026-4738",
-        "CVE-2026-88822",
-        "CVE-2026-88823",
-        "CVE-2026-95691",
-        "CVE-2026-95692"
+        "CVE-2026-4738"
       ],
       "remaining": [],
       "introduced": [],
@@ -311,27 +108,6 @@
   },
   "packages": {
     "changes": [
-      {
-        "ecosystem": "alpine",
-        "name": "libcrypto3",
-        "change": "upgraded",
-        "before": "3.5.9-r0",
-        "after": "3.5.9-r1"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "libssl3",
-        "change": "upgraded",
-        "before": "3.5.9-r0",
-        "after": "3.5.9-r1"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "openssl",
-        "change": "upgraded",
-        "before": "3.5.9-r0",
-        "after": "3.5.9-r1"
-      },
       {
         "ecosystem": "alpine",
         "name": "zlib",
@@ -365,15 +141,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-19T12:09:32Z",
-      "finished_at": "2026-11-19T12:09:32Z",
-      "duration_seconds": 0.2
+      "started_at": "2026-11-21T08:03:52Z",
+      "finished_at": "2026-11-21T08:03:52Z",
+      "duration_seconds": 0.3
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000019170",
+    "runner": "GitHub Actions 1000019518",
     "baseline": {
       "entrypoint": [
         "tini",
@@ -385,38 +161,38 @@
       ],
       "env": [
         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "VALKEY_VERSION=9.1.4"
+        "VALKEY_VERSION=9.2.0"
       ]
     }
   },
-  "promoted_at": "2026-11-19T12:10:53Z",
+  "promoted_at": "2026-11-21T08:04:46Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "3f8dacca0607a6eaac43f83189937936b263954241826981141841df2032b37f",
-      "attachment_sha256": "767fc40ee4a84e884f848e25eec31a2da8b95e8e24022d06471738841f726547",
+      "bundle_sha256": "b01f3bc63e452e20112755897993b58f0d6bbaeddc329a0df5d0a246daea6695",
+      "attachment_sha256": "b252c0327fdd02b986e9be4b0ea12f1753c5ca407692975dce0cdd1eb448db52",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "66d4d363b118231bed8c43c82cd1b9b475067b162ce03f21ae57fac912b7ba87",
-      "bundle_sha256": "f1dc02a452293f6ea8a73f6753f4dbf2c94e69a033327bd358a02dbfc97f9dd7",
-      "attachment_sha256": "bf701415cbf40d4512b2b41b6b89a74dea86bb0d76a85b96f8724a29ae965c92"
+      "predicate_sha256": "a7472b1d077a1dccd938b0677147f8c6ede0553116af6caa643f4c372d9fa85d",
+      "bundle_sha256": "b7b57f798e195e7066a236cf94b7e5fd0770d5ae2dda728d2c8d7d291d14ee71",
+      "attachment_sha256": "c3d947486ecee09fafa2b1907118ef815dfdec202c03608e1756e73d71f6772e"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "H7UZSwLLIfdcdqm1MMrvUUWTLjPpYJdjk2Q2GxSrbiE=",
+        "inclusion_root_hash": "Cg/gnGma/+nz1LW061cTyoU+ArOUb9YLmySfSCQiuDU=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3996037514,
-        "signed_entry_timestamp": "MEQCIEIlkxgyzsYD9NAhNnyZLs0Q27DTPBdi+TWev2Q3bZ3WAiB08+NYLEjZdRi/g4j6R1mgqPZM6pgdGVt31Z0qOhk08w=="
+        "log_index": 4032064080,
+        "signed_entry_timestamp": "MEYCIQDfAg5YiX+35bHkmdiyu7m3KREK94mLAXBXc9vIW9+SdwIhAIF5qh7NR8f16nNPleapryj0+X+MH69GPzfeIqUHZzta"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "B0cdwH2hxgz4dhBDLntOdp10pcUqTf736w7YNegGUK0=",
+        "inclusion_root_hash": "wDGK477TZMiJeptT5QZU+Ue1N4P1AiGNXmFeBRY4P5Q=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3996041421,
-        "signed_entry_timestamp": "MEUCIQCfAPvYcIWqlNKzfAReiBU8OxZOnr06UZmyM0EVicJ3NAIgF1z6ZYSHH/HQY+gcASx4wbLgstyiXCgofNn61wcz6Bc="
+        "log_index": 4032064289,
+        "signed_entry_timestamp": "MEYCIQDVZzV99SAAEZnA/5gASFB3t9AFGYvPV0USa5XQg99QfQIhAPN3BlZw1e+BLN2hznVMhiBPG3eCIoum0FlLQVWImZIW"
       }
     },
     "tools": {
