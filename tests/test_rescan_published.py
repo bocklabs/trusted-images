@@ -46,6 +46,65 @@ class PublishedRescanTests(unittest.TestCase):
                                     "Vulnerabilities": [{"VulnerabilityID": "CVE-2026-1234", "PkgName": "openssl",
                                                          "InstalledVersion": "1", "FixedVersion": "2", "Severity": "LOW"}]}]}
 
+    def test_missing_go_source_is_monitor_only_and_preserves_evidence(self):
+        generator = importlib.import_module("generate_go_file_build")
+        module = "github.com/example/server"
+        target = "usr/bin/server"
+        info = generator.parse_build_info(
+            f"server: go1.26.0\n\tpath\t{module}\n\tmod\t{module}\t(devel)\n"
+        )
+        self.report["Metadata"]["ImageConfig"] = {"config": {"Labels": {
+            "org.opencontainers.image.source": "https://github.com/example/package-builder",
+            "org.opencontainers.image.base.name": "server:1.0",
+        }}}
+        layer = {"Digest": "sha256:" + "a" * 64, "DiffID": "sha256:" + "b" * 64}
+        self.report["Metadata"].update(ImageID="sha256:" + "d" * 64, DiffIDs=[layer["DiffID"]])
+        second_target = "usr/bin/worker"
+        for binary in (target, second_target):
+            self.report["Results"].append({
+                "Class": "lang-pkgs", "Type": "gobinary", "Target": binary,
+                "Packages": [{"Name": module, "ID": module, "Relationship": "root", "AnalyzedBy": "gobinary",
+                              "Identifier": {"PURL": f"pkg:golang/{module}"}, "Layer": layer}],
+            })
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inventory = root / "inventory"
+            app = inventory / self.selection["app"]
+            app.mkdir(parents=True)
+            old = app / "go-file-build.json"
+            history = {
+                "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
+                "ref": self.ref.rsplit("@", 1)[0] + "@sha256:" + "c" * 64,
+                "config_digest": "sha256:" + "c" * 64,
+                "upstream_child_digest": "sha256:" + "e" * 64,
+                "target": target, "module": module, "binary_sha256": "f" * 64,
+                "layer": layer, "source": {"repository": "https://github.com/example/server", "revision": "a" * 40},
+            }
+            previous = json.dumps(history)
+            old.write_text(previous)
+            report = root / "trivy-full.json"
+            report.write_text(json.dumps(self.report))
+            selection = root / "selection.json"
+            selection.write_text(json.dumps(self.selection))
+            argv = ["generate", "--app", self.selection["app"], "--report", str(report),
+                    "--selection", str(selection), "--inventory", str(inventory)]
+            output = root / "output"
+            with patch.object(sys, "argv", argv), patch.object(generator, "run", return_value="go version"), patch.object(
+                generator, "binary_build_info", return_value=("a" * 64, info)
+            ), patch.dict(os.environ, {"GITHUB_OUTPUT": str(output)}):
+                self.assertEqual(generator.main(), 0)
+            self.assertFalse(output.exists())
+            self.assertEqual(old.read_text(), previous)
+            with patch.object(rescan, "ARTIFACT", root), patch.object(rescan, "INVENTORY", inventory):
+                decision = rescan.decide(self.selection, self.report, True)
+                old.write_text(json.dumps({**history, "ref": self.ref}))
+                with self.assertRaisesRegex(ValueError, "differs from scanned image"):
+                    rescan.decide(self.selection, self.report, True)
+            self.assertFalse(decision["proceed"])
+            self.assertFalse(decision["package_coverage"])
+            self.assertEqual(decision["findings"], 1)
+            self.assertEqual(set(decision["go_source_skip"]["targets"]), {target, second_target})
+
     def test_go_workspace_replacements_remain_monitor_only_without_losing_findings(self):
         self.report["Results"].append({"Class": "lang-pkgs", "Type": "gobinary", "Target": "usr/bin/grafana",
             "Packages": [{"Name": "github.com/grafana/grafana/apps/advisor", "ID": "github.com/grafana/grafana/apps/advisor",

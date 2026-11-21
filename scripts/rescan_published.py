@@ -15,6 +15,7 @@ from evaluate_promotion import (
     validate_report_results,
 )
 from finding_identity import canonical, findings_hash, require
+from generate_go_file_build import GO_SOURCE_SKIP_FILE, versionless_targets
 from promote_signing_gate import load_identity
 from reverify_signing import load_current, merged_commit, record_time, verified_record
 from validate_inventory import dig, entry_failures, parse_go_file_build
@@ -120,7 +121,7 @@ def review_matches_image(review, selection, metadata, labels, diff_ids):
     )
 
 
-def reviewed_file_builds(selection, report):
+def reviewed_file_builds(selection, report, *, allow_historical=False):
     app = selection["app"]
     require(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", app), "invalid inventory app")
     paths = sorted((INVENTORY / app).glob("go-file-build*.json"))
@@ -137,10 +138,9 @@ def reviewed_file_builds(selection, report):
         require(path.is_file() and not path.is_symlink(), "unsafe Go file-build evidence")
         raw = path.read_bytes()
         review = parse_go_file_build(raw, path)
-        require(
-            review["ref"] == selection["ref"],
-            "Go file-build evidence is stale for the selected published image",
-        )
+        if review["ref"] != selection["ref"]:
+            require(allow_historical, "Go file-build evidence is stale for the selected published image")
+            continue
         require(
             review_matches_image(review, selection, metadata, labels, diff_ids),
             "Go file-build scan evidence differs from scanned image",
@@ -274,13 +274,30 @@ def decision_outcome(covered, same_upstream_pin, requested, enabled):
     return True, "actionable producer remediation"
 
 
+def read_go_source_skip(selection, report):
+    path = ARTIFACT / GO_SOURCE_SKIP_FILE
+    if not path.exists():
+        return None
+    require(path.is_file() and not path.is_symlink(), "unsafe Go source skip record")
+    skip = json.loads(path.read_text(encoding="utf-8"))
+    require(isinstance(skip, dict) and skip.get("app") == selection["app"] and skip.get("ref") == selection["ref"],
+            "Go source skip record does not match the selected image")
+    targets = skip.get("targets")
+    require(isinstance(targets, dict) and targets, "Go source skip record lacks targets")
+    require(all(isinstance(reason, str) and reason for reason in targets.values()),
+            "Go source skip record lacks a target reason")
+    require(targets.keys() <= versionless_targets(report).keys(), "Go source skip target is missing from the scan")
+    return skip
+
+
 def decide(selection, report, enabled):
     require(report.get("ArtifactName") == selection["ref"], "scan reference differs from selected published image")
     validate_native_inventory(report, ARTIFACT / "trivy-full.json")
     results = validate_report_results(report, "published full report", False)
     normalized = findings(report, "published full report")
     require(report.get("Metadata", {}).get("OS", {}).get("EOSL") is not True, "published image is end-of-life")
-    file_builds = reviewed_file_builds(selection, report)
+    skip = read_go_source_skip(selection, report)
+    file_builds = reviewed_file_builds(selection, report, allow_historical=bool(skip))
     covered, limitations = package_coverage(results, file_builds)
     limitations.extend(review_limitations(file_builds))
     spec = selection["spec"]
@@ -304,10 +321,13 @@ def decide(selection, report, enabled):
     requested = sorted({canonical(item): item for item in requested}.values(), key=canonical)
     value = {"app": selection["app"], "ref": selection["ref"], "proceed": False,
              "force_repromote": False, "findings": len(normalized), "no_fix": no_fix,
-             "unsupported": unsupported, "actionable": len(requested), "package_coverage": bool(covered)}
+             "unsupported": unsupported, "actionable": len(requested), "package_coverage": covered and skip is None}
     value["reviewed_file_builds"] = [review["review_sha256"] for review in file_builds]
     if limitations:
         value["coverage_limitations"] = limitations
+    if skip:
+        value.update(go_source_skip=skip, reason="Go source evidence skipped; full report retained")
+        return value
     proceed, reason = decision_outcome(
         covered, same_upstream_pin, requested, enabled
     )
