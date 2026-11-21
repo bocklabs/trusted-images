@@ -51,7 +51,7 @@ repos:
         require_serial: true
         language: system
         types: [python]
-        args: [--check-untyped-defs, --follow-untyped-imports, --python-version, '3.14']
+        args: [--check-untyped-defs, --follow-untyped-imports]
 
       - id: inventory-valid
         name: validate inventory schema v1

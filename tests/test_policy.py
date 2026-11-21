@@ -221,7 +221,7 @@ class PolicyTests(unittest.TestCase):
         with patch.dict(os.environ, REQUESTED_REMEDIATION=json.dumps(binding)):
             return self.run_policy()
 
-    def test_requested_need_blocks_relocated_language_cve_and_allows_clean_upstream(self):
+    def test_requested_need_blocks_relocated_cve_and_already_clean_upstream(self):
         requested = [{"id": "CVE-2026-9001", "package": "example", "installed": "1.0",
                       "class": "lang-pkgs", "type": "python-pkg", "target": "/old"}]
         binding = {"app": "app", "ref": "ghcr.io/bocklabs/app:v1-bocklabs.1@sha256:" + "a" * 64,
@@ -236,9 +236,25 @@ class PolicyTests(unittest.TestCase):
         self.assertFalse(json.loads(self.out.read_text())["eligible"])
         write_json(self.full, report())
         result = self.run_requested_policy(binding)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("did not resolve a finding", json.loads(self.out.read_text())["reason"])
         binding["need_sha256"] = "0" * 64
         self.assertEqual(self.run_requested_policy(binding).returncode, 2)
+
+    def test_requested_fix_allows_patched_candidate(self):
+        self.patched(
+            [vuln("CVE-2026-9001", fixed="1.1")], [],
+            [package("libexample", "1.0")], [package("libexample", "1.1")],
+        )
+        requested = [{"id": "CVE-2026-9001", "package": "libexample", "installed": "1.0",
+                      "class": "os-pkgs", "type": "debian", "target": "root"}]
+        encoded = json.dumps(requested, sort_keys=True, separators=(",", ":")).encode()
+        binding = {"app": "app", "ref": "ghcr.io/bocklabs/app:v1-bocklabs.1@sha256:" + "a" * 64,
+                   "need_sha256": hashlib.sha256(encoded).hexdigest(), "findings": requested}
+        with patch.dict(os.environ, REQUESTED_REMEDIATION=json.dumps(binding)):
+            result = self.run_policy(**{"--candidate-digest": PATCHED_DIGEST})
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(json.loads(self.out.read_text())["eligible"])
 
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
