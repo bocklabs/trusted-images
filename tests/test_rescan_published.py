@@ -12,8 +12,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import yaml
-
 from tests.workflow_helpers import load_workflow
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,8 +35,10 @@ class PublishedRescanTests(unittest.TestCase):
 
     def setUp(self):
         self.record = json.loads((ROOT / "provenance/postgres-exporter/current.json").read_text())
-        self.spec = yaml.safe_load((ROOT / "inventory/postgres-exporter/image.yaml").read_text())["spec"]
-        self.ref = "ghcr.io/bocklabs/postgres-exporter:v0.20.1-bocklabs.7@" + self.record["internal"]["digest"]
+        self.upstream = {key: self.record["upstream"][key] for key in ("ref", "tag", "digest")}
+        self.spec = {"upstream": self.upstream, "patchPolicy": "enabled"}
+        internal = self.record["internal"]
+        self.ref = f"{internal['package']}:{internal['tag']}@" + internal["digest"]
         self.selection = {"app": "postgres-exporter", "ref": self.ref, "spec": self.spec, "published": self.record}
         self.report = {"SchemaVersion": 2, "ArtifactName": self.ref, "Metadata": {"OS": {"EOSL": False}},
                        "Results": [{"Class": "os-pkgs", "Type": "debian", "Target": "root",
@@ -404,7 +404,7 @@ class PublishedRescanTests(unittest.TestCase):
         self.report["Results"][0]["Class"] = "lang-pkgs"
         self.report["Results"][0]["Type"] = "gobinary"
         self.assertFalse(rescan.decide(self.selection, self.report, True)["proceed"])
-        self.spec["upstream"]["digest"] = "sha256:" + "a" * 64
+        self.upstream["digest"] = "sha256:" + "a" * 64
         value = rescan.decide(self.selection, self.report, True)
         self.assertFalse(value["proceed"])
         self.assertFalse(value["force_repromote"])
@@ -413,7 +413,7 @@ class PublishedRescanTests(unittest.TestCase):
 
     def test_changed_pin_does_not_request_daily_remediation(self):
         for pin in ({"tag": "v0.20.2"}, {"digest": "sha256:" + "a" * 64}):
-            with self.subTest(pin=pin), patch.dict(self.spec["upstream"], pin):
+            with self.subTest(pin=pin), patch.dict(self.upstream, pin):
                 value = rescan.decide(self.selection, self.report, True)
                 self.assertFalse(value["proceed"])
                 self.assertFalse(value["force_repromote"])
