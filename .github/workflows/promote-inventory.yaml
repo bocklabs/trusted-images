@@ -1,0 +1,44 @@
+name: promote-inventory
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - inventory/*/image.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout merged inventory
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Guard runner labels
+        uses: ./.github/actions/runner-label-guard
+
+      - name: Set up Python environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Mint own-repository dispatch token
+        id: token
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
+        with:
+          client-id: ${{ secrets.RELEASE_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-actions: write
+
+      - name: Queue promotions for changed upstream pins
+        uses: ./.github/actions/dispatch/queue-inventory-promotions
+        with:
+          gh_token: ${{ steps.token.outputs.token }}
+          before: ${{ github.event.before }}

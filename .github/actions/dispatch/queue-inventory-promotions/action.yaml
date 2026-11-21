@@ -1,0 +1,17 @@
+name: queue-inventory-promotions
+description: Queue standard promotions for changed upstream pins
+inputs:
+  gh_token:
+    description: Own-repository promotion dispatch token
+    required: true
+  before:
+    description: Commit before the inventory update
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh_token }}
+        BEFORE: ${{ inputs.before }}
+      run: uv run --locked python scripts/queue_inventory_promotions.py "$BEFORE" "$GITHUB_SHA" "$GITHUB_REPOSITORY"

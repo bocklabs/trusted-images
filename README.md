@@ -39,9 +39,10 @@ version bumps and same-tag digest drift; each PR carries the
 `validate / inventory` check, and on green it merges automatically —
 no human in the loop.
 
-Promoting an image is a manual dispatch of the repository's `promote`
-workflow with an inventory app name: the run scans the pinned upstream
-image, publishes it digest-preserving to the public registry, verifies
+An upstream pin update on `main` queues the repository's standard
+`promote` workflow for that image. The same workflow supports manual
+dispatch for the first publication of a new inventory entry. It scans
+the pinned upstream image, publishes it to the public registry, verifies
 digest equality and anonymous readability, and opens a provenance
 pull request updating `provenance/<app>/current.json`. The release App enables
 automatic merge through genuine required checks; unchanged tag/digest evidence
@@ -105,9 +106,9 @@ on its next run and keeps it current from then on.
 **How updates flow** — when an upstream publishes a new version or
 re-points an existing tag, Renovate opens a PR updating the entry's
 `tag` and `digest`. The `validate / inventory` check runs on the PR and
-it merges automatically on green. Digests are always pinned: an update
-is always an explicit, reviewable diff in git history, never a floating
-tag.
+it merges automatically on green. The merge queues a standard promotion
+when the upstream reference, tag, or digest changes. Every update pins
+an exact digest in Git history.
 
 **Drift guard** — `tests/renovate-manager-match.mjs` fails if the
 Renovate manager regex and the inventory schema drift apart (Renovate

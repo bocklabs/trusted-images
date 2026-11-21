@@ -339,23 +339,27 @@ class PublishedRescanTests(unittest.TestCase):
         self.report["Results"][0]["Vulnerabilities"] = []
         self.assertEqual(rescan.decide(self.selection, self.report, True)["findings"], 0)
 
-    def test_language_requires_reviewed_upstream_change_and_disabled_os_is_unsupported(self):
+    def test_language_and_disabled_os_are_unsupported(self):
         self.spec["patchPolicy"] = "disabled"
         self.assertEqual(rescan.decide(self.selection, self.report, True)["unsupported"], 1)
         self.report["Results"][0]["Class"] = "lang-pkgs"
         self.report["Results"][0]["Type"] = "gobinary"
         self.assertFalse(rescan.decide(self.selection, self.report, True)["proceed"])
         self.spec["upstream"]["digest"] = "sha256:" + "a" * 64
-        self.assertTrue(rescan.decide(self.selection, self.report, True)["proceed"])
-
-    def test_inventory_upstream_tag_change_does_not_request_automatic_remediation(
-        self,
-    ) -> None:
-        self.spec["upstream"]["tag"] = "v0.20.2"
         value = rescan.decide(self.selection, self.report, True)
         self.assertFalse(value["proceed"])
+        self.assertFalse(value["force_repromote"])
         self.assertEqual(value["unsupported"], 1)
-        self.assertIn("inventory upstream tag differs", value["reason"])
+        self.assertIn("inventory upstream pin differs", value["reason"])
+
+    def test_changed_pin_does_not_request_daily_remediation(self):
+        for pin in ({"tag": "v0.20.2"}, {"digest": "sha256:" + "a" * 64}):
+            with self.subTest(pin=pin), patch.dict(self.spec["upstream"], pin):
+                value = rescan.decide(self.selection, self.report, True)
+                self.assertFalse(value["proceed"])
+                self.assertFalse(value["force_repromote"])
+                self.assertEqual(value["unsupported"], 1)
+                self.assertIn("inventory upstream pin differs", value["reason"])
 
     def test_incomplete_coverage_wrong_reference_and_eol_fail_closed(self):
         incomplete: tuple[None | list[dict[str, str]], ...] = (None, [])

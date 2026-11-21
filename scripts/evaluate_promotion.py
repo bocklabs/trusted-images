@@ -1163,6 +1163,9 @@ def build_decision(
     if unresolved:
         eligible = False
         reason = "requested remediation unresolved: " + ",".join(unresolved)
+    elif request and not set(delta["resolved"]).intersection(unresolved_requested(request, full)):
+        eligible = False
+        reason = "requested remediation did not resolve a finding in the candidate scans"
     decision = {
         "schema": SCHEMA,
         "eligible": eligible,

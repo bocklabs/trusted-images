@@ -7,10 +7,11 @@ infrastructure details.
 
 ## Operator dispatch modes
 
-The `promote` workflow is dispatch-only. Choose exactly one mode; normal, force,
-recovery, and accepted-resume use the same validation, scanning, policy, artifact,
-publication, and provenance gates. A manual run is initiated by an authorized
-operator; these commands describe the interface, not a claim of authorization.
+`promote-inventory.yaml` queues the standard `promote` workflow when a
+merge to `main` changes the upstream reference, tag, or digest of an existing
+inventory entry. New inventory entries use an operator dispatch for their first
+publication. All promotion modes use the same validation, scanning, policy,
+artifact, publication, and provenance gates.
 
 ```sh
 gh workflow run promote.yaml --repo bocklabs/trusted-images --ref main \
@@ -85,11 +86,12 @@ open for manual review.
 
 Monitoring always runs; automatic remediation requires repository variable
 `REMEDIATION_ENABLED=true` and defaults to disabled. Enabled patch policy permits
-fixable OS findings at any severity. Language findings require a reviewed upstream
-inventory change; Copa remains in stable OS scope. An actionable scan emits its
-canonical finding hash internally and forces the next append-only revision through
-the existing complete candidate and publication gates. Requested CVEs must disappear
-in their ecosystem scope from the final full report. Historical acceptance may be
+fixable OS findings at any severity when the published upstream pin matches the
+inventory. Language fixes and upstream pin changes use the standard promotion path.
+An actionable scan sends its canonical finding hash to the candidate checks.
+The candidate's before and after scans must show that it resolved a requested
+finding. All requested CVEs must be absent in their ecosystem scope from the
+final full report before a new revision can publish. Historical acceptance may be
 monitored, but monitoring never renews it or changes eligibility; the new candidate
 still needs valid current KEV evidence and acceptance. Historical provenance is never
 rewritten. Signed publication records use release-App auto-merge after required
@@ -100,12 +102,10 @@ checks; quarantine artifacts remain available for operator review.
 Each gate fails the run before downstream work.
 
 Producer-owned automatic remediation carries the canonical requested finding set
-and hash into the final full-report evaluator and forces a fresh immutable
-revision from the reviewed original upstream child. Every supplied finding must
-be absent in its ecosystem scope; package/version changes or moving a result
-cannot conceal an unresolved CVE. This gate also covers supplied language
-findings, while Copa stays within stable OS scope. Existing residual/no-fix and
-KEV policy still applies; remediation promises no zero-CVE result.
+and hash into the final full-report evaluator. The candidate uses the reviewed
+original upstream child. The evaluator checks each requested CVE across its
+ecosystem, including findings whose package or result path changed. Existing
+residual and KEV policies still apply.
 
 1. **Validate inventory and candidate** in a read-only validation job. The job
    has read-only GitHub and registry access. The candidate has no network egress

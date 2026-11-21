@@ -38,30 +38,34 @@ class WorkflowActionTests(unittest.TestCase):
         for path in sorted(WORKFLOWS.glob("*.yaml")):
             text = path.read_text(encoding="utf-8")
             workflow = yaml.safe_load(text)
-            for job in workflow.get("jobs", {}).values():
-                for step in job.get("steps", []):
-                    uses = step.get("uses", "")
-                    if not uses.startswith("./.github/actions/"):
-                        continue
-                    action = yaml.safe_load(
-                        (ROOT / uses.removeprefix("./") / "action.yaml").read_text(encoding="utf-8")
+            steps = (
+                step
+                for job in workflow.get("jobs", {}).values()
+                for step in job.get("steps", [])
+            )
+            for step in steps:
+                uses = step.get("uses", "")
+                if not uses.startswith("./.github/actions/"):
+                    continue
+                action = yaml.safe_load(
+                    (ROOT / uses.removeprefix("./") / "action.yaml").read_text(encoding="utf-8")
+                )
+                given = set(step.get("with", {}))
+                declared_inputs = set((action.get("inputs") or {}).keys())
+                with self.subTest(action=uses):
+                    self.assertLessEqual(given, declared_inputs)
+                step_id = step.get("id")
+                if not step_id:
+                    continue
+                used = set(
+                    re.findall(
+                        rf"steps\.{re.escape(step_id)}\.outputs\.([A-Za-z0-9_-]+)",
+                        text,
                     )
-                    given = set(step.get("with", {}))
-                    declared_inputs = set((action.get("inputs") or {}).keys())
-                    with self.subTest(action=uses):
-                        self.assertLessEqual(given, declared_inputs)
-                    step_id = step.get("id")
-                    if not step_id:
-                        continue
-                    used = set(
-                        re.findall(
-                            rf"steps\.{re.escape(step_id)}\.outputs\.([A-Za-z0-9_-]+)",
-                            text,
-                        )
-                    )
-                    declared_outputs = set((action.get("outputs") or {}).keys())
-                    with self.subTest(action=uses, step=step_id):
-                        self.assertLessEqual(used, declared_outputs)
+                )
+                declared_outputs = set((action.get("outputs") or {}).keys())
+                with self.subTest(action=uses, step=step_id):
+                    self.assertLessEqual(used, declared_outputs)
 
     def test_shared_ci_logic_lives_in_repository_helpers(self) -> None:
         action_files = sorted(ACTIONS.rglob("action.yaml"))

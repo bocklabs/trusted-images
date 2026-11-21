@@ -256,14 +256,14 @@ def package_coverage(results, file_builds=None):
     return bool(covered), limitations
 
 
-def decision_outcome(covered, same_upstream_tag, requested, enabled):
+def decision_outcome(covered, same_upstream_pin, requested, enabled):
     if not covered:
         return False, "package coverage incomplete; full report retained"
-    if not same_upstream_tag:
+    if not same_upstream_pin:
         return (
             False,
             (
-                "inventory upstream tag differs from the published image; "
+                "inventory upstream pin differs from the published image; "
                 "publish the inventory update separately"
             ),
         )
@@ -285,11 +285,7 @@ def decide(selection, report, enabled):
     limitations.extend(review_limitations(file_builds))
     spec = selection["spec"]
     published_upstream = selection["published"]["upstream"]
-    same_upstream_tag = (
-        spec["upstream"]["ref"] == published_upstream["ref"]
-        and spec["upstream"]["tag"] == published_upstream["tag"]
-    )
-    changed_upstream = spec["upstream"] != {
+    same_upstream_pin = spec["upstream"] == {
         k: published_upstream[k] for k in ("ref", "tag", "digest")
     }
     requested = []
@@ -298,10 +294,7 @@ def decide(selection, report, enabled):
         if not item["fixed_version"]:
             no_fix += 1
             continue
-        actionable = same_upstream_tag and (
-            (item["class"] == "os-pkgs" and spec["patchPolicy"] == "enabled")
-            or (item["class"] == "lang-pkgs" and changed_upstream)
-        )
+        actionable = same_upstream_pin and item["class"] == "os-pkgs" and spec["patchPolicy"] == "enabled"
         if not actionable:
             unsupported += 1
             continue
@@ -316,7 +309,7 @@ def decide(selection, report, enabled):
     if limitations:
         value["coverage_limitations"] = limitations
     proceed, reason = decision_outcome(
-        covered, same_upstream_tag, requested, enabled
+        covered, same_upstream_pin, requested, enabled
     )
     value["reason"] = reason
     if proceed:
