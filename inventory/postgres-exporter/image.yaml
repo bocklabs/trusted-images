@@ -7,8 +7,8 @@ metadata:
 spec:
   upstream:
     ref: quay.io/prometheuscommunity/postgres-exporter
-    tag: v0.20.1
-    digest: sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e
+    tag: v0.21.1
+    digest: sha256:a88794758ad461c75f3825b51cde4bde730bdff04b3b24d00efe14217e41f615
   destination:
     package: ghcr.io/bocklabs/postgres-exporter
   patchPolicy: enabled
