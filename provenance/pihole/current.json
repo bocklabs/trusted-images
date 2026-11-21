@@ -12,14 +12,14 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/pihole",
-    "tag": "2026.11.0-bocklabs.2",
-    "digest": "sha256:d2039a17f89510a3d1da2abed035bf6a50d1525da314a84513e339372dd9bcd2",
+    "tag": "2026.11.0-bocklabs.3",
+    "digest": "sha256:6ad61259220b1f3393235f1d23debde4227f3ff09e8add59ef5a464dacd484ad",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44520907390",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44900603494",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
@@ -28,20 +28,20 @@
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:58db214a5bdca54f5f14de36c6a9052d7c189ce9d7a500688da0ce94f5a33e92"
+    "skopeo_image_digest": "sha256:075359e92740bec687ed6ec8d12141bdb3666e6547dcd917657e24a7758926ed"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:12af2cc363cbf0e0e53b515a3946071fa50c704f02f499f96b9cdada0c85c649",
-      "updated_at": "2026-11-19 07:06:49.809946527 +0000 UTC"
+      "check_bundle_digest": "sha256:c77b79f405b0cabf3bcddb2cc463180efec17f293e28cee9210cfea895878b9b",
+      "updated_at": "2026-11-21 07:02:51.626719824 +0000 UTC"
     },
-    "full_report_sha256": "2ad96110104d99d0f501f381a637ba0c132eba656dab81342dab7c20f6db245b",
-    "copa_report_sha256": "2e771e17fd328bf66ad6730a1faabaff133515f8e578c87d50cb429ed5cfd0c4",
-    "decision_sha256": "0aa5e71f8cfcb87a0c37bf71ee94369bcea0e4ff7f97b9e99898ce4756c621d4",
+    "full_report_sha256": "66da6a7aa12b4bef19809374cac797d9f0d7cc339b5976c0ed96429c2dd7bcff",
+    "copa_report_sha256": "551437a02a9c703987950a75d27ae53183b59c3b38b1a95537d703ad6abdd810",
+    "decision_sha256": "e383e48472e6ade76d80397f6918b8c586ce955ff3b2985a1bc16e2b31002215",
     "reports": {
-      "before_sha256": "d9e3f4a2d542e91300b4d7fb8cfbdffce71aafb247cb9adf22263dda02482847",
-      "final_sha256": "2ad96110104d99d0f501f381a637ba0c132eba656dab81342dab7c20f6db245b",
-      "fixable_sha256": "2e771e17fd328bf66ad6730a1faabaff133515f8e578c87d50cb429ed5cfd0c4"
+      "before_sha256": "ca685a8c8f87ba39ac4a639e9e26e5f3d7a4603908715dc7cb21d695d33f4934",
+      "final_sha256": "66da6a7aa12b4bef19809374cac797d9f0d7cc339b5976c0ed96429c2dd7bcff",
+      "fixable_sha256": "551437a02a9c703987950a75d27ae53183b59c3b38b1a95537d703ad6abdd810"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ad618e404a43d72ac6435b6e5a8d75000778b9245a6b70dbde46530152f2eef3",
-        "fetched_at": "2026-11-19T12:14:02Z",
-        "catalogVersion": "2026.11.18",
-        "dateReleased": "2026-11-18T19:17:41.0354Z"
+        "sha256": "12c9ca4c5350ecacdf22bdce91b4ffcf06b8c8dc9c69b8bfb4c1a21be7a5fe50",
+        "fetched_at": "2026-11-21T11:52:18Z",
+        "catalogVersion": "2026.11.20",
+        "dateReleased": "2026-11-20T17:48:39.1516Z"
       }
     },
     "acceptance": null,
@@ -73,7 +73,7 @@
       "limitation": null
     },
     "remediation": {
-      "need_sha256": "e6df703d1da242fd55f959c3fd1d878540276fee0ece31b6b103327eb6fab022"
+      "need_sha256": "f520cf4844ed62aa8380792036768bbc20c0d032d59845a3a76065df6e8e7744"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -108,7 +108,7 @@
         "target": "pihole/pihole@sha256:52762e1620160b1e8cb3e12c585d0d0b0df901395c2bad6b514db379e526a9fb (alpine 3.24.3)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
+        "severity": "LOW",
         "severity_source": ""
       },
       {
@@ -121,7 +121,7 @@
         "target": "pihole/pihole@sha256:52762e1620160b1e8cb3e12c585d0d0b0df901395c2bad6b514db379e526a9fb (alpine 3.24.3)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
+        "severity": "LOW",
         "severity_source": ""
       },
       {
@@ -173,7 +173,7 @@
         "target": "pihole/pihole@sha256:52762e1620160b1e8cb3e12c585d0d0b0df901395c2bad6b514db379e526a9fb (alpine 3.24.3)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
+        "severity": "LOW",
         "severity_source": ""
       },
       {
@@ -186,7 +186,7 @@
         "target": "pihole/pihole@sha256:52762e1620160b1e8cb3e12c585d0d0b0df901395c2bad6b514db379e526a9fb (alpine 3.24.3)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
+        "severity": "LOW",
         "severity_source": ""
       },
       {
@@ -216,6 +216,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|libxml2|CVE-2026-86144",
+        "platform": "linux/amd64",
+        "package": "libxml2",
+        "cve": "CVE-2026-86144",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "pihole/pihole@sha256:52762e1620160b1e8cb3e12c585d0d0b0df901395c2bad6b514db379e526a9fb (alpine 3.24.3)",
+        "installed_version": "2.13.9-r2",
+        "fixed_version": "2.13.9-r3",
+        "severity": "HIGH",
+        "severity_source": "nvd"
+      },
+      {
         "identity": "linux/amd64|zlib|CVE-2026-4738",
         "platform": "linux/amd64",
         "package": "zlib",
@@ -234,6 +247,7 @@
       "resolved": [
         "CVE-2026-107496",
         "CVE-2026-4738",
+        "CVE-2026-86144",
         "CVE-2026-88822",
         "CVE-2026-88823",
         "CVE-2026-95691",
@@ -290,6 +304,13 @@
       },
       {
         "ecosystem": "alpine",
+        "name": "libxml2",
+        "change": "upgraded",
+        "before": "2.13.9-r2",
+        "after": "2.13.9-r3"
+      },
+      {
+        "ecosystem": "alpine",
         "name": "zlib",
         "change": "upgraded",
         "before": "1.3.2-r1",
@@ -318,15 +339,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-19T12:09:02Z",
-      "finished_at": "2026-11-19T12:14:02Z",
-      "duration_seconds": 300.2
+      "started_at": "2026-11-21T11:47:18Z",
+      "finished_at": "2026-11-21T11:52:18Z",
+      "duration_seconds": 300.1
     },
     "health": {
       "defined": true,
       "final_status": "healthy"
     },
-    "runner": "GitHub Actions 1000019164",
+    "runner": "GitHub Actions 1000019639",
     "baseline": {
       "entrypoint": [
         "start.sh"
@@ -339,34 +360,34 @@
       ]
     }
   },
-  "promoted_at": "2026-11-19T12:15:08Z",
+  "promoted_at": "2026-11-21T11:53:18Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "7481d4060249d3ebb3f1ff484d61beb40fbcf19156875a91c1bcbfdab70ef878",
-      "attachment_sha256": "eafbb8edc69fdf81fca9630351c022e56cc143a7595403296e72c6c74cf21b0b",
+      "bundle_sha256": "dcfd5cc1f55437bb88c164a170b97580f6b9c1125f17f46e0e15e0acec7312c1",
+      "attachment_sha256": "7ba6365ba7da5843c86dcc74f76fff98ad5998f06a66f6d37a6f3382a2d88cbd",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "a4891fa02f788f3909317d6a7f1aca1b20ef493902026b2239b3524df46cdb8d",
-      "bundle_sha256": "4cb72e763d23eb9144fd87a5511f37847dedb4d9b5847daa42557725ae1c2937",
-      "attachment_sha256": "ab8ab4855cc052f81f090f92090f18961313ba6338124f878595d20c87fc247e"
+      "predicate_sha256": "00867b796dbcf4eb1653afc0ca94416483a24f43afa9b5e85d9076f9cea521a0",
+      "bundle_sha256": "b1bfb0435cc5eae0237e6314bf45252694484102901b536e2e249110dcb3442d",
+      "attachment_sha256": "0e87f3509060f4326c975f902e24f69c0041bb2eda58b74ddab704c32febbaf8"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "Ym7S1SL3PweoYdLb/d8GowF4hbgMP8ibbcVijBMe6/0=",
+        "inclusion_root_hash": "sAPcSKegu40KuRuoHrRSFW7old0tjOlWPw721E0sSJs=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3996134007,
-        "signed_entry_timestamp": "MEYCIQCFt0nnS1cRM/NUH611m28XW0OQbbIVFWljN3gnUaGmPgIhAMMC8yycmLQdoBb3RBr+ave5aMd7jZI41z8UmjGaMgg9"
+        "log_index": 4032893148,
+        "signed_entry_timestamp": "MEYCIQDvHZQFzEG3pnDnnSXLF2TYAh6IZzTlwinA3A795ExbsQIhAK/226Q2+2y/efwj1u4iiZFhCgn37MEuSwKOR8R3s678"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "/+je3pVqeIM0ag3oAsfXDCTDyc6ZTZfXLLiPISp62z0=",
+        "inclusion_root_hash": "58dQ2AsGc9fjr0omNY+ZtO4Xan1LCW3OunjIiafr6dE=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3996137929,
-        "signed_entry_timestamp": "MEUCIFnkN7A0YqViyJU6djsO3bhH9UBbIb3BQW2koG29gbXLAiEA7pHHjcQaEne+42B/OM96bQclpO1c7Iq6hVWr6ON7MKA="
+        "log_index": 4032893437,
+        "signed_entry_timestamp": "MEYCIQCNRG/uhfCz2XtcVbpxKAioUkG54J7OSJa9MmAxXif/tQIhAMG9gXmcaiFiKmbYGVY85O93dqQ4cHGFwEt4R6GNWHGH"
       }
     },
     "tools": {
