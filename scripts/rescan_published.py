@@ -15,6 +15,7 @@ from evaluate_promotion import (
     validate_report_results,
 )
 from finding_identity import canonical, findings_hash, require
+from generate_go_file_build import GO_SOURCE_SKIP_FILE, versionless_targets
 from promote_signing_gate import load_identity
 from reverify_signing import load_current, merged_commit, record_time, verified_record
 from validate_inventory import dig, entry_failures, parse_go_file_build
@@ -274,13 +275,28 @@ def decision_outcome(covered, same_upstream_pin, requested, enabled):
     return True, "actionable producer remediation"
 
 
+def read_go_source_skip(selection, report):
+    path = ARTIFACT / GO_SOURCE_SKIP_FILE
+    if not path.exists():
+        return None
+    require(path.is_file() and not path.is_symlink(), "unsafe Go source skip record")
+    skip = json.loads(path.read_text(encoding="utf-8"))
+    require(isinstance(skip, dict) and skip.get("app") == selection["app"] and skip.get("ref") == selection["ref"],
+            "Go source skip record does not match the selected image")
+    require(all(isinstance(skip.get(key), str) and skip[key] for key in ("target", "reason")),
+            "Go source skip record lacks target or reason")
+    require(skip["target"] in versionless_targets(report), "Go source skip target is missing from the scan")
+    return skip
+
+
 def decide(selection, report, enabled):
     require(report.get("ArtifactName") == selection["ref"], "scan reference differs from selected published image")
     validate_native_inventory(report, ARTIFACT / "trivy-full.json")
     results = validate_report_results(report, "published full report", False)
     normalized = findings(report, "published full report")
     require(report.get("Metadata", {}).get("OS", {}).get("EOSL") is not True, "published image is end-of-life")
-    file_builds = reviewed_file_builds(selection, report)
+    skip = read_go_source_skip(selection, report)
+    file_builds = [] if skip else reviewed_file_builds(selection, report)
     covered, limitations = package_coverage(results, file_builds)
     limitations.extend(review_limitations(file_builds))
     spec = selection["spec"]
@@ -304,10 +320,13 @@ def decide(selection, report, enabled):
     requested = sorted({canonical(item): item for item in requested}.values(), key=canonical)
     value = {"app": selection["app"], "ref": selection["ref"], "proceed": False,
              "force_repromote": False, "findings": len(normalized), "no_fix": no_fix,
-             "unsupported": unsupported, "actionable": len(requested), "package_coverage": bool(covered)}
+             "unsupported": unsupported, "actionable": len(requested), "package_coverage": covered and skip is None}
     value["reviewed_file_builds"] = [review["review_sha256"] for review in file_builds]
     if limitations:
         value["coverage_limitations"] = limitations
+    if skip:
+        value.update(go_source_skip=skip, reason="Go source evidence skipped; full report retained")
+        return value
     proceed, reason = decision_outcome(
         covered, same_upstream_pin, requested, enabled
     )

@@ -77,8 +77,13 @@ new reviews. This exception proves inventory coverage for the reviewed builds,
 not vulnerability coverage for the unversioned packages.
 
 The existing daily promotion workflow generates evidence once per automatic
-published-image scan. It retains a checksummed patch for a scoped evidence PR
-against the same source commit. A changed main branch stops the write-back.
+published-image scan. If the binary lacks a verifiable source tag or revision,
+the workflow records the skipped Go evidence and retains the full scan. That run
+is monitoring-only. Failed lookups, invalid scans, and conflicting source
+evidence still fail the run.
+
+When evidence is available, the workflow retains a checksummed patch for a
+scoped evidence PR against the same source commit. A changed main branch stops the write-back.
 If the reviewed targets, modules, source repositories, and main modules are
 unchanged, the PR
 auto-merges through the normal required checks. Any structural change stays

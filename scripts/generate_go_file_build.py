@@ -17,6 +17,11 @@ INVENTORY = Path(__file__).resolve().parents[1] / "inventory"
 DEVEL = "(devel)"
 VCS_REVISION = "vcs.revision"
 GITHUB_PREFIX = "https://github.com/"
+GO_SOURCE_SKIP_FILE = "go-source-skip.json"
+
+
+class GoSourceUnavailable(ValueError):
+    """The scanned binary has no supported source binding."""
 
 
 def require(value, message):
@@ -95,16 +100,13 @@ def infer_modules(packages, info):
 
 def resolve_tag(repository, *tags):
     for tag in tags:
-        try:
-            output = run("git", "ls-remote", "--tags", repository, f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}")
-        except subprocess.CalledProcessError:
-            continue
+        output = run("git", "ls-remote", "--tags", repository, f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}")
         rows = [line.split() for line in output.splitlines() if line.split()]
         refs = {ref: sha for sha, ref in rows}
         revision = refs.get(f"refs/tags/{tag}^{{}}") or refs.get(f"refs/tags/{tag}")
         if revision:
             return tag, revision
-    raise ValueError(f"source tag is not resolvable for {repository}: {tags[-1]}")
+    raise GoSourceUnavailable(f"source tag is not resolvable for {repository}: {tags[-1]}")
 
 
 def github_source(module):
@@ -134,33 +136,17 @@ def opaque_source(module_repo, vcs_revision, image_version, deps, fallback):
     return repository, tag, revision
 
 
-def source_info(labels, info):
-    label_repo = labels.get("org.opencontainers.image.source", "")
-    module_repo = github_source(info["first_party_module"])
-    repository = module_repo or label_repo
-    if label_repo and (
-        labels.get("org.opencontainers.image.revision")
-        or not module_repo
-        or same_repository(module_repo, label_repo)
-    ):
-        repository = label_repo
-    require(repository, "source repository is unknown")
-    revision = labels.get("org.opencontainers.image.revision", "") if repository == label_repo else ""
-    vcs_revision = info["build"].get(VCS_REVISION, "")
-    revision = revision or vcs_revision
-    base_tag = labels.get("org.opencontainers.image.base.name", "").rsplit(":", 1)[-1]
-    tag = info["module_version"] if info["module_version"] != DEVEL else base_tag
-    if not revision:
-        require(base_tag, "image has no source tag or revision")
-        require(
-            repository.startswith(GITHUB_PREFIX),
-            "source tag fallback requires a GitHub repository",
-        )
-        tag, revision = resolve_tag(repository, f"v{base_tag}", base_tag)
-    repository, tag, revision = opaque_source(
-        module_repo, vcs_revision, labels.get("org.opencontainers.image.version", ""), info.get("deps", []),
-        (repository, tag, revision),
-    )
+def resolve_labeled_source(repository, label_repo, base_tag):
+    if not base_tag:
+        raise GoSourceUnavailable("image has no source tag or revision")
+    if not repository.startswith(GITHUB_PREFIX):
+        raise GoSourceUnavailable("source tag fallback requires a GitHub repository")
+    if repository != label_repo:
+        raise GoSourceUnavailable("Go binary has no VCS revision to verify its source repository")
+    return resolve_tag(repository, f"v{base_tag}", base_tag)
+
+
+def source_files(repository, revision):
     files = {}
     if repository.startswith(GITHUB_PREFIX):
         raw = repository.replace(GITHUB_PREFIX, "https://raw.githubusercontent.com/")
@@ -172,7 +158,33 @@ def source_info(labels, info):
             except (urllib.error.URLError, TimeoutError):
                 continue
             files[name] = {"url": url, "sha256": hashlib.sha256(data).hexdigest()}
-    return {"repository": repository, "revision": revision, **({"tag": tag} if tag else {}), "files": files}
+    return files
+
+
+def source_info(labels, info):
+    label_repo = labels.get("org.opencontainers.image.source", "")
+    module_repo = github_source(info["first_party_module"])
+    repository = module_repo or label_repo
+    if label_repo and (
+        labels.get("org.opencontainers.image.revision")
+        or not module_repo
+        or same_repository(module_repo, label_repo)
+    ):
+        repository = label_repo
+    if not repository:
+        raise GoSourceUnavailable("source repository is unknown")
+    revision = labels.get("org.opencontainers.image.revision", "") if repository == label_repo else ""
+    vcs_revision = info["build"].get(VCS_REVISION, "")
+    revision = revision or vcs_revision
+    base_tag = labels.get("org.opencontainers.image.base.name", "").rsplit(":", 1)[-1]
+    tag = info["module_version"] if info["module_version"] != DEVEL else base_tag
+    if not revision:
+        tag, revision = resolve_labeled_source(repository, label_repo, base_tag)
+    repository, tag, revision = opaque_source(
+        module_repo, vcs_revision, labels.get("org.opencontainers.image.version", ""), info.get("deps", []),
+        (repository, tag, revision),
+    )
+    return {"repository": repository, "revision": revision, **({"tag": tag} if tag else {}), "files": source_files(repository, revision)}
 
 
 def binary_build_info(ref, target):
@@ -195,6 +207,7 @@ def record(selection, report, ref, target, packages, run_url):
     binary_sha, info = binary_build_info(ref, target)
     labels = report["Metadata"]["ImageConfig"]["config"]["Labels"]
     modules = infer_modules(packages, info)
+    layer = target_layer(packages)
     source = source_info(labels, info)
     records = []
     for module in modules:
@@ -205,7 +218,7 @@ def record(selection, report, ref, target, packages, run_url):
             "upstream_child_digest": selection["published"]["upstream"]["selected_child_digest"],
             "target": target,
             "module": module,
-            "layer": target_layer(packages),
+            "layer": layer,
             "binary_sha256": binary_sha,
             "source": source,
             "build_info": {
@@ -295,7 +308,10 @@ def main():
     parser.add_argument("--run-url", default=os.getenv("GITHUB_RUN_URL", ""))
     args = parser.parse_args()
     require(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", args.app), "invalid inventory app")
-    report = json.loads(Path(args.report).read_text())
+    report_path = Path(args.report)
+    skip_path = report_path.with_name(GO_SOURCE_SKIP_FILE)
+    skip_path.unlink(missing_ok=True)
+    report = json.loads(report_path.read_text())
     selection = json.loads(Path(args.selection).read_text())
     ref = selection["ref"]
     targets = versionless_targets(report)
@@ -305,11 +321,17 @@ def main():
         if result.get("Class") == "lang-pkgs" and result.get("Type") == "gobinary" and result.get("Packages")
     }
     require({key[0] for key in existing} <= scanned_targets, "scan is missing previously reviewed Go targets")
-    if not targets:
-        records = []
-    else:
+    records = []
+    if targets:
         print(run("go", "version").strip(), file=sys.stderr)
-        records = [item for target, packages in targets.items() for item in record(selection, report, ref, target, packages, args.run_url)]
+    for target, packages in targets.items():
+        try:
+            records.extend(record(selection, report, ref, target, packages, args.run_url))
+        except GoSourceUnavailable as error:
+            skip = json.dumps({"app": args.app, "ref": ref, "target": target, "reason": str(error)})
+            skip_path.write_text(skip + "\n", encoding="utf-8")
+            print("Go source evidence skipped: " + skip)
+            return 0
     changed, structural = write_records(args.inventory, args.app, records, existing)
     value = {"app": args.app, "changed": changed, "structural_drift": structural, "records": len(records)}
     print(json.dumps(value))

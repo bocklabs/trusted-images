@@ -97,11 +97,11 @@ class GenerateGoFileBuildTests(unittest.TestCase):
             generator.source_info(labels, ambiguous)
         with patch.object(generator, "run", return_value=f"{'a' * 40}\trefs/tags/v2.11.7^{{}}\n"), self.assertRaisesRegex(ValueError, "revision|VCS"):
             generator.source_info(labels, info)
-        with patch.object(generator, "run", return_value=""), self.assertRaisesRegex(ValueError, "not resolvable"):
+        with patch.object(generator, "run", return_value=""), self.assertRaisesRegex(generator.GoSourceUnavailable, "not resolvable"):
             generator.source_info(labels, info)
-        with patch.object(generator, "run", return_value=f"{revision}\trefs/tags/other^{{}}\n"), self.assertRaisesRegex(ValueError, "not resolvable"):
+        with patch.object(generator, "run", return_value=f"{revision}\trefs/tags/other^{{}}\n"), self.assertRaisesRegex(generator.GoSourceUnavailable, "not resolvable"):
             generator.source_info(labels, info)
-        with patch.object(generator, "run", side_effect=subprocess.CalledProcessError(1, ["git"])), self.assertRaisesRegex(ValueError, "not resolvable"):
+        with patch.object(generator, "run", side_effect=subprocess.CalledProcessError(1, ["git"])), self.assertRaises(subprocess.CalledProcessError):
             generator.source_info(labels, info)
 
     def test_native_go_build_info_hash_is_stable_across_temp_directories(self):

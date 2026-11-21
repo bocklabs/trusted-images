@@ -46,6 +46,51 @@ class PublishedRescanTests(unittest.TestCase):
                                     "Vulnerabilities": [{"VulnerabilityID": "CVE-2026-1234", "PkgName": "openssl",
                                                          "InstalledVersion": "1", "FixedVersion": "2", "Severity": "LOW"}]}]}
 
+    def test_missing_go_source_is_monitor_only_and_preserves_evidence(self):
+        generator = importlib.import_module("generate_go_file_build")
+        module = "github.com/example/server"
+        target = "usr/bin/server"
+        info = generator.parse_build_info(
+            f"server: go1.26.0\n\tpath\t{module}\n\tmod\t{module}\t(devel)\n"
+        )
+        self.report["Metadata"]["ImageConfig"] = {"config": {"Labels": {
+            "org.opencontainers.image.source": "https://github.com/example/package-builder",
+            "org.opencontainers.image.base.name": "server:1.0",
+        }}}
+        self.report["Results"].append({
+            "Class": "lang-pkgs", "Type": "gobinary", "Target": target,
+            "Packages": [{"Name": module, "ID": module, "Relationship": "root", "AnalyzedBy": "gobinary",
+                          "Identifier": {"PURL": f"pkg:golang/{module}"},
+                          "Layer": {"Digest": "sha256:" + "a" * 64, "DiffID": "sha256:" + "b" * 64}}],
+        })
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inventory = root / "inventory"
+            app = inventory / self.selection["app"]
+            app.mkdir(parents=True)
+            old = app / "go-file-build.json"
+            previous = json.dumps({"target": target, "module": module, "source": {"repository": "old"}})
+            old.write_text(previous)
+            report = root / "trivy-full.json"
+            report.write_text(json.dumps(self.report))
+            selection = root / "selection.json"
+            selection.write_text(json.dumps(self.selection))
+            argv = ["generate", "--app", self.selection["app"], "--report", str(report),
+                    "--selection", str(selection), "--inventory", str(inventory)]
+            output = root / "output"
+            with patch.object(sys, "argv", argv), patch.object(generator, "run", return_value="go version"), patch.object(
+                generator, "binary_build_info", return_value=("a" * 64, info)
+            ), patch.dict(os.environ, {"GITHUB_OUTPUT": str(output)}):
+                self.assertEqual(generator.main(), 0)
+            self.assertFalse(output.exists())
+            self.assertEqual(old.read_text(), previous)
+            with patch.object(rescan, "ARTIFACT", root), patch.object(rescan, "INVENTORY", inventory):
+                decision = rescan.decide(self.selection, self.report, True)
+            self.assertFalse(decision["proceed"])
+            self.assertFalse(decision["package_coverage"])
+            self.assertEqual(decision["findings"], 1)
+            self.assertEqual(decision["go_source_skip"]["target"], target)
+
     def test_go_workspace_replacements_remain_monitor_only_without_losing_findings(self):
         self.report["Results"].append({"Class": "lang-pkgs", "Type": "gobinary", "Target": "usr/bin/grafana",
             "Packages": [{"Name": "github.com/grafana/grafana/apps/advisor", "ID": "github.com/grafana/grafana/apps/advisor",
