@@ -334,15 +334,14 @@ def main():
         skip = json.dumps({"app": args.app, "ref": ref, "targets": skipped})
         skip_path.write_text(skip + "\n", encoding="utf-8")
         print("Go source evidence skipped: " + skip)
-        return 0
+        return
     changed, structural = write_records(args.inventory, args.app, records, existing)
     value = {"app": args.app, "changed": changed, "structural_drift": structural, "records": len(records)}
     print(json.dumps(value))
     if os.getenv("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
             stream.write(f"changed={str(changed).lower()}\nstructural_drift={str(structural).lower()}\n")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
