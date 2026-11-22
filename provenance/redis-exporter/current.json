@@ -3,49 +3,49 @@
   "app": "redis-exporter",
   "upstream": {
     "ref": "oliver006/redis_exporter",
-    "tag": "v1.97.0",
-    "digest": "sha256:f5f903fbe77571d455ede0453b084d6840bc62fc105efac001034421cab83b99",
-    "index_digest": "sha256:f5f903fbe77571d455ede0453b084d6840bc62fc105efac001034421cab83b99",
+    "tag": "v1.98.0",
+    "digest": "sha256:2b68665248d909bb25de9d175c648932a8c358ba143e5dbed1eb48f91cc9d2e1",
+    "index_digest": "sha256:2b68665248d909bb25de9d175c648932a8c358ba143e5dbed1eb48f91cc9d2e1",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:d16780dcfefc6e42f48682ecc5fbd6dd3207938b1ee88f766b838436a4e27e6e"
+    "selected_child_digest": "sha256:599a43766b8f5dd8ce3bc555da2f301cc5d6c07977013cbe77cee92ecb607a4a"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/redis-exporter",
-    "tag": "v1.97.0-bocklabs.1",
-    "digest": "sha256:d16780dcfefc6e42f48682ecc5fbd6dd3207938b1ee88f766b838436a4e27e6e",
+    "tag": "v1.98.0-bocklabs.1",
+    "digest": "sha256:599a43766b8f5dd8ce3bc555da2f301cc5d6c07977013cbe77cee92ecb607a4a",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/42362247655",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44999826401",
     "workflow": "promote",
     "dispatched_by": "nitish-raj"
   },
   "tools": {
-    "trivy": "0.76.1",
+    "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": null,
-    "skopeo": "v1.22.3",
-    "skopeo_image_digest": "sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f"
+    "skopeo": "v1.25.1",
+    "skopeo_image_digest": "sha256:075359e92740bec687ed6ec8d12141bdb3666e6547dcd917657e24a7758926ed"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:edd340f7487d3b3a50a4b1ceaa9d3da09fcbcddb5f6d5c60dd9921d41915eee0",
-      "updated_at": "2026-11-07 06:54:25.084761873 +0000 UTC"
+      "check_bundle_digest": "sha256:f8cdab9ab629e7a0f2313d466a1b5d4380eac89a7d16624bb68765ed805cc686",
+      "updated_at": "2026-11-22 01:10:45.128389923 +0000 UTC"
     },
-    "full_report_sha256": "4de99bf29329333dbb8566ad3a3e1e0886af84365701b19ae09254a43e76186a",
-    "copa_report_sha256": "5fee7b0fc22daaf3fe84fcf6e2246e16d5b4ba82da7e063c8aec4fd8ef53ccb3",
-    "decision_sha256": "8fa8befbaee7673dbcc37768a2b95fa57f918dff05e069d286f40c1a78e3c754",
+    "full_report_sha256": "f8492067fd6bc4325b5635045d6eb16376540b7314ccec728c1dcd27316711b1",
+    "copa_report_sha256": "9c1ada5126c8f15404424e11aaf3452e858186be5b3452a223fbe79377a8f904",
+    "decision_sha256": "939a1589daa1292e184a8be89d98e83559d382333550e2a25a6f484dbae8cb19",
     "reports": {
-      "before_sha256": "4de99bf29329333dbb8566ad3a3e1e0886af84365701b19ae09254a43e76186a",
-      "final_sha256": "4de99bf29329333dbb8566ad3a3e1e0886af84365701b19ae09254a43e76186a",
-      "fixable_sha256": "5fee7b0fc22daaf3fe84fcf6e2246e16d5b4ba82da7e063c8aec4fd8ef53ccb3"
+      "before_sha256": "f8492067fd6bc4325b5635045d6eb16376540b7314ccec728c1dcd27316711b1",
+      "final_sha256": "f8492067fd6bc4325b5635045d6eb16376540b7314ccec728c1dcd27316711b1",
+      "fixable_sha256": "9c1ada5126c8f15404424e11aaf3452e858186be5b3452a223fbe79377a8f904"
     },
     "secobserve": {
       "product": "trusted-images",
-      "origin": "oliver006/redis_exporter:v1.97.0"
+      "origin": "oliver006/redis_exporter:v1.98.0"
     }
   },
   "policy": {
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "47e0406b2be5a40420eff66f3d90e83eb8883dae6ff4d08e1b2a942c366f6cc2",
-        "fetched_at": "2026-11-07T10:03:29Z",
-        "catalogVersion": "2026.11.06",
-        "dateReleased": "2026-11-06T19:44:45.1797Z"
+        "sha256": "12c9ca4c5350ecacdf22bdce91b4ffcf06b8c8dc9c69b8bfb4c1a21be7a5fe50",
+        "fetched_at": "2026-11-22T07:48:42Z",
+        "catalogVersion": "2026.11.20",
+        "dateReleased": "2026-11-20T17:48:39.1516Z"
       }
     },
     "acceptance": null,
@@ -76,61 +76,16 @@
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: GO-2026-5932:UNKNOWN:",
+    "outcome": "clean",
     "eligible": true,
-    "warnings": [
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:gobinary:redis_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "GO-2026-5932",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "redis_exporter",
-        "installed_version": "v0.58.0",
-        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
-        "severity": "UNKNOWN",
-        "severity_source": ""
-      }
-    ]
+    "warnings": []
   },
   "cves": {
-    "before": [
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:redis_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "GO-2026-5932",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "redis_exporter",
-        "installed_version": "v0.58.0",
-        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
-        "severity": "UNKNOWN",
-        "severity_source": ""
-      }
-    ],
-    "final": [
-      {
-        "identity": "linux/amd64|lang-pkgs:gobinary:redis_exporter:golang.org%2Fx%2Fcrypto|GO-2026-5932",
-        "platform": "linux/amd64",
-        "package": "golang.org/x/crypto",
-        "cve": "GO-2026-5932",
-        "class": "lang-pkgs",
-        "type": "gobinary",
-        "target": "redis_exporter",
-        "installed_version": "v0.58.0",
-        "fixed_version": "0.58.1-0.20261009181718-2f1f834330b2",
-        "severity": "UNKNOWN",
-        "severity_source": ""
-      }
-    ],
+    "before": [],
+    "final": [],
     "summary": {
       "resolved": [],
-      "remaining": [
-        "GO-2026-5932"
-      ],
+      "remaining": [],
       "introduced": [],
       "unresolved_fixable": []
     }
@@ -161,15 +116,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-07T10:03:26Z",
-      "finished_at": "2026-11-07T10:03:29Z",
-      "duration_seconds": 3.3
+      "started_at": "2026-11-22T07:48:40Z",
+      "finished_at": "2026-11-22T07:48:42Z",
+      "duration_seconds": 2.9
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000017084",
+    "runner": "GitHub Actions 1000019867",
     "baseline": {
       "entrypoint": [
         "/redis_exporter"
@@ -180,39 +135,39 @@
       ]
     }
   },
-  "promoted_at": "2026-11-07T10:04:20Z",
+  "promoted_at": "2026-11-22T07:49:51Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "fba0e6ac95b537824f7152e863959e86d333059f10406a569411b89c13ac87ca",
-      "attachment_sha256": "775380890764529318f163ef6af9dcdfcdf551d01cd5a3b685ffbdaaac4cad42",
+      "bundle_sha256": "3292f5b17f192bdf02c519c1bfa8a79e707d89a98130599a94ef03d88d967327",
+      "attachment_sha256": "96c9643a8727957d9a7e14b56b575035bc8c33f46850ecbf8ce1f15f5af13ef2",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "5df06f1a46705f56a0f8970e07d671b697ef60b4afb5993b8770520861416bb1",
-      "bundle_sha256": "e176104025c6de78a3613d0a6330ff1b79a9fc02cee92bebbb587491dcc4fc1e",
-      "attachment_sha256": "5b047c743a8262587a8047f299d0c6d2cea11f4aed788d5dedcdd13ab4664d8b"
+      "predicate_sha256": "add6102eb125cdc17cc25a869042d9c5dd728409b36d847cae5c337fc4ab13f3",
+      "bundle_sha256": "a52844487d3446de3dc0b8b249f5cdd8af47f0482623a6a9e5438978d1856ce6",
+      "attachment_sha256": "ea66cd5edbe286c3a396d634c04fa996f5ecc30d541ef22fb7e5b2eabf17dcf8"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "5Y9kh8f89OUmytbY1k2l00B86qC3vTPKOcSkvQsPxaE=",
+        "inclusion_root_hash": "WsFr5lAF60rnpHNv522SEfjwtj3Fz7tsGvTe73FVeWA=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3735230860,
-        "signed_entry_timestamp": "MEUCIEJYWLvD8twt3LY6bfzT4agJeksdSHTouaL3/3lkQUrCAiEAvwtg0+6MNXbdOFBBF7xFH+lo7W+fq3PEBpFMZ7iVxEk="
+        "log_index": 4039128690,
+        "signed_entry_timestamp": "MEUCIFUYeqqOSkBbDcXB5U93x9txIdBiwHc3JHWa9F0kLnpTAiEA8r8GZdckoHtZwtDiOrHkGm1Sih6jEBUHBCFA4LvdYJQ="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "XDYjzE1A3LZzU9FjNOY5gIZuC3coTkmGOmdb0GCUV24=",
+        "inclusion_root_hash": "0qk/fsHutb/wxeAOgNCYnTjFSFvju1E+X9v0GtaDQTs=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3735231429,
-        "signed_entry_timestamp": "MEQCIGYa8lEsS0mqekRuYXN9ze6txhHtAmDyyXOPIcnkVvO0AiBiLNU+qJBAfVF6akd0UcWqaq7edZZtPRiErt31mtdH4g=="
+        "log_index": 4039130004,
+        "signed_entry_timestamp": "MEQCICQiLUd46S99ifOJWye5ckedfguLV7phvY0z0lE1gqDvAiAULP8f93k83/4EDEFbzbw3DvjUZxZJWzWeMn16Yo8mcg=="
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.1"
+      "trivy": "0.76.2"
     }
   }
 }
