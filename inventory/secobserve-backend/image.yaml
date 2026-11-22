@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: ghcr.io/secobserve/secobserve-backend
-    tag: 1.65.0
-    digest: sha256:12b60d67a7583cf8cb765c5af342e25a6b5aa604b52370a1eac87fddaa946345
+    tag: 1.66.0
+    digest: sha256:cbdcda8babe2e56d09d34fe28968ba87792aea51c329d03c237bf9953e020714
   destination:
     package: ghcr.io/bocklabs/secobserve-backend
   patchPolicy: enabled
