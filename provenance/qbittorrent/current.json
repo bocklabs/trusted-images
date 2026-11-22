@@ -4,44 +4,44 @@
   "upstream": {
     "ref": "linuxserver/qbittorrent",
     "tag": "5.3.0",
-    "digest": "sha256:3d4c4545d51a690a0df15a2ff99038823a88a9822df8e794526447b9afbd7384",
-    "index_digest": "sha256:3d4c4545d51a690a0df15a2ff99038823a88a9822df8e794526447b9afbd7384",
+    "digest": "sha256:afed7399d0f336ee22d6d011b3c8c50a44e3810f0af6e3c4083d79e566f1677a",
+    "index_digest": "sha256:afed7399d0f336ee22d6d011b3c8c50a44e3810f0af6e3c4083d79e566f1677a",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b"
+    "selected_child_digest": "sha256:598058410a5cbfcc03d968c1ddc7fb52a7e2b2dd3e89682db47535feee4048c8"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/qbittorrent",
-    "tag": "5.3.0-bocklabs.8",
-    "digest": "sha256:8906f98e91c78f60b3a22cc12fd9f20589be5fdd658d17dabb003102dc3e10d9",
+    "tag": "5.3.0-bocklabs.9",
+    "digest": "sha256:598058410a5cbfcc03d968c1ddc7fb52a7e2b2dd3e89682db47535feee4048c8",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44520943559",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45077403283",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
     "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
-    "copa": "0.15.0",
+    "copa": null,
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:58db214a5bdca54f5f14de36c6a9052d7c189ce9d7a500688da0ce94f5a33e92"
+    "skopeo_image_digest": "sha256:075359e92740bec687ed6ec8d12141bdb3666e6547dcd917657e24a7758926ed"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:12af2cc363cbf0e0e53b515a3946071fa50c704f02f499f96b9cdada0c85c649",
-      "updated_at": "2026-11-19 07:06:49.809946527 +0000 UTC"
+      "check_bundle_digest": "sha256:9e2c69b0e3ae118861569563692b15056d63e79fb48b121361b319b2314d07d2",
+      "updated_at": "2026-11-22 19:00:46.978228443 +0000 UTC"
     },
-    "full_report_sha256": "744ef5c7e74af6582aad2d8de5b182014f96df114d2d576fd139724630835a8a",
-    "copa_report_sha256": "3f5bd30154b15ce99ca6c4765674630c5f469abd977b1469432b4c3b9dcbdcbe",
-    "decision_sha256": "7715780e08c6e678dcc745d582391c680b81901ac914f943d2ef775133a2fec5",
+    "full_report_sha256": "892b6e811727df9e03f286eb740e2afab0084c1a0f3b42786e0254b28db6743e",
+    "copa_report_sha256": "b32f69a68c919b2ff6076c06e283439190f237ade6812ca0b57a1cbe50559ba9",
+    "decision_sha256": "c2319b02a83ed6a0f18e461ad73bc00ec14f0ec1ab605ba7c72ccb78e2243485",
     "reports": {
-      "before_sha256": "9e97aabd2ece4fa7bf76c794492c5f337ce3d30f4d796a7e3353ff13420cb754",
-      "final_sha256": "744ef5c7e74af6582aad2d8de5b182014f96df114d2d576fd139724630835a8a",
-      "fixable_sha256": "3f5bd30154b15ce99ca6c4765674630c5f469abd977b1469432b4c3b9dcbdcbe"
+      "before_sha256": "892b6e811727df9e03f286eb740e2afab0084c1a0f3b42786e0254b28db6743e",
+      "final_sha256": "892b6e811727df9e03f286eb740e2afab0084c1a0f3b42786e0254b28db6743e",
+      "fixable_sha256": "b32f69a68c919b2ff6076c06e283439190f237ade6812ca0b57a1cbe50559ba9"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ad618e404a43d72ac6435b6e5a8d75000778b9245a6b70dbde46530152f2eef3",
-        "fetched_at": "2026-11-19T12:09:35Z",
-        "catalogVersion": "2026.11.18",
-        "dateReleased": "2026-11-18T19:17:41.0354Z"
+        "sha256": "12c9ca4c5350ecacdf22bdce91b4ffcf06b8c8dc9c69b8bfb4c1a21be7a5fe50",
+        "fetched_at": "2026-11-22T22:24:31Z",
+        "catalogVersion": "2026.11.20",
+        "dateReleased": "2026-11-20T17:48:39.1516Z"
       }
     },
     "acceptance": null,
@@ -64,189 +64,34 @@
       "disabled": false
     },
     "copa": {
-      "classification": "succeeded",
-      "original_child_input": true,
-      "mode": "comprehensive",
-      "release": "0.15.0",
-      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
-      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
+      "classification": "not-required",
+      "original_child_input": false,
+      "mode": "not-required",
+      "release": null,
+      "source_sha": null,
+      "runtime_digest": null,
       "limitation": null
-    },
-    "remediation": {
-      "need_sha256": "22ee1d1652fc91eafd26021e421fab7fd396bdda0f3b792f090cd0b4ff780e17"
     },
     "supersedes": {
       "higher_upstream": true,
       "original_child_selected": true
     },
-    "outcome": "patched",
+    "outcome": "clean",
     "eligible": true,
     "warnings": []
   },
   "cves": {
-    "before": [
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-107496",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-107496",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-88822",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-88822",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-88823",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-88823",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-95691",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-95691",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcrypto3|CVE-2026-95692",
-        "platform": "linux/amd64",
-        "package": "libcrypto3",
-        "cve": "CVE-2026-95692",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-107496",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-107496",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-88822",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-88822",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-88823",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-88823",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-95691",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-95691",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libssl3|CVE-2026-95692",
-        "platform": "linux/amd64",
-        "package": "libssl3",
-        "cve": "CVE-2026-95692",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/qbittorrent@sha256:c848051844a2e2c34e557cafe74f548fe46b3fa27560e3af95904c3a51284b2b (alpine 3.24.4)",
-        "installed_version": "3.5.9-r0",
-        "fixed_version": "3.5.9-r1",
-        "severity": "MEDIUM",
-        "severity_source": ""
-      }
-    ],
+    "before": [],
     "final": [],
     "summary": {
-      "resolved": [
-        "CVE-2026-107496",
-        "CVE-2026-88822",
-        "CVE-2026-88823",
-        "CVE-2026-95691",
-        "CVE-2026-95692"
-      ],
+      "resolved": [],
       "remaining": [],
       "introduced": [],
       "unresolved_fixable": []
     }
   },
   "packages": {
-    "changes": [
-      {
-        "ecosystem": "alpine",
-        "name": "libcrypto3",
-        "change": "upgraded",
-        "before": "3.5.9-r0",
-        "after": "3.5.9-r1"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "libssl3",
-        "change": "upgraded",
-        "before": "3.5.9-r0",
-        "after": "3.5.9-r1"
-      }
-    ],
+    "changes": [],
     "downgrades": [],
     "downgrade_blocked": false
   },
@@ -272,15 +117,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-19T12:09:27Z",
-      "finished_at": "2026-11-19T12:09:35Z",
-      "duration_seconds": 8.4
+      "started_at": "2026-11-22T22:24:17Z",
+      "finished_at": "2026-11-22T22:24:31Z",
+      "duration_seconds": 13.2
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000019165",
+    "runner": "GitHub Actions 1000020069",
     "baseline": {
       "entrypoint": [
         "/init"
@@ -301,34 +146,34 @@
       ]
     }
   },
-  "promoted_at": "2026-11-19T12:10:57Z",
+  "promoted_at": "2026-11-22T22:25:56Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "2264376b2e679fc5698d8bfedf51209b87f77e0c1b1f92de27960bf8cf46763c",
-      "attachment_sha256": "c77e0a79cbd87fa1ce6b8b983179b4fe3b9b5b76d7c7ea738683b6bf7450446d",
+      "bundle_sha256": "89ca756884404623a2b73c61fca5900470ffda0fcb643bfd6edd8f5ac3a9770c",
+      "attachment_sha256": "03588f0d930e26c7954ef792830428e1b9adc394df6101d454377250133c14dc",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "b2c8cb7b1417c84986ed6a9f9cba56d02e5a551d5a5ec8cebe2a49a5bb533d91",
-      "bundle_sha256": "5c57804d00bfc0409c0fdfe5ba3df07de75b62acc03882df7c9404fe51e7e83e",
-      "attachment_sha256": "427182ca2081299778b6297abe29d242eba11bfbdbade1074ebf4dec16f9d3df"
+      "predicate_sha256": "2e8665eaa06dcde644b4a2228179c5e1bce1cef9e1a3464d164edd717eaa7631",
+      "bundle_sha256": "f3c2d38870f409045e96db52791c683d3e8e8876a410ef7434f411f4bb6b17ba",
+      "attachment_sha256": "3fedebc79b6f9724bb7a03b28b8d03e7a2e34f679b061ec8e287a9123fd881a9"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "TPl/Eze6doXsmdautjfb6R1kVvaefNy0kqHdkM+gk+Q=",
+        "inclusion_root_hash": "YWCR05E11m5o+yVgcKuxBdGW1HxxZuECc2FaoQc75tE=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3996040400,
-        "signed_entry_timestamp": "MEYCIQDlvx1K6qOgEU9S5z4dXLnuZiNzL/u/79EiqzP6fqODxAIhAJvEL0isjIQfqb+ZFJ73GzVSU5tzBKd6YLvphjvMvtYC"
+        "log_index": 4048569101,
+        "signed_entry_timestamp": "MEUCIQDlZKO1wtg8UfOygkeB1K+szk5v3CBWlQrW4zDt7e+4ZAIgLOxISOhcRwVUh3GagUuu9EyJtUd/k2C0OuoiGe9TFK4="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "PKRrtMO3vti82t6Cxmysj060UZJAFMLqOtUh3ZOKeqw=",
+        "inclusion_root_hash": "cnFCP1lq1BQYzKL9EAuo3JfCC3VmwUtYxqgIMQ3tKD0=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3996042799,
-        "signed_entry_timestamp": "MEUCIDNAc+gXcRu/wt4p7zVHlbT/cApuYMv8omNDOUplJ6QZAiEAq+5VPHMzO43cSLTNKgK9P5G22GVtCzO2cArZ8qeaBWE="
+        "log_index": 4048569237,
+        "signed_entry_timestamp": "MEUCIQDx1XPC5Te84HpwhgLTPDkd3j+QOwCZORUJBoNDzaIyFAIgIsffWwfFod7o8tTtQv+/GQysEmcXxqMyLmHTusQ7jBs="
       }
     },
     "tools": {
