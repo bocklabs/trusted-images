@@ -4,44 +4,44 @@
   "upstream": {
     "ref": "linuxserver/radarr",
     "tag": "6.4.4",
-    "digest": "sha256:ea6822c956d26db648b237919f41340318f32e5b7dcc4ba702cf256a0f5f3c12",
-    "index_digest": "sha256:ea6822c956d26db648b237919f41340318f32e5b7dcc4ba702cf256a0f5f3c12",
+    "digest": "sha256:7a20f20de63706eee2ff6e4ac1f989a70c961f456aa47ccb6c78f2bb7657d9ae",
+    "index_digest": "sha256:7a20f20de63706eee2ff6e4ac1f989a70c961f456aa47ccb6c78f2bb7657d9ae",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650"
+    "selected_child_digest": "sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/radarr",
-    "tag": "6.4.4-bocklabs.4",
-    "digest": "sha256:69d35c5361025e53b76bb1dfb800a1888e72e6f18e6b8b7b77beaa0e4033d832",
+    "tag": "6.4.4-bocklabs.5",
+    "digest": "sha256:b78f094b9b5994b8a58908978702cee0e89196eb4a6c688a9038a36a003c818f",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/40298955255",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45000573038",
     "workflow": "promote",
-    "dispatched_by": "bocklabs-release[bot]"
+    "dispatched_by": "nitish-raj"
   },
   "tools": {
-    "trivy": "0.76.1",
+    "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
-    "skopeo": "v1.22.2",
-    "skopeo_image_digest": "sha256:2b7d76dde38c5924e1945348840c58786fc192201f2fd545832e58b53d26f7b8"
+    "skopeo": "v1.25.1",
+    "skopeo_image_digest": "sha256:075359e92740bec687ed6ec8d12141bdb3666e6547dcd917657e24a7758926ed"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:96ee978993524fa2026071c61b8641e2034b8208322fab672b2b814666ffbc83",
-      "updated_at": "2026-10-26 07:15:18.945937093 +0000 UTC"
+      "check_bundle_digest": "sha256:f8cdab9ab629e7a0f2313d466a1b5d4380eac89a7d16624bb68765ed805cc686",
+      "updated_at": "2026-11-22 01:10:45.128389923 +0000 UTC"
     },
-    "full_report_sha256": "a9b79320fba3dcc4f23a2ee545345c7d0a32c07761c9eafa2b51beb2d65bea12",
-    "copa_report_sha256": "0a78135e283a81cee7645021a14bedbe6959749cccd5ca2c29ceac5d3a988565",
-    "decision_sha256": "96bee103eeb2203682aa6be95afaea6aa1d6c314196c9b2c4b69c90222bfd35b",
+    "full_report_sha256": "917648ff06c179557f9e5fecdbfa28834ad7b1fa266b1dd8ba20eca5aa29beb2",
+    "copa_report_sha256": "3058c793be4787632ef3ab531e584636e5f1dd6bc49a17104183d12f48b5df23",
+    "decision_sha256": "33e91f3d585f72e4acf2ba96f06e8d8e62f2fa5c2eca3694e63b83b94aa8c639",
     "reports": {
-      "before_sha256": "6f30373398ad33dc794cf11816ccc3d600dce3f57b200441088c05f5969e4ad5",
-      "final_sha256": "a9b79320fba3dcc4f23a2ee545345c7d0a32c07761c9eafa2b51beb2d65bea12",
-      "fixable_sha256": "0a78135e283a81cee7645021a14bedbe6959749cccd5ca2c29ceac5d3a988565"
+      "before_sha256": "531b85e93dc3e86e5a7f53e6c7ab09651cd8d9c9c8ec2b45f77a37bfe51033e1",
+      "final_sha256": "917648ff06c179557f9e5fecdbfa28834ad7b1fa266b1dd8ba20eca5aa29beb2",
+      "fixable_sha256": "3058c793be4787632ef3ab531e584636e5f1dd6bc49a17104183d12f48b5df23"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "97a6e54bc74c651ab3c55657191db9adec6c63b05ca54e4205327cfd97a8fb70",
-        "fetched_at": "2026-10-26T09:23:38Z",
-        "catalogVersion": "2026.10.23",
-        "dateReleased": "2026-10-23T19:30:18.9209Z"
+        "sha256": "12c9ca4c5350ecacdf22bdce91b4ffcf06b8c8dc9c69b8bfb4c1a21be7a5fe50",
+        "fetched_at": "2026-11-22T07:59:28Z",
+        "catalogVersion": "2026.11.20",
+        "dateReleased": "2026-11-20T17:48:39.1516Z"
       }
     },
     "acceptance": null,
@@ -72,16 +72,83 @@
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
     },
-    "remediation": {
-      "need_sha256": "c4f74beb08909fdd6a12988f8da6c2721afe24efa8cf991ceaf7d5df7a489f3c"
-    },
     "supersedes": {
-      "higher_upstream": false,
-      "original_child_selected": false
+      "higher_upstream": true,
+      "original_child_selected": true
     },
-    "outcome": "eligible with no-fix warnings: CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa",
+    "outcome": "eligible with no-fix warnings: CVE-2026-109476:MEDIUM:ghsa,CVE-2026-109478:MEDIUM:ghsa,CVE-2026-114146:HIGH:ghsa,CVE-2026-114147:HIGH:ghsa,CVE-2026-114149:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-109475:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-106118:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-109475:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-109475:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-106118:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-109476:MEDIUM:ghsa,CVE-2026-109478:MEDIUM:ghsa,CVE-2026-114146:HIGH:ghsa,CVE-2026-114147:HIGH:ghsa,CVE-2026-114149:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-109475:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-106118:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-109476:MEDIUM:ghsa,CVE-2026-109478:MEDIUM:ghsa,CVE-2026-114146:HIGH:ghsa,CVE-2026-114147:HIGH:ghsa,CVE-2026-114149:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-109475:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-106118:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-109475:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-109476:MEDIUM:ghsa,CVE-2026-109478:MEDIUM:ghsa,CVE-2026-114146:HIGH:ghsa,CVE-2026-114147:HIGH:ghsa,CVE-2026-114149:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-109475:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-106118:HIGH:ghsa,CVE-2026-70162:MEDIUM:ghsa,CVE-2026-84008:HIGH:ghsa,CVE-2026-109476:MEDIUM:ghsa,CVE-2026-109478:MEDIUM:ghsa,CVE-2026-114146:HIGH:ghsa,CVE-2026-114147:HIGH:ghsa,CVE-2026-114149:HIGH:ghsa,CVE-2026-70175:HIGH:ghsa,CVE-2026-70181:HIGH:ghsa,CVE-2026-70183:HIGH:ghsa,CVE-2026-70186:HIGH:ghsa,CVE-2026-70188:CRITICAL:ghsa,CVE-2026-70196:MEDIUM:ghsa,CVE-2026-88092:CRITICAL:ghsa,CVE-2026-96236:HIGH:ghsa,CVE-2026-109475:MEDIUM:ghsa,CVE-2026-47302:HIGH:ghsa,CVE-2026-50524:HIGH:ghsa,CVE-2026-50528:HIGH:ghsa,CVE-2026-50651:HIGH:ghsa,CVE-2026-50659:MEDIUM:ghsa,CVE-2026-57108:HIGH:ghsa,CVE-2026-58280:HIGH:ghsa,CVE-2026-62899:MEDIUM:ghsa,CVE-2026-62901:HIGH:ghsa,CVE-2026-62909:MEDIUM:ghsa,CVE-2026-66822:MEDIUM:ghsa,CVE-2026-69651:HIGH:ghsa,CVE-2026-96225:HIGH:ghsa,CVE-2026-96231:HIGH:ghsa,CVE-2026-96233:HIGH:ghsa,GHSA-p3jp-9v83-76w9:HIGH:ghsa,CVE-2026-106110:HIGH:ghsa,CVE-2026-106113:HIGH:ghsa,CVE-2026-106114:MEDIUM:ghsa,CVE-2026-106115:HIGH:ghsa,CVE-2026-106116:MEDIUM:ghsa,CVE-2026-106118:HIGH:ghsa",
     "eligible": true,
     "warnings": [
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
       {
         "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-70175",
@@ -192,6 +259,20 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -406,6 +487,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -414,7 +509,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -428,7 +523,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -442,7 +537,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -456,7 +551,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -470,8 +565,22 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -500,6 +609,20 @@
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -714,6 +837,34 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-47302",
         "platform": "linux/amd64",
         "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
@@ -924,6 +1075,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -932,7 +1097,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -946,7 +1111,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -960,7 +1125,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -974,7 +1139,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -988,8 +1153,22 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -1017,6 +1196,76 @@
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1130,6 +1379,20 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -1344,6 +1607,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -1352,7 +1629,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1366,7 +1643,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1380,7 +1657,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -1394,7 +1671,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1408,8 +1685,22 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -1437,6 +1728,76 @@
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1550,6 +1911,20 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -1764,6 +2139,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -1772,7 +2161,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1786,7 +2175,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1800,7 +2189,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -1814,7 +2203,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -1828,8 +2217,22 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -1858,6 +2261,20 @@
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -2072,6 +2489,90 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-70175",
         "platform": "linux/amd64",
         "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
@@ -2180,6 +2681,20 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -2394,6 +2909,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -2402,7 +2931,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2416,7 +2945,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2430,7 +2959,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -2444,7 +2973,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2458,8 +2987,22 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -2487,6 +3030,76 @@
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2600,6 +3213,20 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -2814,6 +3441,20 @@
       },
       {
         "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -2822,7 +3463,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2836,7 +3477,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2850,7 +3491,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -2864,7 +3505,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -2878,8 +3519,22 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       }
     ]
@@ -2887,329 +3542,69 @@
   "cves": {
     "before": [
       {
-        "identity": "linux/amd64|brotli-libs|CVE-2026-111497",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
         "platform": "linux/amd64",
-        "package": "brotli-libs",
-        "cve": "CVE-2026-111497",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "1.2.0-r1",
-        "fixed_version": "1.2.1-r0",
-        "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-107928",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-107928",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-107929",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-107929",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86409",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86409",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86410",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86410",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86411",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86411",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86412",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86412",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86413",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86413",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86414",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86414",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-86415",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-86415",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87861",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87861",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87862",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87862",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87863",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87863",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87864",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87864",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87865",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87865",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-87866",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-87866",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92386",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92386",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92387",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92387",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92388",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92388",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "MEDIUM",
-        "severity_source": ""
+        "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|curl|CVE-2026-92389",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
         "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92389",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|curl|CVE-2026-92390",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
         "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92390",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92391",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92391",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|curl|CVE-2026-92392",
-        "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-92392",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
-        "severity_source": ""
+        "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|curl|CVE-2026-94265",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
         "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-94265",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|curl|CVE-2026-94266",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
         "platform": "linux/amd64",
-        "package": "curl",
-        "cve": "CVE-2026-94266",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
       },
       {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-70175",
@@ -3313,6 +3708,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -3511,6 +3919,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -3519,7 +3940,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -3532,7 +3953,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -3545,7 +3966,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -3558,7 +3979,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -3571,8 +3992,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -3599,6 +4033,19 @@
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -3797,6 +4244,32 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-47302",
         "platform": "linux/amd64",
         "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
@@ -3992,6 +4465,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -4000,7 +4486,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4013,7 +4499,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4026,7 +4512,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -4039,7 +4525,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4052,8 +4538,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -4079,6 +4578,71 @@
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4184,6 +4748,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -4382,6 +4959,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -4390,7 +4980,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4403,7 +4993,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4416,7 +5006,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -4429,7 +5019,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4442,8 +5032,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -4469,6 +5072,71 @@
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4574,6 +5242,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -4772,6 +5453,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -4780,7 +5474,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4793,7 +5487,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4806,7 +5500,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -4819,7 +5513,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -4832,8 +5526,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -4860,6 +5567,19 @@
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -5058,6 +5778,84 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-70175",
         "platform": "linux/amd64",
         "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
@@ -5159,6 +5957,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -5357,6 +6168,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -5365,7 +6189,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -5378,7 +6202,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -5391,7 +6215,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -5404,7 +6228,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -5417,8 +6241,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -5444,6 +6281,71 @@
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -5549,6 +6451,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -5747,6 +6662,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -5755,7 +6683,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -5768,7 +6696,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -5781,7 +6709,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -5794,7 +6722,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -5807,351 +6735,234 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|libcurl|CVE-2026-107928",
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
         "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-107928",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|libcurl|CVE-2026-107929",
+        "identity": "linux/amd64|libcrypto3|CVE-2026-107496",
         "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-107929",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-107496",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86409",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86409",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86410",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86410",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86411",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86411",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86412",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86412",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86413",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86413",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86414",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86414",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-86415",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-86415",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87861",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87861",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87862",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87862",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87863",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87863",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87864",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87864",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87865",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87865",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-87866",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-87866",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92386",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92386",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92387",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92387",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-92388",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92388",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
         "severity_source": ""
       },
       {
-        "identity": "linux/amd64|libcurl|CVE-2026-92389",
+        "identity": "linux/amd64|libcrypto3|CVE-2026-88822",
         "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92389",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-88822",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
         "severity": "LOW",
         "severity_source": ""
       },
       {
-        "identity": "linux/amd64|libcurl|CVE-2026-92390",
+        "identity": "linux/amd64|libcrypto3|CVE-2026-88823",
         "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92390",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-88823",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
         "severity": "LOW",
         "severity_source": ""
       },
       {
-        "identity": "linux/amd64|libcurl|CVE-2026-92391",
+        "identity": "linux/amd64|libcrypto3|CVE-2026-95691",
         "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92391",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-95691",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-95692",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-95692",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-107496",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-107496",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-88822",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-88822",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
         "severity": "LOW",
         "severity_source": ""
       },
       {
-        "identity": "linux/amd64|libcurl|CVE-2026-92392",
+        "identity": "linux/amd64|libssl3|CVE-2026-88823",
         "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-92392",
+        "package": "libssl3",
+        "cve": "CVE-2026-88823",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-95691",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-95691",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-95692",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-95692",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libxml2|CVE-2026-86144",
+        "platform": "linux/amd64",
+        "package": "libxml2",
+        "cve": "CVE-2026-86144",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "linuxserver/radarr@sha256:6e5f800ae0a330fd739eaac7304e513234664861fd9985e5c7db999ebbe79a6f (alpine 3.24.4)",
+        "installed_version": "2.13.9-r2",
+        "fixed_version": "2.13.9-r3",
         "severity": "HIGH",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-94265",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-94265",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|libcurl|CVE-2026-94266",
-        "platform": "linux/amd64",
-        "package": "libcurl",
-        "cve": "CVE-2026-94266",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "8.22.0-r0",
-        "fixed_version": "8.23.0-r0",
-        "severity": "LOW",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|musl-utils|CVE-2026-107891",
-        "platform": "linux/amd64",
-        "package": "musl-utils",
-        "cve": "CVE-2026-107891",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "1.2.6-r2",
-        "fixed_version": "1.2.6-r3",
-        "severity": "UNKNOWN",
-        "severity_source": ""
-      },
-      {
-        "identity": "linux/amd64|musl|CVE-2026-107891",
-        "platform": "linux/amd64",
-        "package": "musl",
-        "cve": "CVE-2026-107891",
-        "class": "os-pkgs",
-        "type": "alpine",
-        "target": "linuxserver/radarr@sha256:cc4742e5296c7fbb960839149f1fd07b78da8bdf296041c5c81b7f9c87ecb650 (alpine 3.24.2)",
-        "installed_version": "1.2.6-r2",
-        "fixed_version": "1.2.6-r3",
-        "severity": "UNKNOWN",
-        "severity_source": ""
+        "severity_source": "nvd"
       }
     ],
     "final": [
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-70175",
         "platform": "linux/amd64",
         "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
@@ -6253,6 +7064,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -6451,6 +7275,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -6459,7 +7296,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -6472,7 +7309,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -6485,7 +7322,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -6498,7 +7335,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -6511,8 +7348,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Api.V3.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Api.V3.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -6539,6 +7389,19 @@
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -6737,6 +7600,32 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Common.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Common.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-47302",
         "platform": "linux/amd64",
         "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
@@ -6932,6 +7821,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -6940,7 +7842,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -6953,7 +7855,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -6966,7 +7868,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -6979,7 +7881,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -6992,8 +7894,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Core.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Core.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -7019,6 +7934,71 @@
         "target": "app/radarr/bin/Radarr.Core.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7124,6 +8104,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -7322,6 +8315,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -7330,7 +8336,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7343,7 +8349,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7356,7 +8362,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -7369,7 +8375,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7382,8 +8388,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Host.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Host.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -7409,6 +8428,71 @@
         "target": "app/radarr/bin/Radarr.Host.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7514,6 +8598,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -7712,6 +8809,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -7720,7 +8830,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7733,7 +8843,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7746,7 +8856,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -7759,7 +8869,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -7772,8 +8882,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.Http.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Http.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Http.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -7800,6 +8923,19 @@
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -7998,6 +9134,84 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.Mono.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.Mono.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-70175",
         "platform": "linux/amd64",
         "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
@@ -8099,6 +9313,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -8297,6 +9524,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -8305,7 +9545,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -8318,7 +9558,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -8331,7 +9571,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -8344,7 +9584,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -8357,8 +9597,21 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.SignalR.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.SignalR.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       },
       {
@@ -8384,6 +9637,71 @@
         "target": "app/radarr/bin/Radarr.SignalR.deps.json",
         "installed_version": "8.0.1",
         "fixed_version": "10.0.13, 11.0.0-rc.2, 8.0.2, 9.0.21",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109476",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109476",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-109478",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109478",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.0-preview.4.24267.6",
+        "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114146",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114146",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114147",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114147",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.AspNetCore.App.Runtime.linux-musl-x64|CVE-2026-114149",
+        "platform": "linux/amd64",
+        "package": "Microsoft.AspNetCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-114149",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -8489,6 +9807,19 @@
         "installed_version": "8.0.27",
         "fixed_version": "8.0.32, 11.0.0-rc.2, 10.0.13, 9.0.21",
         "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|CVE-2026-109475",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "CVE-2026-109475",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.34, 9.0.23, 10.0.15, 11.0.0",
+        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -8687,6 +10018,19 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:Microsoft.NETCore.App.Runtime.linux-musl-x64|GHSA-p3jp-9v83-76w9",
+        "platform": "linux/amd64",
+        "package": "Microsoft.NETCore.App.Runtime.linux-musl-x64",
+        "cve": "GHSA-p3jp-9v83-76w9",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "8.0.27",
+        "fixed_version": "8.0.33, 9.0.22, 10.0.14, 11.0.0-rc.3.26522.148",
+        "severity": "HIGH",
+        "severity_source": "ghsa"
+      },
+      {
         "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:SixLabors.ImageSharp|CVE-2026-106110",
         "platform": "linux/amd64",
         "package": "SixLabors.ImageSharp",
@@ -8695,7 +10039,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -8708,7 +10052,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -8721,7 +10065,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "4.1.2, 3.2.0",
         "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
@@ -8734,7 +10078,7 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "HIGH",
         "severity_source": "ghsa"
       },
@@ -8747,39 +10091,32 @@
         "type": "dotnet-core",
         "target": "app/radarr/bin/Radarr.deps.json",
         "installed_version": "3.1.12",
-        "fixed_version": "4.1.2",
+        "fixed_version": "3.2.0, 4.1.2",
         "severity": "MEDIUM",
+        "severity_source": "ghsa"
+      },
+      {
+        "identity": "linux/amd64|lang-pkgs:dotnet-core:app%2Fradarr%2Fbin%2FRadarr.deps.json:SixLabors.ImageSharp|CVE-2026-106118",
+        "platform": "linux/amd64",
+        "package": "SixLabors.ImageSharp",
+        "cve": "CVE-2026-106118",
+        "class": "lang-pkgs",
+        "type": "dotnet-core",
+        "target": "app/radarr/bin/Radarr.deps.json",
+        "installed_version": "3.1.12",
+        "fixed_version": "3.2.0, 4.1.1",
+        "severity": "HIGH",
         "severity_source": "ghsa"
       }
     ],
     "summary": {
       "resolved": [
-        "CVE-2026-107891",
-        "CVE-2026-107928",
-        "CVE-2026-107929",
-        "CVE-2026-111497",
-        "CVE-2026-86409",
-        "CVE-2026-86410",
-        "CVE-2026-86411",
-        "CVE-2026-86412",
-        "CVE-2026-86413",
-        "CVE-2026-86414",
-        "CVE-2026-86415",
-        "CVE-2026-87861",
-        "CVE-2026-87862",
-        "CVE-2026-87863",
-        "CVE-2026-87864",
-        "CVE-2026-87865",
-        "CVE-2026-87866",
-        "CVE-2026-92386",
-        "CVE-2026-92387",
-        "CVE-2026-92388",
-        "CVE-2026-92389",
-        "CVE-2026-92390",
-        "CVE-2026-92391",
-        "CVE-2026-92392",
-        "CVE-2026-94265",
-        "CVE-2026-94266"
+        "CVE-2026-107496",
+        "CVE-2026-86144",
+        "CVE-2026-88822",
+        "CVE-2026-88823",
+        "CVE-2026-95691",
+        "CVE-2026-95692"
       ],
       "remaining": [
         "CVE-2026-106110",
@@ -8787,6 +10124,13 @@
         "CVE-2026-106114",
         "CVE-2026-106115",
         "CVE-2026-106116",
+        "CVE-2026-106118",
+        "CVE-2026-109475",
+        "CVE-2026-109476",
+        "CVE-2026-109478",
+        "CVE-2026-114146",
+        "CVE-2026-114147",
+        "CVE-2026-114149",
         "CVE-2026-47302",
         "CVE-2026-50524",
         "CVE-2026-50528",
@@ -8811,7 +10155,8 @@
         "CVE-2026-96225",
         "CVE-2026-96231",
         "CVE-2026-96233",
-        "CVE-2026-96236"
+        "CVE-2026-96236",
+        "GHSA-p3jp-9v83-76w9"
       ],
       "introduced": [],
       "unresolved_fixable": []
@@ -8821,66 +10166,24 @@
     "changes": [
       {
         "ecosystem": "alpine",
-        "name": "alpine-release",
+        "name": "libcrypto3",
         "change": "upgraded",
-        "before": "3.24.2-r0",
-        "after": "3.24.3-r0"
+        "before": "3.5.9-r0",
+        "after": "3.5.9-r1"
       },
       {
         "ecosystem": "alpine",
-        "name": "brotli-libs",
+        "name": "libssl3",
         "change": "upgraded",
-        "before": "1.2.0-r1",
-        "after": "1.2.1-r0"
+        "before": "3.5.9-r0",
+        "after": "3.5.9-r1"
       },
       {
         "ecosystem": "alpine",
-        "name": "c-ares",
+        "name": "libxml2",
         "change": "upgraded",
-        "before": "1.34.8-r0",
-        "after": "1.34.9-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "ca-certificates",
-        "change": "upgraded",
-        "before": "20260909-r0",
-        "after": "20261020-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "ca-certificates-bundle",
-        "change": "upgraded",
-        "before": "20260909-r0",
-        "after": "20261020-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "curl",
-        "change": "upgraded",
-        "before": "8.22.0-r0",
-        "after": "8.23.0-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "libcurl",
-        "change": "upgraded",
-        "before": "8.22.0-r0",
-        "after": "8.23.0-r0"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "musl",
-        "change": "upgraded",
-        "before": "1.2.6-r2",
-        "after": "1.2.6-r3"
-      },
-      {
-        "ecosystem": "alpine",
-        "name": "musl-utils",
-        "change": "upgraded",
-        "before": "1.2.6-r2",
-        "after": "1.2.6-r3"
+        "before": "2.13.9-r2",
+        "after": "2.13.9-r3"
       }
     ],
     "downgrades": [],
@@ -8896,6 +10199,7 @@
       "expectStatus": 200,
       "durationSeconds": 30,
       "timeoutSeconds": 180,
+      "network": "none",
       "expectedExit": 0,
       "command": [
         "/app/radarr/bin/Radarr",
@@ -8909,15 +10213,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-10-26T09:23:29Z",
-      "finished_at": "2026-10-26T09:23:38Z",
-      "duration_seconds": 9.3
+      "started_at": "2026-11-22T07:59:19Z",
+      "finished_at": "2026-11-22T07:59:28Z",
+      "duration_seconds": 8.3
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000014950",
+    "runner": "GitHub Actions 1000019902",
     "baseline": {
       "entrypoint": [
         "/init"
@@ -8935,43 +10239,44 @@
         "LSIO_FIRST_PARTY=true",
         "XDG_CONFIG_HOME=/config/xdg",
         "COMPlus_EnableDiagnostics=0",
+        "PGGSSENCMODE=disable",
         "TMPDIR=/run/radarr-temp"
       ]
     }
   },
-  "promoted_at": "2026-10-26T09:24:49Z",
+  "promoted_at": "2026-11-22T08:01:01Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "917203cf798c831a1d471c083f486290ade1cd73a9ce95928dc7cb68433a6a5f",
-      "attachment_sha256": "a0f62c9fa048346772b1e378248551b6463f4f61389118655d642331d30500a4",
+      "bundle_sha256": "b68e2137bb7257ab044254ac3784a84dec8093bc8ba2b81be3e18d4a3fd80ee8",
+      "attachment_sha256": "3a5d48369eb27f7ddf53dfa76a7a1f0311bff582185afecabb9b282868c099bb",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "98b02db5f49ac1ca53a17468eba6d9b1da583e1e2fd7594ec4b882387aaaf453",
-      "bundle_sha256": "75550e9d38bc2bcd3a36984c4c06412794a1941f7bce776976a33b66d61deaab",
-      "attachment_sha256": "9e369f0c547e83c939c458d2ae021cd2d20419b8860d41467eb4ad094ece08b4"
+      "predicate_sha256": "b1ad90a1fb8c842c1c4c0e02b6dc5acde2198beaee2644709d60bb2ef76be4df",
+      "bundle_sha256": "b32854624061a9635ed5815c6def877a2131d8bfa800548cb08b883abd34e986",
+      "attachment_sha256": "828d6eafa64448ee416081338986f488d4d602f387010e0ed68270af7e7e0303"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "p/eXIxGSOgGSOfDBuaJTgdrzIxDk+czC8P/kU+40sfw=",
+        "inclusion_root_hash": "YFVUSo1kyJAN1XxisqTYjzG+UAOMwZ0VsSek2Zv53CA=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3482970176,
-        "signed_entry_timestamp": "MEYCIQDzgsvMuqYfGHNAuk+U6SnvbdYBADtGY7GmZjQjJ5o00QIhAPLMz9lAdhutVj174b+1JEmpi3U2Ym8mnErMI75k2wna"
+        "log_index": 4039374740,
+        "signed_entry_timestamp": "MEUCIFqjJP/IMkNmlGLhwq44lfMxJD4kn8WapROzQX7IThhUAiEA63Wvs1F5N0VjWC/SKZG1klVbz1SB7U3mQS8B2P0RZ7g="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "5p7LnkdzPYguPKULJaaJQBXrYxZF/jbKN8MH5Neopz0=",
+        "inclusion_root_hash": "M3lQ7g1qDGyIIUvH9C309JqY2FL0AOFijKzsqYaRRpU=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 3482972623,
-        "signed_entry_timestamp": "MEUCICkyNRzr1PSJGuCC4f4WWkRbjZaFj2FrTaicNvY1IYHHAiEA8WrBrwAL0znkCLkjnuBL+uJjCr1/9TCVumPhyv6QRr0="
+        "log_index": 4039376003,
+        "signed_entry_timestamp": "MEUCIG7ENkclE0PT48hP6CmEFI0zHp6js0LtLplIBxM8eo8gAiEAy9s42MsUiLvLxV9NpOsOIL0gNPgheDmMxebTJ/mCvKI="
       }
     },
     "tools": {
       "cosign": "v3.1.4",
-      "trivy": "0.76.1"
+      "trivy": "0.76.2"
     }
   }
 }
