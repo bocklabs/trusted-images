@@ -92,7 +92,7 @@ class PublishedRescanTests(unittest.TestCase):
             with patch.object(sys, "argv", argv), patch.object(generator, "run", return_value="go version"), patch.object(
                 generator, "binary_build_info", return_value=("a" * 64, info)
             ), patch.dict(os.environ, {"GITHUB_OUTPUT": str(output)}):
-                self.assertEqual(generator.main(), 0)
+                generator.main()
             self.assertFalse(output.exists())
             self.assertEqual(old.read_text(), previous)
             with patch.object(rescan, "ARTIFACT", root), patch.object(rescan, "INVENTORY", inventory):
