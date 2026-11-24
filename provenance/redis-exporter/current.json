@@ -3,49 +3,49 @@
   "app": "redis-exporter",
   "upstream": {
     "ref": "oliver006/redis_exporter",
-    "tag": "v1.98.0",
-    "digest": "sha256:2b68665248d909bb25de9d175c648932a8c358ba143e5dbed1eb48f91cc9d2e1",
-    "index_digest": "sha256:2b68665248d909bb25de9d175c648932a8c358ba143e5dbed1eb48f91cc9d2e1",
+    "tag": "v1.99.0",
+    "digest": "sha256:2c0cdc2452096b5af460d870e72fa6ee2ebb971780f443a616885685d2c0ebad",
+    "index_digest": "sha256:2c0cdc2452096b5af460d870e72fa6ee2ebb971780f443a616885685d2c0ebad",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:599a43766b8f5dd8ce3bc555da2f301cc5d6c07977013cbe77cee92ecb607a4a"
+    "selected_child_digest": "sha256:0025a8b9a2d98ac8626d0770b57d17f5ba433c8e95d26802e15979ab688ded42"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/redis-exporter",
-    "tag": "v1.98.0-bocklabs.1",
-    "digest": "sha256:599a43766b8f5dd8ce3bc555da2f301cc5d6c07977013cbe77cee92ecb607a4a",
+    "tag": "v1.99.0-bocklabs.1",
+    "digest": "sha256:0025a8b9a2d98ac8626d0770b57d17f5ba433c8e95d26802e15979ab688ded42",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44999826401",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45418909716",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
     "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": null,
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:075359e92740bec687ed6ec8d12141bdb3666e6547dcd917657e24a7758926ed"
+    "skopeo_image_digest": "sha256:638c591f8a72f447eb61e2075b6db023f81175839931675f93fbb3b55be27339"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:f8cdab9ab629e7a0f2313d466a1b5d4380eac89a7d16624bb68765ed805cc686",
-      "updated_at": "2026-11-22 01:10:45.128389923 +0000 UTC"
+      "check_bundle_digest": "sha256:ed85b86c1d0eb65fc273d33a427f7cba5b1372ef937477338286dd56088a9ab1",
+      "updated_at": "2026-11-24 13:06:50.432258513 +0000 UTC"
     },
-    "full_report_sha256": "f8492067fd6bc4325b5635045d6eb16376540b7314ccec728c1dcd27316711b1",
-    "copa_report_sha256": "9c1ada5126c8f15404424e11aaf3452e858186be5b3452a223fbe79377a8f904",
-    "decision_sha256": "939a1589daa1292e184a8be89d98e83559d382333550e2a25a6f484dbae8cb19",
+    "full_report_sha256": "f57445c21b75939fb486a4a7b248f0f64f367ac24a7c4a487fa5bab96a7b65a8",
+    "copa_report_sha256": "9f20fb8ccc942129d6008ef841cd7cce59bc61a1213ac5a46104f04875b2b175",
+    "decision_sha256": "9af47d8b6db9be33693cd581467f470c1b31aef31a9160e3628c7223fa65d37f",
     "reports": {
-      "before_sha256": "f8492067fd6bc4325b5635045d6eb16376540b7314ccec728c1dcd27316711b1",
-      "final_sha256": "f8492067fd6bc4325b5635045d6eb16376540b7314ccec728c1dcd27316711b1",
-      "fixable_sha256": "9c1ada5126c8f15404424e11aaf3452e858186be5b3452a223fbe79377a8f904"
+      "before_sha256": "f57445c21b75939fb486a4a7b248f0f64f367ac24a7c4a487fa5bab96a7b65a8",
+      "final_sha256": "f57445c21b75939fb486a4a7b248f0f64f367ac24a7c4a487fa5bab96a7b65a8",
+      "fixable_sha256": "9f20fb8ccc942129d6008ef841cd7cce59bc61a1213ac5a46104f04875b2b175"
     },
     "secobserve": {
       "product": "trusted-images",
-      "origin": "oliver006/redis_exporter:v1.98.0"
+      "origin": "oliver006/redis_exporter:v1.99.0"
     }
   },
   "policy": {
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "12c9ca4c5350ecacdf22bdce91b4ffcf06b8c8dc9c69b8bfb4c1a21be7a5fe50",
-        "fetched_at": "2026-11-22T07:48:42Z",
-        "catalogVersion": "2026.11.20",
-        "dateReleased": "2026-11-20T17:48:39.1516Z"
+        "sha256": "ac8f0c4e73ec9212dd00afbb9bed2b43abc9cdb3c8719fc2c2606f008171f70a",
+        "fetched_at": "2026-11-24T14:53:01Z",
+        "catalogVersion": "2026.11.23",
+        "dateReleased": "2026-11-23T19:43:55.7979Z"
       }
     },
     "acceptance": null,
@@ -116,15 +116,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-22T07:48:40Z",
-      "finished_at": "2026-11-22T07:48:42Z",
-      "duration_seconds": 2.9
+      "started_at": "2026-11-24T14:52:58Z",
+      "finished_at": "2026-11-24T14:53:01Z",
+      "duration_seconds": 3.3
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000019867",
+    "runner": "GitHub Actions 1000020475",
     "baseline": {
       "entrypoint": [
         "/redis_exporter"
@@ -135,34 +135,34 @@
       ]
     }
   },
-  "promoted_at": "2026-11-22T07:49:51Z",
+  "promoted_at": "2026-11-24T14:54:18Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "3292f5b17f192bdf02c519c1bfa8a79e707d89a98130599a94ef03d88d967327",
-      "attachment_sha256": "96c9643a8727957d9a7e14b56b575035bc8c33f46850ecbf8ce1f15f5af13ef2",
+      "bundle_sha256": "513231ed3e53b9c09fe1c3cc365f07117fde474cdb23f57206d0fee75a1f251b",
+      "attachment_sha256": "9072b5209bcba002f5f622d0172f9661dd90d14d014fc81a6ff19b35d7c34839",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "add6102eb125cdc17cc25a869042d9c5dd728409b36d847cae5c337fc4ab13f3",
-      "bundle_sha256": "a52844487d3446de3dc0b8b249f5cdd8af47f0482623a6a9e5438978d1856ce6",
-      "attachment_sha256": "ea66cd5edbe286c3a396d634c04fa996f5ecc30d541ef22fb7e5b2eabf17dcf8"
+      "predicate_sha256": "2ece7f448995ea2985ee1655d8cb09a771fe25976dfbbee8fe084d97cb38a334",
+      "bundle_sha256": "67a01cea9c03c67886ad6f411bcaac81bbafa0b5e8f52a373d73387ff8c924cc",
+      "attachment_sha256": "ba876a06d5982dbc118852fa1231c85f33f229764f812da3a73e42df2f54fd03"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "WsFr5lAF60rnpHNv522SEfjwtj3Fz7tsGvTe73FVeWA=",
+        "inclusion_root_hash": "NqHuKGF/IwXICW4r91zaOYyuHDDfmbDA5MVwQd48x+g=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4039128690,
-        "signed_entry_timestamp": "MEUCIFUYeqqOSkBbDcXB5U93x9txIdBiwHc3JHWa9F0kLnpTAiEA8r8GZdckoHtZwtDiOrHkGm1Sih6jEBUHBCFA4LvdYJQ="
+        "log_index": 4080545479,
+        "signed_entry_timestamp": "MEUCIQCO4jt+pGqPlWFYGPeoHc3Gw5KXsjdwmpruuYKD81IwwwIgQ1Q63f77G9U8CfAWtzj2RMe6qEYxOibCCQnC2u4M7dY="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "0qk/fsHutb/wxeAOgNCYnTjFSFvju1E+X9v0GtaDQTs=",
+        "inclusion_root_hash": "QDdPG3m76gh1mQW9r1iw7eHo4fvp4I4dy7T1CbAKZlE=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4039130004,
-        "signed_entry_timestamp": "MEQCICQiLUd46S99ifOJWye5ckedfguLV7phvY0z0lE1gqDvAiAULP8f93k83/4EDEFbzbw3DvjUZxZJWzWeMn16Yo8mcg=="
+        "log_index": 4080548022,
+        "signed_entry_timestamp": "MEQCIBl44JOLj2GBkBeT3qQfpZK7iqOHV/VoFYP7ijI7wur1AiApxoJtTHkheDLi0DAcYpzOh6W1wNY+OX3zNC5w/aoclA=="
       }
     },
     "tools": {
