@@ -12,36 +12,36 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/seerr",
-    "tag": "v3.5.2-bocklabs.1",
-    "digest": "sha256:5c6eef47ce6f8ac17ecc0b03b9d62ff7dbe1771a7ad0a36bc80f7103fc2372d6",
+    "tag": "v3.5.2-bocklabs.2",
+    "digest": "sha256:a54b7ba2debe5a64d35bf2c8d807a3281ac2a92fe46bd582af123a12779be71b",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/44952025297",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45412070350",
     "workflow": "promote",
-    "dispatched_by": "nitish-raj"
+    "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
     "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:075359e92740bec687ed6ec8d12141bdb3666e6547dcd917657e24a7758926ed"
+    "skopeo_image_digest": "sha256:638c591f8a72f447eb61e2075b6db023f81175839931675f93fbb3b55be27339"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:ae4edaadc207bb9004ff433372cabdf88b59aa7a141681754a22546eaca3169c",
-      "updated_at": "2026-11-21 07:02:51.626719824 +0000 UTC"
+      "check_bundle_digest": "sha256:ed85b86c1d0eb65fc273d33a427f7cba5b1372ef937477338286dd56088a9ab1",
+      "updated_at": "2026-11-24 13:06:50.432258513 +0000 UTC"
     },
-    "full_report_sha256": "68df447ecfa1889c5e33cb70741d27ee5921d990807281b01320f8e600d5b256",
-    "copa_report_sha256": "24fd341015eef377d029f71ef97c5dad3319110eac0edf8418f3863b06beeb76",
-    "decision_sha256": "0ac298cc70eae33d7e4911d796bdb8f8282ceaaaf257d9addb5a42c465983b85",
+    "full_report_sha256": "cec0a0825fb5827378ce872b946c039832e730e8d33a25fbe5e34f02cd9055e5",
+    "copa_report_sha256": "e17dcd4f9a08e9d00fd57ea880fd11c4f2762df1bb52d0b6b1844ad8ce7567fb",
+    "decision_sha256": "3d1b61841844755e58b321de555bbcad85bc2829ac31486d998d7ee796756a5c",
     "reports": {
-      "before_sha256": "657595e86956709c20d311734ddc23f4d27b4b692f3d5f6e5bc8787dead2f971",
-      "final_sha256": "68df447ecfa1889c5e33cb70741d27ee5921d990807281b01320f8e600d5b256",
-      "fixable_sha256": "24fd341015eef377d029f71ef97c5dad3319110eac0edf8418f3863b06beeb76"
+      "before_sha256": "b2b3c2b809f43852811080c72008843a8ab6917db83af9a5c309c00989ac5d22",
+      "final_sha256": "cec0a0825fb5827378ce872b946c039832e730e8d33a25fbe5e34f02cd9055e5",
+      "fixable_sha256": "e17dcd4f9a08e9d00fd57ea880fd11c4f2762df1bb52d0b6b1844ad8ce7567fb"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "12c9ca4c5350ecacdf22bdce91b4ffcf06b8c8dc9c69b8bfb4c1a21be7a5fe50",
-        "fetched_at": "2026-11-21T21:35:26Z",
-        "catalogVersion": "2026.11.20",
-        "dateReleased": "2026-11-20T17:48:39.1516Z"
+        "sha256": "ac8f0c4e73ec9212dd00afbb9bed2b43abc9cdb3c8719fc2c2606f008171f70a",
+        "fetched_at": "2026-11-24T14:19:47Z",
+        "catalogVersion": "2026.11.23",
+        "dateReleased": "2026-11-23T19:43:55.7979Z"
       }
     },
     "acceptance": null,
@@ -71,6 +71,9 @@
       "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
       "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
+    },
+    "remediation": {
+      "need_sha256": "ab743f74acf53ad0f9d35076bad35fd9b75335c15385bc03a6cc898c7fdc8b43"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -1866,6 +1869,136 @@
         "severity_source": "ghsa"
       },
       {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-107496",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-107496",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-88822",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-88822",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-88823",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-88823",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-95691",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-95691",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-95692",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-95692",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-107496",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-107496",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-88822",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-88822",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-88823",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-88823",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-95691",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-95691",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-95692",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-95692",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "ghcr.io/seerr-team/seerr@sha256:ccddd8e5c5b026790b447f4c97937751083227584c793864db218b460def7959 (alpine 3.23.8)",
+        "installed_version": "3.5.9-r0",
+        "fixed_version": "3.5.9-r1",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|zlib|CVE-2026-4738",
         "platform": "linux/amd64",
         "package": "zlib",
@@ -2741,7 +2874,12 @@
     ],
     "summary": {
       "resolved": [
-        "CVE-2026-4738"
+        "CVE-2026-107496",
+        "CVE-2026-4738",
+        "CVE-2026-88822",
+        "CVE-2026-88823",
+        "CVE-2026-95691",
+        "CVE-2026-95692"
       ],
       "remaining": [
         "CVE-2026-101911",
@@ -2804,6 +2942,20 @@
     "changes": [
       {
         "ecosystem": "alpine",
+        "name": "libcrypto3",
+        "change": "upgraded",
+        "before": "3.5.9-r0",
+        "after": "3.5.9-r1"
+      },
+      {
+        "ecosystem": "alpine",
+        "name": "libssl3",
+        "change": "upgraded",
+        "before": "3.5.9-r0",
+        "after": "3.5.9-r1"
+      },
+      {
+        "ecosystem": "alpine",
         "name": "zlib",
         "change": "upgraded",
         "before": "1.3.2-r1",
@@ -2832,15 +2984,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-21T21:33:56Z",
-      "finished_at": "2026-11-21T21:35:26Z",
+      "started_at": "2026-11-24T14:18:17Z",
+      "finished_at": "2026-11-24T14:19:47Z",
       "duration_seconds": 90.1
     },
     "health": {
       "defined": false,
       "final_status": "none-defined"
     },
-    "runner": "GitHub Actions 1000019785",
+    "runner": "GitHub Actions 1000020408",
     "baseline": {
       "entrypoint": [
         "docker-entrypoint.sh"
@@ -2858,34 +3010,34 @@
       ]
     }
   },
-  "promoted_at": "2026-11-21T21:36:43Z",
+  "promoted_at": "2026-11-24T14:20:42Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "77d86edccb78253fcb99efc3107dc4fbf36b23290ceca0da715ebdda602bd590",
-      "attachment_sha256": "2a9a311dc4096fb70c65c98d65d13ff25d23d480db55519337090ffe3a64a71a",
+      "bundle_sha256": "d6aff5b60341907f4fb9fd0c5eeca9eed9fde8fbe626aed4a54905d360b541ec",
+      "attachment_sha256": "476d572bc8f3bd46a6c380869a6d2d648dd7ae0190b8357f069ca99d701321e7",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "7ecb9e2d735b9599f6dbeb1e362d7f427eedc5008438f878c7185eda69e1715b",
-      "bundle_sha256": "346b258cd7f62080be53b5611fcdf693d22f1f73e4396f683e431e682f04449d",
-      "attachment_sha256": "9cdb244d838f25cc18b61678e808f4c91fbdc2efc3d5c76111e04ee4c27bdb5a"
+      "predicate_sha256": "c0c7585e45d4045bbdf3e8e75da731944e07b5c00588c92ad6dfb8606b83430b",
+      "bundle_sha256": "e9648e2b70ba0308993a1d79512f747f21a7fa17cb181fd0d3a78076e1b39c9b",
+      "attachment_sha256": "38f13fbc8c91c571d83741f6142991722ad30b8a2026880ba17047517d5bad3a"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "7Cr8RjgOGRjvqfK06PXZYb9FHBgivGmxugcSReXGmMk=",
+        "inclusion_root_hash": "CmOLp1yk4wuvJjO6BS9HyIynWRFROLB02G1KqKaUL1o=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4034153055,
-        "signed_entry_timestamp": "MEQCIBITtQ+M8Ua8xPh1dUx3aoQu2dejqbskfjWfBLjs0Y7uAiAVRRyYTsRX3r6onbmGvbnoHNd5Vnyvz+X5lnm0WzYD7A=="
+        "log_index": 4079891164,
+        "signed_entry_timestamp": "MEUCIQDzqaaBOqStB3A49zqS6wAsJLrIA8cysmvLMGHANJxXLQIgXTx3QT8K87K98mYZMe11uE+ieHE5A1czPvQrMUXs/ko="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "zYgc6Htz6g6kTLBlwzV8mlOk6utgTX4LFWVjtrbD9ZI=",
+        "inclusion_root_hash": "Gn7kGVqcKQ3ZJb8SrUbCauYSMiwLbN7Cmh0nLGN4Kk4=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4034153122,
-        "signed_entry_timestamp": "MEUCIFvFPypBVj0Um/kt89/h4vi2MErLgdQcuQYgEo9/Gqj2AiEA3t6o/wRQGdDxHsfWTyB2DCiXZEftbeTWmUeZmgr2/bI="
+        "log_index": 4079892187,
+        "signed_entry_timestamp": "MEUCIQDZwIJEQU7Knwv5qS8YbRjwbXfsvihgj9iDAptv5WOJugIgFfDS81GFdFUz/Pi/jX3xMovt9CGsWbxGdYTZwEJs1Ss="
       }
     },
     "tools": {
