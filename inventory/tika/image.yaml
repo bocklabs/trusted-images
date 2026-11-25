@@ -6,8 +6,8 @@ spec:
   version: 2
   upstream:
     ref: apache/tika
-    tag: 3.3.3.1-full
-    digest: sha256:36f6f322d5ecf2d0ac12fbdda0fe904625aff73b3363328b35d21bdf9b4c650c
+    tag: 3.4.0.0-full
+    digest: sha256:33d96e4c936b4bc716e9ca310a2e8d93f609be55571e9f777ae247e85462306f
   destination:
     package: ghcr.io/bocklabs/tika
   patchPolicy: enabled
