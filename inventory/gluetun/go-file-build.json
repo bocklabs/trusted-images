@@ -1,12 +1,12 @@
 {
   "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
-  "ref": "ghcr.io/bocklabs/gluetun:v3.41.3-bocklabs.2@sha256:a3a6c74040aa80bc5b4de82d15b8d1acd1d6eb4743d0b3c3c744d9164a32ab2a",
-  "config_digest": "sha256:4cc2ac5dea643b8bc511adcf53ed8a1ad184a822bec79f06cde34b9c53e95e1a",
+  "ref": "ghcr.io/bocklabs/gluetun:v3.41.3-bocklabs.3@sha256:01683fc0fb1de2e2cc23bb1d54fdc06d1a0b7933db5428e811c0a7d9c9d10413",
+  "config_digest": "sha256:fd3f25eb5a3bb650bf12f1e692d29553dc7eefb3d26138f3849a9c80ac041f00",
   "upstream_child_digest": "sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e",
   "target": "gluetun-entrypoint",
   "module": "github.com/qdm12/gluetun",
   "layer": {
-    "Digest": "sha256:d830941ec93d408671ecbb7af8e62159331b48596d7eab0dae07bd620fc862e7",
+    "Digest": "sha256:5726187740e2609c254c4e4ee7752556240a57f22f77163e50f1b239525c9140",
     "DiffID": "sha256:5292e7f16f16fce35a219f8f7470e9faede1e29e9a668e73029b78bfc7ab1b3d"
   },
   "binary_sha256": "c5930e42a32c689469016009f2651e1807865a9bba926974cb40119f7b397bd3",
@@ -34,6 +34,6 @@
     "go_package_count": 52,
     "versioned_go_package_count": 51
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/42614208536",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/45623941518",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
