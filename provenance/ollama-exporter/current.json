@@ -12,14 +12,14 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/ollama-exporter",
-    "tag": "1.0.3-bocklabs.3",
-    "digest": "sha256:2806b2db94e396fe65a168c6a9aff4ff158e50dfc360f72e31c6c4fb3cb56d0e",
+    "tag": "1.0.3-bocklabs.4",
+    "digest": "sha256:6c9e2812612138ab72db6f56f9ffefb6e2f49f47196ac0bbfcb7f02cc5fbca6f",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45411963783",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45826126950",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
@@ -28,20 +28,20 @@
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:638c591f8a72f447eb61e2075b6db023f81175839931675f93fbb3b55be27339"
+    "skopeo_image_digest": "sha256:4784191278912fc8e8dd914fd28e65540c499798d59f688f97c7e1a22a259d38"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:ed85b86c1d0eb65fc273d33a427f7cba5b1372ef937477338286dd56088a9ab1",
-      "updated_at": "2026-11-24 13:06:50.432258513 +0000 UTC"
+      "check_bundle_digest": "sha256:fecd4e9802bd3c69b57207bca78cd3f3003cdd445b5b49f4afd484ec06a33b31",
+      "updated_at": "2026-11-25 19:00:05.492170927 +0000 UTC"
     },
-    "full_report_sha256": "84bb763d04be3730ea231326a88d4eeb8faffc3a62bd72c23c891d8f51313edf",
-    "copa_report_sha256": "8008ef52418b663fa7ddd6aa180da77cb6141e17d88f5cac7c0115d3a953c1cc",
-    "decision_sha256": "9f7504577431e27fb2ce30fb941cc7cf498f14d04ccee0fa77b36ca5b9b3a2e2",
+    "full_report_sha256": "fdc822597891cd7c9da1e54c20b4c1c6216ccef2a4ed05f0dfc469c67ff46bbb",
+    "copa_report_sha256": "0649cb38f48f99dad6c698025766b54daaf49b707112654023982f64af4bc281",
+    "decision_sha256": "18e2eeb5d59d8ee4e66496cd7645d92306257d167f73dd1ea31a9049a31d6845",
     "reports": {
-      "before_sha256": "6e3e0695c6ef7e78c64a2a8d16d783a7f30ae2f65e061a1ec7ce110dfac77441",
-      "final_sha256": "84bb763d04be3730ea231326a88d4eeb8faffc3a62bd72c23c891d8f51313edf",
-      "fixable_sha256": "8008ef52418b663fa7ddd6aa180da77cb6141e17d88f5cac7c0115d3a953c1cc"
+      "before_sha256": "6cf7bd40d6d3c37d26eaf2f82f17ba3c6c12f3e0c7951fbd4a74dd15f754850f",
+      "final_sha256": "fdc822597891cd7c9da1e54c20b4c1c6216ccef2a4ed05f0dfc469c67ff46bbb",
+      "fixable_sha256": "0649cb38f48f99dad6c698025766b54daaf49b707112654023982f64af4bc281"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ac8f0c4e73ec9212dd00afbb9bed2b43abc9cdb3c8719fc2c2606f008171f70a",
-        "fetched_at": "2026-11-24T14:18:30Z",
-        "catalogVersion": "2026.11.23",
-        "dateReleased": "2026-11-23T19:43:55.7979Z"
+        "sha256": "a76360009e4a65794a2b8073df5475f7a787a3bb83c3bfad2b0c3434a067631a",
+        "fetched_at": "2026-11-26T13:10:51Z",
+        "catalogVersion": "2026.11.25",
+        "dateReleased": "2026-11-25T19:48:12.4344Z"
       }
     },
     "acceptance": null,
@@ -73,7 +73,7 @@
       "limitation": null
     },
     "remediation": {
-      "need_sha256": "55dbc8fd1db894364692b2f76ac77deaa38e2762fc81eb30c8fbffad3c7c2f81"
+      "need_sha256": "544c5563d1d91571ef9ad348eca6a9ae272b2dd0a38183fbb2c4629c2804733b"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -2009,6 +2009,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-107493",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-107493",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "lucabecker42/ollama-exporter@sha256:948e06a3e3a94ac9d1a82f3277782da75d5911ff0a1b6ce9f696d29143d5cadd (alpine 3.22.1)",
+        "installed_version": "3.5.1-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|libcrypto3|CVE-2026-107496",
         "platform": "linux/amd64",
         "package": "libcrypto3",
@@ -2019,6 +2032,19 @@
         "installed_version": "3.5.1-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-124709",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-124709",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "lucabecker42/ollama-exporter@sha256:948e06a3e3a94ac9d1a82f3277782da75d5911ff0a1b6ce9f696d29143d5cadd (alpine 3.22.1)",
+        "installed_version": "3.5.1-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -2685,6 +2711,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|libssl3|CVE-2026-107493",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-107493",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "lucabecker42/ollama-exporter@sha256:948e06a3e3a94ac9d1a82f3277782da75d5911ff0a1b6ce9f696d29143d5cadd (alpine 3.22.1)",
+        "installed_version": "3.5.1-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|libssl3|CVE-2026-107496",
         "platform": "linux/amd64",
         "package": "libssl3",
@@ -2695,6 +2734,19 @@
         "installed_version": "3.5.1-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-124709",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-124709",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "lucabecker42/ollama-exporter@sha256:948e06a3e3a94ac9d1a82f3277782da75d5911ff0a1b6ce9f696d29143d5cadd (alpine 3.22.1)",
+        "installed_version": "3.5.1-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -4186,8 +4238,10 @@
         "CVE-2025-9230",
         "CVE-2025-9231",
         "CVE-2025-9232",
+        "CVE-2026-107493",
         "CVE-2026-107496",
         "CVE-2026-107891",
+        "CVE-2026-124709",
         "CVE-2026-14456",
         "CVE-2026-14457",
         "CVE-2026-18798",
@@ -4327,14 +4381,14 @@
         "name": "libcrypto3",
         "change": "upgraded",
         "before": "3.5.1-r0",
-        "after": "3.5.9-r1"
+        "after": "3.5.9-r2"
       },
       {
         "ecosystem": "alpine",
         "name": "libssl3",
         "change": "upgraded",
         "before": "3.5.1-r0",
-        "after": "3.5.9-r1"
+        "after": "3.5.9-r2"
       },
       {
         "ecosystem": "alpine",
@@ -4389,15 +4443,15 @@
       }
     },
     "timings": {
-      "started_at": "2026-11-24T14:17:00Z",
-      "finished_at": "2026-11-24T14:18:30Z",
+      "started_at": "2026-11-26T13:09:21Z",
+      "finished_at": "2026-11-26T13:10:51Z",
       "duration_seconds": 90.1
     },
     "health": {
       "defined": true,
       "final_status": "healthy"
     },
-    "runner": "GitHub Actions 1000020407",
+    "runner": "GitHub Actions 1000020783",
     "baseline": {
       "entrypoint": [
         "./docker-entrypoint.sh"
@@ -4415,38 +4469,38 @@
       ]
     }
   },
-  "promoted_at": "2026-11-24T14:19:27Z",
+  "promoted_at": "2026-11-26T13:11:48Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "d2ba63d375673f92610cf0853ea2a455f8d70dc2e9a7e2394e8190ef5c36de8e",
-      "attachment_sha256": "48c906078062ed4b7fb624fde4df6c2a229c922b64f549a464f54a2eae2c4cea",
+      "bundle_sha256": "d87a87de7d05e291283631bb421c1464a7d7b8b6eb0e676a3d0239e8c1dcdb43",
+      "attachment_sha256": "ece13cb81802170779e9281236f482cb0a91d19e7647834d5026797fb29313a8",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "40c240e73229061d6e9be0c9bf6a15cc0256eefd66c50e6cafbfcdd5139b8855",
-      "bundle_sha256": "94a35c67c00e04d033c89af46954858b46945ae5ed5c44513b089ca0613be39a",
-      "attachment_sha256": "5942f2fbf3a7187dba1e3f7999164fb410a25d96c53f93d8d6e40f2dddee55de"
+      "predicate_sha256": "c518edfdbcbd8c3d98eb5347270abe347c8374a3862d6532c798ed64489df6c3",
+      "bundle_sha256": "7eede4e170a10a135fd2bac5a4bbc916f5a64e31c4bdf5be79eb3607e464724f",
+      "attachment_sha256": "88fb212043fcf3d3fb6d3bc188c7fa8deb17c9a64147968e347c219d485db1cf"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "ptFsinD16s5R2dL7T7NRVkPbOkDTYAEAA42zzKpG9HU=",
+        "inclusion_root_hash": "ZqUL2afQ3OHj7apUfinkZHjNIJpeAXaMR1QjJdkhfV4=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4079866725,
-        "signed_entry_timestamp": "MEUCIAZzJsYHZzU+wRuP+sWvzt5AV/AIIB971/fRM2ecQ/cAAiEAvN4F+1UX3z1TYscdVNjSlzxgz5p7fpmvdc/DYP9i5IU="
+        "log_index": 4126658511,
+        "signed_entry_timestamp": "MEQCIAam7CW6+AczA9tBTnOeyVDftyIor436Kq8Aniz60W0sAiB3iRynWx7Sck/hCGse8oIQ5jFESm5eAFeX/9pag+cl0g=="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "rbwMv89MNtEOuTP37leH90iN2sxuwrEKFM41mcizZxE=",
+        "inclusion_root_hash": "nOM7AMkMxaquS9pnsJDQPHws6/Cbr9tMEuQY13SrW+w=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4079868260,
-        "signed_entry_timestamp": "MEUCIQD2/z6BkAg6RH2CwRWztJTujI7oVbCVOsHe1YB3K5zVEAIgdzNa2P3ziDejXZcuiOoB9rtpgfCbM+iDOiSGEY2MrO0="
+        "log_index": 4126659739,
+        "signed_entry_timestamp": "MEUCIQCWvQvY/X7epEcvMuMviU5m2EEncHecNW7QlEnt9ZA9VgIgbwdBbJR5CFmk97c8+yDdHhKXxUPadPKnAtId2Kp7SW0="
       }
     },
     "tools": {
-      "cosign": "v3.1.4",
+      "cosign": "v3.1.6",
       "trivy": "0.76.2"
     }
   }
