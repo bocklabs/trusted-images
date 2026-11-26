@@ -12,14 +12,14 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/cadvisor",
-    "tag": "v0.55.1-bocklabs.3",
-    "digest": "sha256:08fc35c9627444393c7a95369fbe9f0df58f9830d38b723df8287d458131e283",
+    "tag": "v0.55.1-bocklabs.4",
+    "digest": "sha256:f0f6cd9ec602af6a0b15cc793edb4976e70a9484810b77895a6db254d72ddde4",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45411871550",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45826043041",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
@@ -28,20 +28,20 @@
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:638c591f8a72f447eb61e2075b6db023f81175839931675f93fbb3b55be27339"
+    "skopeo_image_digest": "sha256:4784191278912fc8e8dd914fd28e65540c499798d59f688f97c7e1a22a259d38"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:ed85b86c1d0eb65fc273d33a427f7cba5b1372ef937477338286dd56088a9ab1",
-      "updated_at": "2026-11-24 13:06:50.432258513 +0000 UTC"
+      "check_bundle_digest": "sha256:fecd4e9802bd3c69b57207bca78cd3f3003cdd445b5b49f4afd484ec06a33b31",
+      "updated_at": "2026-11-25 19:00:05.492170927 +0000 UTC"
     },
-    "full_report_sha256": "3f20438c7b91500ea9e3e30cdd40e9962fa1b394399ae381d4bce5b9cc65b329",
-    "copa_report_sha256": "33547da5d7d4b4ab0d3b5147ba126e6d963932bef48f4295789cd985a436821e",
-    "decision_sha256": "80df6f1c5b31cc1018fdde11d47b205a6b2eb26afee3e1f6e221d4903c66382f",
+    "full_report_sha256": "541e7736042e689f43ea884b5bee0ddbd492eb84b20c7ec40c9bcc9a401ba49b",
+    "copa_report_sha256": "0b839adf0ee28092b44d7a34def3a248cc1825bd1b03e4dd38c99373b3e32d12",
+    "decision_sha256": "f7052e1c0273403dd0ab9c77633228a87e7456f3860c4d808184696bf23b5c7e",
     "reports": {
-      "before_sha256": "d0bb42d1ce7e528c2f3f453060ca8e4cb785d3a0d1fce2d5acc920f6f61f6026",
-      "final_sha256": "3f20438c7b91500ea9e3e30cdd40e9962fa1b394399ae381d4bce5b9cc65b329",
-      "fixable_sha256": "33547da5d7d4b4ab0d3b5147ba126e6d963932bef48f4295789cd985a436821e"
+      "before_sha256": "9eb6acc57a601afddaa94e20d5a75970cad049ef30afd880c978dab6098683d4",
+      "final_sha256": "541e7736042e689f43ea884b5bee0ddbd492eb84b20c7ec40c9bcc9a401ba49b",
+      "fixable_sha256": "0b839adf0ee28092b44d7a34def3a248cc1825bd1b03e4dd38c99373b3e32d12"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ac8f0c4e73ec9212dd00afbb9bed2b43abc9cdb3c8719fc2c2606f008171f70a",
-        "fetched_at": "2026-11-24T14:16:56Z",
-        "catalogVersion": "2026.11.23",
-        "dateReleased": "2026-11-23T19:43:55.7979Z"
+        "sha256": "a76360009e4a65794a2b8073df5475f7a787a3bb83c3bfad2b0c3434a067631a",
+        "fetched_at": "2026-11-26T13:09:10Z",
+        "catalogVersion": "2026.11.25",
+        "dateReleased": "2026-11-25T19:48:12.4344Z"
       }
     },
     "acceptance": null,
@@ -73,7 +73,7 @@
       "limitation": null
     },
     "remediation": {
-      "need_sha256": "f491a47a72793e8a6036bd1f467c05379d1356a84b62a21ce07f427a22a6e3e6"
+      "need_sha256": "7fd1b8417d91ac4ef7ef6804e5823ba77e2821c2e1dd1b3e336803c9bdc54fc5"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -2965,6 +2965,19 @@
         "severity_source": "nvd"
       },
       {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-107493",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-107493",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "gcr.io/cadvisor/cadvisor@sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069 (alpine 3.22.2)",
+        "installed_version": "3.5.4-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|libcrypto3|CVE-2026-107496",
         "platform": "linux/amd64",
         "package": "libcrypto3",
@@ -2975,6 +2988,19 @@
         "installed_version": "3.5.4-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-124709",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-124709",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "gcr.io/cadvisor/cadvisor@sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069 (alpine 3.22.2)",
+        "installed_version": "3.5.4-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -3602,6 +3628,19 @@
         "severity_source": "nvd"
       },
       {
+        "identity": "linux/amd64|libssl3|CVE-2026-107493",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-107493",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "gcr.io/cadvisor/cadvisor@sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069 (alpine 3.22.2)",
+        "installed_version": "3.5.4-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|libssl3|CVE-2026-107496",
         "platform": "linux/amd64",
         "package": "libssl3",
@@ -3612,6 +3651,19 @@
         "installed_version": "3.5.4-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-124709",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-124709",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "gcr.io/cadvisor/cadvisor@sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069 (alpine 3.22.2)",
+        "installed_version": "3.5.4-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -5647,8 +5699,10 @@
         "CVE-2025-69419",
         "CVE-2025-69420",
         "CVE-2025-69421",
+        "CVE-2026-107493",
         "CVE-2026-107496",
         "CVE-2026-107891",
+        "CVE-2026-124709",
         "CVE-2026-14456",
         "CVE-2026-14457",
         "CVE-2026-18798",
@@ -5853,14 +5907,14 @@
         "name": "libcrypto3",
         "change": "upgraded",
         "before": "3.5.4-r0",
-        "after": "3.5.9-r1"
+        "after": "3.5.9-r2"
       },
       {
         "ecosystem": "alpine",
         "name": "libssl3",
         "change": "upgraded",
         "before": "3.5.4-r0",
-        "after": "3.5.9-r1"
+        "after": "3.5.9-r2"
       },
       {
         "ecosystem": "alpine",
@@ -5923,7 +5977,7 @@
         "name": "zstd-libs",
         "change": "upgraded",
         "before": "1.5.7-r0",
-        "after": "1.6.0-r0"
+        "after": "1.6.0-r1"
       }
     ],
     "downgrades": [],
@@ -5950,15 +6004,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-24T14:16:56Z",
-      "finished_at": "2026-11-24T14:16:56Z",
+      "started_at": "2026-11-26T13:09:10Z",
+      "finished_at": "2026-11-26T13:09:10Z",
       "duration_seconds": 0.3
     },
     "health": {
       "defined": true,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000020402",
+    "runner": "GitHub Actions 1000020770",
     "baseline": {
       "entrypoint": [
         "/usr/bin/cadvisor",
@@ -5971,38 +6025,38 @@
       ]
     }
   },
-  "promoted_at": "2026-11-24T14:18:19Z",
+  "promoted_at": "2026-11-26T13:10:21Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "18f648dc16b63bfb125fdf70ebed7c76b0a434a93e34a8e2330573156ee337c6",
-      "attachment_sha256": "90261363db4ebc1a6baf3cac3b3c2cb8a32a7ea815a009b6d60fb68943c515dc",
+      "bundle_sha256": "017f29eafead6d39201e82e0ed54bf678e54a69793d545daca026573bf6e06cd",
+      "attachment_sha256": "c2c8479402f25c0e41b53c1315dd3acc102f9c39fb3477ce85a2c49784c7a25e",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "5e9c775fec5fe466777a0b26f16c42329a600b401d72a51c68adab54137d4f1e",
-      "bundle_sha256": "beb418d90b8b97d1e11fbcdc6c39bccaceb72134d1ff35649e55e308109ac4e1",
-      "attachment_sha256": "5a31772e065b45697f0883f2bdc443702f2a6bfcfd2d5a102915582be6002e02"
+      "predicate_sha256": "2af769155fcc2aeb3a26cce04271ed6ef2144de8c60529a5547c69107bc7bdc3",
+      "bundle_sha256": "03ca9cea8b7ecf38290060859006a947f924e357161c5015ba0877bd96e92444",
+      "attachment_sha256": "440a58503a69a21cdd43cd56d4edbaa4703bad055019af9d1bf19f17261b3bd0"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "iZhxcb54Ce+JQK25/F7wctAxOAMTicqFIbIC7rJp0N4=",
+        "inclusion_root_hash": "qnWCQyna4h9EetGeWElB2IcLBa608wEyO+8BN8XdOXQ=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4079838414,
-        "signed_entry_timestamp": "MEUCIQCejigcz1+VWl5rfnDeZo+07PjOf55Ci0IzoJ58yleeZAIgVl0du3xHpLGMPHOg/vYyMEPvbkplE1tzIbDRaDsDIHs="
+        "log_index": 4126644062,
+        "signed_entry_timestamp": "MEYCIQClngv3IVtTdkh+DgTj720hH7Uz1Vy8X9RWIFmzrVqIuQIhAOideXgjTf6/WLnm718gy030KwNZpl2nLyg1eXbLieVL"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "SvUYZQot+wXVmw5JBpG9E7/NQTxN6Xl2vddRye8PJGY=",
+        "inclusion_root_hash": "P6/f+GYpxyyiPLLJEoPvwx1vp/SEgl47irPGsh3wOOE=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4079840327,
-        "signed_entry_timestamp": "MEYCIQDVd6vBAfD4OzWR0Sn+CM9LZpJMHpj+MjulW03yD24tIwIhAI8/CFo9x9NvmQrNxhUHXBh14CQUHb43X3CbCckMZI/Z"
+        "log_index": 4126644336,
+        "signed_entry_timestamp": "MEUCIADv/qB9D530ZpRhgMihPfMwi1yB+DGKkBqVBJUZ10uKAiEA0OUUuRhfhCF3TdSLwhF2mZ6imf1ixqKkfrLvkg6DYEk="
       }
     },
     "tools": {
-      "cosign": "v3.1.4",
+      "cosign": "v3.1.6",
       "trivy": "0.76.2"
     }
   }
