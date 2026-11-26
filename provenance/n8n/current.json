@@ -3,23 +3,23 @@
   "app": "n8n",
   "upstream": {
     "ref": "n8nio/n8n",
-    "tag": "3.4.0",
-    "digest": "sha256:623e766dd0548ee8246376de1d5f3d4d1a65e0a2f645844833bd3d91b2200fae",
-    "index_digest": "sha256:623e766dd0548ee8246376de1d5f3d4d1a65e0a2f645844833bd3d91b2200fae",
+    "tag": "3.4.1",
+    "digest": "sha256:95f4fabd308669b35761ccf5b0d0a63526da06135e7e44d19d14694dbfd340be",
+    "index_digest": "sha256:95f4fabd308669b35761ccf5b0d0a63526da06135e7e44d19d14694dbfd340be",
     "media_type": "application/vnd.oci.image.index.v1+json",
     "selected_platform": "linux/amd64",
-    "selected_child_digest": "sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5"
+    "selected_child_digest": "sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212"
   },
   "internal": {
     "package": "ghcr.io/bocklabs/n8n",
-    "tag": "3.4.0-bocklabs.1",
-    "digest": "sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5",
+    "tag": "3.4.1-bocklabs.1",
+    "digest": "sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45417060767",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45829482944",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
@@ -28,24 +28,24 @@
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": null,
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:638c591f8a72f447eb61e2075b6db023f81175839931675f93fbb3b55be27339"
+    "skopeo_image_digest": "sha256:4784191278912fc8e8dd914fd28e65540c499798d59f688f97c7e1a22a259d38"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:ed85b86c1d0eb65fc273d33a427f7cba5b1372ef937477338286dd56088a9ab1",
-      "updated_at": "2026-11-24 13:06:50.432258513 +0000 UTC"
+      "check_bundle_digest": "sha256:fecd4e9802bd3c69b57207bca78cd3f3003cdd445b5b49f4afd484ec06a33b31",
+      "updated_at": "2026-11-25 19:00:05.492170927 +0000 UTC"
     },
-    "full_report_sha256": "daea5696f1299ceafa7cf41a9b046869c540ed5773530d8e9b2ef240759e52e3",
-    "copa_report_sha256": "1cde09bf48f2573eb85d0a1403ea715d838f19303494b1f971dfc323d1845318",
-    "decision_sha256": "61df8f6c8dcd5bc60b266f27fe2bacced637a54e04ff5c626d4af32a798c1b00",
+    "full_report_sha256": "909dc12e731e9de4dee06c8341529646c5c01eb828456069d12a26e7f0f27422",
+    "copa_report_sha256": "07fbf6589c0e37b2f6809918e925da456c5de89d8f7e6cb9c28cbdd3ffe38d2a",
+    "decision_sha256": "9da1f864ec02310449bb210773c55944d83534ad31190d2e11c0943b9f5226df",
     "reports": {
-      "before_sha256": "daea5696f1299ceafa7cf41a9b046869c540ed5773530d8e9b2ef240759e52e3",
-      "final_sha256": "daea5696f1299ceafa7cf41a9b046869c540ed5773530d8e9b2ef240759e52e3",
-      "fixable_sha256": "1cde09bf48f2573eb85d0a1403ea715d838f19303494b1f971dfc323d1845318"
+      "before_sha256": "909dc12e731e9de4dee06c8341529646c5c01eb828456069d12a26e7f0f27422",
+      "final_sha256": "909dc12e731e9de4dee06c8341529646c5c01eb828456069d12a26e7f0f27422",
+      "fixable_sha256": "07fbf6589c0e37b2f6809918e925da456c5de89d8f7e6cb9c28cbdd3ffe38d2a"
     },
     "secobserve": {
       "product": "trusted-images",
-      "origin": "n8nio/n8n:3.4.0"
+      "origin": "n8nio/n8n:3.4.1"
     }
   },
   "policy": {
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ac8f0c4e73ec9212dd00afbb9bed2b43abc9cdb3c8719fc2c2606f008171f70a",
-        "fetched_at": "2026-11-24T14:44:04Z",
-        "catalogVersion": "2026.11.23",
-        "dateReleased": "2026-11-23T19:43:55.7979Z"
+        "sha256": "a76360009e4a65794a2b8073df5475f7a787a3bb83c3bfad2b0c3434a067631a",
+        "fetched_at": "2026-11-26T13:30:32Z",
+        "catalogVersion": "2026.11.25",
+        "dateReleased": "2026-11-25T19:48:12.4344Z"
       }
     },
     "acceptance": null,
@@ -80,7 +80,7 @@
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with patching disabled (unsupported): Exact n8n Alpine-derived image lacks target APK tooling required for supported stable Copa remediation.; findings: CVE-2026-118663:MEDIUM:ghsa,CVE-2026-126210:MEDIUM:ghsa,CVE-2026-128080:MEDIUM:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2025-57665:MEDIUM:ghsa,CVE-2026-126066:LOW:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-126355:MEDIUM:ghsa,CVE-2026-126356:MEDIUM:ghsa,CVE-2026-126357:MEDIUM:ghsa,CVE-2026-126358:MEDIUM:ghsa,CVE-2026-126359:LOW:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-101910:MEDIUM:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-111759:HIGH:ghsa,CVE-2026-111766:LOW:ghsa,CVE-2026-2327:MEDIUM:ghsa,CVE-2026-48988:MEDIUM:ghsa,GHSA-253c-mchw-3w2r:MEDIUM:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-17495:MEDIUM:ghsa,CVE-2026-104844:MEDIUM:ghsa,CVE-2026-110816:MEDIUM:ghsa,CVE-2026-113650:MEDIUM:ghsa,CVE-2024-1899:MEDIUM:ghsa,CVE-2026-59710:MEDIUM:ghsa,CVE-2026-59711:MEDIUM:ghsa,CVE-2026-104182:MEDIUM:ghsa,CVE-2026-104183:MEDIUM:ghsa,CVE-2026-71429:MEDIUM:ghsa,CVE-2026-109383:HIGH:ghsa,CVE-2026-109869:HIGH:ghsa,CVE-2026-109924:MEDIUM:ghsa,CVE-2026-109932:MEDIUM:ghsa,CVE-2026-18540:LOW:ghsa,CVE-2026-19534:HIGH:ghsa,CVE-2026-85024:MEDIUM:ghsa,CVE-2026-87018:HIGH:ghsa,CVE-2026-107496:MEDIUM:,CVE-2026-88822:LOW:,CVE-2026-88823:LOW:,CVE-2026-95691:MEDIUM:,CVE-2026-95692:MEDIUM:,CVE-2026-107496:MEDIUM:,CVE-2026-88822:LOW:,CVE-2026-88823:LOW:,CVE-2026-95691:MEDIUM:,CVE-2026-95692:MEDIUM:",
+    "outcome": "eligible with patching disabled (unsupported): Exact n8n Alpine-derived image lacks target APK tooling required for supported stable Copa remediation.; findings: CVE-2026-118663:MEDIUM:ghsa,CVE-2026-126210:MEDIUM:ghsa,CVE-2026-128080:MEDIUM:ghsa,CVE-2026-102276:HIGH:ghsa,CVE-2026-102277:MEDIUM:ghsa,CVE-2026-102278:HIGH:ghsa,CVE-2025-57665:MEDIUM:ghsa,CVE-2026-126066:LOW:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-118773:MEDIUM:ghsa,CVE-2026-126355:MEDIUM:ghsa,CVE-2026-126356:MEDIUM:ghsa,CVE-2026-126357:MEDIUM:ghsa,CVE-2026-126358:MEDIUM:ghsa,CVE-2026-126359:LOW:ghsa,CVE-2026-101910:MEDIUM:ghsa,CVE-2026-101911:MEDIUM:ghsa,CVE-2026-101912:MEDIUM:ghsa,CVE-2026-101913:MEDIUM:ghsa,CVE-2026-111997:MEDIUM:ghsa,CVE-2026-111759:HIGH:ghsa,CVE-2026-111766:LOW:ghsa,CVE-2026-2327:MEDIUM:ghsa,CVE-2026-48988:MEDIUM:ghsa,GHSA-253c-mchw-3w2r:MEDIUM:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-118764:MEDIUM:ghsa,CVE-2026-17495:MEDIUM:ghsa,CVE-2026-104844:MEDIUM:ghsa,CVE-2026-110816:MEDIUM:ghsa,CVE-2026-113650:MEDIUM:ghsa,CVE-2024-1899:MEDIUM:ghsa,CVE-2026-59710:MEDIUM:ghsa,CVE-2026-59711:MEDIUM:ghsa,CVE-2026-104182:MEDIUM:ghsa,CVE-2026-104183:MEDIUM:ghsa,CVE-2026-71429:MEDIUM:ghsa,CVE-2026-109383:HIGH:ghsa,CVE-2026-109869:HIGH:ghsa,CVE-2026-109924:MEDIUM:ghsa,CVE-2026-109932:MEDIUM:ghsa,CVE-2026-18540:LOW:ghsa,CVE-2026-19534:HIGH:ghsa,CVE-2026-85024:MEDIUM:ghsa,CVE-2026-87018:HIGH:ghsa,CVE-2026-107496:MEDIUM:,CVE-2026-88822:LOW:,CVE-2026-88823:LOW:,CVE-2026-95691:MEDIUM:,CVE-2026-95692:MEDIUM:,CVE-2026-107496:MEDIUM:,CVE-2026-88822:LOW:,CVE-2026-88823:LOW:,CVE-2026-95691:MEDIUM:,CVE-2026-95692:MEDIUM:",
     "eligible": true,
     "warnings": [
       {
@@ -319,20 +319,6 @@
         "installed_version": "4.13.11",
         "fixed_version": "4.13.16",
         "severity": "LOW",
-        "severity_source": "ghsa"
-      },
-      {
-        "kind": "no-fix",
-        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fn8n%2Fnode_modules%2F.pnpm%2Fip-address%4010.7.1%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-111997",
-        "platform": "linux/amd64",
-        "package": "ip-address",
-        "cve": "CVE-2026-111997",
-        "class": "lang-pkgs",
-        "type": "node-pkg",
-        "target": "Node.js",
-        "installed_version": "10.7.1",
-        "fixed_version": "10.7.4",
-        "severity": "MEDIUM",
         "severity_source": "ghsa"
       },
       {
@@ -1000,19 +986,6 @@
         "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fn8n%2Fnode_modules%2F.pnpm%2Fip-address%4010.7.1%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-111997",
-        "platform": "linux/amd64",
-        "package": "ip-address",
-        "cve": "CVE-2026-111997",
-        "class": "lang-pkgs",
-        "type": "node-pkg",
-        "target": "Node.js",
-        "installed_version": "10.7.1",
-        "fixed_version": "10.7.4",
-        "severity": "MEDIUM",
-        "severity_source": "ghsa"
-      },
-      {
         "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101910",
         "platform": "linux/amd64",
         "package": "ip-address",
@@ -1422,7 +1395,7 @@
         "cve": "CVE-2026-107496",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -1435,7 +1408,7 @@
         "cve": "CVE-2026-88822",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "LOW",
@@ -1448,7 +1421,7 @@
         "cve": "CVE-2026-88823",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "LOW",
@@ -1461,7 +1434,7 @@
         "cve": "CVE-2026-95691",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -1474,7 +1447,7 @@
         "cve": "CVE-2026-95692",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -1487,7 +1460,7 @@
         "cve": "CVE-2026-107496",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -1500,7 +1473,7 @@
         "cve": "CVE-2026-88822",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "LOW",
@@ -1513,7 +1486,7 @@
         "cve": "CVE-2026-88823",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "LOW",
@@ -1526,7 +1499,7 @@
         "cve": "CVE-2026-95691",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -1539,7 +1512,7 @@
         "cve": "CVE-2026-95692",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -1769,19 +1742,6 @@
         "severity_source": "ghsa"
       },
       {
-        "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fn8n%2Fnode_modules%2F.pnpm%2Fip-address%4010.7.1%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-111997",
-        "platform": "linux/amd64",
-        "package": "ip-address",
-        "cve": "CVE-2026-111997",
-        "class": "lang-pkgs",
-        "type": "node-pkg",
-        "target": "Node.js",
-        "installed_version": "10.7.1",
-        "fixed_version": "10.7.4",
-        "severity": "MEDIUM",
-        "severity_source": "ghsa"
-      },
-      {
         "identity": "linux/amd64|lang-pkgs:node-pkg:Node.js:ip-address:usr%2Flocal%2Flib%2Fnode_modules%2Fnpm%2Fnode_modules%2Fip-address%2Fpackage.json|CVE-2026-101910",
         "platform": "linux/amd64",
         "package": "ip-address",
@@ -2191,7 +2151,7 @@
         "cve": "CVE-2026-107496",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -2204,7 +2164,7 @@
         "cve": "CVE-2026-88822",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "LOW",
@@ -2217,7 +2177,7 @@
         "cve": "CVE-2026-88823",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "LOW",
@@ -2230,7 +2190,7 @@
         "cve": "CVE-2026-95691",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -2243,7 +2203,7 @@
         "cve": "CVE-2026-95692",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -2256,7 +2216,7 @@
         "cve": "CVE-2026-107496",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -2269,7 +2229,7 @@
         "cve": "CVE-2026-88822",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "LOW",
@@ -2282,7 +2242,7 @@
         "cve": "CVE-2026-88823",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "LOW",
@@ -2295,7 +2255,7 @@
         "cve": "CVE-2026-95691",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -2308,7 +2268,7 @@
         "cve": "CVE-2026-95692",
         "class": "os-pkgs",
         "type": "alpine",
-        "target": "n8nio/n8n@sha256:eaa40a56749ecea59c41c9dba75fe271d00ffccbc1c96f71acc8b2f9abba4ca5 (alpine 3.24)",
+        "target": "n8nio/n8n@sha256:393d29f84eb12056ee639bbc46ec0099a219b5f6d66bad2bde3dec8289d68212 (alpine 3.24)",
         "installed_version": "3.5.9-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
@@ -2403,15 +2363,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-24T14:43:59Z",
-      "finished_at": "2026-11-24T14:44:04Z",
-      "duration_seconds": 4.9
+      "started_at": "2026-11-26T13:30:25Z",
+      "finished_at": "2026-11-26T13:30:32Z",
+      "duration_seconds": 7.7
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000020457",
+    "runner": "GitHub Actions 1000020856",
     "baseline": {
       "entrypoint": [
         "tini",
@@ -2431,38 +2391,38 @@
       ]
     }
   },
-  "promoted_at": "2026-11-24T14:46:41Z",
+  "promoted_at": "2026-11-26T13:32:07Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "22ed4801b45f0aedeaf9db41462a260419f49c4ff223cbd715589c0acea2996c",
-      "attachment_sha256": "dd79c4f453102937b79a1ba6f1f514a82c4cb3ce94de9f60306b6d8edf93b0ac",
+      "bundle_sha256": "ccc3b4da49bda7d7837b172bdfbd98fe5080a7619342e6517223bc727333b1cc",
+      "attachment_sha256": "d40138e0a89763b2beaa4bba73ce61a0f49aa448c354e9537c79076c385db8bd",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "3330df6d350d080d3fe31dae62591f3d5404a420bdcb09d3485ebb8afb1851b8",
-      "bundle_sha256": "6e7f94886018fd5150995cdac2a1e06cf0b0f6dd18530b79c963258e505ec523",
-      "attachment_sha256": "83bbf8175bff925d9880973debf0ba697f64812b9c99ffd3ab7fd8cd806a94b1"
+      "predicate_sha256": "eb54bb1672ec46dc68def952b0622c1b7e68b74c85fc2e10013825e7e7fec9cf",
+      "bundle_sha256": "614fa95e4c3d5cc703bbdd2fb030e3f6481cf05b70a06d58abae265075cfa601",
+      "attachment_sha256": "4a73efe0d7aac97c6dbaabec47b5b394492692242b3bad6706ce07c223569c82"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "5dL7CM3+dQ8apZUjQO8D+MmzAVeaAUNCdP0JW8tIqLw=",
+        "inclusion_root_hash": "xN6sDipFib+1pTz7M1yP11Ts47f2Qda6dsQ4dkNR4ak=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4080359138,
-        "signed_entry_timestamp": "MEUCID9sl5h3FYQzdetA/g/AE1VtGzLUAsZxNoQcPCCT1Y8eAiEAwCkUVUDwd2Bcy5pXEJ3p39Pvj7obxNsbHA8yJTuMwBc="
+        "log_index": 4126965565,
+        "signed_entry_timestamp": "MEYCIQCJOIXzT48O2v7p+ZYcbwc7TdfEpZ/aNCxOYKwsHsCB6AIhAKfG1IzEV3KC4QndkIqhdXZKHFF0merbksg+FhWFnbbW"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "lKvswafrFJ1xiTgmBR7W6w4l+j5/Yi6VMf/Nl6fyN+k=",
+        "inclusion_root_hash": "iD5lP0eZlrpcwKJ07q7DA0v59erYolEKbeO4OLnSOpA=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4080363382,
-        "signed_entry_timestamp": "MEUCIQD3Nl7wygMlj87pAKgqbKGKQNzMK1o3KmNZNhQmTLj0rQIgciOhRr8HMANU5fVt5//tR/G0dLIEybrUib93WrjDKPI="
+        "log_index": 4126966322,
+        "signed_entry_timestamp": "MEYCIQDDj6osi8qKd6mEnxckLQkoiEI688pnrdEjAnjHHkwNkwIhALNM+fdaj/EojBpA1lkEdvsJ3I1Y5M8hhdPltlIipBcP"
       }
     },
     "tools": {
-      "cosign": "v3.1.4",
+      "cosign": "v3.1.6",
       "trivy": "0.76.2"
     }
   }
