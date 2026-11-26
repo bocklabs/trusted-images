@@ -12,36 +12,36 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/cloudflared",
-    "tag": "2026.11.2-bocklabs.1",
-    "digest": "sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2",
+    "tag": "2026.11.2-bocklabs.2",
+    "digest": "sha256:cdf426c04da48b852ceff08a18192dbb532eac774510765b8e640acb39cceb91",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45187789816",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45826048210",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
   "tools": {
     "trivy": "0.76.2",
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
-    "copa": null,
+    "copa": "0.15.0",
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:7e7d5b9c9f30896e8fd256d33ba351408299399442f04b8ef3a9452f3c2fa50e"
+    "skopeo_image_digest": "sha256:4784191278912fc8e8dd914fd28e65540c499798d59f688f97c7e1a22a259d38"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:13e8c99fd00caa68c6e4c45e43476ad4f4f6e08bc2900a4d27bf8236f804360a",
-      "updated_at": "2026-11-23 07:04:04.632673631 +0000 UTC"
+      "check_bundle_digest": "sha256:fecd4e9802bd3c69b57207bca78cd3f3003cdd445b5b49f4afd484ec06a33b31",
+      "updated_at": "2026-11-25 19:00:05.492170927 +0000 UTC"
     },
-    "full_report_sha256": "13d9f4094c4e96820619d1c93d1a24ce7dba7a62f517c5b4efe09027785ea670",
-    "copa_report_sha256": "a27d535c53c9de62eac17b56c8e190b4cf1e6beb2a583e1d0dff1e85caa6c49f",
-    "decision_sha256": "7dedb7f66ae2db2c61fa763ac0c6df1bd5a26658ee197033ad49c31e75464a95",
+    "full_report_sha256": "09a140e1210f518ad9f1f2577e85fcc67699222513d9c44b1c9fc2e2c3d61531",
+    "copa_report_sha256": "dffee4f6060bffaada1d3c8da8884d4f062407f7df2040cacfe0fb1f0b15c376",
+    "decision_sha256": "d0fd44f19816301d938f604cecdd25dce78c7ed00486f7398f406c47162c18c3",
     "reports": {
-      "before_sha256": "13d9f4094c4e96820619d1c93d1a24ce7dba7a62f517c5b4efe09027785ea670",
-      "final_sha256": "13d9f4094c4e96820619d1c93d1a24ce7dba7a62f517c5b4efe09027785ea670",
-      "fixable_sha256": "a27d535c53c9de62eac17b56c8e190b4cf1e6beb2a583e1d0dff1e85caa6c49f"
+      "before_sha256": "19eb1be4c0c2cd96e8c87f58db0b086e00311fa79d0b356aba78f0f2d7dd0ef4",
+      "final_sha256": "09a140e1210f518ad9f1f2577e85fcc67699222513d9c44b1c9fc2e2c3d61531",
+      "fixable_sha256": "dffee4f6060bffaada1d3c8da8884d4f062407f7df2040cacfe0fb1f0b15c376"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "776fdde0a5d4f412bfe8336ffb6da32294890a794cc374c5d4c72a99ae5db84c",
-        "fetched_at": "2026-11-23T13:50:50Z",
-        "catalogVersion": "2026.11.23",
-        "dateReleased": "2026-11-23T12:54:37.9646Z"
+        "sha256": "a76360009e4a65794a2b8073df5475f7a787a3bb83c3bfad2b0c3434a067631a",
+        "fetched_at": "2026-11-26T13:09:33Z",
+        "catalogVersion": "2026.11.25",
+        "dateReleased": "2026-11-25T19:48:12.4344Z"
       }
     },
     "acceptance": null,
@@ -64,19 +64,22 @@
       "disabled": false
     },
     "copa": {
-      "classification": "not-required",
-      "original_child_input": false,
-      "mode": "not-required",
-      "release": null,
-      "source_sha": null,
-      "runtime_digest": null,
+      "classification": "succeeded",
+      "original_child_input": true,
+      "mode": "comprehensive",
+      "release": "0.15.0",
+      "source_sha": "bce7b4305e378558f20420aa2ca48686cec850d0",
+      "runtime_digest": "sha256:b20772e7b2ec82d94d5350a2e70f9281ce70fc7296d1f839f3f1cc38d605995b",
       "limitation": null
+    },
+    "remediation": {
+      "need_sha256": "3ec8b4f36d8a0455291a808c2ac89154ce8adc5ce410a71b7c39534551f4310a"
     },
     "supersedes": {
       "higher_upstream": false,
       "original_child_selected": false
     },
-    "outcome": "eligible with no-fix warnings: CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-100290:LOW:,CVE-2026-115819:MEDIUM:,CVE-2026-121757:UNKNOWN:,CVE-2026-121758:UNKNOWN:,CVE-2026-124024:UNKNOWN:,CVE-2026-126765:LOW:,CVE-2026-84243:MEDIUM:,CVE-2026-107493:LOW:,CVE-2026-107496:MEDIUM:,CVE-2026-121481:LOW:,CVE-2026-121482:MEDIUM:,CVE-2026-124709:HIGH:,CVE-2026-35190:MEDIUM:,CVE-2026-84786:MEDIUM:,CVE-2026-88822:LOW:,CVE-2026-88823:LOW:,CVE-2026-95690:MEDIUM:,CVE-2026-95691:MEDIUM:,CVE-2026-95692:MEDIUM:",
+    "outcome": "eligible with no-fix warnings: CVE-2010-4756:LOW:debian,CVE-2018-20796:LOW:debian,CVE-2019-1010022:LOW:debian,CVE-2019-1010023:LOW:debian,CVE-2019-1010024:LOW:debian,CVE-2019-1010025:LOW:debian,CVE-2019-9192:LOW:debian,CVE-2026-100290:LOW:,CVE-2026-115819:MEDIUM:,CVE-2026-121757:MEDIUM:,CVE-2026-121758:UNKNOWN:,CVE-2026-124024:UNKNOWN:,CVE-2026-126765:LOW:,CVE-2026-84243:MEDIUM:,CVE-2026-107493:LOW:,CVE-2026-107494:HIGH:,CVE-2026-107496:MEDIUM:,CVE-2026-121481:LOW:,CVE-2026-121482:MEDIUM:,CVE-2026-124709:HIGH:,CVE-2026-35190:MEDIUM:,CVE-2026-84785:UNKNOWN:,CVE-2026-84786:MEDIUM:,CVE-2026-88822:LOW:,CVE-2026-88823:LOW:,CVE-2026-95690:MEDIUM:,CVE-2026-95691:MEDIUM:,CVE-2026-95692:MEDIUM:",
     "eligible": true,
     "warnings": [
       {
@@ -87,7 +90,7 @@
         "cve": "CVE-2010-4756",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -101,7 +104,7 @@
         "cve": "CVE-2018-20796",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -115,7 +118,7 @@
         "cve": "CVE-2019-1010022",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -129,7 +132,7 @@
         "cve": "CVE-2019-1010023",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -143,7 +146,7 @@
         "cve": "CVE-2019-1010024",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -157,7 +160,7 @@
         "cve": "CVE-2019-1010025",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -171,7 +174,7 @@
         "cve": "CVE-2019-9192",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -185,7 +188,7 @@
         "cve": "CVE-2026-100290",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -199,7 +202,7 @@
         "cve": "CVE-2026-115819",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -213,10 +216,10 @@
         "cve": "CVE-2026-121757",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
-        "severity": "UNKNOWN",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -227,7 +230,7 @@
         "cve": "CVE-2026-121758",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "UNKNOWN",
@@ -241,7 +244,7 @@
         "cve": "CVE-2026-124024",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "UNKNOWN",
@@ -255,7 +258,7 @@
         "cve": "CVE-2026-126765",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -269,7 +272,7 @@
         "cve": "CVE-2026-84243",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -283,10 +286,24 @@
         "cve": "CVE-2026-107493",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|libssl3t64|CVE-2026-107494",
+        "platform": "linux/amd64",
+        "package": "libssl3t64",
+        "cve": "CVE-2026-107494",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.8)",
+        "installed_version": "3.5.9-1~deb13u1",
+        "fixed_version": "",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -297,7 +314,7 @@
         "cve": "CVE-2026-107496",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -311,7 +328,7 @@
         "cve": "CVE-2026-121481",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "LOW",
@@ -325,7 +342,7 @@
         "cve": "CVE-2026-121482",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -339,7 +356,7 @@
         "cve": "CVE-2026-124709",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "HIGH",
@@ -353,10 +370,24 @@
         "cve": "CVE-2026-35190",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|libssl3t64|CVE-2026-84785",
+        "platform": "linux/amd64",
+        "package": "libssl3t64",
+        "cve": "CVE-2026-84785",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.8)",
+        "installed_version": "3.5.9-1~deb13u1",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
         "severity_source": ""
       },
       {
@@ -367,7 +398,7 @@
         "cve": "CVE-2026-84786",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -381,7 +412,7 @@
         "cve": "CVE-2026-88822",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "LOW",
@@ -395,7 +426,7 @@
         "cve": "CVE-2026-88823",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "LOW",
@@ -409,7 +440,7 @@
         "cve": "CVE-2026-95690",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -423,7 +454,7 @@
         "cve": "CVE-2026-95691",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -437,7 +468,7 @@
         "cve": "CVE-2026-95692",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -574,7 +605,7 @@
         "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
-        "severity": "UNKNOWN",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -643,6 +674,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|libssl3t64|CVE-2026-107494",
+        "platform": "linux/amd64",
+        "package": "libssl3t64",
+        "cve": "CVE-2026-107494",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "installed_version": "3.5.9-1~deb13u1",
+        "fixed_version": "",
+        "severity": "HIGH",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|libssl3t64|CVE-2026-107496",
         "platform": "linux/amd64",
         "package": "libssl3t64",
@@ -705,6 +749,19 @@
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3t64|CVE-2026-84785",
+        "platform": "linux/amd64",
+        "package": "libssl3t64",
+        "cve": "CVE-2026-84785",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "installed_version": "3.5.9-1~deb13u1",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
         "severity_source": ""
       },
       {
@@ -784,6 +841,19 @@
         "fixed_version": "",
         "severity": "MEDIUM",
         "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libzstd1|CVE-2026-124851",
+        "platform": "linux/amd64",
+        "package": "libzstd1",
+        "cve": "CVE-2026-124851",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "installed_version": "1.5.7+dfsg-1",
+        "fixed_version": "1.5.7+dfsg-1+deb13u1",
+        "severity": "HIGH",
+        "severity_source": ""
       }
     ],
     "final": [
@@ -794,7 +864,7 @@
         "cve": "CVE-2010-4756",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -807,7 +877,7 @@
         "cve": "CVE-2018-20796",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -820,7 +890,7 @@
         "cve": "CVE-2019-1010022",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -833,7 +903,7 @@
         "cve": "CVE-2019-1010023",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -846,7 +916,7 @@
         "cve": "CVE-2019-1010024",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -859,7 +929,7 @@
         "cve": "CVE-2019-1010025",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -872,7 +942,7 @@
         "cve": "CVE-2019-9192",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -885,7 +955,7 @@
         "cve": "CVE-2026-100290",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -898,7 +968,7 @@
         "cve": "CVE-2026-115819",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -911,10 +981,10 @@
         "cve": "CVE-2026-121757",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
-        "severity": "UNKNOWN",
+        "severity": "MEDIUM",
         "severity_source": ""
       },
       {
@@ -924,7 +994,7 @@
         "cve": "CVE-2026-121758",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "UNKNOWN",
@@ -937,7 +1007,7 @@
         "cve": "CVE-2026-124024",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "UNKNOWN",
@@ -950,7 +1020,7 @@
         "cve": "CVE-2026-126765",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "LOW",
@@ -963,7 +1033,7 @@
         "cve": "CVE-2026-84243",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "2.41-12+deb13u5",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -976,10 +1046,23 @@
         "cve": "CVE-2026-107493",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "LOW",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3t64|CVE-2026-107494",
+        "platform": "linux/amd64",
+        "package": "libssl3t64",
+        "cve": "CVE-2026-107494",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.8)",
+        "installed_version": "3.5.9-1~deb13u1",
+        "fixed_version": "",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -989,7 +1072,7 @@
         "cve": "CVE-2026-107496",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -1002,7 +1085,7 @@
         "cve": "CVE-2026-121481",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "LOW",
@@ -1015,7 +1098,7 @@
         "cve": "CVE-2026-121482",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -1028,7 +1111,7 @@
         "cve": "CVE-2026-124709",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "HIGH",
@@ -1041,10 +1124,23 @@
         "cve": "CVE-2026-35190",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3t64|CVE-2026-84785",
+        "platform": "linux/amd64",
+        "package": "libssl3t64",
+        "cve": "CVE-2026-84785",
+        "class": "os-pkgs",
+        "type": "debian",
+        "target": "candidate-final.tar (debian 13.8)",
+        "installed_version": "3.5.9-1~deb13u1",
+        "fixed_version": "",
+        "severity": "UNKNOWN",
         "severity_source": ""
       },
       {
@@ -1054,7 +1150,7 @@
         "cve": "CVE-2026-84786",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -1067,7 +1163,7 @@
         "cve": "CVE-2026-88822",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "LOW",
@@ -1080,7 +1176,7 @@
         "cve": "CVE-2026-88823",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "LOW",
@@ -1093,7 +1189,7 @@
         "cve": "CVE-2026-95690",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -1106,7 +1202,7 @@
         "cve": "CVE-2026-95691",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -1119,7 +1215,7 @@
         "cve": "CVE-2026-95692",
         "class": "os-pkgs",
         "type": "debian",
-        "target": "cloudflare/cloudflared@sha256:a402a90577df31aa392dbce73d056ece0fe9083642eeefff28a5a94656e9e4a2 (debian 13.8)",
+        "target": "candidate-final.tar (debian 13.8)",
         "installed_version": "3.5.9-1~deb13u1",
         "fixed_version": "",
         "severity": "MEDIUM",
@@ -1127,7 +1223,9 @@
       }
     ],
     "summary": {
-      "resolved": [],
+      "resolved": [
+        "CVE-2026-124851"
+      ],
       "remaining": [
         "CVE-2010-4756",
         "CVE-2018-20796",
@@ -1138,6 +1236,7 @@
         "CVE-2019-9192",
         "CVE-2026-100290",
         "CVE-2026-107493",
+        "CVE-2026-107494",
         "CVE-2026-107496",
         "CVE-2026-115819",
         "CVE-2026-121481",
@@ -1149,6 +1248,7 @@
         "CVE-2026-126765",
         "CVE-2026-35190",
         "CVE-2026-84243",
+        "CVE-2026-84785",
         "CVE-2026-84786",
         "CVE-2026-88822",
         "CVE-2026-88823",
@@ -1161,7 +1261,15 @@
     }
   },
   "packages": {
-    "changes": [],
+    "changes": [
+      {
+        "ecosystem": "debian",
+        "name": "libzstd1",
+        "change": "upgraded",
+        "before": "1.5.7+dfsg-1",
+        "after": "1.5.7+dfsg-1+deb13u1"
+      }
+    ],
     "downgrades": [],
     "downgrade_blocked": false
   },
@@ -1186,15 +1294,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-23T13:50:43Z",
-      "finished_at": "2026-11-23T13:50:50Z",
-      "duration_seconds": 6.9
+      "started_at": "2026-11-26T13:09:32Z",
+      "finished_at": "2026-11-26T13:09:33Z",
+      "duration_seconds": 0.3
     },
     "health": {
       "defined": false,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000020185",
+    "runner": "GitHub Actions 1000020764",
     "baseline": {
       "entrypoint": [
         "cloudflared"
@@ -1209,38 +1317,38 @@
       ]
     }
   },
-  "promoted_at": "2026-11-23T13:52:10Z",
+  "promoted_at": "2026-11-26T13:11:07Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "249cd5ed15f565ee8a2e93077820da14a585e218098129dd0c1facf17e0392ab",
-      "attachment_sha256": "25601937bd0c66d154ff7690930ae8473af6d9c3c1cc69f9b8ae24c56180957d",
+      "bundle_sha256": "14b2c9014da4da361faa003009eea80aab48c2857f103f95c501482fd5927deb",
+      "attachment_sha256": "77779820e92ecc4e7a915a28aedbf8123816b121e611a74e5c91460e57753e37",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "fc97d319bb3a6c6c1b9f99ced786b21d3fa9a7e42e3cb8a4d36d103a5cb31fdc",
-      "bundle_sha256": "d8a1977ad3762aa11af4c51271e13265fecfe4929c8b39f04b0b234ec30a19cf",
-      "attachment_sha256": "8aaaf38d69852ac3592906d80b89484d9eed3b900625a1720c1e30ca8e9416f2"
+      "predicate_sha256": "84deca1a041d9dd8c462965d64e825212d609c65bfb3b4620d1e55949487278f",
+      "bundle_sha256": "e65e7e6e9c941edc0edc67c9585aa1a9a4482562635669b1f557ebad117778a2",
+      "attachment_sha256": "ee006200088ba00f3bca6c2a91742f98a0754f4e471d64733c9e6686637f9fe7"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "8n4uTIsVXgEBybIuK4Y9Td46ivsYZ0Bx5px6FBuSn5g=",
+        "inclusion_root_hash": "N5ocovE5w3TPuoOQzKlkTubeTLnaoiscSNn/aEbFfk8=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4051836469,
-        "signed_entry_timestamp": "MEQCIA51j4JSoMyPn5oVYde+VDVpSUKCjsW99zV3u/yECBR8AiBvVJES0gNhEcG5/g7UcV/Yuj+seBu07V+wBzdNC0wyhQ=="
+        "log_index": 4126647496,
+        "signed_entry_timestamp": "MEYCIQDTfG1VqxdAgnwTvPAggSvQZ/FgrK2F7DZHP/lcIMqeTwIhAPRNByUP4GdStP2sqSHi9+Ujvd9ZL08CdEt4KQ7zLPHT"
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "aYb7HuVq5wEEkzCK3Sip6RuDIuqaSHKxDez3qEimSw4=",
+        "inclusion_root_hash": "lFxWZi6VEIWQ3mGuPB+xhgR/+N6xkm1pigkvRpLqyko=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4051836725,
-        "signed_entry_timestamp": "MEYCIQCFpG4vCYS1klZMWk2Gglyx8T90UpbWY+NB0I4MKCI9GgIhAMGiN6u6g70OJwvUrS7xWKMnrKTvKUnsPmLTlqvw4F2j"
+        "log_index": 4126648346,
+        "signed_entry_timestamp": "MEUCIQDdDmr8n3T7QdQPZLZkEJtdzF3YAxQfoUDgWhnai9YeOgIgVpppoq80m6Dh9pymOxeLlShewgB8mtzgR5wN+umU/nA="
       }
     },
     "tools": {
-      "cosign": "v3.1.4",
+      "cosign": "v3.1.6",
       "trivy": "0.76.2"
     }
   }
