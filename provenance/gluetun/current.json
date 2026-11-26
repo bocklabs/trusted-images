@@ -12,14 +12,14 @@
   },
   "internal": {
     "package": "ghcr.io/bocklabs/gluetun",
-    "tag": "v3.41.3-bocklabs.3",
-    "digest": "sha256:01683fc0fb1de2e2cc23bb1d54fdc06d1a0b7933db5428e811c0a7d9c9d10413",
+    "tag": "v3.41.3-bocklabs.4",
+    "digest": "sha256:441efec33911278ef2f02de9d6bf9fd3a7414082d5557e38d9e451b0b5d51f15",
     "platforms": [
       "linux/amd64"
     ]
   },
   "pipeline": {
-    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45411911965",
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/45826080348",
     "workflow": "promote",
     "dispatched_by": "bocklabs-release[bot]"
   },
@@ -28,20 +28,20 @@
     "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
     "copa": "0.15.0",
     "skopeo": "v1.25.1",
-    "skopeo_image_digest": "sha256:638c591f8a72f447eb61e2075b6db023f81175839931675f93fbb3b55be27339"
+    "skopeo_image_digest": "sha256:4784191278912fc8e8dd914fd28e65540c499798d59f688f97c7e1a22a259d38"
   },
   "scan": {
     "trivy_db": {
-      "check_bundle_digest": "sha256:ed85b86c1d0eb65fc273d33a427f7cba5b1372ef937477338286dd56088a9ab1",
-      "updated_at": "2026-11-24 13:06:50.432258513 +0000 UTC"
+      "check_bundle_digest": "sha256:fecd4e9802bd3c69b57207bca78cd3f3003cdd445b5b49f4afd484ec06a33b31",
+      "updated_at": "2026-11-25 19:00:05.492170927 +0000 UTC"
     },
-    "full_report_sha256": "f47fb5b25c40cc48a2175a8f8f685801da717250a7e537768d9602ca488d3a6e",
-    "copa_report_sha256": "92b409cf27288ec85896bc2a25bd38fe57bb0acf1dc0e4348d32d5ad164c494b",
-    "decision_sha256": "0b10232664aeda45c295cfcfbfac9e6b74f6731a462fbacaa567b1e308e80607",
+    "full_report_sha256": "1ff68591d41c556c3700d0d5fde1d45f6eaf5129b8eb4d473dfb4aaab07d5aea",
+    "copa_report_sha256": "80a4aeff0e61240e17660d9aff606052eae472154475bc1aaa61904462f30a40",
+    "decision_sha256": "a1e0a21bb25c66c07f9dd57396254fcb8f0fc80674adcca3875e8ada33bf8316",
     "reports": {
-      "before_sha256": "81b0c08a90d82b9d95907b72cb131513fd1f4d730248e4dbacebad9c60dfe5fd",
-      "final_sha256": "f47fb5b25c40cc48a2175a8f8f685801da717250a7e537768d9602ca488d3a6e",
-      "fixable_sha256": "92b409cf27288ec85896bc2a25bd38fe57bb0acf1dc0e4348d32d5ad164c494b"
+      "before_sha256": "76b62b645a60461105ba441228bf246cfab35269fda12b1acb709f05c724206f",
+      "final_sha256": "1ff68591d41c556c3700d0d5fde1d45f6eaf5129b8eb4d473dfb4aaab07d5aea",
+      "fixable_sha256": "80a4aeff0e61240e17660d9aff606052eae472154475bc1aaa61904462f30a40"
     },
     "secobserve": {
       "product": "trusted-images",
@@ -53,10 +53,10 @@
       "matches": [],
       "catalog": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
-        "sha256": "ac8f0c4e73ec9212dd00afbb9bed2b43abc9cdb3c8719fc2c2606f008171f70a",
-        "fetched_at": "2026-11-24T14:17:10Z",
-        "catalogVersion": "2026.11.23",
-        "dateReleased": "2026-11-23T19:43:55.7979Z"
+        "sha256": "a76360009e4a65794a2b8073df5475f7a787a3bb83c3bfad2b0c3434a067631a",
+        "fetched_at": "2026-11-26T13:09:02Z",
+        "catalogVersion": "2026.11.25",
+        "dateReleased": "2026-11-25T19:48:12.4344Z"
       }
     },
     "acceptance": null,
@@ -73,7 +73,7 @@
       "limitation": null
     },
     "remediation": {
-      "need_sha256": "8ae353a640ced8c842122e75382064399c8176ee7e4222a5e9685e171e19de92"
+      "need_sha256": "1c8e7dbf04f1e9d422a8f0c7c8d42aa5f80fe66f242b6df7d69d8a4022fb7a74"
     },
     "supersedes": {
       "higher_upstream": false,
@@ -1734,6 +1734,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-107493",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-107493",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "qmcgaw/gluetun@sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e (alpine 3.22.5)",
+        "installed_version": "3.5.7-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|libcrypto3|CVE-2026-107496",
         "platform": "linux/amd64",
         "package": "libcrypto3",
@@ -1744,6 +1757,19 @@
         "installed_version": "3.5.7-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libcrypto3|CVE-2026-124709",
+        "platform": "linux/amd64",
+        "package": "libcrypto3",
+        "cve": "CVE-2026-124709",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "qmcgaw/gluetun@sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e (alpine 3.22.5)",
+        "installed_version": "3.5.7-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -1929,6 +1955,19 @@
         "severity_source": ""
       },
       {
+        "identity": "linux/amd64|libssl3|CVE-2026-107493",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-107493",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "qmcgaw/gluetun@sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e (alpine 3.22.5)",
+        "installed_version": "3.5.7-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "LOW",
+        "severity_source": ""
+      },
+      {
         "identity": "linux/amd64|libssl3|CVE-2026-107496",
         "platform": "linux/amd64",
         "package": "libssl3",
@@ -1939,6 +1978,19 @@
         "installed_version": "3.5.7-r0",
         "fixed_version": "3.5.9-r1",
         "severity": "MEDIUM",
+        "severity_source": ""
+      },
+      {
+        "identity": "linux/amd64|libssl3|CVE-2026-124709",
+        "platform": "linux/amd64",
+        "package": "libssl3",
+        "cve": "CVE-2026-124709",
+        "class": "os-pkgs",
+        "type": "alpine",
+        "target": "qmcgaw/gluetun@sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e (alpine 3.22.5)",
+        "installed_version": "3.5.7-r0",
+        "fixed_version": "3.5.9-r2",
+        "severity": "HIGH",
         "severity_source": ""
       },
       {
@@ -3182,9 +3234,11 @@
     "summary": {
       "resolved": [
         "CVE-2026-103111",
+        "CVE-2026-107493",
         "CVE-2026-107496",
         "CVE-2026-107891",
         "CVE-2026-11771",
+        "CVE-2026-124709",
         "CVE-2026-12932",
         "CVE-2026-12996",
         "CVE-2026-13117",
@@ -3319,14 +3373,14 @@
         "name": "libcrypto3",
         "change": "upgraded",
         "before": "3.5.7-r0",
-        "after": "3.5.9-r1"
+        "after": "3.5.9-r2"
       },
       {
         "ecosystem": "alpine",
         "name": "libssl3",
         "change": "upgraded",
         "before": "3.5.7-r0",
-        "after": "3.5.9-r1"
+        "after": "3.5.9-r2"
       },
       {
         "ecosystem": "alpine",
@@ -3375,7 +3429,7 @@
         "name": "zstd-libs",
         "change": "upgraded",
         "before": "1.5.7-r0",
-        "after": "1.6.0-r0"
+        "after": "1.6.0-r1"
       }
     ],
     "downgrades": [],
@@ -3402,15 +3456,15 @@
       "env": {}
     },
     "timings": {
-      "started_at": "2026-11-24T14:17:10Z",
-      "finished_at": "2026-11-24T14:17:10Z",
-      "duration_seconds": 0.2
+      "started_at": "2026-11-26T13:09:02Z",
+      "finished_at": "2026-11-26T13:09:02Z",
+      "duration_seconds": 0.3
     },
     "health": {
       "defined": true,
       "final_status": "not-applicable"
     },
-    "runner": "GitHub Actions 1000020406",
+    "runner": "GitHub Actions 1000020781",
     "baseline": {
       "entrypoint": [
         "/gluetun-entrypoint"
@@ -3548,38 +3602,38 @@
       ]
     }
   },
-  "promoted_at": "2026-11-24T14:18:09Z",
+  "promoted_at": "2026-11-26T13:10:07Z",
   "notes": "",
   "signing": {
     "result": "pass",
     "image_signature": {
-      "bundle_sha256": "93f643ba67d78f109d1a4defd87a8ccec602ee72ef07ee3eb9b36a1ab6a3841c",
-      "attachment_sha256": "1ccb58f2bd91c24bfd65568ce7ab0fd24a7ac25ffd6504783ba3501c5c05d9d9",
+      "bundle_sha256": "252766751bf324d7a24b73690dc65914da8a735ae0c75155fbff5979baba18ea",
+      "attachment_sha256": "99a29c27ad1048616bf33d67f3249435e982dd3b52db91c2fd1a11a2464a46d7",
       "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
       "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
     },
     "sbom_attestation": {
       "predicate_type": "https://cyclonedx.org/bom",
-      "predicate_sha256": "53078363e06c42c0423885b82dfb3a3c519febe8c95cc893bec948e2e9de8d95",
-      "bundle_sha256": "182d85af809cafd731a174baa925c4f0905c8e61f86a98a44f486be293e2530a",
-      "attachment_sha256": "762aed60a78544ae65995b882c14905be897e412532cd819df6ac38ed91ae6d2"
+      "predicate_sha256": "88597dc6cad463a8f0080a48d59208f240a505207b696d9cc6711a2b827237c0",
+      "bundle_sha256": "40d27bc145e4fbeb0c9cc00270a63e79d1c1291a8fac5f42b76f5f9246175e8b",
+      "attachment_sha256": "faf6a37944daee59d2fde75ee20ae1041a43c98e22998f8264d4a3dc4aa637ba"
     },
     "rekor": {
       "signature": {
-        "inclusion_root_hash": "DmWt0rTfSoQf120t+iQJMOX0lvL0P8M+si5uhSd/W1s=",
+        "inclusion_root_hash": "TifOJGLi/H11p4SbJO7e8sGl1uJfQQjgRpRTq0kSeeQ=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4079837355,
-        "signed_entry_timestamp": "MEUCIH7ytFEvrZZsZNnAXAVMpE0pysxMSEav6XLW24ylb59sAiEA8gNLkyvQvsywD+Xwy7KoIEEuNNBfmDj6CmzGWB/dhlg="
+        "log_index": 4126643372,
+        "signed_entry_timestamp": "MEUCIHp2N+qvqTdbz0s7qdFC/jrHsw2F6OB7R1cAOz7zzxVOAiEA9k5NAd3GRGWPXwEpYJUimyW84F11gAFWnCmhqHnH43s="
       },
       "sbom_attestation": {
-        "inclusion_root_hash": "2VnhQ3QLfocPCthERBfaoqEZMudhKXuRp8AgB0uRApY=",
+        "inclusion_root_hash": "nwi2w/sCDw9EIfPsei0PZZqCh6wzF+jCUqzlucaRmJo=",
         "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
-        "log_index": 4079838654,
-        "signed_entry_timestamp": "MEYCIQDkpV05CuwPyYeNFgsXa6FlnMq5qaS45yv/1TPbikAuigIhAOvBu3ZO5lYuFjnqjQOckV7y5CwQgFj5j74Xay2ZpmUP"
+        "log_index": 4126643735,
+        "signed_entry_timestamp": "MEYCIQDiICW/EmkQdCebL3fQQNJ0cTsdCw0xzaredgAKFRloTAIhAMz9lQiOW69XoCRxowYfdfk627TEzvQYlt1v304jNOc5"
       }
     },
     "tools": {
-      "cosign": "v3.1.4",
+      "cosign": "v3.1.6",
       "trivy": "0.76.2"
     }
   }
