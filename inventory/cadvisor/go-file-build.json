@@ -1,12 +1,12 @@
 {
   "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
-  "ref": "ghcr.io/bocklabs/cadvisor:v0.55.1-bocklabs.2@sha256:60b358e0d57c529ca5b9b392001fda35f0df3bf1c9169ac39d8086209067ca11",
-  "config_digest": "sha256:7c0e98b1ea9c19563ae228f52fe0d4d1ea1c26bf13aac6336a5244d9ed8073e3",
+  "ref": "ghcr.io/bocklabs/cadvisor:v0.55.1-bocklabs.3@sha256:08fc35c9627444393c7a95369fbe9f0df58f9830d38b723df8287d458131e283",
+  "config_digest": "sha256:35da48a3ccf51ed228f297cedf9527b72e85f9d7fc31f35bb1d74d056afc7d0e",
   "upstream_child_digest": "sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069",
   "target": "usr/bin/cadvisor",
   "module": "../",
   "layer": {
-    "Digest": "sha256:28d7ab525b10fdd3e588ecf02760552a0338309263f88ab17c84d4d09e8e0216",
+    "Digest": "sha256:613beaf8dd8288921045bdd6ee57d603953d7ed86b8b05cb1415512537162438",
     "DiffID": "sha256:ab70e19376221c5e201d269c1cb86670e5317daf12f78219fdc057eeab4f9a29"
   },
   "binary_sha256": "b7fda328204352d4dfbbc5f63f03748b4d6b6dcb31239291ea54b342e5aee5fb",
@@ -31,6 +31,6 @@
     "versioned_go_package_count": 96,
     "vcs_revision": "f5bec3744d92f01556c6ca528ee52f3a26402d6d"
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/42614179605",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/45826043041",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
