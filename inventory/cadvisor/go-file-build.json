@@ -1,7 +1,7 @@
 {
   "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
-  "ref": "ghcr.io/bocklabs/cadvisor:v0.55.1-bocklabs.3@sha256:08fc35c9627444393c7a95369fbe9f0df58f9830d38b723df8287d458131e283",
-  "config_digest": "sha256:35da48a3ccf51ed228f297cedf9527b72e85f9d7fc31f35bb1d74d056afc7d0e",
+  "ref": "ghcr.io/bocklabs/cadvisor:v0.55.1-bocklabs.4@sha256:f0f6cd9ec602af6a0b15cc793edb4976e70a9484810b77895a6db254d72ddde4",
+  "config_digest": "sha256:f3d160c2ec24424d558e3a5666a432c7a0c4237638b9ea7d3ba76cbd5580a91b",
   "upstream_child_digest": "sha256:9cc0da1192a4d0cd3597d16cdc3c625b8cc5636cee201f3d122c8331e1a01069",
   "target": "usr/bin/cadvisor",
   "module": "../",
@@ -31,6 +31,6 @@
     "versioned_go_package_count": 96,
     "vcs_revision": "f5bec3744d92f01556c6ca528ee52f3a26402d6d"
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/45826043041",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/46004074323",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
