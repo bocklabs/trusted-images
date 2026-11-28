@@ -1,7 +1,7 @@
 {
   "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
-  "ref": "ghcr.io/bocklabs/gluetun:v3.41.3-bocklabs.3@sha256:01683fc0fb1de2e2cc23bb1d54fdc06d1a0b7933db5428e811c0a7d9c9d10413",
-  "config_digest": "sha256:fd3f25eb5a3bb650bf12f1e692d29553dc7eefb3d26138f3849a9c80ac041f00",
+  "ref": "ghcr.io/bocklabs/gluetun:v3.41.3-bocklabs.4@sha256:441efec33911278ef2f02de9d6bf9fd3a7414082d5557e38d9e451b0b5d51f15",
+  "config_digest": "sha256:9fceeb91796de8c23eb93b4a5f8b710875209a3058dd6a072255c0f8a1480c5e",
   "upstream_child_digest": "sha256:1baa76576dea1dfbafbd62bb635daf40fd87171f63273c2fdfe630418783011e",
   "target": "gluetun-entrypoint",
   "module": "github.com/qdm12/gluetun",
@@ -34,6 +34,6 @@
     "go_package_count": 52,
     "versioned_go_package_count": 51
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/45623941518",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/46144071467",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
