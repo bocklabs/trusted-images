@@ -1,0 +1,221 @@
+{
+  "schema": "trusted-images.bocklabs.dev/provenance-v1",
+  "app": "loki",
+  "upstream": {
+    "ref": "grafana/loki",
+    "tag": "3.7.11",
+    "digest": "sha256:4c86f2ad5003304c8da84d29da2279b04eb999d716f8089c88e4fa4a44b0781e",
+    "index_digest": "sha256:4c86f2ad5003304c8da84d29da2279b04eb999d716f8089c88e4fa4a44b0781e",
+    "media_type": "application/vnd.docker.distribution.manifest.list.v2+json",
+    "selected_platform": "linux/amd64",
+    "selected_child_digest": "sha256:a553c31d41ebd82bc676c87835bbfd6d7625b5382d1884fe124fc81de01c3461"
+  },
+  "internal": {
+    "package": "ghcr.io/bocklabs/loki",
+    "tag": "3.7.11-bocklabs.1",
+    "digest": "sha256:a553c31d41ebd82bc676c87835bbfd6d7625b5382d1884fe124fc81de01c3461",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "pipeline": {
+    "run_url": "https://github.com/bocklabs/trusted-images/actions/runs/46102177499",
+    "workflow": "promote",
+    "dispatched_by": "bocklabs-release[bot]"
+  },
+  "tools": {
+    "trivy": "0.76.2",
+    "trivy_action": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+    "copa": null,
+    "skopeo": "v1.25.1",
+    "skopeo_image_digest": "sha256:9ce297b1309340cb31cf4cd7529a638b912da0bbe30894e210dbf9aae9d8a5d5"
+  },
+  "scan": {
+    "trivy_db": {
+      "check_bundle_digest": "sha256:4b60fe9c3a0ba63d837f2c94484d075cfa1964edd7c712da47adc098eace3bdc",
+      "updated_at": "2026-11-27 07:06:44.674751291 +0000 UTC"
+    },
+    "full_report_sha256": "02885598a39c1848196954b8a99239f36e11a68f3244bf0bbad9cdd53ba8b930",
+    "copa_report_sha256": "4867f98a12493192eda7d5cca39fa7720cd1240b83490af30ee870b4e57d2660",
+    "decision_sha256": "bf9510ba8ea124b2e175e7caa2b208e64ffb1114d3307178f792daf2c0ca5a3f",
+    "reports": {
+      "before_sha256": "02885598a39c1848196954b8a99239f36e11a68f3244bf0bbad9cdd53ba8b930",
+      "final_sha256": "02885598a39c1848196954b8a99239f36e11a68f3244bf0bbad9cdd53ba8b930",
+      "fixable_sha256": "4867f98a12493192eda7d5cca39fa7720cd1240b83490af30ee870b4e57d2660"
+    },
+    "secobserve": {
+      "product": "trusted-images",
+      "origin": "grafana/loki:3.7.11"
+    }
+  },
+  "policy": {
+    "kev": {
+      "matches": [],
+      "catalog": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "sha256": "05be4bfcfd70004c57756f02231e308e4273cd0c0ae513695c91bf45de483b3d",
+        "fetched_at": "2026-11-28T03:19:02Z",
+        "catalogVersion": "2026.11.27",
+        "dateReleased": "2026-11-27T18:03:12.5733Z"
+      }
+    },
+    "acceptance": null,
+    "patching": {
+      "disabled": false
+    },
+    "copa": {
+      "classification": "not-required",
+      "original_child_input": false,
+      "mode": "not-required",
+      "release": null,
+      "source_sha": null,
+      "runtime_digest": null,
+      "limitation": null
+    },
+    "supersedes": {
+      "higher_upstream": false,
+      "original_child_selected": false
+    },
+    "outcome": "eligible with no-fix warnings: CVE-2026-97054:MEDIUM:",
+    "eligible": true,
+    "warnings": [
+      {
+        "kind": "no-fix",
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Floki:stdlib|CVE-2026-97054",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97054",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/loki",
+        "installed_version": "v1.26.10",
+        "fixed_version": "1.26.11, 1.27.4",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      }
+    ]
+  },
+  "cves": {
+    "before": [
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Floki:stdlib|CVE-2026-97054",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97054",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/loki",
+        "installed_version": "v1.26.10",
+        "fixed_version": "1.26.11, 1.27.4",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      }
+    ],
+    "final": [
+      {
+        "identity": "linux/amd64|lang-pkgs:gobinary:usr%2Fbin%2Floki:stdlib|CVE-2026-97054",
+        "platform": "linux/amd64",
+        "package": "stdlib",
+        "cve": "CVE-2026-97054",
+        "class": "lang-pkgs",
+        "type": "gobinary",
+        "target": "usr/bin/loki",
+        "installed_version": "v1.26.10",
+        "fixed_version": "1.26.11, 1.27.4",
+        "severity": "MEDIUM",
+        "severity_source": ""
+      }
+    ],
+    "summary": {
+      "resolved": [],
+      "remaining": [
+        "CVE-2026-97054"
+      ],
+      "introduced": [],
+      "unresolved_fixable": []
+    }
+  },
+  "packages": {
+    "changes": [],
+    "downgrades": [],
+    "downgrade_blocked": false
+  },
+  "validation": {
+    "profile": "oneshot",
+    "result": "pass",
+    "params": {
+      "type": "oneshot",
+      "port": null,
+      "path": "/",
+      "expectStatus": 200,
+      "durationSeconds": 30,
+      "timeoutSeconds": 30,
+      "network": "none",
+      "expectedExit": 0,
+      "command": [
+        "-version"
+      ],
+      "expectedPlatforms": [
+        "linux/amd64"
+      ],
+      "env": {}
+    },
+    "timings": {
+      "started_at": "2026-11-28T03:18:56Z",
+      "finished_at": "2026-11-28T03:19:02Z",
+      "duration_seconds": 6.0
+    },
+    "health": {
+      "defined": false,
+      "final_status": "not-applicable"
+    },
+    "runner": "GitHub Actions 1000021129",
+    "baseline": {
+      "entrypoint": [
+        "/usr/bin/loki"
+      ],
+      "cmd": [
+        "-config.file=/etc/loki/local-config.yaml"
+      ],
+      "env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+      ]
+    }
+  },
+  "promoted_at": "2026-11-28T03:20:13Z",
+  "notes": "",
+  "signing": {
+    "result": "pass",
+    "image_signature": {
+      "bundle_sha256": "6585d2bd0a489c792a473f71c76005a56dcb68b9c05ace1992ec53c673b90607",
+      "attachment_sha256": "53d14353a05215a2dc9956833b45463f20187f6c86b31ae12a2e1d8a55d8712b",
+      "certificate_identity": "https://github.com/bocklabs/trusted-images/.github/workflows/promote-publish.yaml@refs/heads/main",
+      "certificate_oidc_issuer": "https://token.actions.githubusercontent.com"
+    },
+    "sbom_attestation": {
+      "predicate_type": "https://cyclonedx.org/bom",
+      "predicate_sha256": "7e80d098e6cbc3e6235807faa7f76abff3cc23f0f7390495397dfcf8a0a53bcf",
+      "bundle_sha256": "8eff1c34f89e3b02056dc2f74235f42b0e0a0ee54f2fe278bbd395b118ee5023",
+      "attachment_sha256": "c82940b40642836b49d0a43bc31b41e0faa2cd2aa1219ca170e3dfc1994234d7"
+    },
+    "rekor": {
+      "signature": {
+        "inclusion_root_hash": "QgwD8E2oJYIYNqsV5iJPD1pkhZYfeGI3kR88jVjoW1I=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 4154183408,
+        "signed_entry_timestamp": "MEUCIQCQz+7hfqFx1q/yAu7NL1YVINNd8wnvXh0/4TBDPIYSbgIgME7ZHTugIzOy6wtZF34VMCors/sPRHm60ylL3gg+1OA="
+      },
+      "sbom_attestation": {
+        "inclusion_root_hash": "g8KwIY4qJmb9092HWW5MHw/oHYPKoccO/r7VwBicIpE=",
+        "log_id": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0=",
+        "log_index": 4154184009,
+        "signed_entry_timestamp": "MEYCIQCRngfT6SRKKUvB2tw24Ijc5UZgYWMHasCr/cR4jU9nTgIhAKFe1TybIJfJhzhNR2h6bkCvAyH/BIvYdAD/xugvHOqe"
+      }
+    },
+    "tools": {
+      "cosign": "v3.1.6",
+      "trivy": "0.76.2"
+    }
+  }
+}
