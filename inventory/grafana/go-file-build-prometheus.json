@@ -1,36 +1,36 @@
 {
   "schema": "trusted-images.bocklabs.dev/go-file-build-v1",
-  "ref": "ghcr.io/bocklabs/grafana:13.2.4-bocklabs.2@sha256:f82096e412ba5e9c6966660318c82c2850c18ed6e208f73f395dcc2cad18a6c8",
-  "config_digest": "sha256:a500e8393b6f4bdaa11f1b45ed3e17174ce1fff43c2d865fbbcc8be9dbb93dd8",
-  "upstream_child_digest": "sha256:7b22f3edf947329d75eba7a62d9f6ea1ac1e786736813ef7a98cfb275a52e49b",
+  "ref": "ghcr.io/bocklabs/grafana:13.3.2-bocklabs.1@sha256:41f655e04263368e30ba4bd88a93fc7b21e51d83f27131371aba4386c3afb084",
+  "config_digest": "sha256:96d4d6bcb0ba0bce0a4468fef4a32b81bb6930d364cbd96f05de55a2abc26683",
+  "upstream_child_digest": "sha256:1b8b4d34bde1e7c95dd639523a0dab6481f4d4e4b9727022c66f28cf3c708060",
   "target": "usr/share/grafana/data/plugins-bundled/prometheus/gpx_grafana-prometheus-datasource_linux_amd64",
   "module": "./pkg/promlib",
   "layer": {
-    "Digest": "sha256:769c05bb609d68b3cc67fb6dd664f81e42f4690f36163b321a1c23c6b694901f",
-    "DiffID": "sha256:5ed8daca7d5df36951edd502643150f1bac07fb9b85911a1ad4ae4d795644de5"
+    "Digest": "sha256:68bc385fe87388117c24a872beb04ca465a80f6dd0a817baf05754d8fafd0dcd",
+    "DiffID": "sha256:bb1bd87c02830e6b48f3efabe655f86c7850858949b9ca60868c638423ff88c6"
   },
-  "binary_sha256": "ee2b4e699130b6a4c0382df20abd4b6e88580d81940150aedc45823a464d7966",
+  "binary_sha256": "52f52b3621b4153f44a3d1c9e4ff2c86112c143b01b8d88b8a6c339a8068f835",
   "source": {
     "repository": "https://github.com/grafana/grafana-prometheus-datasource",
-    "revision": "6d21418acde6ce31c9f7a6418a88758842a881bb",
-    "tag": "v0.0.0-20260929115645-6d21418acde6",
+    "revision": "69f620a7ca54c852d3fa8b88084f9e0a12ab4dd0",
+    "tag": "v0.0.0-20261118225216-69f620a7ca54",
     "files": {
       "go.mod": {
-        "url": "https://raw.githubusercontent.com/grafana/grafana-prometheus-datasource/6d21418acde6ce31c9f7a6418a88758842a881bb/go.mod",
-        "sha256": "fd23f133aec7529f83f1d867168777b9e5520f3ad37fe4c1da24465c681e83be"
+        "url": "https://raw.githubusercontent.com/grafana/grafana-prometheus-datasource/69f620a7ca54c852d3fa8b88084f9e0a12ab4dd0/go.mod",
+        "sha256": "5fd5b1070dfdabdbf3b2ff17bdfd71627fb0a0d6b1c10f6f348241ad4e3e79fd"
       }
     }
   },
   "build_info": {
     "program": "github.com/grafana/grafana-prometheus-datasource/pkg",
     "main_module": "github.com/grafana/grafana-prometheus-datasource",
-    "module_version": "v0.0.0-20260929115645-6d21418acde6",
-    "go_version": "go1.27.1",
-    "sha256": "8bd6b24eab1db321bba33eea9b8421ad38442d96cd7916a378936d8427733197",
-    "go_package_count": 110,
-    "versioned_go_package_count": 110,
-    "vcs_revision": "6d21418acde6ce31c9f7a6418a88758842a881bb"
+    "module_version": "v0.0.0-20261118225216-69f620a7ca54",
+    "go_version": "go1.27.3",
+    "sha256": "ccce447d965e198cb50fae6b1d0cd96ca2ba8e30df598f09011591594b39006a",
+    "go_package_count": 103,
+    "versioned_go_package_count": 103,
+    "vcs_revision": "69f620a7ca54c852d3fa8b88084f9e0a12ab4dd0"
   },
-  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/41299022777",
+  "evidence_run": "https://github.com/bocklabs/trusted-images/actions/runs/46144073745",
   "limitation": "The scanned package has no version. Coverage is limited to the reviewed binary; vulnerability coverage is not established for the unversioned package."
 }
